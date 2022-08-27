@@ -1,0 +1,17 @@
+mysql:
+  dsn:
+    host: localhost
+    port: 3306
+    db: wordpress
+    user: root
+    password: root
+    charset: utf8mb4
+  pool:
+    # 最长空闲时间
+    connMaxIdleTime: 60
+    # 最大连接数
+    maxOpenConn: 100
+    # 最大空闲连接数
+    maxIdleConn: 10
+    # 连接的生命时长
+    connMaxLifetime: 236
