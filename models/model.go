@@ -3,6 +3,7 @@ package models
 import (
 	"fmt"
 	"github/fthvgb1/wp-go/db"
+	"github/fthvgb1/wp-go/helper"
 	"strings"
 )
 
@@ -14,9 +15,9 @@ type mod interface {
 type model[T mod] struct {
 }
 
-type SimpleWhere [][]string
+type SqlBuilder [][]string
 
-func (w SimpleWhere) parseWhere() (string, []interface{}) {
+func (w SqlBuilder) parseWhere() (string, []interface{}) {
 	var s strings.Builder
 	args := make([]interface{}, 0, len(w))
 	for _, ss := range w {
@@ -31,11 +32,57 @@ func (w SimpleWhere) parseWhere() (string, []interface{}) {
 			s.WriteString(ss[0])
 			s.WriteString("`")
 			s.WriteString(ss[1])
-			s.WriteString("? and ")
+			s.WriteString(" ? and ")
 			args = append(args, ss[2])
 		}
 	}
 	return strings.TrimRight(s.String(), "and "), args
+}
+
+func (w SqlBuilder) parseOrderBy() string {
+	s := strings.Builder{}
+	for _, ss := range w {
+		if len(ss) == 2 && ss[0] != "" && helper.IsContainInArr(ss[1], []string{"asc", "desc"}) {
+			s.WriteString(" `")
+			s.WriteString(ss[0])
+			s.WriteString("` ")
+			s.WriteString(ss[1])
+			s.WriteString(",")
+		}
+	}
+	return strings.TrimRight(s.String(), ",")
+}
+
+func (m model[T]) SimplePagination(where SqlBuilder, fields string, page, pageSize int, order SqlBuilder) (r []T, total int, err error) {
+	var rr T
+	w, args := where.parseWhere()
+	n := struct {
+		N int `db:"n" json:"n"`
+	}{}
+	tpx := "select count(*) n from %s where %s limit 1"
+	sq := fmt.Sprintf(tpx, rr.Table(), w)
+	err = db.Db.Get(&n, sq, args...)
+	if err != nil {
+		return
+	}
+	if n.N == 0 {
+		return
+	}
+	total = n.N
+	offset := 0
+	if page > 1 {
+		offset = (page - 1) * pageSize
+	}
+	if offset >= total {
+		return
+	}
+	tp := "select %s from %s where %s order by %s limit %d,%d"
+	sql := fmt.Sprintf(tp, fields, rr.Table(), w, order.parseOrderBy(), offset, pageSize)
+	err = db.Db.Select(&r, sql, args...)
+	if err != nil {
+		return
+	}
+	return
 }
 
 func (m model[T]) FindOneById(id int) (T, error) {
@@ -48,7 +95,7 @@ func (m model[T]) FindOneById(id int) (T, error) {
 	return r, nil
 }
 
-func (m model[T]) FirstOne(where SimpleWhere, fields string) (T, error) {
+func (m model[T]) FirstOne(where SqlBuilder, fields string) (T, error) {
 	var r T
 	w, args := where.parseWhere()
 	tp := "select %s from %s where %s"
@@ -60,7 +107,19 @@ func (m model[T]) FirstOne(where SimpleWhere, fields string) (T, error) {
 	return r, nil
 }
 
-func (m model[T]) FindMany(where SimpleWhere, fields string) ([]T, error) {
+func (m model[T]) LastOne(where SqlBuilder, fields string) (T, error) {
+	var r T
+	w, args := where.parseWhere()
+	tp := "select %s from %s where %s order by %s desc limit 1"
+	sql := fmt.Sprintf(tp, fields, r.Table(), w, r.PrimaryKey())
+	err := db.Db.Get(&r, sql, args...)
+	if err != nil {
+		return r, err
+	}
+	return r, nil
+}
+
+func (m model[T]) FindMany(where SqlBuilder, fields string) ([]T, error) {
 	var r []T
 	var rr T
 	w, args := where.parseWhere()

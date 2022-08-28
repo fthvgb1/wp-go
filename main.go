@@ -19,9 +19,9 @@ func init() {
 }
 
 func main() {
-	T, err := models.WpPostsM.FindOneById(3)
+	T, total, err := models.WpPostsM.SimplePagination(models.SqlBuilder{{"post_content", "like", "%哟%"}}, "*", 2, 10, models.SqlBuilder{{"ID", "desc"}})
 	if err != nil {
 		return
 	}
-	fmt.Println(T)
+	fmt.Println(T, total)
 }
