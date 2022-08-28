@@ -15,6 +15,14 @@ type mod interface {
 type model[T mod] struct {
 }
 
+func (m model[T]) PrimaryKey() string {
+	return "id"
+}
+
+func (m model[T]) Table() string {
+	return ""
+}
+
 type SqlBuilder [][]string
 
 func (w SqlBuilder) parseWhere() (string, []interface{}) {
