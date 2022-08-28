@@ -19,7 +19,7 @@ func init() {
 }
 
 func main() {
-	T, total, err := models.WpPostsM.SimplePagination(models.SqlBuilder{{"post_content", "like", "%哟%"}}, "*", 2, 10, models.SqlBuilder{{"ID", "desc"}})
+	T, total, err := models.WpPostsM.SimplePagination(nil, "*", 1, 10, models.SqlBuilder{{"ID", "desc"}})
 	if err != nil {
 		return
 	}

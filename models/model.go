@@ -36,7 +36,14 @@ func (w SqlBuilder) parseWhere() (string, []interface{}) {
 			args = append(args, ss[2])
 		}
 	}
-	return strings.TrimRight(s.String(), "and "), args
+	ss := strings.TrimRight(s.String(), "and ")
+	if ss != "" {
+		s.Reset()
+		s.WriteString(" where ")
+		s.WriteString(ss)
+		ss = s.String()
+	}
+	return ss, args
 }
 
 func (w SqlBuilder) parseOrderBy() string {
@@ -50,7 +57,14 @@ func (w SqlBuilder) parseOrderBy() string {
 			s.WriteString(",")
 		}
 	}
-	return strings.TrimRight(s.String(), ",")
+	ss := strings.TrimRight(s.String(), ",")
+	if ss != "" {
+		s.Reset()
+		s.WriteString(" order by ")
+		s.WriteString(ss)
+		ss = s.String()
+	}
+	return ss
 }
 
 func (m model[T]) SimplePagination(where SqlBuilder, fields string, page, pageSize int, order SqlBuilder) (r []T, total int, err error) {
@@ -59,7 +73,7 @@ func (m model[T]) SimplePagination(where SqlBuilder, fields string, page, pageSi
 	n := struct {
 		N int `db:"n" json:"n"`
 	}{}
-	tpx := "select count(*) n from %s where %s limit 1"
+	tpx := "select count(*) n from %s %s limit 1"
 	sq := fmt.Sprintf(tpx, rr.Table(), w)
 	err = db.Db.Get(&n, sq, args...)
 	if err != nil {
@@ -76,7 +90,7 @@ func (m model[T]) SimplePagination(where SqlBuilder, fields string, page, pageSi
 	if offset >= total {
 		return
 	}
-	tp := "select %s from %s where %s order by %s limit %d,%d"
+	tp := "select %s from %s %s %s limit %d,%d"
 	sql := fmt.Sprintf(tp, fields, rr.Table(), w, order.parseOrderBy(), offset, pageSize)
 	err = db.Db.Select(&r, sql, args...)
 	if err != nil {
@@ -98,7 +112,7 @@ func (m model[T]) FindOneById(id int) (T, error) {
 func (m model[T]) FirstOne(where SqlBuilder, fields string) (T, error) {
 	var r T
 	w, args := where.parseWhere()
-	tp := "select %s from %s where %s"
+	tp := "select %s from %s %s"
 	sql := fmt.Sprintf(tp, fields, r.Table(), w)
 	err := db.Db.Get(&r, sql, args...)
 	if err != nil {
@@ -110,7 +124,7 @@ func (m model[T]) FirstOne(where SqlBuilder, fields string) (T, error) {
 func (m model[T]) LastOne(where SqlBuilder, fields string) (T, error) {
 	var r T
 	w, args := where.parseWhere()
-	tp := "select %s from %s where %s order by %s desc limit 1"
+	tp := "select %s from %s %s order by %s desc limit 1"
 	sql := fmt.Sprintf(tp, fields, r.Table(), w, r.PrimaryKey())
 	err := db.Db.Get(&r, sql, args...)
 	if err != nil {
@@ -123,7 +137,7 @@ func (m model[T]) FindMany(where SqlBuilder, fields string) ([]T, error) {
 	var r []T
 	var rr T
 	w, args := where.parseWhere()
-	tp := "select %s from %s where %s"
+	tp := "select %s from %s %s"
 	sql := fmt.Sprintf(tp, fields, rr.Table(), w)
 	err := db.Db.Select(&r, sql, args...)
 	if err != nil {
