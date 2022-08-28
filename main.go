@@ -8,7 +8,7 @@ import (
 )
 
 func init() {
-	err := vars.InitDbConfig()
+	err := vars.InitConfig()
 	if err != nil {
 		panic(err)
 	}

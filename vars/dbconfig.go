@@ -18,7 +18,7 @@ type Mysql struct {
 	Pool Pool `yaml:"pool"`
 }
 
-func InitDbConfig() error {
+func InitConfig() error {
 	file, err := ioutil.ReadFile("config.yaml")
 	if err != nil {
 		return err
