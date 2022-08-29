@@ -19,9 +19,11 @@ func init() {
 }
 
 func main() {
-	T, err := models.WpPostsM.FindOneById(1)
+	T, t, err := models.WpPostsM.SimplePagination(nil, "wp_posts.ID,b.meta_id post_author", 4, 2, nil, models.SqlBuilder{{
+		"left join", "wp_postmeta b", "b.post_id=wp_posts.ID",
+	}})
 	if err != nil {
 		return
 	}
-	fmt.Println(T)
+	fmt.Println(T, t)
 }

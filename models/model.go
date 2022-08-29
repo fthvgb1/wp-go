@@ -74,15 +74,32 @@ func (w SqlBuilder) parseOrderBy() string {
 	}
 	return ss
 }
+func (w SqlBuilder) parseJoin() string {
+	s := strings.Builder{}
+	for _, ss := range w {
+		l := len(ss)
+		for j := 0; j < l; j++ {
+			s.WriteString(" ")
+			if (l == 4 && j == 3) || (l == 3 && j == 2) {
+				s.WriteString("on ")
+			}
+			s.WriteString(ss[j])
+			s.WriteString(" ")
+		}
 
-func (m model[T]) SimplePagination(where SqlBuilder, fields string, page, pageSize int, order SqlBuilder) (r []T, total int, err error) {
+	}
+	return s.String()
+}
+
+func (m model[T]) SimplePagination(where SqlBuilder, fields string, page, pageSize int, order SqlBuilder, join SqlBuilder) (r []T, total int, err error) {
 	var rr T
 	w, args := where.parseWhere()
 	n := struct {
 		N int `db:"n" json:"n"`
 	}{}
-	tpx := "select count(*) n from %s %s limit 1"
-	sq := fmt.Sprintf(tpx, rr.Table(), w)
+	j := join.parseJoin()
+	tpx := "select count(*) n from %s %s %s limit 1"
+	sq := fmt.Sprintf(tpx, rr.Table(), j, w)
 	err = db.Db.Get(&n, sq, args...)
 	if err != nil {
 		return
@@ -98,8 +115,8 @@ func (m model[T]) SimplePagination(where SqlBuilder, fields string, page, pageSi
 	if offset >= total {
 		return
 	}
-	tp := "select %s from %s %s %s limit %d,%d"
-	sql := fmt.Sprintf(tp, fields, rr.Table(), w, order.parseOrderBy(), offset, pageSize)
+	tp := "select %s from %s %s %s %s limit %d,%d"
+	sql := fmt.Sprintf(tp, fields, rr.Table(), j, w, order.parseOrderBy(), offset, pageSize)
 	err = db.Db.Select(&r, sql, args...)
 	if err != nil {
 		return
