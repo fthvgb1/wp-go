@@ -1,9 +1,6 @@
 package models
 
-var WpOptionsM = WpOptions{}
-
 type WpOptions struct {
-	model[WpOptions]
 	OptionId    uint64 `gorm:"column:option_id" db:"option_id" json:"option_id" form:"option_id"`
 	OptionName  string `gorm:"column:option_name" db:"option_name" json:"option_name" form:"option_name"`
 	OptionValue string `gorm:"column:option_value" db:"option_value" json:"option_value" form:"option_value"`

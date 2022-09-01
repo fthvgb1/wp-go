@@ -2,10 +2,7 @@ package models
 
 import "time"
 
-var WpCommentsM = WpComments{}
-
 type WpComments struct {
-	model[WpComments]
 	CommentId          uint64    `gorm:"column:comment_ID" db:"comment_ID" json:"comment_ID" form:"comment_ID"`
 	CommentPostId      uint64    `gorm:"column:comment_post_ID" db:"comment_post_ID" json:"comment_post_ID" form:"comment_post_ID"`
 	CommentAuthor      string    `gorm:"column:comment_author" db:"comment_author" json:"comment_author" form:"comment_author"`

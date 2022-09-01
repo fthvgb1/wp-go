@@ -2,10 +2,7 @@ package models
 
 import "time"
 
-var WpPostsM = WpPosts{}
-
 type WpPosts struct {
-	model[WpPosts]
 	Id                  uint64    `gorm:"column:ID" db:"ID" json:"ID" form:"ID"`
 	PostAuthor          uint64    `gorm:"column:post_author" db:"post_author" json:"post_author" form:"post_author"`
 	PostDate            time.Time `gorm:"column:post_date" db:"post_date" json:"post_date" form:"post_date"`

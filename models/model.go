@@ -8,20 +8,9 @@ import (
 	"strings"
 )
 
-type mod interface {
+type model interface {
 	PrimaryKey() string
 	Table() string
-}
-
-type model[T mod] struct {
-}
-
-func (m model[T]) PrimaryKey() string {
-	return "id"
-}
-
-func (m model[T]) Table() string {
-	return ""
 }
 
 type SqlBuilder [][]string
@@ -115,24 +104,7 @@ func (w SqlBuilder) parseJoin() string {
 	return s.String()
 }
 
-func (m model[T]) Find(where SqlBuilder, fields string, order SqlBuilder, join SqlBuilder, limit int, in ...[]interface{}) (r []T, err error) {
-	var rr T
-	w, args := where.parseWhere(in...)
-	j := join.parseJoin()
-	tp := "select %s from %s %s %s %s %s"
-	l := ""
-	if limit > 0 {
-		l = fmt.Sprintf(" limit %d", limit)
-	}
-	sql := fmt.Sprintf(tp, fields, rr.Table(), j, w, order.parseOrderBy(), l)
-	err = db.Db.Select(&r, sql, args...)
-	if err != nil {
-		return
-	}
-	return
-}
-
-func (m model[T]) SimplePagination(where SqlBuilder, fields string, page, pageSize int, order SqlBuilder, join SqlBuilder, in ...[]interface{}) (r []T, total int, err error) {
+func SimplePagination[T model](where SqlBuilder, fields string, page, pageSize int, order SqlBuilder, join SqlBuilder, in ...[]interface{}) (r []T, total int, err error) {
 	var rr T
 	w, args := where.parseWhere(in...)
 	n := struct {
@@ -165,7 +137,7 @@ func (m model[T]) SimplePagination(where SqlBuilder, fields string, page, pageSi
 	return
 }
 
-func (m model[T]) FindOneById(id int) (T, error) {
+func FindOneById[T model](id int) (T, error) {
 	var r T
 	sql := fmt.Sprintf("select * from `%s` where `%s`=?", r.Table(), r.PrimaryKey())
 	err := db.Db.Get(&r, sql, id)
@@ -175,7 +147,7 @@ func (m model[T]) FindOneById(id int) (T, error) {
 	return r, nil
 }
 
-func (m model[T]) FirstOne(where SqlBuilder, fields string, in ...[]interface{}) (T, error) {
+func FirstOne[T model](where SqlBuilder, fields string, in ...[]interface{}) (T, error) {
 	var r T
 	w, args := where.parseWhere(in...)
 	tp := "select %s from %s %s"
@@ -187,7 +159,7 @@ func (m model[T]) FirstOne(where SqlBuilder, fields string, in ...[]interface{})
 	return r, nil
 }
 
-func (m model[T]) LastOne(where SqlBuilder, fields string, in ...[]interface{}) (T, error) {
+func LastOne[T model](where SqlBuilder, fields string, in ...[]interface{}) (T, error) {
 	var r T
 	w, args := where.parseWhere(in...)
 	tp := "select %s from %s %s order by %s desc limit 1"
@@ -199,7 +171,7 @@ func (m model[T]) LastOne(where SqlBuilder, fields string, in ...[]interface{}) 
 	return r, nil
 }
 
-func (m model[T]) SimpleFind(where SqlBuilder, fields string, in ...[]interface{}) ([]T, error) {
+func SimpleFind[T model](where SqlBuilder, fields string, in ...[]interface{}) ([]T, error) {
 	var r []T
 	var rr T
 	w, args := where.parseWhere(in...)
@@ -212,17 +184,7 @@ func (m model[T]) SimpleFind(where SqlBuilder, fields string, in ...[]interface{
 	return r, nil
 }
 
-func (m model[T]) Get(sql string, params ...interface{}) (T, error) {
-	var r T
-	sql = strings.Replace(sql, "%table%", r.Table(), -1)
-	err := db.Db.Get(&r, sql, params...)
-	if err != nil {
-		return r, err
-	}
-	return r, nil
-}
-
-func (m model[T]) Select(sql string, params ...interface{}) ([]T, error) {
+func Select[T model](sql string, params ...interface{}) ([]T, error) {
 	var r []T
 	var rr T
 	sql = strings.Replace(sql, "%table%", rr.Table(), -1)
@@ -231,4 +193,24 @@ func (m model[T]) Select(sql string, params ...interface{}) ([]T, error) {
 		return r, err
 	}
 	return r, nil
+}
+
+func Find[T model](where SqlBuilder, fields string, order SqlBuilder, join SqlBuilder, limit int, in ...[]interface{}) (r []T, err error) {
+	var rr T
+	w, args := where.parseWhere(in...)
+	j := join.parseJoin()
+	tp := "select %s from %s %s %s %s %s"
+	l := ""
+	if limit > 0 {
+		l = fmt.Sprintf(" limit %d", limit)
+	}
+	sql := fmt.Sprintf(tp, fields, rr.Table(), j, w, order.parseOrderBy(), l)
+	err = db.Db.Select(&r, sql, args...)
+	return
+}
+
+func Get[T model](sql string, params ...interface{}) (r T, err error) {
+	sql = strings.Replace(sql, "%table%", r.Table(), -1)
+	err = db.Db.Get(&r, sql, params...)
+	return
 }

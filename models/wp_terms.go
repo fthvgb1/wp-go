@@ -1,9 +1,6 @@
 package models
 
-var WpTermsM = WpTerms{}
-
 type WpTerms struct {
-	model[WpTerms]
 	TermId    uint64 `gorm:"column:term_id" db:"term_id" json:"term_id" form:"term_id"`
 	Name      string `gorm:"column:name" db:"name" json:"name" form:"name"`
 	Slug      string `gorm:"column:slug" db:"slug" json:"slug" form:"slug"`
