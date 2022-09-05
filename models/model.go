@@ -22,13 +22,27 @@ func (w SqlBuilder) parseWhere(in ...[]interface{}) (string, []interface{}) {
 	for _, ss := range w {
 		if len(ss) == 2 {
 			s.WriteString("`")
-			s.WriteString(ss[0])
+			if strings.Contains(ss[0], ".") {
+				sx := strings.Split(ss[0], ".")
+				s.WriteString(sx[0])
+				s.WriteString("`.`")
+				s.WriteString(sx[1])
+			} else {
+				s.WriteString(ss[0])
+			}
 			s.WriteString("`=? and ")
 			args = append(args, ss[1])
 		}
 		if len(ss) >= 3 {
 			s.WriteString("`")
-			s.WriteString(ss[0])
+			if strings.Contains(ss[0], ".") {
+				sx := strings.Split(ss[0], ".")
+				s.WriteString(sx[0])
+				s.WriteString("`.`")
+				s.WriteString(sx[1])
+			} else {
+				s.WriteString(ss[0])
+			}
 			s.WriteString("`")
 			s.WriteString(ss[1])
 			if ss[1] == "in" && len(in) > 0 {
@@ -187,7 +201,7 @@ func SimpleFind[T model](where SqlBuilder, fields string, in ...[]interface{}) (
 func Select[T model](sql string, params ...interface{}) ([]T, error) {
 	var r []T
 	var rr T
-	sql = strings.Replace(sql, "%table%", rr.Table(), -1)
+	sql = strings.Replace(sql, "{table}", rr.Table(), -1)
 	err := db.Db.Select(&r, sql, params...)
 	if err != nil {
 		return r, err
@@ -210,7 +224,7 @@ func Find[T model](where SqlBuilder, fields string, order SqlBuilder, join SqlBu
 }
 
 func Get[T model](sql string, params ...interface{}) (r T, err error) {
-	sql = strings.Replace(sql, "%table%", r.Table(), -1)
+	sql = strings.Replace(sql, "{table}", r.Table(), -1)
 	err = db.Db.Get(&r, sql, params...)
 	return
 }

@@ -20,6 +20,10 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+	err = models.InitTerms()
+	if err != nil {
+		panic(err)
+	}
 }
 
 func main() {
