@@ -26,6 +26,9 @@ type WpPosts struct {
 	PostType            string    `gorm:"column:post_type" db:"post_type" json:"post_type" form:"post_type"`
 	PostMimeType        string    `gorm:"column:post_mime_type" db:"post_mime_type" json:"post_mime_type" form:"post_mime_type"`
 	CommentCount        int64     `gorm:"column:comment_count" db:"comment_count" json:"comment_count" form:"comment_count"`
+
+	//扩展字段
+	CategoryName string `db:"category_name" json:"category_name"`
 }
 
 func (w WpPosts) PrimaryKey() string {
