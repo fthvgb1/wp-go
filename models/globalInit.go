@@ -1,8 +1,7 @@
 package models
 
-import "fmt"
-
 var Options = make(map[string]string)
+var TermsIds []uint64
 
 func InitOptions() error {
 	ops, err := SimpleFind[WpOptions](SqlBuilder{{"autoload", "yes"}}, "option_name, option_value")
@@ -31,6 +30,8 @@ func InitTerms() (err error) {
 	}, {"t.name", "in", ""}}, "t.term_id", nil, SqlBuilder{{
 		"t", "inner join", "wp_term_taxonomy tt", "t.term_id = tt.term_id",
 	}}, 1, themes, name)
-	fmt.Println(terms, err)
+	for _, wpTerms := range terms {
+		TermsIds = append(TermsIds, wpTerms.TermId)
+	}
 	return
 }
