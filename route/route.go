@@ -4,6 +4,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github/fthvgb1/wp-go/middleware"
 	"github/fthvgb1/wp-go/static"
+	"github/fthvgb1/wp-go/templates"
 	"html/template"
 	"net/http"
 	"time"
@@ -28,9 +29,14 @@ func SetupRouter() *gin.Engine {
 		FS:   static.FsEx,
 		Path: "wp-content",
 	}))
-	r.LoadHTMLGlob("templates/**/*")
-	// Ping test
+	loadTemplates(r, "**/*")
 	r.GET("/", index)
 
 	return r
+}
+
+func loadTemplates(engine *gin.Engine, pattern string) {
+	templ := template.New("").Funcs(engine.FuncMap).Delims("{{", "}}")
+	templ = template.Must(templ.ParseFS(templates.TemplateFs, pattern))
+	engine.SetHTMLTemplate(templ)
 }

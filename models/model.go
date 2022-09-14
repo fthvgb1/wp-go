@@ -213,16 +213,23 @@ func Select[T Model](sql string, params ...interface{}) ([]T, error) {
 	return r, nil
 }
 
-func Find[T Model](where ParseWhere, fields string, order SqlBuilder, join SqlBuilder, limit int, in ...[]interface{}) (r []T, err error) {
+func Find[T Model](where ParseWhere, fields, group string, order SqlBuilder, join SqlBuilder, limit int, in ...[]interface{}) (r []T, err error) {
 	var rr T
 	w, args := where.ParseWhere(in...)
 	j := join.parseJoin()
-	tp := "select %s from %s %s %s %s %s"
+	groupBy := ""
+	if group != "" {
+		g := strings.Builder{}
+		g.WriteString(" group by ")
+		g.WriteString(group)
+		groupBy = g.String()
+	}
+	tp := "select %s from %s %s %s %s %s %s"
 	l := ""
 	if limit > 0 {
 		l = fmt.Sprintf(" limit %d", limit)
 	}
-	sql := fmt.Sprintf(tp, fields, rr.Table(), j, w, order.parseOrderBy(), l)
+	sql := fmt.Sprintf(tp, fields, rr.Table(), j, w, groupBy, order.parseOrderBy(), l)
 	err = db.Db.Select(&r, sql, args...)
 	return
 }

@@ -27,7 +27,7 @@ func InitTerms() (err error) {
 	name = append(name, "twentyfifteen")
 	terms, err := Find[WpTerms](SqlBuilder{{
 		"tt.taxonomy", "in", "",
-	}, {"t.name", "in", ""}}, "t.term_id", nil, SqlBuilder{{
+	}, {"t.name", "in", ""}}, "t.term_id", "", nil, SqlBuilder{{
 		"t", "inner join", "wp_term_taxonomy tt", "t.term_id = tt.term_id",
 	}}, 1, themes, name)
 	for _, wpTerms := range terms {

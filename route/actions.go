@@ -36,7 +36,7 @@ func index(c *gin.Context) {
 	if len(needQuery) > 0 {
 		rawPosts, err := models.Find[models.WpPosts](models.SqlBuilder{{
 			"Id", "in", "",
-		}}, "a.*,d.name category_name", nil, models.SqlBuilder{{
+		}}, "a.*,d.name category_name", "", nil, models.SqlBuilder{{
 			"a", "left join", "wp_term_relationships b", "a.Id=b.object_id",
 		}, {
 			"left join", "wp_term_taxonomy c", "b.term_taxonomy_id=c.term_taxonomy_id",
@@ -56,8 +56,31 @@ func index(c *gin.Context) {
 		pp := post.(models.WpPosts)
 		allPosts = append(allPosts, pp)
 	}
+	recent, _ := recentPosts()
+	archive, _ := archives()
+
 	c.HTML(http.StatusOK, "index.html", gin.H{
-		"posts":   allPosts,
-		"options": models.Options,
+		"posts":       allPosts,
+		"options":     models.Options,
+		"recentPosts": recent,
+		"archives":    archive,
 	})
+}
+
+func recentPosts() (r []models.WpPosts, err error) {
+	r, err = models.Find[models.WpPosts](models.SqlBuilder{{
+		"post_type", "post",
+	}, {"post_status", "publish"}}, "ID,post_title", "", models.SqlBuilder{{"post_date", "desc"}}, nil, 5)
+	if err != nil {
+		return
+	}
+
+	return
+}
+
+func archives() (r []models.PostArchive, err error) {
+	r, err = models.Find[models.PostArchive](models.SqlBuilder{
+		{"post_type", "post"}, {"post_status", "publish"},
+	}, "YEAR(post_date) AS `year`, MONTH(post_date) AS `month`, count(ID) as posts", "year,month", models.SqlBuilder{{"year", "desc"}, {"month", "desc"}}, nil, 0)
+	return
 }

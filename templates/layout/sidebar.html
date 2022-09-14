@@ -13,21 +13,11 @@
         <h2 class="widget-title">近期文章</h2>
         <nav aria-label="近期文章">
             <ul>
+                {{range $k,$v:=.recentPosts}}
                 <li>
-                    <a href="https://www.xloyy.com/p/2799">密码保护：2022.9.12</a>
+                    <a href="/p/{{$v.Id}}">密码保护：{{$v.PostTitle}}</a>
                 </li>
-                <li>
-                    <a href="https://www.xloyy.com/p/2797">密码保护：2022.9.11</a>
-                </li>
-                <li>
-                    <a href="https://www.xloyy.com/p/2795">密码保护：2022.9.10</a>
-                </li>
-                <li>
-                    <a href="https://www.xloyy.com/p/2793">密码保护：2022.9.9</a>
-                </li>
-                <li>
-                    <a href="https://www.xloyy.com/p/2789">密码保护：2022.9.8</a>
-                </li>
+                {{end}}
             </ul>
 
         </nav>
@@ -40,36 +30,9 @@
     <aside id="archives-2" class="widget widget_archive"><h2 class="widget-title">归档</h2>
         <nav aria-label="归档">
             <ul>
-                <li><a href="https://www.xloyy.com/p/date/2022/09">2022年9月</a></li>
-                <li><a href="https://www.xloyy.com/p/date/2022/08">2022年8月</a></li>
-                <li><a href="https://www.xloyy.com/p/date/2022/07">2022年7月</a></li>
-                <li><a href="https://www.xloyy.com/p/date/2022/06">2022年6月</a></li>
-                <li><a href="https://www.xloyy.com/p/date/2022/05">2022年5月</a></li>
-                <li><a href="https://www.xloyy.com/p/date/2022/04">2022年4月</a></li>
-                <li><a href="https://www.xloyy.com/p/date/2022/03">2022年3月</a></li>
-                <li><a href="https://www.xloyy.com/p/date/2022/02">2022年2月</a></li>
-                <li><a href="https://www.xloyy.com/p/date/2022/01">2022年1月</a></li>
-                <li><a href="https://www.xloyy.com/p/date/2021/12">2021年12月</a></li>
-                <li><a href="https://www.xloyy.com/p/date/2021/11">2021年11月</a></li>
-                <li><a href="https://www.xloyy.com/p/date/2021/10">2021年10月</a></li>
-                <li><a href="https://www.xloyy.com/p/date/2021/09">2021年9月</a></li>
-                <li><a href="https://www.xloyy.com/p/date/2021/08">2021年8月</a></li>
-                <li><a href="https://www.xloyy.com/p/date/2021/07">2021年7月</a></li>
-                <li><a href="https://www.xloyy.com/p/date/2021/06">2021年6月</a></li>
-                <li><a href="https://www.xloyy.com/p/date/2021/05">2021年5月</a></li>
-                <li><a href="https://www.xloyy.com/p/date/2021/04">2021年4月</a></li>
-                <li><a href="https://www.xloyy.com/p/date/2021/03">2021年3月</a></li>
-                <li><a href="https://www.xloyy.com/p/date/2021/02">2021年2月</a></li>
-                <li><a href="https://www.xloyy.com/p/date/2021/01">2021年1月</a></li>
-                <li><a href="https://www.xloyy.com/p/date/2020/12">2020年12月</a></li>
-                <li><a href="https://www.xloyy.com/p/date/2020/11">2020年11月</a></li>
-                <li><a href="https://www.xloyy.com/p/date/2020/10">2020年10月</a></li>
-                <li><a href="https://www.xloyy.com/p/date/2020/09">2020年9月</a></li>
-                <li><a href="https://www.xloyy.com/p/date/2020/08">2020年8月</a></li>
-                <li><a href="https://www.xloyy.com/p/date/2020/07">2020年7月</a></li>
-                <li><a href="https://www.xloyy.com/p/date/2020/06">2020年6月</a></li>
-                <li><a href="https://www.xloyy.com/p/date/2020/05">2020年5月</a></li>
-                <li><a href="https://www.xloyy.com/p/date/2019/05">2019年5月</a></li>
+                {{range $k,$v := .archives}}
+                <li><a href="/p/date/{{$v.Year}}/{{$v.Month|printf "%02s"}}">{{$v.Year}}年{{$v.Month|printf "%02s"}}月</a></li>
+                {{end}}
             </ul>
 
         </nav>

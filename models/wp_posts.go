@@ -38,3 +38,17 @@ func (w WpPosts) PrimaryKey() string {
 func (w WpPosts) Table() string {
 	return "wp_posts"
 }
+
+func (w PostArchive) PrimaryKey() string {
+	return "ID"
+}
+
+func (w PostArchive) Table() string {
+	return "wp_posts"
+}
+
+type PostArchive struct {
+	Year  string `db:"year"`
+	Month string `db:"month"`
+	Posts int    `db:"posts"`
+}

@@ -11,4 +11,5 @@ func SetStaticFileCache(c *gin.Context) {
 	if len(f) > 1 && helper.IsContainInArr(f[0], []string{"wp-includes", "wp-content"}) {
 		c.Header("Cache-Control", "private, max-age=86400")
 	}
+	c.Next()
 }
