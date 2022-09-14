@@ -71,10 +71,6 @@ func recentPosts() (r []models.WpPosts, err error) {
 	r, err = models.Find[models.WpPosts](models.SqlBuilder{{
 		"post_type", "post",
 	}, {"post_status", "publish"}}, "ID,post_title", "", models.SqlBuilder{{"post_date", "desc"}}, nil, 5)
-	if err != nil {
-		return
-	}
-
 	return
 }
 
