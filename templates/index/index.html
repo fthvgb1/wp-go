@@ -1,0 +1,55 @@
+{{template "layout/base" .}}
+{{define "content" }}
+<div id="primary" class="content-area">
+    <main id="main" class="site-main">
+        {{ range $k,$v:=.posts}}
+        <article id="post-{{$v.Id}}"
+                 class="post-{{$v.Id}} post type-post status-publish format-standard hentry category-uncategorized">
+
+            <header class="entry-header">
+                <h2 class="entry-title">
+                    <a href="/p/{{$v.Id}}" rel="bookmark">{{$v.PostTitle}}</a>
+                </h2>
+            </header><!-- .entry-header -->
+
+            <div class="entry-content">
+                <p>{{$v.PostContent|unescaped}}</p>
+            </div><!-- .entry-content -->
+
+            <footer class="entry-footer">
+                <span class="posted-on">
+                    <span class="screen-reader-text">发布于 </span>
+                    <a href="/p/{{$v.Id}}" rel="bookmark">
+                        <time class="entry-date published updated" datetime="{{$v.PostDateGmt}}">{{$v.PostDate|dateCh}}
+                        </time>
+                    </a>
+                </span>
+                <span class="cat-links">
+                    <span class="screen-reader-text">分类 </span>
+                    <a href="/p/category/uncategorized" rel="category tag">{{$v.CategoryName}}</a>
+                </span>
+                <span class="comments-link">
+                    <a href="/p/1#comments">
+                        <span class="screen-reader-text">{{$v.PostTitle}}</span>有1条评论
+                    </a>
+                </span>
+            </footer><!-- .entry-footer -->
+
+        </article><!-- #post-{{$v.Id}} -->
+        {{end}}
+
+
+        <nav class="navigation pagination" aria-label="文章">
+            <h2 class="screen-reader-text">文章导航</h2>
+            <div class="nav-links"><span aria-current="page" class="page-numbers current"><span
+                    class="meta-nav screen-reader-text">页 </span>1</span>
+                <a class="page-numbers" href="/page/2"><span
+                        class="meta-nav screen-reader-text">页 </span>2</a>
+                <span class="page-numbers dots">…</span>
+                <a class="page-numbers" href="/page/37"><span
+                        class="meta-nav screen-reader-text">页 </span>37</a>
+                <a class="next page-numbers" href="/page/2">下一页</a></div>
+        </nav>
+    </main><!-- .site-main -->
+</div>
+{{end}}
