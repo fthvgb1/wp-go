@@ -13,3 +13,15 @@ func (t WpTerms) PrimaryKey() string {
 func (t WpTerms) Table() string {
 	return "wp_terms"
 }
+
+type WpTermsMy struct {
+	WpTerms
+	WpTermTaxonomy
+}
+
+func (t WpTermsMy) PrimaryKey() string {
+	return "term_id"
+}
+func (t WpTermsMy) Table() string {
+	return "wp_terms"
+}

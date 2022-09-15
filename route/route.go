@@ -31,6 +31,7 @@ func SetupRouter() *gin.Engine {
 	}))
 	loadTemplates(r, "**/*")
 	r.GET("/", index)
+	r.GET("/page/:page", index)
 
 	return r
 }

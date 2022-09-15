@@ -22,3 +22,12 @@ func StructColumn[T any, M any](arr []M, field string) (r []T) {
 	}
 	return
 }
+
+func RangeSlice[T ~int | ~uint | ~int64 | ~int8 | ~int16 | ~int32 | ~uint64](start, end, step T) []T {
+	r := make([]T, 0, int(end/step+1))
+	for i := start; i <= end; {
+		r = append(r, i)
+		i = i + step
+	}
+	return r
+}

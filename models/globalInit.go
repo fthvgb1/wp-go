@@ -1,7 +1,8 @@
 package models
 
 var Options = make(map[string]string)
-var TermsIds []uint64
+var Terms = map[uint64]WpTerms{}
+var TermTaxonomy = map[uint64]WpTermTaxonomy{}
 
 func InitOptions() error {
 	ops, err := SimpleFind[WpOptions](SqlBuilder{{"autoload", "yes"}}, "option_name, option_value")
@@ -21,17 +22,19 @@ func InitOptions() error {
 }
 
 func InitTerms() (err error) {
-	var themes []interface{}
-	themes = append(themes, "wp_theme")
-	var name []interface{}
-	name = append(name, "twentyfifteen")
-	terms, err := Find[WpTerms](SqlBuilder{{
-		"tt.taxonomy", "in", "",
-	}, {"t.name", "in", ""}}, "t.term_id", "", nil, SqlBuilder{{
-		"t", "inner join", "wp_term_taxonomy tt", "t.term_id = tt.term_id",
-	}}, 1, themes, name)
+	terms, err := Find[WpTerms](nil, "*", "", nil, nil, 0)
+	if err != nil {
+		return err
+	}
 	for _, wpTerms := range terms {
-		TermsIds = append(TermsIds, wpTerms.TermId)
+		Terms[wpTerms.TermId] = wpTerms
+	}
+	termTax, err := Find[WpTermTaxonomy](nil, "*", "", nil, nil, 0)
+	if err != nil {
+		return err
+	}
+	for _, taxonomy := range termTax {
+		TermTaxonomy[taxonomy.TermTaxonomyId] = taxonomy
 	}
 	return
 }

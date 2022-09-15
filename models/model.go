@@ -89,9 +89,9 @@ func (w SqlBuilder) parseOrderBy() string {
 	s := strings.Builder{}
 	for _, ss := range w {
 		if len(ss) == 2 && ss[0] != "" && helper.IsContainInArr(ss[1], []string{"asc", "desc"}) {
-			s.WriteString(" `")
+			s.WriteString(" ")
 			s.WriteString(ss[0])
-			s.WriteString("` ")
+			s.WriteString(" ")
 			s.WriteString(ss[1])
 			s.WriteString(",")
 		}
@@ -215,7 +215,12 @@ func Select[T Model](sql string, params ...interface{}) ([]T, error) {
 
 func Find[T Model](where ParseWhere, fields, group string, order SqlBuilder, join SqlBuilder, limit int, in ...[]interface{}) (r []T, err error) {
 	var rr T
-	w, args := where.ParseWhere(in...)
+	w := ""
+	var args []interface{}
+	if where != nil {
+		w, args = where.ParseWhere(in...)
+	}
+
 	j := join.parseJoin()
 	groupBy := ""
 	if group != "" {
