@@ -1,7 +1,6 @@
 package route
 
 import (
-	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
 	"github/fthvgb1/wp-go/middleware"
 	"github/fthvgb1/wp-go/static"
@@ -16,9 +15,10 @@ func SetupRouter() *gin.Engine {
 	// gin.DisableConsoleColor()
 	r := gin.Default()
 	r.Use(middleware.SetStaticFileCache)
-	r.Use(gzip.Gzip(gzip.DefaultCompression, gzip.WithExcludedPaths([]string{
+	//gzip 因为一般会用nginx做反代时自动使用gzip,所以go这边本身可以不用
+	/*r.Use(gzip.Gzip(gzip.DefaultCompression, gzip.WithExcludedPaths([]string{
 		"/wp-includes/", "/wp-content/",
-	})))
+	})))*/
 	r.SetFuncMap(template.FuncMap{
 		"unescaped": func(s string) interface{} {
 			return template.HTML(s)
