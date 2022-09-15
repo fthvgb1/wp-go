@@ -3,6 +3,7 @@ package route
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github/fthvgb1/wp-go/helper"
 	"github/fthvgb1/wp-go/models"
 	"math"
 	"net/http"
@@ -16,6 +17,10 @@ var PostsCache sync.Map
 func index(c *gin.Context) {
 	page := 1
 	pageSize := 10
+	order := c.Query("order")
+	if !helper.IsContainInArr(order, []string{"asc", "desc"}) {
+		order = "desc"
+	}
 	p := c.Query("paged")
 	if p == "" {
 		p = c.Param("page")
@@ -29,7 +34,7 @@ func index(c *gin.Context) {
 	status := []interface{}{"publish", "private"}
 	posts, totalRaw, err := models.SimplePagination[models.WpPosts](models.SqlBuilder{{
 		"post_type", "post",
-	}, {"post_status", "in", ""}}, "ID", page, pageSize, models.SqlBuilder{{"post_date", "desc"}}, nil, status)
+	}, {"post_status", "in", ""}}, "ID", page, pageSize, models.SqlBuilder{{"post_date", order}}, nil, status)
 	defer func() {
 		if err != nil {
 			c.Error(err)
