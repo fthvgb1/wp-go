@@ -26,7 +26,11 @@
                 </span>
                 <span class="cat-links">
                     <span class="screen-reader-text">分类 </span>
-                    <a href="/p/category/uncategorized" rel="category tag">{{$v.CategoryName}}</a>
+                    {{$v.CategoriesHtml|unescaped}}
+                </span>
+                <span class="tags-links">
+                    <span class="screen-reader-text">标签 </span>
+                    {{$v.TagsHtml|unescaped}}
                 </span>
                 <span class="comments-link">
                     <a href="/p/1#comments">

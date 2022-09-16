@@ -19,44 +19,35 @@ type ParseWhere interface {
 
 type SqlBuilder [][]string
 
+func (w SqlBuilder) parseField(ss []string, s *strings.Builder) {
+	if strings.Contains(ss[0], ".") && !strings.Contains(ss[0], "(") {
+		s.WriteString("`")
+		sx := strings.Split(ss[0], ".")
+		s.WriteString(sx[0])
+		s.WriteString("`.`")
+		s.WriteString(sx[1])
+		s.WriteString("`")
+	} else if !strings.Contains(ss[0], ".") && !strings.Contains(ss[0], "(") {
+		s.WriteString("`")
+		s.WriteString(ss[0])
+		s.WriteString("`")
+	} else {
+		s.WriteString(ss[0])
+	}
+}
+
 func (w SqlBuilder) ParseWhere(in ...[]interface{}) (string, []interface{}) {
 	var s strings.Builder
 	args := make([]interface{}, 0, len(w))
 	c := 0
 	for _, ss := range w {
 		if len(ss) == 2 {
-			if strings.Contains(ss[0], ".") && !strings.Contains(ss[0], "(") {
-				s.WriteString("`")
-				sx := strings.Split(ss[0], ".")
-				s.WriteString(sx[0])
-				s.WriteString("`.`")
-				s.WriteString(sx[1])
-				s.WriteString("`")
-			} else if !strings.Contains(ss[0], ".") && !strings.Contains(ss[0], "(") {
-				s.WriteString("`")
-				s.WriteString(ss[0])
-				s.WriteString("`")
-			} else {
-				s.WriteString(ss[0])
-			}
+			w.parseField(ss, &s)
 			s.WriteString("=? and ")
 			args = append(args, ss[1])
 		}
 		if len(ss) >= 3 {
-			if strings.Contains(ss[0], ".") && !strings.Contains(ss[0], "(") {
-				s.WriteString("`")
-				sx := strings.Split(ss[0], ".")
-				s.WriteString(sx[0])
-				s.WriteString("`.`")
-				s.WriteString(sx[1])
-				s.WriteString("`")
-			} else if !strings.Contains(ss[0], ".") && !strings.Contains(ss[0], "(") {
-				s.WriteString("`")
-				s.WriteString(ss[0])
-				s.WriteString("`")
-			} else {
-				s.WriteString(ss[0])
-			}
+			w.parseField(ss, &s)
 			s.WriteString(ss[1])
 			if ss[1] == "in" && len(in) > 0 {
 				s.WriteString(" (")
@@ -131,16 +122,30 @@ func (w SqlBuilder) parseJoin() string {
 	return s.String()
 }
 
-func SimplePagination[T Model](where ParseWhere, fields string, page, pageSize int, order SqlBuilder, join SqlBuilder, in ...[]interface{}) (r []T, total int, err error) {
+func SimplePagination[T Model](where ParseWhere, fields, group string, page, pageSize int, order SqlBuilder, join SqlBuilder, in ...[]interface{}) (r []T, total int, err error) {
 	var rr T
 	w, args := where.ParseWhere(in...)
 	n := struct {
 		N int `db:"n" json:"n"`
 	}{}
+	groupBy := ""
+	if group != "" {
+		g := strings.Builder{}
+		g.WriteString(" group by ")
+		g.WriteString(group)
+		groupBy = g.String()
+	}
 	j := join.parseJoin()
-	tpx := "select count(*) n from %s %s %s limit 1"
-	sq := fmt.Sprintf(tpx, rr.Table(), j, w)
-	err = db.Db.Get(&n, sq, args...)
+	if group == "" {
+		tpx := "select count(*) n from %s %s %s limit 1"
+		sq := fmt.Sprintf(tpx, rr.Table(), j, w)
+		err = db.Db.Get(&n, sq, args...)
+	} else {
+		tpx := "select count(*) n from (select %s from %s %s %s %s ) tx"
+		sq := fmt.Sprintf(tpx, group, rr.Table(), j, w, groupBy)
+		err = db.Db.Get(&n, sq, args...)
+	}
+
 	if err != nil {
 		return
 	}
@@ -155,8 +160,8 @@ func SimplePagination[T Model](where ParseWhere, fields string, page, pageSize i
 	if offset >= total {
 		return
 	}
-	tp := "select %s from %s %s %s %s limit %d,%d"
-	sql := fmt.Sprintf(tp, fields, rr.Table(), j, w, order.parseOrderBy(), offset, pageSize)
+	tp := "select %s from %s %s %s %s %s limit %d,%d"
+	sql := fmt.Sprintf(tp, fields, rr.Table(), j, w, groupBy, order.parseOrderBy(), offset, pageSize)
 	err = db.Db.Select(&r, sql, args...)
 	if err != nil {
 		return

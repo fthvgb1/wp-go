@@ -37,6 +37,7 @@ func SetupRouter() *gin.Engine {
 	r.GET("/", index)
 	r.GET("/page/:page", index)
 	r.GET("/p/category/:category", index)
+	r.GET("/p/tag/:tag", index)
 	r.GET("/p/date/:year/:month", index)
 	r.GET("/p/date/:year/:month/page/:page", index)
 

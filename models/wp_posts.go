@@ -28,7 +28,12 @@ type WpPosts struct {
 	CommentCount        int64     `gorm:"column:comment_count" db:"comment_count" json:"comment_count" form:"comment_count"`
 
 	//扩展字段
-	CategoryName string `db:"category_name" json:"category_name"`
+	Taxonomy       string   `db:"taxonomy" json:"taxonomy"`
+	CategoryName   string   `db:"category_name" json:"category_name"`
+	Categories     []string `json:"categories"`
+	Tags           []string `json:"tags"`
+	CategoriesHtml string
+	TagsHtml       string
 }
 
 func (w WpPosts) PrimaryKey() string {

@@ -20,7 +20,7 @@ func index(c *gin.Context) {
 	pageSize := 10
 	order := c.Query("order")
 	if !helper.IsContainInArr(order, []string{"asc", "desc"}) {
-		order = "desc"
+		order = "asc"
 	}
 	where := models.SqlBuilder{{
 		"post_type", "post",
@@ -38,11 +38,28 @@ func index(c *gin.Context) {
 			"month(post_date)", month,
 		})
 	}
+	tt := ""
 	category := c.Param("category")
+	if category == "" {
+		category = c.Param("tag")
+		if category != "" {
+			tt = "post_tag"
+		}
+	} else {
+		tt = "category"
+	}
+	var join models.SqlBuilder
 	if category != "" {
-		/*where = append(where, []string{
+		where = append(where, []string{
 			"d.name", category,
-		})*/
+		}, []string{"taxonomy", tt})
+		join = append(join, []string{
+			"a", "left join", "wp_term_relationships b", "a.Id=b.object_id",
+		}, []string{
+			"left join", "wp_term_taxonomy c", "b.term_taxonomy_id=c.term_taxonomy_id",
+		}, []string{
+			"left join", "wp_terms d", "c.term_id=d.term_id",
+		})
 	}
 	if p == "" {
 		p = c.Param("page")
@@ -54,7 +71,7 @@ func index(c *gin.Context) {
 	}
 
 	status := []interface{}{"publish", "private"}
-	posts, totalRaw, err := models.SimplePagination[models.WpPosts](where, "ID", page, pageSize, models.SqlBuilder{{"post_date", order}}, nil, status)
+	postIds, totalRaw, err := models.SimplePagination[models.WpPosts](where, "ID", "", page, pageSize, models.SqlBuilder{{"post_date", order}}, join, status)
 	defer func() {
 		if err != nil {
 			c.Error(err)
@@ -66,7 +83,7 @@ func index(c *gin.Context) {
 	var all []uint64
 	var allPosts []models.WpPosts
 	var needQuery []interface{}
-	for _, wpPosts := range posts {
+	for _, wpPosts := range postIds {
 		all = append(all, wpPosts.Id)
 		if _, ok := PostsCache.Load(wpPosts.Id); !ok {
 			needQuery = append(needQuery, wpPosts.Id)
@@ -75,7 +92,7 @@ func index(c *gin.Context) {
 	if len(needQuery) > 0 {
 		rawPosts, err := models.Find[models.WpPosts](models.SqlBuilder{{
 			"Id", "in", "",
-		}}, "a.*,d.name category_name", "", nil, models.SqlBuilder{{
+		}}, "a.*,d.name category_name,taxonomy", "", nil, models.SqlBuilder{{
 			"a", "left join", "wp_term_relationships b", "a.Id=b.object_id",
 		}, {
 			"left join", "wp_term_taxonomy c", "b.term_taxonomy_id=c.term_taxonomy_id",
@@ -85,15 +102,42 @@ func index(c *gin.Context) {
 		if err != nil {
 			return
 		}
-		for _, post := range rawPosts {
-			PostsCache.Store(post.Id, post)
+		postsMap := make(map[uint64]*models.WpPosts)
+		for i, post := range rawPosts {
+			v, ok := postsMap[post.Id]
+			if !ok {
+				v = &rawPosts[i]
+			}
+			if post.Taxonomy == "category" {
+				v.Categories = append(v.Categories, post.CategoryName)
+			} else if post.Taxonomy == "post_tag" {
+				v.Tags = append(v.Tags, post.CategoryName)
+			}
+			postsMap[post.Id] = v
+		}
+		for _, pp := range postsMap {
+			if len(pp.Categories) > 0 {
+				t := make([]string, 0, len(pp.Categories))
+				for _, cat := range pp.Categories {
+					t = append(t, fmt.Sprintf(`<a href="/p/category/%s" rel="category tag">%s</a>`, cat, cat))
+				}
+				pp.CategoriesHtml = strings.Join(t, "、")
+			}
+			if len(pp.Tags) > 0 {
+				t := make([]string, 0, len(pp.Tags))
+				for _, cat := range pp.Tags {
+					t = append(t, fmt.Sprintf(`<a href="/p/tag/%s" rel="tag">%s</a>`, cat, cat))
+				}
+				pp.TagsHtml = strings.Join(t, "、")
+			}
+			PostsCache.Store(pp.Id, pp)
 		}
 	}
 
 	for _, id := range all {
 		post, _ := PostsCache.Load(id)
-		pp := post.(models.WpPosts)
-		allPosts = append(allPosts, pp)
+		pp := post.(*models.WpPosts)
+		allPosts = append(allPosts, *pp)
 	}
 	recent, err := recentPosts()
 	archive, err := archives()
