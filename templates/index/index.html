@@ -24,14 +24,20 @@
                         </time>
                     </a>
                 </span>
+                {{if $v.CategoriesHtml}}
                 <span class="cat-links">
                     <span class="screen-reader-text">分类 </span>
                     {{$v.CategoriesHtml|unescaped}}
                 </span>
+                {{end}}
+
+                {{if $v.TagsHtml}}
                 <span class="tags-links">
                     <span class="screen-reader-text">标签 </span>
                     {{$v.TagsHtml|unescaped}}
                 </span>
+                {{end}}
+
                 <span class="comments-link">
                     <a href="/p/1#comments">
                         <span class="screen-reader-text">{{$v.PostTitle}}</span>有1条评论
