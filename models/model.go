@@ -87,7 +87,6 @@ func (w SqlBuilder) ParseWhere(in ...[]interface{}) (string, []interface{}) {
 			w.parseType(ss, &args)
 		} else if len(ss) >= 5 && len(ss)%5 == 0 {
 			j := len(ss) / 5
-			fl := false
 			for i := 0; i < j; i++ {
 				start := i * 5
 				end := start + 5
@@ -100,24 +99,21 @@ func (w SqlBuilder) ParseWhere(in ...[]interface{}) (string, []interface{}) {
 				}
 				if i == 0 {
 					s.WriteString("( ")
-					fl = true
 				}
 				w.parseField(ss[start+1:end], &s)
+				s.WriteString(ss[start+2])
 				if w.parseIn(ss[start+1:end], &s, &c, &args, in) {
 					s.WriteString(" and ")
 					continue
 				}
-				s.WriteString(ss[start+2])
 				s.WriteString(" ? and ")
 				w.parseType(ss[start+1:end], &args)
-				if i == j-1 && fl {
-					st = s.String()
-					st = strings.TrimRight(st, "and ")
-					s.Reset()
-					s.WriteString(st)
-					s.WriteString(") and ")
-				}
 			}
+			st := s.String()
+			st = strings.TrimRight(st, "and ")
+			s.Reset()
+			s.WriteString(st)
+			s.WriteString(") and ")
 		}
 	}
 	ss := strings.TrimRight(s.String(), "and ")
