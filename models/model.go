@@ -25,29 +25,38 @@ func (w SqlBuilder) ParseWhere(in ...[]interface{}) (string, []interface{}) {
 	c := 0
 	for _, ss := range w {
 		if len(ss) == 2 {
-			s.WriteString("`")
-			if strings.Contains(ss[0], ".") {
+			if strings.Contains(ss[0], ".") && !strings.Contains(ss[0], "(") {
+				s.WriteString("`")
 				sx := strings.Split(ss[0], ".")
 				s.WriteString(sx[0])
 				s.WriteString("`.`")
 				s.WriteString(sx[1])
+				s.WriteString("`")
+			} else if !strings.Contains(ss[0], ".") && !strings.Contains(ss[0], "(") {
+				s.WriteString("`")
+				s.WriteString(ss[0])
+				s.WriteString("`")
 			} else {
 				s.WriteString(ss[0])
 			}
-			s.WriteString("`=? and ")
+			s.WriteString("=? and ")
 			args = append(args, ss[1])
 		}
 		if len(ss) >= 3 {
-			s.WriteString("`")
-			if strings.Contains(ss[0], ".") {
+			if strings.Contains(ss[0], ".") && !strings.Contains(ss[0], "(") {
+				s.WriteString("`")
 				sx := strings.Split(ss[0], ".")
 				s.WriteString(sx[0])
 				s.WriteString("`.`")
 				s.WriteString(sx[1])
+				s.WriteString("`")
+			} else if !strings.Contains(ss[0], ".") && !strings.Contains(ss[0], "(") {
+				s.WriteString("`")
+				s.WriteString(ss[0])
+				s.WriteString("`")
 			} else {
 				s.WriteString(ss[0])
 			}
-			s.WriteString("`")
 			s.WriteString(ss[1])
 			if ss[1] == "in" && len(in) > 0 {
 				s.WriteString(" (")

@@ -7,6 +7,7 @@ import (
 	"github/fthvgb1/wp-go/models"
 	"math"
 	"net/http"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -21,7 +22,28 @@ func index(c *gin.Context) {
 	if !helper.IsContainInArr(order, []string{"asc", "desc"}) {
 		order = "desc"
 	}
+	where := models.SqlBuilder{{
+		"post_type", "post",
+	}, {"post_status", "in", ""}}
 	p := c.Query("paged")
+	year := c.Param("year")
+	if year != "" {
+		where = append(where, []string{
+			"year(post_date)", year,
+		})
+	}
+	month := c.Param("month")
+	if month != "" {
+		where = append(where, []string{
+			"month(post_date)", month,
+		})
+	}
+	category := c.Param("category")
+	if category != "" {
+		/*where = append(where, []string{
+			"d.name", category,
+		})*/
+	}
 	if p == "" {
 		p = c.Param("page")
 	}
@@ -32,9 +54,7 @@ func index(c *gin.Context) {
 	}
 
 	status := []interface{}{"publish", "private"}
-	posts, totalRaw, err := models.SimplePagination[models.WpPosts](models.SqlBuilder{{
-		"post_type", "post",
-	}, {"post_status", "in", ""}}, "ID", page, pageSize, models.SqlBuilder{{"post_date", order}}, nil, status)
+	posts, totalRaw, err := models.SimplePagination[models.WpPosts](where, "ID", page, pageSize, models.SqlBuilder{{"post_date", order}}, nil, status)
 	defer func() {
 		if err != nil {
 			c.Error(err)
@@ -91,7 +111,7 @@ func index(c *gin.Context) {
 		"categories":  categoryItems,
 		"totalPage":   totalPage,
 		"queryRaw":    q,
-		"pagination":  pagination(page, totalPage, 1, q),
+		"pagination":  pagination(page, totalPage, 2, c.Request.URL.Path, q),
 	})
 }
 
@@ -131,13 +151,19 @@ func archives() (r []models.PostArchive, err error) {
 	return
 }
 
-func pagination(currentPage, totalPage, step int, query string) (html string) {
-	html = ""
+func pagination(currentPage, totalPage, step int, path, query string) (html string) {
+	if totalPage < 2 {
+		return
+	}
+	pathx := path
+	if !strings.Contains(path, "/page/") {
+		pathx = fmt.Sprintf("%s%s", path, "/page/1")
+	}
 	s := strings.Builder{}
 	if currentPage > totalPage {
 		currentPage = totalPage
 	}
-
+	r := regexp.MustCompile(`(/page)/(\d+)`)
 	start := currentPage - step
 	end := currentPage + step
 	if start < 1 {
@@ -145,20 +171,21 @@ func pagination(currentPage, totalPage, step int, query string) (html string) {
 	}
 	if currentPage > 1 {
 		pp := ""
-		if currentPage > 2 {
-			pp = fmt.Sprintf("page/%d", currentPage-1)
+		if currentPage >= 2 {
+			pp = replacePage(r, pathx, currentPage-1)
 		}
-		s.WriteString(fmt.Sprintf(`<a class="prev page-numbers" href="/%s%s">上一页</a>`, pp, query))
+		s.WriteString(fmt.Sprintf(`<a class="prev page-numbers" href="%s%s">上一页</a>`, pp, query))
 	}
 	if currentPage >= step+2 {
 		d := ""
 		if currentPage > step+2 {
 			d = `<span class="page-numbers dots">…</span>`
 		}
+		e := replacePage(r, path, 1)
 		s.WriteString(fmt.Sprintf(`
-<a class="page-numbers" href="/%s"><span class="meta-nav screen-reader-text">页 </span>1</a>
+<a class="page-numbers" href="%s%s"><span class="meta-nav screen-reader-text">页 </span>1</a>
 %s
-`, query, d))
+`, e, query, d))
 	}
 	if totalPage < end {
 		end = totalPage
@@ -173,10 +200,7 @@ func pagination(currentPage, totalPage, step int, query string) (html string) {
 `, page)
 
 		} else {
-			d := fmt.Sprintf("/page/%d", page)
-			if currentPage > page && page == 1 {
-				d = "/"
-			}
+			d := replacePage(r, pathx, page)
 			h = fmt.Sprintf(`
 <a class="page-numbers" href="%s%s">
 <span class="meta-nav screen-reader-text">页 </span>%d</a>
@@ -185,14 +209,32 @@ func pagination(currentPage, totalPage, step int, query string) (html string) {
 		s.WriteString(h)
 
 	}
-	if totalPage > currentPage+step+2 {
+	if totalPage >= currentPage+step+1 {
+		if totalPage > currentPage+step+1 {
+			s.WriteString(`<span class="page-numbers dots">…</span>`)
+		}
+		dd := replacePage(r, pathx, totalPage)
 		s.WriteString(fmt.Sprintf(`
-<span class="page-numbers dots">…</span>
-<a class="page-numbers" href="/page/%d%s"><span class="meta-nav screen-reader-text">页 </span>%d</a>`, totalPage, query, totalPage))
+<a class="page-numbers" href="%s%s"><span class="meta-nav screen-reader-text">页 </span>%d</a>`, dd, query, totalPage))
 	}
 	if currentPage < totalPage {
-		s.WriteString(fmt.Sprintf(`<a class="next page-numbers" href="/page/%d%s">下一页</a>`, currentPage+1, query))
+		dd := replacePage(r, pathx, currentPage+1)
+		s.WriteString(fmt.Sprintf(`<a class="next page-numbers" href="%s%s">下一页</a>`, dd, query))
 	}
 	html = s.String()
+	return
+}
+
+func replacePage(r *regexp.Regexp, path string, page int) (src string) {
+	if page == 1 {
+		src = r.ReplaceAllString(path, "")
+	} else {
+		s := fmt.Sprintf("$1/%d", page)
+		src = r.ReplaceAllString(path, s)
+	}
+	src = strings.Replace(src, "//", "/", -1)
+	if src == "" {
+		src = "/"
+	}
 	return
 }
