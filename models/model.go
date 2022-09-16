@@ -38,6 +38,35 @@ func (w SqlBuilder) parseField(ss []string, s *strings.Builder) {
 	}
 }
 
+func (w SqlBuilder) parseIn(ss []string, s *strings.Builder, c *int, args *[]interface{}, in [][]interface{}) (t bool) {
+	if ss[1] == "in" && len(in) > 0 {
+		s.WriteString(" (")
+		for _, p := range in[*c] {
+			s.WriteString("?,")
+			*args = append(*args, p)
+		}
+		sx := s.String()
+		s.Reset()
+		s.WriteString(strings.TrimRight(sx, ","))
+		s.WriteString(")")
+		*c++
+		t = true
+	}
+	return t
+}
+
+func (w SqlBuilder) parseType(ss []string, s *strings.Builder, args *[]interface{}) {
+	if len(ss) == 4 && ss[3] == "int" {
+		i, _ := strconv.Atoi(ss[2])
+		*args = append(*args, i)
+	} else if len(ss) == 4 && ss[3] == "float" {
+		i, _ := strconv.ParseFloat(ss[2], 64)
+		*args = append(*args, i)
+	} else {
+		*args = append(*args, ss[2])
+	}
+}
+
 func (w SqlBuilder) ParseWhere(in ...[]interface{}) (string, []interface{}) {
 	var s strings.Builder
 	args := make([]interface{}, 0, len(w))
@@ -47,33 +76,60 @@ func (w SqlBuilder) ParseWhere(in ...[]interface{}) (string, []interface{}) {
 			w.parseField(ss, &s)
 			s.WriteString("=? and ")
 			args = append(args, ss[1])
-		}
-		if len(ss) >= 3 {
+		} else if len(ss) >= 3 && len(ss) < 5 {
 			w.parseField(ss, &s)
 			s.WriteString(ss[1])
-			if ss[1] == "in" && len(in) > 0 {
-				s.WriteString(" (")
-				for _, p := range in[c] {
-					s.WriteString("?,")
-					args = append(args, p)
-				}
-				sx := s.String()
-				s.Reset()
-				s.WriteString(strings.TrimRight(sx, ","))
-				s.WriteString(")")
-				c++
+			if w.parseIn(ss, &s, &c, &args, in) {
 				s.WriteString(" and ")
 				continue
 			}
 			s.WriteString(" ? and ")
-			if len(ss) == 4 && ss[3] == "int" {
-				i, _ := strconv.Atoi(ss[2])
-				args = append(args, i)
-			} else if len(ss) == 4 && ss[3] == "float" {
-				i, _ := strconv.ParseFloat(ss[2], 64)
-				args = append(args, i)
-			} else {
-				args = append(args, ss[2])
+			w.parseType(ss, &s, &args)
+		} else if len(ss) >= 5 && len(ss)%5 == 0 {
+			j := len(ss) / 5
+			fl := false
+			for i := 0; i < j; i++ {
+				start := i * 5
+				end := start + 5
+				if ss[start] == "or" {
+					st := s.String()
+					if strings.Contains(st, "and ") {
+						st = strings.TrimRight(st, "and ")
+						s.Reset()
+						s.WriteString(st)
+						s.WriteString(" or ")
+					}
+					if i == 0 {
+						s.WriteString("( ")
+						fl = true
+					}
+
+					w.parseField(ss[start+1:end], &s)
+					if w.parseIn(ss[start+1:end], &s, &c, &args, in) {
+						s.WriteString(" and ")
+						continue
+					}
+					s.WriteString(ss[start+2])
+					s.WriteString(" ? and ")
+					w.parseType(ss[start+1:end], &s, &args)
+				} else {
+					w.parseField(ss[start+1:end], &s)
+					if w.parseIn(ss[start+1:end], &s, &c, &args, in) {
+						s.WriteString(" and ")
+						continue
+					}
+					s.WriteString(ss[start+2])
+					s.WriteString(" ? and ")
+					w.parseType(ss[start+1:start+4], &s, &args)
+
+				}
+				if i == j-1 && fl {
+					st := s.String()
+					st = strings.TrimRight(st, "and ")
+					s.Reset()
+					s.WriteString(st)
+					s.WriteString(") and ")
+				}
 			}
 		}
 	}

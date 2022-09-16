@@ -155,7 +155,7 @@ func index(c *gin.Context) {
 		"categories":  categoryItems,
 		"totalPage":   totalPage,
 		"queryRaw":    q,
-		"pagination":  pagination(page, totalPage, 2, c.Request.URL.Path, q),
+		"pagination":  pagination(page, totalPage, 1, c.Request.URL.Path, q),
 	})
 }
 
@@ -211,7 +211,7 @@ func pagination(currentPage, totalPage, step int, path, query string) (html stri
 	start := currentPage - step
 	end := currentPage + step
 	if start < 1 {
-		start = currentPage
+		start = 1
 	}
 	if currentPage > 1 {
 		pp := ""
