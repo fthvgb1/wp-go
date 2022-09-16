@@ -111,7 +111,7 @@ func (w SqlBuilder) ParseWhere(in ...[]interface{}) (string, []interface{}) {
 				s.WriteString(" ? and ")
 				w.parseType(ss[start+1:end], &s, &args)
 				if i == j-1 && fl {
-					st := s.String()
+					st = s.String()
 					st = strings.TrimRight(st, "and ")
 					s.Reset()
 					s.WriteString(st)
