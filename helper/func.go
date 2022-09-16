@@ -2,6 +2,7 @@ package helper
 
 import (
 	"reflect"
+	"strings"
 )
 
 func IsContainInArr[T comparable](a T, arr []T) bool {
@@ -30,4 +31,17 @@ func RangeSlice[T ~int | ~uint | ~int64 | ~int8 | ~int16 | ~int32 | ~uint64](sta
 		i = i + step
 	}
 	return r
+}
+
+func StrJoin(s ...string) (str string) {
+	if len(s) == 1 {
+		return s[0]
+	} else if len(s) > 1 {
+		b := strings.Builder{}
+		for _, s2 := range s {
+			b.WriteString(s2)
+		}
+		str = b.String()
+	}
+	return
 }
