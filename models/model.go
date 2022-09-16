@@ -91,38 +91,25 @@ func (w SqlBuilder) ParseWhere(in ...[]interface{}) (string, []interface{}) {
 			for i := 0; i < j; i++ {
 				start := i * 5
 				end := start + 5
-				if ss[start] == "or" {
-					st := s.String()
-					if strings.Contains(st, "and ") {
-						st = strings.TrimRight(st, "and ")
-						s.Reset()
-						s.WriteString(st)
-						s.WriteString(" or ")
-					}
-					if i == 0 {
-						s.WriteString("( ")
-						fl = true
-					}
-
-					w.parseField(ss[start+1:end], &s)
-					if w.parseIn(ss[start+1:end], &s, &c, &args, in) {
-						s.WriteString(" and ")
-						continue
-					}
-					s.WriteString(ss[start+2])
-					s.WriteString(" ? and ")
-					w.parseType(ss[start+1:end], &s, &args)
-				} else {
-					w.parseField(ss[start+1:end], &s)
-					if w.parseIn(ss[start+1:end], &s, &c, &args, in) {
-						s.WriteString(" and ")
-						continue
-					}
-					s.WriteString(ss[start+2])
-					s.WriteString(" ? and ")
-					w.parseType(ss[start+1:start+4], &s, &args)
-
+				st := s.String()
+				if strings.Contains(st, "and ") && ss[start] == "or" {
+					st = strings.TrimRight(st, "and ")
+					s.Reset()
+					s.WriteString(st)
+					s.WriteString(fmt.Sprintf(" %s ", ss[start]))
 				}
+				if i == 0 {
+					s.WriteString("( ")
+					fl = true
+				}
+				w.parseField(ss[start+1:end], &s)
+				if w.parseIn(ss[start+1:end], &s, &c, &args, in) {
+					s.WriteString(" and ")
+					continue
+				}
+				s.WriteString(ss[start+2])
+				s.WriteString(" ? and ")
+				w.parseType(ss[start+1:end], &s, &args)
 				if i == j-1 && fl {
 					st := s.String()
 					st = strings.TrimRight(st, "and ")
