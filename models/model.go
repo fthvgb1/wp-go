@@ -55,7 +55,7 @@ func (w SqlBuilder) parseIn(ss []string, s *strings.Builder, c *int, args *[]int
 	return t
 }
 
-func (w SqlBuilder) parseType(ss []string, s *strings.Builder, args *[]interface{}) {
+func (w SqlBuilder) parseType(ss []string, args *[]interface{}) {
 	if len(ss) == 4 && ss[3] == "int" {
 		i, _ := strconv.Atoi(ss[2])
 		*args = append(*args, i)
@@ -84,7 +84,7 @@ func (w SqlBuilder) ParseWhere(in ...[]interface{}) (string, []interface{}) {
 				continue
 			}
 			s.WriteString(" ? and ")
-			w.parseType(ss, &s, &args)
+			w.parseType(ss, &args)
 		} else if len(ss) >= 5 && len(ss)%5 == 0 {
 			j := len(ss) / 5
 			fl := false
@@ -109,7 +109,7 @@ func (w SqlBuilder) ParseWhere(in ...[]interface{}) (string, []interface{}) {
 				}
 				s.WriteString(ss[start+2])
 				s.WriteString(" ? and ")
-				w.parseType(ss[start+1:end], &s, &args)
+				w.parseType(ss[start+1:end], &args)
 				if i == j-1 && fl {
 					st = s.String()
 					st = strings.TrimRight(st, "and ")
