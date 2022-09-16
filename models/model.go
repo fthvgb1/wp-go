@@ -4,8 +4,10 @@ import (
 	"fmt"
 	"github/fthvgb1/wp-go/db"
 	"github/fthvgb1/wp-go/helper"
+	"math/rand"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Model interface {
@@ -141,8 +143,9 @@ func SimplePagination[T Model](where ParseWhere, fields, group string, page, pag
 		sq := fmt.Sprintf(tpx, rr.Table(), j, w)
 		err = db.Db.Get(&n, sq, args...)
 	} else {
-		tpx := "select count(*) n from (select %s from %s %s %s %s ) tx"
-		sq := fmt.Sprintf(tpx, group, rr.Table(), j, w, groupBy)
+		tpx := "select count(*) n from (select %s from %s %s %s %s ) %s"
+		rand.Seed(int64(time.Now().Nanosecond()))
+		sq := fmt.Sprintf(tpx, group, rr.Table(), j, w, groupBy, fmt.Sprintf("table%d", rand.Int()))
 		err = db.Db.Get(&n, sq, args...)
 	}
 
