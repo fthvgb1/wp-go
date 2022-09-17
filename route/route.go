@@ -14,11 +14,6 @@ func SetupRouter() *gin.Engine {
 	// Disable Console Color
 	// gin.DisableConsoleColor()
 	r := gin.Default()
-	r.Use(middleware.SetStaticFileCache)
-	//gzip 因为一般会用nginx做反代时自动使用gzip,所以go这边本身可以不用
-	/*r.Use(gzip.Gzip(gzip.DefaultCompression, gzip.WithExcludedPaths([]string{
-		"/wp-includes/", "/wp-content/",
-	})))*/
 	r.SetFuncMap(template.FuncMap{
 		"unescaped": func(s string) interface{} {
 			return template.HTML(s)
@@ -27,13 +22,19 @@ func SetupRouter() *gin.Engine {
 			return t.Format("2006年01月02日")
 		},
 	})
+	loadTemplates(r, "**/*")
+	r.Use(middleware.SetStaticFileCache)
+	//gzip 因为一般会用nginx做反代时自动使用gzip,所以go这边本身可以不用
+	/*r.Use(gzip.Gzip(gzip.DefaultCompression, gzip.WithExcludedPaths([]string{
+		"/wp-includes/", "/wp-content/",
+	})))*/
+
 	f := static.Fs{FS: static.FsEx, Path: "wp-includes"}
 	r.StaticFS("/wp-includes", http.FS(f))
 	r.StaticFS("/wp-content", http.FS(static.Fs{
 		FS:   static.FsEx,
 		Path: "wp-content",
 	}))
-	loadTemplates(r, "**/*")
 	r.GET("/", index)
 	r.GET("/page/:page", index)
 	r.GET("/p/category/:category", index)
