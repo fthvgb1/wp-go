@@ -15,103 +15,135 @@ import (
 
 var PostsCache sync.Map
 
-func index(c *gin.Context) {
-	page := 1
-	pageSize := 10
-	status := []interface{}{"publish"}
-	order := c.Query("order")
-	if !helper.IsContainInArr(order, []string{"asc", "desc"}) {
-		order = "asc"
+type IndexHandle struct {
+	c            *gin.Context
+	page         int
+	pageSize     int
+	title        string
+	titleL       string
+	titleR       string
+	search       string
+	totalPage    int
+	category     string
+	categoryType string
+	where        models.SqlBuilder
+	orderBy      models.SqlBuilder
+	order        string
+	join         models.SqlBuilder
+	postType     []interface{}
+	status       []interface{}
+	header       string
+}
+
+func NewIndexHandle(ctx *gin.Context) *IndexHandle {
+	return &IndexHandle{
+		c:        ctx,
+		page:     1,
+		pageSize: 10,
+		titleL:   models.Options["blogname"],
+		titleR:   models.Options["blogdescription"],
+		where: models.SqlBuilder{
+			{"post_type", "in", ""},
+			{"post_status", "in", ""},
+		},
+		orderBy:  models.SqlBuilder{},
+		join:     models.SqlBuilder{},
+		postType: []interface{}{"post"},
+		status:   []interface{}{"publish"},
 	}
-	title := ""
-	header := ""
-	postType := []interface{}{"post"}
-	where := models.SqlBuilder{{
-		"post_type", "in", "",
-	}, {"post_status", "in", ""}}
-	p := c.Query("paged")
-	year := c.Param("year")
+}
+func (h *IndexHandle) setTitleLR(l, r string) {
+	h.titleL = l
+	h.titleR = r
+}
+
+func (h *IndexHandle) getTitle() string {
+	h.title = fmt.Sprintf("%s-%s", h.titleL, h.titleR)
+	return h.title
+}
+
+func (h *IndexHandle) parseParams() {
+	h.order = h.c.Query("order")
+	if !helper.IsContainInArr(h.order, []string{"asc", "desc"}) {
+		h.order = "asc"
+	}
+	year := h.c.Param("year")
 	if year != "" {
-		where = append(where, []string{
+		h.where = append(h.where, []string{
 			"year(post_date)", year,
 		})
 	}
-	month := c.Param("month")
+	month := h.c.Param("month")
 	if month != "" {
-		where = append(where, []string{
+		h.where = append(h.where, []string{
 			"month(post_date)", month,
 		})
 		ss := fmt.Sprintf("%s年%s月", year, month)
-		header = fmt.Sprintf("月度归档： <span>%s</span>", ss)
-		title = ss
+		h.header = fmt.Sprintf("月度归档： <span>%s</span>", ss)
+		h.setTitleLR(ss, models.Options["blogname"])
 	}
-	tt := ""
-	category := c.Param("category")
+	category := h.c.Param("category")
 	if category == "" {
-		category = c.Param("tag")
+		category = h.c.Param("tag")
 		if category != "" {
-			tt = "post_tag"
-			header = fmt.Sprintf("标签： <span>%s</span>", category)
-			title = category
+			h.categoryType = "post_tag"
+			h.header = fmt.Sprintf("标签： <span>%s</span>", category)
 		}
 	} else {
-		tt = "category"
-		header = fmt.Sprintf("分类： <span>%s</span>", category)
-		title = category
+		h.categoryType = "category"
+		h.header = fmt.Sprintf("分类： <span>%s</span>", category)
 	}
-	s := c.Query("s")
-	if s != "" && strings.Replace(s, " ", "", -1) != "" {
-		q := helper.StrJoin("%", s, "%")
-		where = append(where, []string{
-			"and", "post_title", "like", q, "",
-			"or", "post_content", "like", q, "",
-			"or", "post_excerpt", "like", q, "",
-		}, []string{"post_password", ""})
-		postType = append(postType, "page", "attachment")
-		header = fmt.Sprintf("%s的搜索结果", s)
-		title = header
-	} else {
-		status = append(status, "private")
-	}
-	var join models.SqlBuilder
+	h.category = category
+
 	if category != "" {
-		where = append(where, []string{
+		h.where = append(h.where, []string{
 			"d.name", category,
-		}, []string{"taxonomy", tt})
-		join = append(join, []string{
+		}, []string{"taxonomy", h.categoryType})
+		h.join = append(h.join, []string{
 			"a", "left join", "wp_term_relationships b", "a.Id=b.object_id",
 		}, []string{
 			"left join", "wp_term_taxonomy c", "b.term_taxonomy_id=c.term_taxonomy_id",
 		}, []string{
 			"left join", "wp_terms d", "c.term_id=d.term_id",
 		})
+		h.setTitleLR(category, models.Options["blogname"])
 	}
+	s := h.c.Query("s")
+	if s != "" && strings.Replace(s, " ", "", -1) != "" {
+		q := helper.StrJoin("%", s, "%")
+		h.where = append(h.where, []string{
+			"and", "post_title", "like", q, "",
+			"or", "post_content", "like", q, "",
+			"or", "post_excerpt", "like", q, "",
+		}, []string{"post_password", ""})
+		h.postType = append(h.postType, "page", "attachment")
+		h.header = fmt.Sprintf("%s的搜索结果", s)
+		h.setTitleLR(helper.StrJoin(`"`, s, `"`, "的搜索结果"), models.Options["blogname"])
+		h.search = s
+	} else {
+		h.status = append(h.status, "private")
+	}
+	p := h.c.Query("paged")
 	if p == "" {
-		p = c.Param("page")
+		p = h.c.Param("page")
 	}
 	if p != "" {
 		if pa, err := strconv.Atoi(p); err == nil {
-			page = pa
+			h.page = pa
 		}
 	}
-	if page == 1 {
-		title = helper.StrJoin(models.Options["blogname"], "-", models.Options["blogdescription"])
+	if h.page > 1 && (h.category != "" || h.search != "" || month != "") {
+		h.setTitleLR(fmt.Sprintf("%s-第%d页", h.titleL, h.page), models.Options["blogname"])
 	}
+}
 
-	postIds, totalRaw, err := models.SimplePagination[models.WpPosts](where, "ID", "", page, pageSize, models.SqlBuilder{{"post_date", order}}, join, postType, status)
-	defer func() {
-		if err != nil {
-			c.Error(err)
-		}
-	}()
-	if err != nil {
-		return
-	}
-	if len(postIds) < 1 && category != "" {
-		title = "未找到页面"
-	}
+func (h *IndexHandle) getTotalPage(totalRaws int) int {
+	h.totalPage = int(math.Ceil(float64(totalRaws) / float64(h.pageSize)))
+	return h.totalPage
+}
+
+func (h *IndexHandle) queryAndSetPostCache(postIds []models.WpPosts) (err error) {
 	var all []uint64
-	var allPosts []models.WpPosts
 	var needQuery []interface{}
 	for _, wpPosts := range postIds {
 		all = append(all, wpPosts.Id)
@@ -164,32 +196,50 @@ func index(c *gin.Context) {
 			PostsCache.Store(pp.Id, pp)
 		}
 	}
+	return
+}
 
-	for _, id := range all {
-		post, _ := PostsCache.Load(id)
+func index(c *gin.Context) {
+	h := NewIndexHandle(c)
+	h.parseParams()
+	postIds, totalRaw, err := models.SimplePagination[models.WpPosts](h.where, "ID", "", h.page, h.pageSize, h.orderBy, h.join, h.postType, h.status)
+	defer func() {
+		if err != nil {
+			c.Error(err)
+		}
+	}()
+	if err != nil {
+		return
+	}
+	if len(postIds) < 1 && h.category != "" {
+		h.titleL = "未找到页面"
+	}
+	err = h.queryAndSetPostCache(postIds)
+
+	for i, v := range postIds {
+		post, _ := PostsCache.Load(v.Id)
 		pp := post.(*models.WpPosts)
-		allPosts = append(allPosts, *pp)
+		postIds[i] = *pp
 	}
 	recent, err := recentPosts()
 	archive, err := archives()
 	categoryItems, err := categories()
-	totalPage := int(math.Ceil(float64(totalRaw) / float64(pageSize)))
 	q := c.Request.URL.Query().Encode()
 	if q != "" {
 		q = fmt.Sprintf("?%s", q)
 	}
 	c.HTML(http.StatusOK, "index.html", gin.H{
-		"posts":       allPosts,
+		"posts":       postIds,
 		"options":     models.Options,
 		"recentPosts": recent,
 		"archives":    archive,
 		"categories":  categoryItems,
-		"totalPage":   totalPage,
+		"totalPage":   h.getTotalPage(totalRaw),
 		"queryRaw":    q,
-		"pagination":  pagination(page, totalPage, 1, c.Request.URL.Path, q),
-		"search":      s,
-		"header":      header,
-		"title":       title,
+		"pagination":  pagination(h.page, h.totalPage, 1, c.Request.URL.Path, q),
+		"search":      h.search,
+		"header":      h.header,
+		"title":       h.getTitle(),
 	})
 }
 
