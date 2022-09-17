@@ -1,10 +1,17 @@
 {{template "layout/base" .}}
 {{define "content" }}
+{{if .posts}}
 <div id="primary" class="content-area">
     <main id="main" class="site-main">
         {{if .header}}
         <header class="page-header">
-            <h1 class="page-title">{{.header|unescaped}}</h1>
+            <h1 class="page-title">
+                {{if .search}}
+                {{.header}}
+                {{else}}
+                {{.header |unescaped}}
+                {{end}}
+            </h1>
         </header>
         {{end}}
         {{ range $k,$v:=.posts}}
@@ -56,4 +63,8 @@
         {{template "layout/page" .}}
     </main><!-- .site-main -->
 </div>
+{{else }}
+{{template "layout/empty" .}}
+{{end}}
+
 {{end}}

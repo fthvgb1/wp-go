@@ -23,7 +23,7 @@ func index(c *gin.Context) {
 	if !helper.IsContainInArr(order, []string{"asc", "desc"}) {
 		order = "asc"
 	}
-	title := models.Options["blogname"]
+	title := ""
 	header := ""
 	postType := []interface{}{"post"}
 	where := models.SqlBuilder{{
@@ -94,6 +94,9 @@ func index(c *gin.Context) {
 			page = pa
 		}
 	}
+	if page == 1 {
+		title = helper.StrJoin(models.Options["blogname"], "-", models.Options["blogdescription"])
+	}
 
 	postIds, totalRaw, err := models.SimplePagination[models.WpPosts](where, "ID", "", page, pageSize, models.SqlBuilder{{"post_date", order}}, join, postType, status)
 	defer func() {
@@ -103,6 +106,9 @@ func index(c *gin.Context) {
 	}()
 	if err != nil {
 		return
+	}
+	if len(postIds) < 1 && category != "" {
+		title = "未找到页面"
 	}
 	var all []uint64
 	var allPosts []models.WpPosts
