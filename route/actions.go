@@ -16,32 +16,34 @@ import (
 var PostsCache sync.Map
 
 type IndexHandle struct {
-	c            *gin.Context
-	page         int
-	pageSize     int
-	title        string
-	titleL       string
-	titleR       string
-	search       string
-	totalPage    int
-	category     string
-	categoryType string
-	where        models.SqlBuilder
-	orderBy      models.SqlBuilder
-	order        string
-	join         models.SqlBuilder
-	postType     []interface{}
-	status       []interface{}
-	header       string
+	c              *gin.Context
+	page           int
+	pageSize       int
+	title          string
+	titleL         string
+	titleR         string
+	search         string
+	totalPage      int
+	category       string
+	categoryType   string
+	where          models.SqlBuilder
+	orderBy        models.SqlBuilder
+	order          string
+	join           models.SqlBuilder
+	postType       []interface{}
+	status         []interface{}
+	header         string
+	paginationStep int
 }
 
 func NewIndexHandle(ctx *gin.Context) *IndexHandle {
 	return &IndexHandle{
-		c:        ctx,
-		page:     1,
-		pageSize: 10,
-		titleL:   models.Options["blogname"],
-		titleR:   models.Options["blogdescription"],
+		c:              ctx,
+		page:           1,
+		pageSize:       10,
+		paginationStep: 1,
+		titleL:         models.Options["blogname"],
+		titleR:         models.Options["blogdescription"],
 		where: models.SqlBuilder{
 			{"post_type", "in", ""},
 			{"post_status", "in", ""},
@@ -225,9 +227,6 @@ func index(c *gin.Context) {
 	archive, err := archives()
 	categoryItems, err := categories()
 	q := c.Request.URL.Query().Encode()
-	if q != "" {
-		q = fmt.Sprintf("?%s", q)
-	}
 	c.HTML(http.StatusOK, "index.html", gin.H{
 		"posts":       postIds,
 		"options":     models.Options,
@@ -235,8 +234,7 @@ func index(c *gin.Context) {
 		"archives":    archive,
 		"categories":  categoryItems,
 		"totalPage":   h.getTotalPage(totalRaw),
-		"queryRaw":    q,
-		"pagination":  pagination(h.page, h.totalPage, 1, c.Request.URL.Path, q),
+		"pagination":  pagination(h.page, h.totalPage, h.paginationStep, c.Request.URL.Path, q),
 		"search":      h.search,
 		"header":      h.header,
 		"title":       h.getTitle(),
