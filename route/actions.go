@@ -23,6 +23,7 @@ func index(c *gin.Context) {
 	if !helper.IsContainInArr(order, []string{"asc", "desc"}) {
 		order = "asc"
 	}
+	title := models.Options["blogname"]
 	header := ""
 	where := models.SqlBuilder{{
 		"post_type", "post",
@@ -39,7 +40,9 @@ func index(c *gin.Context) {
 		where = append(where, []string{
 			"month(post_date)", month,
 		})
-		header = fmt.Sprintf("月度归档： <span>%s年%s月</span>", year, month)
+		ss := fmt.Sprintf("%s年%s月", year, month)
+		header = fmt.Sprintf("月度归档： <span>%s</span>", ss)
+		title = ss
 	}
 	tt := ""
 	category := c.Param("category")
@@ -48,10 +51,12 @@ func index(c *gin.Context) {
 		if category != "" {
 			tt = "post_tag"
 			header = fmt.Sprintf("标签： <span>%s</span>", category)
+			title = category
 		}
 	} else {
 		tt = "category"
 		header = fmt.Sprintf("分类： <span>%s</span>", category)
+		title = category
 	}
 	s := c.Query("s")
 	if s != "" && strings.Replace(s, " ", "", -1) != "" {
@@ -61,6 +66,7 @@ func index(c *gin.Context) {
 			"or", "post_content", "like", q, "",
 		})
 		header = fmt.Sprintf("%s的搜索结果", s)
+		title = header
 	} else {
 		status = append(status, "private")
 	}
@@ -173,6 +179,7 @@ func index(c *gin.Context) {
 		"pagination":  pagination(page, totalPage, 1, c.Request.URL.Path, q),
 		"search":      s,
 		"header":      header,
+		"title":       title,
 	})
 }
 
