@@ -1,10 +1,10 @@
 {{define "layout/sidebar" }}
 <div id="widget-area" class="widget-area" role="complementary">
     <aside id="search-2" class="widget widget_search">
-        <form role="search" method="get" class="search-form" action="https://www.xloyy.com/">
+        <form role="search" method="get" class="search-form" action="/">
             <label>
                 <span class="screen-reader-text">搜索：</span>
-                <input type="search" class="search-field" placeholder="搜索…" value="" name="s">
+                <input type="search" class="search-field" placeholder="搜索…" value="{{.search}}" name="s">
             </label>
             <input type="submit" class="search-submit screen-reader-text" value="搜索">
         </form>

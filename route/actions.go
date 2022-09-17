@@ -18,10 +18,12 @@ var PostsCache sync.Map
 func index(c *gin.Context) {
 	page := 1
 	pageSize := 10
+	status := []interface{}{"publish"}
 	order := c.Query("order")
 	if !helper.IsContainInArr(order, []string{"asc", "desc"}) {
 		order = "asc"
 	}
+	header := ""
 	where := models.SqlBuilder{{
 		"post_type", "post",
 	}, {"post_status", "in", ""}}
@@ -37,6 +39,7 @@ func index(c *gin.Context) {
 		where = append(where, []string{
 			"month(post_date)", month,
 		})
+		header = fmt.Sprintf("月度归档： <span>%s年%s月</span>", year, month)
 	}
 	tt := ""
 	category := c.Param("category")
@@ -44,9 +47,22 @@ func index(c *gin.Context) {
 		category = c.Param("tag")
 		if category != "" {
 			tt = "post_tag"
+			header = fmt.Sprintf("标签： <span>%s</span>", category)
 		}
 	} else {
 		tt = "category"
+		header = fmt.Sprintf("分类： <span>%s</span>", category)
+	}
+	s := c.Query("s")
+	if s != "" && strings.Replace(s, " ", "", -1) != "" {
+		q := helper.StrJoin("%", s, "%")
+		where = append(where, []string{
+			"and", "post_title", "like", q, "",
+			"or", "post_content", "like", q, "",
+		})
+		header = fmt.Sprintf("%s的搜索结果", s)
+	} else {
+		status = append(status, "private")
 	}
 	var join models.SqlBuilder
 	if category != "" {
@@ -70,7 +86,6 @@ func index(c *gin.Context) {
 		}
 	}
 
-	status := []interface{}{"publish", "private"}
 	postIds, totalRaw, err := models.SimplePagination[models.WpPosts](where, "ID", "", page, pageSize, models.SqlBuilder{{"post_date", order}}, join, status)
 	defer func() {
 		if err != nil {
@@ -156,6 +171,8 @@ func index(c *gin.Context) {
 		"totalPage":   totalPage,
 		"queryRaw":    q,
 		"pagination":  pagination(page, totalPage, 1, c.Request.URL.Path, q),
+		"search":      s,
+		"header":      header,
 	})
 }
 

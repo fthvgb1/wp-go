@@ -2,6 +2,11 @@
 {{define "content" }}
 <div id="primary" class="content-area">
     <main id="main" class="site-main">
+        {{if .header}}
+        <header class="page-header">
+            <h1 class="page-title">{{.header|unescaped}}</h1>
+        </header>
+        {{end}}
         {{ range $k,$v:=.posts}}
         <article id="post-{{$v.Id}}"
                  class="post-{{$v.Id}} post type-post status-publish format-standard hentry category-uncategorized">
