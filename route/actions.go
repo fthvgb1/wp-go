@@ -25,8 +25,9 @@ func index(c *gin.Context) {
 	}
 	title := models.Options["blogname"]
 	header := ""
+	postType := []interface{}{"post"}
 	where := models.SqlBuilder{{
-		"post_type", "post",
+		"post_type", "in", "",
 	}, {"post_status", "in", ""}}
 	p := c.Query("paged")
 	year := c.Param("year")
@@ -64,7 +65,9 @@ func index(c *gin.Context) {
 		where = append(where, []string{
 			"and", "post_title", "like", q, "",
 			"or", "post_content", "like", q, "",
-		})
+			"or", "post_excerpt", "like", q, "",
+		}, []string{"post_password", ""})
+		postType = append(postType, "page", "attachment")
 		header = fmt.Sprintf("%s的搜索结果", s)
 		title = header
 	} else {
@@ -92,7 +95,7 @@ func index(c *gin.Context) {
 		}
 	}
 
-	postIds, totalRaw, err := models.SimplePagination[models.WpPosts](where, "ID", "", page, pageSize, models.SqlBuilder{{"post_date", order}}, join, status)
+	postIds, totalRaw, err := models.SimplePagination[models.WpPosts](where, "ID", "", page, pageSize, models.SqlBuilder{{"post_date", order}}, join, postType, status)
 	defer func() {
 		if err != nil {
 			c.Error(err)
@@ -111,16 +114,17 @@ func index(c *gin.Context) {
 		}
 	}
 	if len(needQuery) > 0 {
-		rawPosts, err := models.Find[models.WpPosts](models.SqlBuilder{{
+		rawPosts, er := models.Find[models.WpPosts](models.SqlBuilder{{
 			"Id", "in", "",
-		}}, "a.*,d.name category_name,taxonomy", "", nil, models.SqlBuilder{{
+		}}, "a.*,ifnull(d.name,'') category_name,ifnull(taxonomy,'') `taxonomy`", "", nil, models.SqlBuilder{{
 			"a", "left join", "wp_term_relationships b", "a.Id=b.object_id",
 		}, {
 			"left join", "wp_term_taxonomy c", "b.term_taxonomy_id=c.term_taxonomy_id",
 		}, {
 			"left join", "wp_terms d", "c.term_id=d.term_id",
 		}}, 0, needQuery)
-		if err != nil {
+		if er != nil {
+			err = er
 			return
 		}
 		postsMap := make(map[uint64]*models.WpPosts)
