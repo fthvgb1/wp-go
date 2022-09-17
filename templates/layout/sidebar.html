@@ -15,7 +15,7 @@
             <ul>
                 {{range $k,$v:=.recentPosts}}
                 <li>
-                    <a href="/p/{{$v.Id}}">密码保护：{{$v.PostTitle}}</a>
+                    <a href="/p/{{$v.Id}}">{{$v.PostTitle}}</a>
                 </li>
                 {{end}}
             </ul>
@@ -31,7 +31,7 @@
         <nav aria-label="归档">
             <ul>
                 {{range $k,$v := .archives}}
-                <li><a href="/p/date/{{$v.Year}}/{{$v.Month|printf "%02s"}}">{{$v.Year}}年{{$v.Month|printf "%02s"}}月</a></li>
+                <li><a href="/p/date/{{$v.Year}}/{{$v.Month|printf "%02s"}}">{{$v.Year}}年{{$v.Month}}月</a></li>
                 {{end}}
             </ul>
 

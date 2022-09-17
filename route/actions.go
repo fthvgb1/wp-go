@@ -80,7 +80,7 @@ func (h *IndexHandle) parseParams() {
 		h.where = append(h.where, []string{
 			"month(post_date)", month,
 		})
-		ss := fmt.Sprintf("%s年%s月", year, month)
+		ss := fmt.Sprintf("%s年%s月", year, strings.TrimLeft(month, "0"))
 		h.header = fmt.Sprintf("月度归档： <span>%s</span>", ss)
 		h.setTitleLR(ss, models.Options["blogname"])
 	}
@@ -221,7 +221,9 @@ func index(c *gin.Context) {
 	for i, v := range postIds {
 		post, _ := PostsCache.Load(v.Id)
 		pp := post.(*models.WpPosts)
-		postIds[i] = *pp
+		px := *pp
+		formatTitleAndContent(&px)
+		postIds[i] = px
 	}
 	recent, err := recentPosts()
 	archive, err := archives()
@@ -241,10 +243,29 @@ func index(c *gin.Context) {
 	})
 }
 
+func formatTitleAndContent(post *models.WpPosts) {
+	if post.PostPassword != "" {
+		if post.PostTitle != "" {
+			post.PostTitle = fmt.Sprintf("密码保护：%s", post.PostTitle)
+		}
+		if post.PostContent != "" {
+			format := `
+<form action="/wp-login.php?action=postpass" class="post-password-form" method="post">
+<p>此内容受密码保护。如需查阅，请在下列字段中输入您的密码。</p>
+<p><label for="pwbox-%d">密码： <input name="post_password" id="pwbox-%d" type="password" size="20"></label> <input type="submit" name="Submit" value="提交"></p>
+</form>`
+			post.PostContent = fmt.Sprintf(format, post.Id, post.Id)
+		}
+	}
+}
+
 func recentPosts() (r []models.WpPosts, err error) {
 	r, err = models.Find[models.WpPosts](models.SqlBuilder{{
 		"post_type", "post",
-	}, {"post_status", "publish"}}, "ID,post_title", "", models.SqlBuilder{{"post_date", "desc"}}, nil, 5)
+	}, {"post_status", "publish"}}, "ID,post_title,post_password", "", models.SqlBuilder{{"post_date", "desc"}}, nil, 5)
+	for i := 0; i < len(r); i++ {
+		formatTitleAndContent(&r[i])
+	}
 	return
 }
 
