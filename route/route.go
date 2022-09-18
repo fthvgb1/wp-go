@@ -4,6 +4,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
+	"github/fthvgb1/wp-go/actions"
 	"github/fthvgb1/wp-go/middleware"
 	"github/fthvgb1/wp-go/static"
 	"github/fthvgb1/wp-go/templates"
@@ -39,13 +40,16 @@ func SetupRouter() *gin.Engine {
 	}))
 	store := cookie.NewStore([]byte("secret"))
 	r.Use(sessions.Sessions("go-wp", store))
-	r.GET("/", index)
-	r.GET("/page/:page", index)
-	r.GET("/p/category/:category", index)
-	r.GET("/p/tag/:tag", index)
-	r.GET("/p/date/:year/:month", index)
-	r.GET("/p/date/:year/:month/page/:page", index)
-	r.POST("/login", login)
+	r.GET("/", actions.Index)
+	r.GET("/page/:page", actions.Index)
+	r.GET("/p/category/:category", actions.Index)
+	r.GET("/p/category/:category/page/:page", actions.Index)
+	r.GET("/p/tag/:tag", actions.Index)
+	r.GET("/p/tag/:tag/page/:page", actions.Index)
+	r.GET("/p/date/:year/:month", actions.Index)
+	r.GET("/p/date/:year/:month/page/:page", actions.Index)
+	r.POST("/login", actions.Login)
+	r.GET("/p/:id", actions.Detail)
 
 	return r
 }

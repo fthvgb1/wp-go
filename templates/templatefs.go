@@ -2,5 +2,5 @@ package templates
 
 import "embed"
 
-//go:embed index layout
+//go:embed posts layout
 var TemplateFs embed.FS

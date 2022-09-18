@@ -1,4 +1,4 @@
-package route
+package actions
 
 import (
 	"github.com/gin-contrib/sessions"
@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-func login(c *gin.Context) {
+func Login(c *gin.Context) {
 	password := c.PostForm("post_password")
 	ref := c.Request.Referer()
 	if ref == "" {

@@ -1,9 +1,10 @@
-package route
+package actions
 
 import (
 	"fmt"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github/fthvgb1/wp-go/actions/common"
 	"github/fthvgb1/wp-go/helper"
 	"github/fthvgb1/wp-go/models"
 	"math"
@@ -204,7 +205,7 @@ func (h *IndexHandle) queryAndSetPostCache(postIds []models.WpPosts) (err error)
 	return
 }
 
-func index(c *gin.Context) {
+func Index(c *gin.Context) {
 	h := NewIndexHandle(c)
 	h.parseParams()
 	postIds, totalRaw, err := models.SimplePagination[models.WpPosts](h.where, "ID", "", h.page, h.pageSize, h.orderBy, h.join, h.postType, h.status)
@@ -220,17 +221,24 @@ func index(c *gin.Context) {
 		h.titleL = "未找到页面"
 	}
 	err = h.queryAndSetPostCache(postIds)
-
+	pw := h.session.Get("post_password")
 	for i, v := range postIds {
 		post, _ := PostsCache.Load(v.Id)
 		pp := post.(*models.WpPosts)
 		px := *pp
-		h.formatTitleAndContent(&px)
+		if px.PostPassword != "" && pw != px.PostPassword {
+			common.PasswdProject(&px)
+		}
 		postIds[i] = px
 	}
-	recent, err := h.recentPosts()
-	archive, err := archives()
-	categoryItems, err := categories()
+	recent, err := common.RecentPosts()
+	for i, post := range recent {
+		if post.PostPassword != "" && pw != post.PostPassword {
+			common.PasswdProject(&recent[i])
+		}
+	}
+	archive, err := common.Archives()
+	categoryItems, err := common.Categories()
 	q := c.Request.URL.Query().Encode()
 	c.HTML(http.StatusOK, "index.html", gin.H{
 		"posts":       postIds,
@@ -244,62 +252,6 @@ func index(c *gin.Context) {
 		"header":      h.header,
 		"title":       h.getTitle(),
 	})
-}
-
-func (h *IndexHandle) formatTitleAndContent(post *models.WpPosts) {
-	pw := h.session.Get("post_password")
-	if post.PostPassword != "" && post.PostPassword != pw {
-		if post.PostTitle != "" {
-			post.PostTitle = fmt.Sprintf("密码保护：%s", post.PostTitle)
-		}
-		if post.PostContent != "" {
-			format := `
-<form action="/login" class="post-password-form" method="post">
-<p>此内容受密码保护。如需查阅，请在下列字段中输入您的密码。</p>
-<p><label for="pwbox-%d">密码： <input name="post_password" id="pwbox-%d" type="password" size="20"></label> <input type="submit" name="Submit" value="提交"></p>
-</form>`
-			post.PostContent = fmt.Sprintf(format, post.Id, post.Id)
-		}
-	}
-}
-
-func (h *IndexHandle) recentPosts() (r []models.WpPosts, err error) {
-	r, err = models.Find[models.WpPosts](models.SqlBuilder{{
-		"post_type", "post",
-	}, {"post_status", "publish"}}, "ID,post_title,post_password", "", models.SqlBuilder{{"post_date", "desc"}}, nil, 5)
-	for i := 0; i < len(r); i++ {
-		h.formatTitleAndContent(&r[i])
-	}
-	return
-}
-
-func categories() (terms []models.WpTermsMy, err error) {
-	var in = []interface{}{"category"}
-	terms, err = models.Find[models.WpTermsMy](models.SqlBuilder{
-		{"tt.count", ">", "0", "int"},
-		{"tt.taxonomy", "in", ""},
-	}, "t.term_id", "", models.SqlBuilder{
-		{"t.name", "asc"},
-	}, models.SqlBuilder{
-		{"t", "inner join", "wp_term_taxonomy tt", "t.term_id = tt.term_id"},
-	}, 0, in)
-	for i := 0; i < len(terms); i++ {
-		if v, ok := models.Terms[terms[i].WpTerms.TermId]; ok {
-			terms[i].WpTerms = v
-		}
-		if v, ok := models.TermTaxonomy[terms[i].WpTerms.TermId]; ok {
-			terms[i].WpTermTaxonomy = v
-		}
-	}
-
-	return
-}
-
-func archives() (r []models.PostArchive, err error) {
-	r, err = models.Find[models.PostArchive](models.SqlBuilder{
-		{"post_type", "post"}, {"post_status", "publish"},
-	}, "YEAR(post_date) AS `year`, MONTH(post_date) AS `month`, count(ID) as posts", "year,month", models.SqlBuilder{{"year", "desc"}, {"month", "desc"}}, nil, 0)
-	return
 }
 
 func pagination(currentPage, totalPage, step int, path, query string) (html string) {
