@@ -22,10 +22,13 @@ func SetupRouter() *gin.Engine {
 			return template.HTML(s)
 		},
 		"dateCh": func(t time.Time) interface{} {
-			return t.Format("2006年01月02日")
+			return t.Format("2006年 01月 02日")
 		},
 	})
-	loadTemplates(r, "**/*")
+	reader := templates.NewFsTemplate(r.FuncMap)
+	reader.AddTemplate("index", "posts/index.html", "layout/*.html")
+	reader.AddTemplate("detail", "posts/detail.html", "layout/*.html")
+	r.HTMLRender = reader
 	r.Use(middleware.SetStaticFileCache)
 	//gzip 因为一般会用nginx做反代时自动使用gzip,所以go这边本身可以不用
 	/*r.Use(gzip.Gzip(gzip.DefaultCompression, gzip.WithExcludedPaths([]string{
@@ -52,10 +55,4 @@ func SetupRouter() *gin.Engine {
 	r.GET("/p/:id", actions.Detail)
 
 	return r
-}
-
-func loadTemplates(engine *gin.Engine, pattern string) {
-	templ := template.New("").Funcs(engine.FuncMap).Delims("{{", "}}")
-	templ = template.Must(templ.ParseFS(templates.TemplateFs, pattern))
-	engine.SetHTMLTemplate(templ)
 }

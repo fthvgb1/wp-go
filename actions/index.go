@@ -12,12 +12,9 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
-	"sync"
 )
 
-var PostsCache sync.Map
-
-type IndexHandle struct {
+type indexHandle struct {
 	c              *gin.Context
 	session        sessions.Session
 	page           int
@@ -39,8 +36,8 @@ type IndexHandle struct {
 	paginationStep int
 }
 
-func NewIndexHandle(ctx *gin.Context) *IndexHandle {
-	return &IndexHandle{
+func newIndexHandle(ctx *gin.Context) *indexHandle {
+	return &indexHandle{
 		c:              ctx,
 		session:        sessions.Default(ctx),
 		page:           1,
@@ -58,17 +55,17 @@ func NewIndexHandle(ctx *gin.Context) *IndexHandle {
 		status:   []interface{}{"publish"},
 	}
 }
-func (h *IndexHandle) setTitleLR(l, r string) {
+func (h *indexHandle) setTitleLR(l, r string) {
 	h.titleL = l
 	h.titleR = r
 }
 
-func (h *IndexHandle) getTitle() string {
+func (h *indexHandle) getTitle() string {
 	h.title = fmt.Sprintf("%s-%s", h.titleL, h.titleR)
 	return h.title
 }
 
-func (h *IndexHandle) parseParams() {
+func (h *indexHandle) parseParams() {
 	h.order = h.c.Query("order")
 	if !helper.IsContainInArr(h.order, []string{"asc", "desc"}) {
 		h.order = "asc"
@@ -143,73 +140,18 @@ func (h *IndexHandle) parseParams() {
 	}
 }
 
-func (h *IndexHandle) getTotalPage(totalRaws int) int {
+func (h *indexHandle) getTotalPage(totalRaws int) int {
 	h.totalPage = int(math.Ceil(float64(totalRaws) / float64(h.pageSize)))
 	return h.totalPage
 }
 
-func (h *IndexHandle) queryAndSetPostCache(postIds []models.WpPosts) (err error) {
-	var all []uint64
-	var needQuery []interface{}
-	for _, wpPosts := range postIds {
-		all = append(all, wpPosts.Id)
-		if _, ok := PostsCache.Load(wpPosts.Id); !ok {
-			needQuery = append(needQuery, wpPosts.Id)
-		}
-	}
-	if len(needQuery) > 0 {
-		rawPosts, er := models.Find[models.WpPosts](models.SqlBuilder{{
-			"Id", "in", "",
-		}}, "a.*,ifnull(d.name,'') category_name,ifnull(taxonomy,'') `taxonomy`", "", nil, models.SqlBuilder{{
-			"a", "left join", "wp_term_relationships b", "a.Id=b.object_id",
-		}, {
-			"left join", "wp_term_taxonomy c", "b.term_taxonomy_id=c.term_taxonomy_id",
-		}, {
-			"left join", "wp_terms d", "c.term_id=d.term_id",
-		}}, 0, needQuery)
-		if er != nil {
-			err = er
-			return
-		}
-		postsMap := make(map[uint64]*models.WpPosts)
-		for i, post := range rawPosts {
-			v, ok := postsMap[post.Id]
-			if !ok {
-				v = &rawPosts[i]
-			}
-			if post.Taxonomy == "category" {
-				v.Categories = append(v.Categories, post.CategoryName)
-			} else if post.Taxonomy == "post_tag" {
-				v.Tags = append(v.Tags, post.CategoryName)
-			}
-			postsMap[post.Id] = v
-		}
-		for _, pp := range postsMap {
-			if len(pp.Categories) > 0 {
-				t := make([]string, 0, len(pp.Categories))
-				for _, cat := range pp.Categories {
-					t = append(t, fmt.Sprintf(`<a href="/p/category/%s" rel="category tag">%s</a>`, cat, cat))
-				}
-				pp.CategoriesHtml = strings.Join(t, "、")
-			}
-			if len(pp.Tags) > 0 {
-				t := make([]string, 0, len(pp.Tags))
-				for _, cat := range pp.Tags {
-					t = append(t, fmt.Sprintf(`<a href="/p/tag/%s" rel="tag">%s</a>`, cat, cat))
-				}
-				pp.TagsHtml = strings.Join(t, "、")
-			}
-			PostsCache.Store(pp.Id, pp)
-		}
-	}
-	return
-}
-
 func Index(c *gin.Context) {
-	h := NewIndexHandle(c)
+	h := newIndexHandle(c)
 	h.parseParams()
+	ginH := gin.H{}
 	postIds, totalRaw, err := models.SimplePagination[models.WpPosts](h.where, "ID", "", h.page, h.pageSize, h.orderBy, h.join, h.postType, h.status)
 	defer func() {
+		c.HTML(http.StatusOK, "index", ginH)
 		if err != nil {
 			c.Error(err)
 		}
@@ -220,27 +162,28 @@ func Index(c *gin.Context) {
 	if len(postIds) < 1 && h.category != "" {
 		h.titleL = "未找到页面"
 	}
-	err = h.queryAndSetPostCache(postIds)
+	err = common.QueryAndSetPostCache(postIds)
 	pw := h.session.Get("post_password")
 	for i, v := range postIds {
-		post, _ := PostsCache.Load(v.Id)
+		post, _ := common.PostsCache.Load(v.Id)
 		pp := post.(*models.WpPosts)
 		px := *pp
+		common.PasswordProjectTitle(&px)
 		if px.PostPassword != "" && pw != px.PostPassword {
-			common.PasswdProject(&px)
+			common.PasswdProjectContent(&px)
 		}
 		postIds[i] = px
 	}
 	recent, err := common.RecentPosts()
 	for i, post := range recent {
 		if post.PostPassword != "" && pw != post.PostPassword {
-			common.PasswdProject(&recent[i])
+			common.PasswdProjectContent(&recent[i])
 		}
 	}
 	archive, err := common.Archives()
 	categoryItems, err := common.Categories()
 	q := c.Request.URL.Query().Encode()
-	c.HTML(http.StatusOK, "index.html", gin.H{
+	ginH = gin.H{
 		"posts":       postIds,
 		"options":     models.Options,
 		"recentPosts": recent,
@@ -251,7 +194,7 @@ func Index(c *gin.Context) {
 		"search":      h.search,
 		"header":      h.header,
 		"title":       h.getTitle(),
-	})
+	}
 }
 
 func pagination(currentPage, totalPage, step int, path, query string) (html string) {

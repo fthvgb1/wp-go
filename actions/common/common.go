@@ -3,7 +3,76 @@ package common
 import (
 	"fmt"
 	"github/fthvgb1/wp-go/models"
+	"strings"
+	"sync"
 )
+
+var PostsCache sync.Map
+
+func GetPostFromCache(Id uint64) (r models.WpPosts) {
+	p, ok := PostsCache.Load(Id)
+	if ok {
+		r = *p.(*models.WpPosts)
+	}
+	return
+}
+
+func QueryAndSetPostCache(postIds []models.WpPosts) (err error) {
+	var all []uint64
+	var needQuery []interface{}
+	for _, wpPosts := range postIds {
+		all = append(all, wpPosts.Id)
+		if _, ok := PostsCache.Load(wpPosts.Id); !ok {
+			needQuery = append(needQuery, wpPosts.Id)
+		}
+	}
+	if len(needQuery) > 0 {
+		rawPosts, er := models.Find[models.WpPosts](models.SqlBuilder{{
+			"Id", "in", "",
+		}}, "a.*,ifnull(d.name,'') category_name,ifnull(taxonomy,'') `taxonomy`", "", nil, models.SqlBuilder{{
+			"a", "left join", "wp_term_relationships b", "a.Id=b.object_id",
+		}, {
+			"left join", "wp_term_taxonomy c", "b.term_taxonomy_id=c.term_taxonomy_id",
+		}, {
+			"left join", "wp_terms d", "c.term_id=d.term_id",
+		}}, 0, needQuery)
+		if er != nil {
+			err = er
+			return
+		}
+		postsMap := make(map[uint64]*models.WpPosts)
+		for i, post := range rawPosts {
+			v, ok := postsMap[post.Id]
+			if !ok {
+				v = &rawPosts[i]
+			}
+			if post.Taxonomy == "category" {
+				v.Categories = append(v.Categories, post.CategoryName)
+			} else if post.Taxonomy == "post_tag" {
+				v.Tags = append(v.Tags, post.CategoryName)
+			}
+			postsMap[post.Id] = v
+		}
+		for _, pp := range postsMap {
+			if len(pp.Categories) > 0 {
+				t := make([]string, 0, len(pp.Categories))
+				for _, cat := range pp.Categories {
+					t = append(t, fmt.Sprintf(`<a href="/p/category/%s" rel="category tag">%s</a>`, cat, cat))
+				}
+				pp.CategoriesHtml = strings.Join(t, "、")
+			}
+			if len(pp.Tags) > 0 {
+				t := make([]string, 0, len(pp.Tags))
+				for _, cat := range pp.Tags {
+					t = append(t, fmt.Sprintf(`<a href="/p/tag/%s" rel="tag">%s</a>`, cat, cat))
+				}
+				pp.TagsHtml = strings.Join(t, "、")
+			}
+			PostsCache.Store(pp.Id, pp)
+		}
+	}
+	return
+}
 
 func Archives() (r []models.PostArchive, err error) {
 	r, err = models.Find[models.PostArchive](models.SqlBuilder{
@@ -37,13 +106,21 @@ func RecentPosts() (r []models.WpPosts, err error) {
 	r, err = models.Find[models.WpPosts](models.SqlBuilder{{
 		"post_type", "post",
 	}, {"post_status", "publish"}}, "ID,post_title,post_password", "", models.SqlBuilder{{"post_date", "desc"}}, nil, 5)
+	for i, post := range r {
+		if post.PostPassword != "" {
+			PasswordProjectTitle(&r[i])
+		}
+	}
 	return
 }
 
-func PasswdProject(post *models.WpPosts) {
-	if post.PostTitle != "" {
+func PasswordProjectTitle(post *models.WpPosts) {
+	if post.PostPassword != "" {
 		post.PostTitle = fmt.Sprintf("密码保护：%s", post.PostTitle)
 	}
+}
+
+func PasswdProjectContent(post *models.WpPosts) {
 	if post.PostContent != "" {
 		format := `
 <form action="/login" class="post-password-form" method="post">
