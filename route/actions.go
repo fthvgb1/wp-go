@@ -2,6 +2,7 @@ package route
 
 import (
 	"fmt"
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github/fthvgb1/wp-go/helper"
 	"github/fthvgb1/wp-go/models"
@@ -17,6 +18,7 @@ var PostsCache sync.Map
 
 type IndexHandle struct {
 	c              *gin.Context
+	session        sessions.Session
 	page           int
 	pageSize       int
 	title          string
@@ -39,6 +41,7 @@ type IndexHandle struct {
 func NewIndexHandle(ctx *gin.Context) *IndexHandle {
 	return &IndexHandle{
 		c:              ctx,
+		session:        sessions.Default(ctx),
 		page:           1,
 		pageSize:       10,
 		paginationStep: 1,
@@ -222,10 +225,10 @@ func index(c *gin.Context) {
 		post, _ := PostsCache.Load(v.Id)
 		pp := post.(*models.WpPosts)
 		px := *pp
-		formatTitleAndContent(&px)
+		h.formatTitleAndContent(&px)
 		postIds[i] = px
 	}
-	recent, err := recentPosts()
+	recent, err := h.recentPosts()
 	archive, err := archives()
 	categoryItems, err := categories()
 	q := c.Request.URL.Query().Encode()
@@ -243,14 +246,15 @@ func index(c *gin.Context) {
 	})
 }
 
-func formatTitleAndContent(post *models.WpPosts) {
-	if post.PostPassword != "" {
+func (h *IndexHandle) formatTitleAndContent(post *models.WpPosts) {
+	pw := h.session.Get("post_password")
+	if post.PostPassword != "" && post.PostPassword != pw {
 		if post.PostTitle != "" {
 			post.PostTitle = fmt.Sprintf("密码保护：%s", post.PostTitle)
 		}
 		if post.PostContent != "" {
 			format := `
-<form action="/wp-login.php?action=postpass" class="post-password-form" method="post">
+<form action="/login" class="post-password-form" method="post">
 <p>此内容受密码保护。如需查阅，请在下列字段中输入您的密码。</p>
 <p><label for="pwbox-%d">密码： <input name="post_password" id="pwbox-%d" type="password" size="20"></label> <input type="submit" name="Submit" value="提交"></p>
 </form>`
@@ -259,12 +263,12 @@ func formatTitleAndContent(post *models.WpPosts) {
 	}
 }
 
-func recentPosts() (r []models.WpPosts, err error) {
+func (h *IndexHandle) recentPosts() (r []models.WpPosts, err error) {
 	r, err = models.Find[models.WpPosts](models.SqlBuilder{{
 		"post_type", "post",
 	}, {"post_status", "publish"}}, "ID,post_title,post_password", "", models.SqlBuilder{{"post_date", "desc"}}, nil, 5)
 	for i := 0; i < len(r); i++ {
-		formatTitleAndContent(&r[i])
+		h.formatTitleAndContent(&r[i])
 	}
 	return
 }
