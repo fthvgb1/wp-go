@@ -1,10 +1,10 @@
 {{define "layout/page"}}
-{{if .pagination}}
-<nav class="navigation pagination" aria-label="文章">
-    <h2 class="screen-reader-text">文章导航</h2>
-    <div class="nav-links">
-        {{.pagination|unescaped}}
-    </div>
-</nav>
-{{end}}
+    {{if .pagination}}
+        <nav class="navigation pagination" aria-label="文章">
+            <h2 class="screen-reader-text">文章导航</h2>
+            <div class="nav-links">
+                {{.pagination|unescaped}}
+            </div>
+        </nav>
+    {{end}}
 {{end}}
