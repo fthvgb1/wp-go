@@ -17,15 +17,14 @@ func SetupRouter() *gin.Engine {
 	// Disable Console Color
 	// gin.DisableConsoleColor()
 	r := gin.Default()
-	r.SetFuncMap(template.FuncMap{
+	r.HTMLRender = templates.NewFsTemplate(template.FuncMap{
 		"unescaped": func(s string) interface{} {
 			return template.HTML(s)
 		},
 		"dateCh": func(t time.Time) interface{} {
 			return t.Format("2006年 01月 02日")
 		},
-	})
-	r.HTMLRender = templates.NewFsTemplate(r.FuncMap).AddTemplate()
+	}).AddTemplate()
 	r.Use(middleware.SetStaticFileCache)
 	//gzip 因为一般会用nginx做反代时自动使用gzip,所以go这边本身可以不用
 	/*r.Use(gzip.Gzip(gzip.DefaultCompression, gzip.WithExcludedPaths([]string{
