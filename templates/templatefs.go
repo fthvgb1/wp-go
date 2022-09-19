@@ -27,9 +27,7 @@ func (t *FsTemplate) AddTemplate() {
 	}
 	for _, include := range mainTemplates {
 		name := filepath.Base(include)
-		in := append([]string{include}, "layout/*.gohtml")
-		//n := strings.Replace(name, ".gohtml", "", -1)
-		t.Templates[include] = template.Must(template.New(name).Funcs(t.FuncMap).ParseFS(TemplateFs, in...))
+		t.Templates[include] = template.Must(template.New(name).Funcs(t.FuncMap).ParseFS(TemplateFs, include, "layout/*.gohtml"))
 	}
 }
 
@@ -37,7 +35,6 @@ func (t FsTemplate) Instance(name string, data any) render.Render {
 	r := t.Templates[name]
 	return render.HTML{
 		Template: r,
-		//Name:     name,
-		Data: data,
+		Data:     data,
 	}
 }
