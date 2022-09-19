@@ -2,12 +2,18 @@ package common
 
 import (
 	"fmt"
+	"github/fthvgb1/wp-go/cache"
 	"github/fthvgb1/wp-go/models"
 	"strings"
 	"sync"
+	"time"
 )
 
 var PostsCache sync.Map
+
+var archivesCaches = cache.NewSliceCache[models.PostArchive](archives, time.Hour*24)
+var categoryCaches = cache.NewSliceCache[models.WpTermsMy](categories, time.Minute*30)
+var recentPostsCaches = cache.NewSliceCache[models.WpPosts](recentPosts, time.Minute*30)
 
 func GetPostFromCache(Id uint64) (r models.WpPosts) {
 	p, ok := PostsCache.Load(Id)
@@ -74,14 +80,21 @@ func QueryAndSetPostCache(postIds []models.WpPosts) (err error) {
 	return
 }
 
-func Archives() (r []models.PostArchive, err error) {
-	r, err = models.Find[models.PostArchive](models.SqlBuilder{
+func archives() ([]models.PostArchive, error) {
+	return models.Find[models.PostArchive](models.SqlBuilder{
 		{"post_type", "post"}, {"post_status", "publish"},
 	}, "YEAR(post_date) AS `year`, MONTH(post_date) AS `month`, count(ID) as posts", "year,month", models.SqlBuilder{{"year", "desc"}, {"month", "desc"}}, nil, 0)
-	return
 }
 
-func Categories() (terms []models.WpTermsMy, err error) {
+func Archives() (r []models.PostArchive) {
+	return archivesCaches.GetCache()
+}
+
+func Categories() []models.WpTermsMy {
+	return categoryCaches.GetCache()
+}
+
+func categories() (terms []models.WpTermsMy, err error) {
 	var in = []interface{}{"category"}
 	terms, err = models.Find[models.WpTermsMy](models.SqlBuilder{
 		{"tt.count", ">", "0", "int"},
@@ -102,7 +115,10 @@ func Categories() (terms []models.WpTermsMy, err error) {
 	return
 }
 
-func RecentPosts() (r []models.WpPosts, err error) {
+func RecentPosts() (r []models.WpPosts) {
+	return recentPostsCaches.GetCache()
+}
+func recentPosts() (r []models.WpPosts, err error) {
 	r, err = models.Find[models.WpPosts](models.SqlBuilder{{
 		"post_type", "post",
 	}, {"post_status", "publish"}}, "ID,post_title,post_password", "", models.SqlBuilder{{"post_date", "desc"}}, nil, 5)

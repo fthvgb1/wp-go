@@ -174,14 +174,14 @@ func Index(c *gin.Context) {
 		}
 		postIds[i] = px
 	}
-	recent, err := common.RecentPosts()
+	recent := common.RecentPosts()
 	for i, post := range recent {
 		if post.PostPassword != "" && pw != post.PostPassword {
 			common.PasswdProjectContent(&recent[i])
 		}
 	}
-	archive, err := common.Archives()
-	categoryItems, err := common.Categories()
+	archive := common.Archives()
+	categoryItems := common.Categories()
 	q := c.Request.URL.Query().Encode()
 	ginH = gin.H{
 		"posts":       postIds,
