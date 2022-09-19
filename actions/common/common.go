@@ -82,17 +82,17 @@ func GetContextPost(id uint64, t time.Time) (prev, next models.WpPosts, err erro
 func getPostContext(t time.Time) (prev, next models.WpPosts, err error) {
 	next, err = models.FirstOne[models.WpPosts](models.SqlBuilder{
 		{"post_date", ">", t.Format("2006-01-02 15:04:05")},
-		{"post_status", "publish"},
+		{"post_status", "in", ""},
 		{"post_type", "post"},
-	}, "ID,post_title,post_password", nil)
+	}, "ID,post_title,post_password", nil, []interface{}{"publish", "private"})
 	if _, ok := PostsCache.Load(next.Id); !ok {
 
 	}
 	prev, err = models.FirstOne[models.WpPosts](models.SqlBuilder{
 		{"post_date", "<", t.Format("2006-01-02 15:04:05")},
-		{"post_status", "publish"},
+		{"post_status", "in", ""},
 		{"post_type", "post"},
-	}, "ID,post_title", models.SqlBuilder{{"post_date", "desc"}})
+	}, "ID,post_title", models.SqlBuilder{{"post_date", "desc"}}, []interface{}{"publish", "private"})
 	return
 }
 
