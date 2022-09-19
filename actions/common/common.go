@@ -14,12 +14,12 @@ import (
 var PostsCache sync.Map
 var PostContextCache sync.Map
 
-var archivesCaches *Arch[models.PostArchive]
+var archivesCaches *Arch
 var categoryCaches *cache.SliceCache[models.WpTermsMy]
 var recentPostsCaches *cache.SliceCache[models.WpPosts]
 
 func InitCache() {
-	archivesCaches = &Arch[models.PostArchive]{
+	archivesCaches = &Arch{
 		mutex:        &sync.Mutex{},
 		setCacheFunc: archives,
 	}
@@ -27,15 +27,14 @@ func InitCache() {
 	recentPostsCaches = cache.NewSliceCache[models.WpPosts](recentPosts, vars.Conf.RecentPostCacheTime)
 }
 
-type Arch[T any] struct {
-	cache.SliceCache[T]
-	data         []T
+type Arch struct {
+	data         []models.PostArchive
 	mutex        *sync.Mutex
-	setCacheFunc func() ([]T, error)
+	setCacheFunc func() ([]models.PostArchive, error)
 	month        time.Month
 }
 
-func (c *Arch[T]) GetCache() []T {
+func (c *Arch) GetCache() []models.PostArchive {
 	l := len(c.data)
 	m := time.Now().Month()
 	if l > 0 && c.month != m || l < 1 {
