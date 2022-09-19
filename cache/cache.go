@@ -31,7 +31,7 @@ func (c *SliceCache[T]) FlushCache() {
 func (c *SliceCache[T]) GetCache() []T {
 	l := len(c.data)
 	expired := time.Duration(c.setTime.Unix())+c.expireTime/time.Second < time.Duration(time.Now().Unix())
-	if l < 1 || (l > 0 && c.expireTime > 0 && expired) {
+	if l < 1 || (l > 0 && c.expireTime >= 0 && expired) {
 		r, err := c.setCacheFunc()
 		if err != nil {
 			log.Printf("set cache err[%s]", err)
