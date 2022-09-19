@@ -15,7 +15,7 @@ func Detail(c *gin.Context) {
 	var h = gin.H{}
 	var err error
 	defer func() {
-		c.HTML(http.StatusOK, "detail", h)
+		c.HTML(http.StatusOK, "posts/detail.gohtml", h)
 		if err != nil {
 			c.Error(err)
 		}

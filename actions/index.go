@@ -151,7 +151,7 @@ func Index(c *gin.Context) {
 	ginH := gin.H{}
 	postIds, totalRaw, err := models.SimplePagination[models.WpPosts](h.where, "ID", "", h.page, h.pageSize, h.orderBy, h.join, h.postType, h.status)
 	defer func() {
-		c.HTML(http.StatusOK, "index", ginH)
+		c.HTML(http.StatusOK, "posts/index.gohtml", ginH)
 		if err != nil {
 			c.Error(err)
 		}

@@ -4,6 +4,7 @@ import (
 	"embed"
 	"github.com/gin-gonic/gin/render"
 	"html/template"
+	"io/fs"
 	"path/filepath"
 )
 
@@ -19,16 +20,24 @@ func NewFsTemplate(funcMap template.FuncMap) *FsTemplate {
 	return &FsTemplate{FuncMap: funcMap, Templates: make(map[string]*template.Template)}
 }
 
-func (t *FsTemplate) AddTemplate(name, main string, sub ...string) {
-	tmp := []string{main}
-	tmp = append(tmp, sub...)
-	t.Templates[name] = template.Must(template.New(filepath.Base(main)).Funcs(t.FuncMap).ParseFS(TemplateFs, tmp...))
+func (t *FsTemplate) AddTemplate() {
+	mainTemplates, err := fs.Glob(TemplateFs, "*[^layout]/*.gohtml")
+	if err != nil {
+		panic(err)
+	}
+	for _, include := range mainTemplates {
+		name := filepath.Base(include)
+		in := append([]string{include}, "layout/*.gohtml")
+		//n := strings.Replace(name, ".gohtml", "", -1)
+		t.Templates[include] = template.Must(template.New(name).Funcs(t.FuncMap).ParseFS(TemplateFs, in...))
+	}
 }
 
 func (t FsTemplate) Instance(name string, data any) render.Render {
 	r := t.Templates[name]
 	return render.HTML{
 		Template: r,
-		Data:     data,
+		//Name:     name,
+		Data: data,
 	}
 }

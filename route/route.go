@@ -26,8 +26,7 @@ func SetupRouter() *gin.Engine {
 		},
 	})
 	reader := templates.NewFsTemplate(r.FuncMap)
-	reader.AddTemplate("index", "posts/index.gohtml", "layout/*.gohtml")
-	reader.AddTemplate("detail", "posts/detail.gohtml", "layout/*.gohtml")
+	reader.AddTemplate()
 	r.HTMLRender = reader
 	r.Use(middleware.SetStaticFileCache)
 	//gzip 因为一般会用nginx做反代时自动使用gzip,所以go这边本身可以不用
