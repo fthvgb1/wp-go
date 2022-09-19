@@ -20,7 +20,7 @@ func NewFsTemplate(funcMap template.FuncMap) *FsTemplate {
 	return &FsTemplate{FuncMap: funcMap, Templates: make(map[string]*template.Template)}
 }
 
-func (t *FsTemplate) AddTemplate() {
+func (t *FsTemplate) AddTemplate() *FsTemplate {
 	mainTemplates, err := fs.Glob(TemplateFs, "*[^layout]/*.gohtml")
 	if err != nil {
 		panic(err)
@@ -29,6 +29,7 @@ func (t *FsTemplate) AddTemplate() {
 		name := filepath.Base(include)
 		t.Templates[include] = template.Must(template.New(name).Funcs(t.FuncMap).ParseFS(TemplateFs, include, "layout/*.gohtml"))
 	}
+	return t
 }
 
 func (t FsTemplate) Instance(name string, data any) render.Render {
