@@ -24,7 +24,7 @@ func SetupRouter() *gin.Engine {
 		"dateCh": func(t time.Time) interface{} {
 			return t.Format("2006年 01月 02日")
 		},
-	}).AddTemplate()
+	}).SetTemplate()
 	r.Use(middleware.SetStaticFileCache)
 	//gzip 因为一般会用nginx做反代时自动使用gzip,所以go这边本身可以不用
 	/*r.Use(gzip.Gzip(gzip.DefaultCompression, gzip.WithExcludedPaths([]string{
