@@ -50,22 +50,20 @@ func Detail(c *gin.Context) {
 		}
 	}
 	pw := sessions.Default(c).Get("post_password")
-	showComment := true
+	showComment := false
+	if post.CommentCount > 0 || post.CommentStatus == "open" {
+		showComment = true
+	}
 	common.PasswordProjectTitle(&post)
 	if post.PostPassword != "" && pw != post.PostPassword {
 		common.PasswdProjectContent(&post)
 		showComment = false
 	}
-	canComment := false
-	if post.CommentStatus == "open" {
-		canComment = true
-	}
 	prev, next, err := common.GetContextPost(post.Id, post.PostDate)
 
 	h["title"] = fmt.Sprintf("%s-%s", post.PostTitle, models.Options["blogname"])
 	h["post"] = post
-	h["comment"] = showComment
-	h["canComment"] = canComment
+	h["showComment"] = showComment
 	h["prev"] = prev
 	h["next"] = next
 }

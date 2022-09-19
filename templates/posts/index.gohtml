@@ -49,12 +49,14 @@
                     {{$v.TagsHtml|unescaped}}
                 </span>
                             {{end}}
+                            {{if gt $v.CommentCount 0}}
+                                <span class="comments-link">
+                        <a href="/p/{{$v.Id}}#comments">
+                             <span class="screen-reader-text">{{$v.PostTitle}}</span>有{{$v.CommentCount}}条评论
+                         </a>
+                    </span>
+                            {{end}}
 
-                            <span class="comments-link">
-                    <a href="/p/1#comments">
-                        <span class="screen-reader-text">{{$v.PostTitle}}</span>有1条评论
-                    </a>
-                </span>
                         </footer><!-- .entry-footer -->
 
                     </article><!-- #post-{{$v.Id}} -->
