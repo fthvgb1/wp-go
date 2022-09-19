@@ -11,16 +11,24 @@ import (
 )
 
 func Detail(c *gin.Context) {
-	id := c.Param("id")
-	var h = gin.H{}
 	var err error
+	recent := common.RecentPosts()
+	archive := common.Archives()
+	categoryItems := common.Categories()
+	var h = gin.H{
+		"title":       models.Options["blogname"],
+		"options":     models.Options,
+		"recentPosts": recent,
+		"archives":    archive,
+		"categories":  categoryItems,
+	}
 	defer func() {
 		c.HTML(http.StatusOK, "posts/detail.gohtml", h)
 		if err != nil {
 			c.Error(err)
 		}
 	}()
-
+	id := c.Param("id")
 	Id := 0
 	if id != "" {
 		Id, err = strconv.Atoi(id)
@@ -48,43 +56,16 @@ func Detail(c *gin.Context) {
 		common.PasswdProjectContent(&post)
 		showComment = false
 	}
-	recent, err := common.RecentPosts()
-	archive, err := common.Archives()
-	categoryItems, err := common.Categories()
 	canComment := false
 	if post.CommentStatus == "open" {
 		canComment = true
 	}
-	prev, err := models.FirstOne[models.WpPosts](models.SqlBuilder{
-		{"post_date", "<", post.PostDate.Format("2006-01-02 15:04:05")},
-		{"post_status", "publish"},
-		{"post_type", "post"},
-	}, "ID,post_title")
-	if prev.Id > 0 {
-		if _, ok := common.PostsCache.Load(prev.Id); !ok {
-			common.QueryAndSetPostCache([]models.WpPosts{prev})
-		}
-	}
-	next, err := models.FirstOne[models.WpPosts](models.SqlBuilder{
-		{"post_date", ">", post.PostDate.Format("2006-01-02 15:04:05")},
-		{"post_status", "publish"},
-		{"post_type", "post"},
-	}, "ID,post_title,post_password")
-	if prev.Id > 0 {
-		if _, ok := common.PostsCache.Load(next.Id); !ok {
-			common.QueryAndSetPostCache([]models.WpPosts{next})
-		}
-	}
-	h = gin.H{
-		"title":       fmt.Sprintf("%s-%s", post.PostTitle, models.Options["blogname"]),
-		"post":        post,
-		"options":     models.Options,
-		"recentPosts": recent,
-		"archives":    archive,
-		"categories":  categoryItems,
-		"comment":     showComment,
-		"canComment":  canComment,
-		"prev":        prev,
-		"next":        next,
-	}
+	prev, next, err := common.GetContextPost(post.Id, post.PostDate)
+
+	h["title"] = fmt.Sprintf("%s-%s", post.PostTitle, models.Options["blogname"])
+	h["post"] = post
+	h["comment"] = showComment
+	h["canComment"] = canComment
+	h["prev"] = prev
+	h["next"] = next
 }

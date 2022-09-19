@@ -4,16 +4,68 @@ import (
 	"fmt"
 	"github/fthvgb1/wp-go/cache"
 	"github/fthvgb1/wp-go/models"
+	"github/fthvgb1/wp-go/vars"
 	"strings"
 	"sync"
 	"time"
 )
 
 var PostsCache sync.Map
+var PostContextCache sync.Map
 
-var archivesCaches = cache.NewSliceCache[models.PostArchive](archives, time.Hour*24)
-var categoryCaches = cache.NewSliceCache[models.WpTermsMy](categories, time.Minute*30)
-var recentPostsCaches = cache.NewSliceCache[models.WpPosts](recentPosts, time.Minute*30)
+var archivesCaches *cache.SliceCache[models.PostArchive]
+var categoryCaches *cache.SliceCache[models.WpTermsMy]
+var recentPostsCaches *cache.SliceCache[models.WpPosts]
+
+func InitCache() {
+	archivesCaches = cache.NewSliceCache[models.PostArchive](archives, vars.Conf.ArchiveCacheTime)
+	categoryCaches = cache.NewSliceCache[models.WpTermsMy](categories, vars.Conf.CategoryCacheTime)
+	recentPostsCaches = cache.NewSliceCache[models.WpPosts](recentPosts, vars.Conf.RecentPostCacheTime)
+}
+
+type PostContext struct {
+	Prev       models.WpPosts
+	Next       models.WpPosts
+	expireTime time.Duration
+	setTime    time.Time
+}
+
+func GetContextPost(id uint64, t time.Time) (prev, next models.WpPosts, err error) {
+	post, ok := PostContextCache.Load(id)
+	if ok {
+		c := post.(PostContext)
+		isExp := c.expireTime/time.Second+time.Duration(c.setTime.Unix()) < time.Duration(time.Now().Unix())
+		if !isExp && (c.Prev.Id > 0 || c.Next.Id > 0) {
+			return c.Prev, c.Next, nil
+		}
+	}
+	prev, next, err = getPostContext(t)
+	post = PostContext{
+		Prev:       prev,
+		Next:       next,
+		expireTime: vars.Conf.ContextPostCacheTime,
+		setTime:    time.Now(),
+	}
+	PostContextCache.Store(id, post)
+	return
+}
+
+func getPostContext(t time.Time) (prev, next models.WpPosts, err error) {
+	next, err = models.FirstOne[models.WpPosts](models.SqlBuilder{
+		{"post_date", ">", t.Format("2006-01-02 15:04:05")},
+		{"post_status", "publish"},
+		{"post_type", "post"},
+	}, "ID,post_title,post_password")
+	if _, ok := PostsCache.Load(next.Id); !ok {
+
+	}
+	prev, err = models.FirstOne[models.WpPosts](models.SqlBuilder{
+		{"post_date", "<", t.Format("2006-01-02 15:04:05")},
+		{"post_status", "publish"},
+		{"post_type", "post"},
+	}, "ID,post_title")
+	return
+}
 
 func GetPostFromCache(Id uint64) (r models.WpPosts) {
 	p, ok := PostsCache.Load(Id)

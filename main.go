@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github/fthvgb1/wp-go/actions/common"
 	"github/fthvgb1/wp-go/db"
 	"github/fthvgb1/wp-go/models"
 	"github/fthvgb1/wp-go/route"
@@ -12,6 +13,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
+	common.InitCache()
 	err = db.InitDb()
 	if err != nil {
 		panic(err)

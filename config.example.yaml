@@ -15,3 +15,11 @@ mysql:
     maxIdleConn: 10
     # 连接的生命时长
     connMaxLifetime: 236
+# 最近文章缓存时间
+recentPostCacheTime: 30m
+# 分类缓存时间
+categoryCacheTime: 30m
+# 归档缓存时间
+archiveCacheTime: 24h
+# 上下篇缓存时间
+contextPostCacheTime: 1h
