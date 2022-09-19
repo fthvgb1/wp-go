@@ -3,6 +3,7 @@ package actions
 import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"net/http"
 	"strings"
 )
 
@@ -13,7 +14,7 @@ func Login(c *gin.Context) {
 		ref = "/"
 	}
 	if password == "" || strings.Replace(password, " ", "", -1) == "" {
-		c.Redirect(304, ref)
+		c.Redirect(http.StatusFound, ref)
 		return
 	}
 	s := sessions.Default(c)
@@ -23,5 +24,5 @@ func Login(c *gin.Context) {
 		c.Error(err)
 		return
 	}
-	c.Redirect(302, ref)
+	c.Redirect(http.StatusFound, ref)
 }
