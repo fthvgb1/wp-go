@@ -148,7 +148,18 @@ func (h *indexHandle) getTotalPage(totalRaws int) int {
 func Index(c *gin.Context) {
 	h := newIndexHandle(c)
 	h.parseParams()
-	ginH := gin.H{}
+	archive := common.Archives()
+	recent := common.RecentPosts()
+	categoryItems := common.Categories()
+	ginH := gin.H{
+		"options":     models.Options,
+		"recentPosts": recent,
+		"archives":    archive,
+		"categories":  categoryItems,
+		"search":      h.search,
+		"header":      h.header,
+		"title":       h.getTitle(),
+	}
 	postIds, totalRaw, err := models.SimplePagination[models.WpPosts](h.where, "ID", "", h.page, h.pageSize, h.orderBy, h.join, h.postType, h.status)
 	defer func() {
 		c.HTML(http.StatusOK, "posts/index.gohtml", ginH)
@@ -174,27 +185,16 @@ func Index(c *gin.Context) {
 		}
 		postIds[i] = px
 	}
-	recent := common.RecentPosts()
 	for i, post := range recent {
 		if post.PostPassword != "" && pw != post.PostPassword {
 			common.PasswdProjectContent(&recent[i])
 		}
 	}
-	archive := common.Archives()
-	categoryItems := common.Categories()
 	q := c.Request.URL.Query().Encode()
-	ginH = gin.H{
-		"posts":       postIds,
-		"options":     models.Options,
-		"recentPosts": recent,
-		"archives":    archive,
-		"categories":  categoryItems,
-		"totalPage":   h.getTotalPage(totalRaw),
-		"pagination":  pagination(h.page, h.totalPage, h.paginationStep, c.Request.URL.Path, q),
-		"search":      h.search,
-		"header":      h.header,
-		"title":       h.getTitle(),
-	}
+	ginH["posts"] = postIds
+	ginH["totalPage"] = h.getTotalPage(totalRaw)
+	ginH["pagination"] = pagination(h.page, h.totalPage, h.paginationStep, c.Request.URL.Path, q)
+	ginH["title"] = h.getTitle()
 }
 
 func pagination(currentPage, totalPage, step int, path, query string) (html string) {

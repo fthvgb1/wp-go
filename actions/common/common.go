@@ -5,6 +5,7 @@ import (
 	"github/fthvgb1/wp-go/cache"
 	"github/fthvgb1/wp-go/models"
 	"github/fthvgb1/wp-go/vars"
+	"log"
 	"strings"
 	"sync"
 	"time"
@@ -13,14 +14,42 @@ import (
 var PostsCache sync.Map
 var PostContextCache sync.Map
 
-var archivesCaches *cache.SliceCache[models.PostArchive]
+var archivesCaches *Arch[models.PostArchive]
 var categoryCaches *cache.SliceCache[models.WpTermsMy]
 var recentPostsCaches *cache.SliceCache[models.WpPosts]
 
 func InitCache() {
-	archivesCaches = cache.NewSliceCache[models.PostArchive](archives, vars.Conf.ArchiveCacheTime)
+	archivesCaches = &Arch[models.PostArchive]{
+		mutex:        &sync.Mutex{},
+		setCacheFunc: archives,
+	}
 	categoryCaches = cache.NewSliceCache[models.WpTermsMy](categories, vars.Conf.CategoryCacheTime)
 	recentPostsCaches = cache.NewSliceCache[models.WpPosts](recentPosts, vars.Conf.RecentPostCacheTime)
+}
+
+type Arch[T any] struct {
+	cache.SliceCache[T]
+	data         []T
+	mutex        *sync.Mutex
+	setCacheFunc func() ([]T, error)
+	month        time.Month
+}
+
+func (c *Arch[T]) GetCache() []T {
+	l := len(c.data)
+	m := time.Now().Month()
+	if l > 0 && c.month != m || l < 1 {
+		r, err := c.setCacheFunc()
+		if err != nil {
+			log.Printf("set cache err[%s]", err)
+			return nil
+		}
+		c.mutex.Lock()
+		defer c.mutex.Unlock()
+		c.month = m
+		c.data = r
+	}
+	return c.data
 }
 
 type PostContext struct {
@@ -55,7 +84,7 @@ func getPostContext(t time.Time) (prev, next models.WpPosts, err error) {
 		{"post_date", ">", t.Format("2006-01-02 15:04:05")},
 		{"post_status", "publish"},
 		{"post_type", "post"},
-	}, "ID,post_title,post_password")
+	}, "ID,post_title,post_password", nil)
 	if _, ok := PostsCache.Load(next.Id); !ok {
 
 	}
@@ -63,7 +92,7 @@ func getPostContext(t time.Time) (prev, next models.WpPosts, err error) {
 		{"post_date", "<", t.Format("2006-01-02 15:04:05")},
 		{"post_status", "publish"},
 		{"post_type", "post"},
-	}, "ID,post_title")
+	}, "ID,post_title", models.SqlBuilder{{"post_date", "desc"}})
 	return
 }
 

@@ -22,12 +22,6 @@ func NewSliceCache[T any](fun func() ([]T, error), duration time.Duration) *Slic
 	}
 }
 
-func (c *SliceCache[T]) FlushCache() {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-	c.data = nil
-}
-
 func (c *SliceCache[T]) GetCache() []T {
 	l := len(c.data)
 	expired := time.Duration(c.setTime.Unix())+c.expireTime/time.Second < time.Duration(time.Now().Unix())
@@ -37,6 +31,8 @@ func (c *SliceCache[T]) GetCache() []T {
 			log.Printf("set cache err[%s]", err)
 			return nil
 		}
+		c.mutex.Lock()
+		defer c.mutex.Unlock()
 		c.setTime = time.Now()
 		c.data = r
 	}

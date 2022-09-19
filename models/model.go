@@ -221,11 +221,11 @@ func FindOneById[T Model](id int) (T, error) {
 	return r, nil
 }
 
-func FirstOne[T Model](where ParseWhere, fields string, in ...[]interface{}) (T, error) {
+func FirstOne[T Model](where ParseWhere, fields string, order SqlBuilder, in ...[]interface{}) (T, error) {
 	var r T
 	w, args := where.ParseWhere(in...)
-	tp := "select %s from %s %s"
-	sql := fmt.Sprintf(tp, fields, r.Table(), w)
+	tp := "select %s from %s %s %s"
+	sql := fmt.Sprintf(tp, fields, r.Table(), w, order.parseOrderBy())
 	err := db.Db.Get(&r, sql, args...)
 	if err != nil {
 		return r, err
