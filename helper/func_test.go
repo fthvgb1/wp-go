@@ -103,6 +103,15 @@ func TestRangeSlice(t *testing.T) {
 			},
 			want: []int{0, 2, 4},
 		},
+		{
+			name: "t3",
+			args: args{
+				start: 1,
+				end:   11,
+				step:  3,
+			},
+			want: []int{1, 4, 7, 10},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -128,6 +137,61 @@ func TestStrJoin(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if gotStr := StrJoin(tt.args.s...); gotStr != tt.wantStr {
 				t.Errorf("StrJoin() = %v, want %v", gotStr, tt.wantStr)
+			}
+		})
+	}
+}
+
+func TestSlicePagination(t *testing.T) {
+	arr := RangeSlice[int](1, 10, 1)
+	type args struct {
+		arr      []int
+		page     int
+		pageSize int
+	}
+	tests := []struct {
+		name string
+		args args
+		want []int
+	}{
+		{
+			name: "t1",
+			args: args{
+				arr:      arr,
+				page:     1,
+				pageSize: 2,
+			},
+			want: RangeSlice[int](1, 2, 1),
+		}, {
+			name: "t2",
+			args: args{
+				arr:      arr,
+				page:     2,
+				pageSize: 2,
+			},
+			want: RangeSlice[int](3, 4, 1),
+		}, {
+			name: "t3",
+			args: args{
+				arr:      arr,
+				page:     4,
+				pageSize: 3,
+			},
+			want: []int{10},
+		}, {
+			name: "t4",
+			args: args{
+				arr:      arr,
+				page:     5,
+				pageSize: 3,
+			},
+			want: []int{},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := SlicePagination(tt.args.arr, tt.args.page, tt.args.pageSize); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("SlicePagination() = %v, want %v", got, tt.want)
 			}
 		})
 	}

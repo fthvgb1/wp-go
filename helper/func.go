@@ -25,7 +25,7 @@ func StructColumn[T any, M any](arr []M, field string) (r []T) {
 }
 
 func RangeSlice[T ~int | ~uint | ~int64 | ~int8 | ~int16 | ~int32 | ~uint64](start, end, step T) []T {
-	r := make([]T, 0, int(end/step+1))
+	r := make([]T, 0, int((end-start+1)/step+1))
 	for i := start; i <= end; {
 		r = append(r, i)
 		i = i + step
@@ -44,4 +44,17 @@ func StrJoin(s ...string) (str string) {
 		str = b.String()
 	}
 	return
+}
+
+func SlicePagination[T any](arr []T, page, pageSize int) []T {
+	start := (page - 1) * pageSize
+	l := len(arr)
+	if start > l {
+		start = l
+	}
+	end := page * pageSize
+	if l < end {
+		end = l
+	}
+	return arr[start:end]
 }

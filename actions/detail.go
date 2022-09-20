@@ -17,12 +17,14 @@ func Detail(c *gin.Context) {
 	recent := common.RecentPosts(ctx)
 	archive := common.Archives()
 	categoryItems := common.Categories(ctx)
+	comments := common.RecentComments(ctx)
 	var h = gin.H{
 		"title":       models.Options["blogname"],
 		"options":     models.Options,
 		"recentPosts": recent,
 		"archives":    archive,
 		"categories":  categoryItems,
+		"comments":    comments,
 	}
 	defer func() {
 		c.HTML(http.StatusOK, "posts/detail.gohtml", h)

@@ -21,3 +21,5 @@ recentPostCacheTime: 30m
 categoryCacheTime: 30m
 # 上下篇缓存时间
 contextPostCacheTime: 1h
+# 最近评论缓存时间
+recentCommentsCacheTime: 10m

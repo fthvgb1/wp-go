@@ -10,11 +10,12 @@ import (
 var Conf Config
 
 type Config struct {
-	Mysql                Mysql         `yaml:"mysql"`
-	RecentPostCacheTime  time.Duration `yaml:"recentPostCacheTime"`
-	CategoryCacheTime    time.Duration `yaml:"categoryCacheTime"`
-	ArchiveCacheTime     time.Duration `yaml:"archiveCacheTime"`
-	ContextPostCacheTime time.Duration `yaml:"contextPostCacheTime"`
+	Mysql                   Mysql         `yaml:"mysql"`
+	RecentPostCacheTime     time.Duration `yaml:"recentPostCacheTime"`
+	CategoryCacheTime       time.Duration `yaml:"categoryCacheTime"`
+	ArchiveCacheTime        time.Duration `yaml:"archiveCacheTime"`
+	ContextPostCacheTime    time.Duration `yaml:"contextPostCacheTime"`
+	RecentCommentsCacheTime time.Duration `yaml:"recentCommentsCacheTime"`
 }
 
 type Mysql struct {

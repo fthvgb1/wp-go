@@ -37,6 +37,7 @@ func (c *MapCache[K, V]) GetCache(ctx context.Context, key K, timeout time.Durat
 	_, ok := c.data[key]
 	var err error
 	expired := time.Duration(c.setTime.Unix())+c.expireTime/time.Second < time.Duration(time.Now().Unix())
+	//todo 这里应该判断下取出的值是否为零值，不过怎么操作呢？
 	if !ok || (c.expireTime >= 0 && expired) {
 		t := c.incr
 		call := func() {

@@ -18,6 +18,8 @@ type WpComments struct {
 	CommentType        string    `gorm:"column:comment_type" db:"comment_type" json:"comment_type" form:"comment_type"`
 	CommentParent      uint64    `gorm:"column:comment_parent" db:"comment_parent" json:"comment_parent" form:"comment_parent"`
 	UserId             uint64    `gorm:"column:user_id" db:"user_id" json:"user_id" form:"user_id"`
+	//扩展字段
+	PostTitle string `db:"post_title"`
 }
 
 func (w WpComments) PrimaryKey() string {

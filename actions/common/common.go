@@ -20,6 +20,7 @@ var archivesCaches *Arch
 var categoryCaches *cache.SliceCache[models.WpTermsMy]
 var recentPostsCaches *cache.SliceCache[models.WpPosts]
 var monthCaches *cache.MapCache[string, []models.WpPosts]
+var recentCommentsCaches *cache.SliceCache[models.WpComments]
 
 func InitCache() {
 	archivesCaches = &Arch{
@@ -29,6 +30,7 @@ func InitCache() {
 	categoryCaches = cache.NewSliceCache[models.WpTermsMy](categories, vars.Conf.CategoryCacheTime)
 	recentPostsCaches = cache.NewSliceCache[models.WpPosts](recentPosts, vars.Conf.RecentPostCacheTime)
 	monthCaches = cache.NewMapCache[string, []models.WpPosts](getMonthPost, 30*time.Minute)
+	recentCommentsCaches = cache.NewSliceCache[models.WpComments](recentComments, vars.Conf.RecentCommentsCacheTime)
 }
 
 type Arch struct {
@@ -64,6 +66,19 @@ type PostContext struct {
 
 func GetMonthPost(ctx context.Context, year, month string) ([]models.WpPosts, error) {
 	return monthCaches.GetCache(ctx, fmt.Sprintf("%s%s", year, month), time.Second, year, month)
+}
+
+func RecentComments(ctx context.Context) (r []models.WpComments) {
+	r, _ = recentCommentsCaches.GetCache(ctx, time.Second)
+	return
+}
+func recentComments(...any) (r []models.WpComments, err error) {
+	return models.Find[models.WpComments](models.SqlBuilder{
+		{"comment_approved", "1"},
+		{"post_status", "publish"},
+	}, "comment_ID,comment_author,comment_post_ID,post_title", "", models.SqlBuilder{{"comment_date_gmt", "desc"}}, models.SqlBuilder{
+		{"a", "left join", "wp_posts b", "a.comment_post_ID=b.ID"},
+	}, 5)
 }
 
 func getMonthPost(args ...any) ([]models.WpPosts, error) {
