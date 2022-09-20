@@ -33,6 +33,7 @@ func (c *SliceCache[T]) FlushCache() {
 
 func (c *SliceCache[T]) GetCache(ctx context.Context, timeout time.Duration, params ...any) ([]T, error) {
 	l := len(c.data)
+	data := c.data
 	var err error
 	expired := time.Duration(c.setTime.Unix())+c.expireTime/time.Second < time.Duration(time.Now().Unix())
 	if l < 1 || (l > 0 && c.expireTime >= 0 && expired) {
@@ -50,6 +51,7 @@ func (c *SliceCache[T]) GetCache(ctx context.Context, timeout time.Duration, par
 			}
 			c.setTime = time.Now()
 			c.data = r
+			data = r
 			c.incr++
 		}
 		if timeout > 0 {
@@ -72,5 +74,5 @@ func (c *SliceCache[T]) GetCache(ctx context.Context, timeout time.Duration, par
 		}
 
 	}
-	return c.data, err
+	return data, err
 }

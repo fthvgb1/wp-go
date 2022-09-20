@@ -2,6 +2,7 @@ package common
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"github/fthvgb1/wp-go/cache"
 	"github/fthvgb1/wp-go/models"
@@ -18,6 +19,7 @@ var PostContextCache sync.Map
 var archivesCaches *Arch
 var categoryCaches *cache.SliceCache[models.WpTermsMy]
 var recentPostsCaches *cache.SliceCache[models.WpPosts]
+var monthCaches *cache.MapCache[string, []models.WpPosts]
 
 func InitCache() {
 	archivesCaches = &Arch{
@@ -26,6 +28,7 @@ func InitCache() {
 	}
 	categoryCaches = cache.NewSliceCache[models.WpTermsMy](categories, vars.Conf.CategoryCacheTime)
 	recentPostsCaches = cache.NewSliceCache[models.WpPosts](recentPosts, vars.Conf.RecentPostCacheTime)
+	monthCaches = cache.NewMapCache[string, []models.WpPosts](getMonthPost, 30*time.Minute)
 }
 
 type Arch struct {
@@ -59,6 +62,25 @@ type PostContext struct {
 	setTime    time.Time
 }
 
+func GetMonthPost(ctx context.Context, year, month string) ([]models.WpPosts, error) {
+	return monthCaches.GetCache(ctx, fmt.Sprintf("%s%s", year, month), time.Second, year, month)
+}
+
+func getMonthPost(args ...any) ([]models.WpPosts, error) {
+	y := args[0].(string)
+	m := args[1].(string)
+	where := models.SqlBuilder{
+		{"post_type", "in", ""},
+		{"post_status", "in", ""},
+		{"month(post_date)", m},
+		{"year(post_date)", y},
+	}
+	return models.Find[models.WpPosts](where, "ID", "",
+		models.SqlBuilder{{"post_date", "asc"}},
+		nil, 0, []interface{}{"post"}, []interface{}{"publish"},
+	)
+}
+
 func GetContextPost(id uint64, t time.Time) (prev, next models.WpPosts, err error) {
 	post, ok := PostContextCache.Load(id)
 	if ok {
@@ -85,14 +107,14 @@ func getPostContext(t time.Time) (prev, next models.WpPosts, err error) {
 		{"post_status", "in", ""},
 		{"post_type", "post"},
 	}, "ID,post_title,post_password", nil, []interface{}{"publish", "private"})
-	if _, ok := PostsCache.Load(next.Id); !ok {
-
-	}
 	prev, err = models.FirstOne[models.WpPosts](models.SqlBuilder{
 		{"post_date", "<", t.Format("2006-01-02 15:04:05")},
 		{"post_status", "in", ""},
 		{"post_type", "post"},
 	}, "ID,post_title", models.SqlBuilder{{"post_date", "desc"}}, []interface{}{"publish", "private"})
+	if err == sql.ErrNoRows {
+		err = nil
+	}
 	return
 }
 

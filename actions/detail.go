@@ -62,7 +62,6 @@ func Detail(c *gin.Context) {
 		showComment = false
 	}
 	prev, next, err := common.GetContextPost(post.Id, post.PostDate)
-
 	h["title"] = fmt.Sprintf("%s-%s", post.PostTitle, models.Options["blogname"])
 	h["post"] = post
 	h["showComment"] = showComment

@@ -22,6 +22,7 @@ func NewMapCache[K comparable, V any](fun func(...any) (V, error), duration time
 		mutex:        &sync.Mutex{},
 		setCacheFunc: fun,
 		expireTime:   duration,
+		data:         make(map[K]V),
 	}
 }
 
@@ -33,10 +34,10 @@ func (c *MapCache[K, V]) FlushCache(k any) {
 }
 
 func (c *MapCache[K, V]) GetCache(ctx context.Context, key K, timeout time.Duration, params ...any) (V, error) {
-	l := len(c.data)
+	_, ok := c.data[key]
 	var err error
 	expired := time.Duration(c.setTime.Unix())+c.expireTime/time.Second < time.Duration(time.Now().Unix())
-	if l < 1 || (l > 0 && c.expireTime >= 0 && expired) {
+	if !ok || (c.expireTime >= 0 && expired) {
 		t := c.incr
 		call := func() {
 			c.mutex.Lock()
