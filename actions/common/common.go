@@ -1,6 +1,7 @@
 package common
 
 import (
+	"context"
 	"fmt"
 	"github/fthvgb1/wp-go/cache"
 	"github/fthvgb1/wp-go/models"
@@ -170,11 +171,11 @@ func Archives() (r []models.PostArchive) {
 	return archivesCaches.GetCache()
 }
 
-func Categories() []models.WpTermsMy {
-	return categoryCaches.GetCache()
+func Categories(ctx context.Context) []models.WpTermsMy {
+	return categoryCaches.GetCache(ctx, time.Second)
 }
 
-func categories() (terms []models.WpTermsMy, err error) {
+func categories(...any) (terms []models.WpTermsMy, err error) {
 	var in = []interface{}{"category"}
 	terms, err = models.Find[models.WpTermsMy](models.SqlBuilder{
 		{"tt.count", ">", "0", "int"},
@@ -195,10 +196,10 @@ func categories() (terms []models.WpTermsMy, err error) {
 	return
 }
 
-func RecentPosts() (r []models.WpPosts) {
-	return recentPostsCaches.GetCache()
+func RecentPosts(ctx context.Context) (r []models.WpPosts) {
+	return recentPostsCaches.GetCache(ctx, time.Second)
 }
-func recentPosts() (r []models.WpPosts, err error) {
+func recentPosts(...any) (r []models.WpPosts, err error) {
 	r, err = models.Find[models.WpPosts](models.SqlBuilder{{
 		"post_type", "post",
 	}, {"post_status", "publish"}}, "ID,post_title,post_password", "", models.SqlBuilder{{"post_date", "desc"}}, nil, 5)

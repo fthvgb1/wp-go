@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"context"
 	"fmt"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -12,9 +13,10 @@ import (
 
 func Detail(c *gin.Context) {
 	var err error
-	recent := common.RecentPosts()
+	ctx := context.TODO()
+	recent := common.RecentPosts(ctx)
 	archive := common.Archives()
-	categoryItems := common.Categories()
+	categoryItems := common.Categories(ctx)
 	var h = gin.H{
 		"title":       models.Options["blogname"],
 		"options":     models.Options,

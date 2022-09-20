@@ -1,6 +1,7 @@
 package actions
 
 import (
+	"context"
 	"fmt"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -148,9 +149,10 @@ func (h *indexHandle) getTotalPage(totalRaws int) int {
 func Index(c *gin.Context) {
 	h := newIndexHandle(c)
 	h.parseParams()
+	ctx := context.TODO()
 	archive := common.Archives()
-	recent := common.RecentPosts()
-	categoryItems := common.Categories()
+	recent := common.RecentPosts(ctx)
+	categoryItems := common.Categories(ctx)
 	ginH := gin.H{
 		"options":     models.Options,
 		"recentPosts": recent,
