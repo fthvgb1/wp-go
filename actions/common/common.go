@@ -172,7 +172,8 @@ func Archives() (r []models.PostArchive) {
 }
 
 func Categories(ctx context.Context) []models.WpTermsMy {
-	return categoryCaches.GetCache(ctx, time.Second)
+	r, _ := categoryCaches.GetCache(ctx, time.Second)
+	return r
 }
 
 func categories(...any) (terms []models.WpTermsMy, err error) {
@@ -197,7 +198,8 @@ func categories(...any) (terms []models.WpTermsMy, err error) {
 }
 
 func RecentPosts(ctx context.Context) (r []models.WpPosts) {
-	return recentPostsCaches.GetCache(ctx, time.Second)
+	r, _ = recentPostsCaches.GetCache(ctx, time.Second)
+	return
 }
 func recentPosts(...any) (r []models.WpPosts, err error) {
 	r, err = models.Find[models.WpPosts](models.SqlBuilder{{

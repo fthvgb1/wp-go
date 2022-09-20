@@ -2,7 +2,8 @@ package cache
 
 import (
 	"context"
-	"log"
+	"errors"
+	"fmt"
 	"sync"
 	"time"
 )
@@ -30,36 +31,46 @@ func (c *SliceCache[T]) FlushCache() {
 	c.data = nil
 }
 
-func (c *SliceCache[T]) GetCache(ctx context.Context, timeout time.Duration) []T {
+func (c *SliceCache[T]) GetCache(ctx context.Context, timeout time.Duration, params ...any) ([]T, error) {
 	l := len(c.data)
+	var err error
 	expired := time.Duration(c.setTime.Unix())+c.expireTime/time.Second < time.Duration(time.Now().Unix())
 	if l < 1 || (l > 0 && c.expireTime >= 0 && expired) {
 		t := c.incr
-		ctx, cancel := context.WithTimeout(ctx, timeout)
-		defer cancel()
-		done := make(chan struct{})
-		go func() {
+		call := func() {
 			c.mutex.Lock()
 			defer c.mutex.Unlock()
 			if c.incr > t {
 				return
 			}
-			r, err := c.setCacheFunc()
+			r, er := c.setCacheFunc(params...)
 			if err != nil {
-				log.Printf("set cache err[%s]", err)
+				err = er
 				return
 			}
 			c.setTime = time.Now()
 			c.data = r
 			c.incr++
-			done <- struct{}{}
-		}()
-		select {
-		case <-ctx.Done():
-			log.Printf("get cache timeout")
-		case <-done:
-
 		}
+		if timeout > 0 {
+			ctx, cancel := context.WithTimeout(ctx, timeout)
+			defer cancel()
+			done := make(chan struct{})
+			go func() {
+				call()
+				done <- struct{}{}
+				close(done)
+			}()
+			select {
+			case <-ctx.Done():
+				err = errors.New(fmt.Sprintf("get cache %s", ctx.Err().Error()))
+			case <-done:
+
+			}
+		} else {
+			call()
+		}
+
 	}
-	return c.data
+	return c.data, err
 }
