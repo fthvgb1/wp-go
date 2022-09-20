@@ -18,10 +18,10 @@ func SetupRouter() *gin.Engine {
 	// gin.DisableConsoleColor()
 	r := gin.Default()
 	r.HTMLRender = templates.NewFsTemplate(template.FuncMap{
-		"unescaped": func(s string) interface{} {
+		"unescaped": func(s string) any {
 			return template.HTML(s)
 		},
-		"dateCh": func(t time.Time) interface{} {
+		"dateCh": func(t time.Time) any {
 			return t.Format("2006年 01月 02日")
 		},
 	}).SetTemplate()

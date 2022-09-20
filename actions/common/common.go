@@ -92,7 +92,7 @@ func getMonthPost(args ...any) ([]models.WpPosts, error) {
 	}
 	return models.Find[models.WpPosts](where, "ID", "",
 		models.SqlBuilder{{"post_date", "asc"}},
-		nil, 0, []interface{}{"post"}, []interface{}{"publish"},
+		nil, 0, []any{"post"}, []any{"publish"},
 	)
 }
 
@@ -121,12 +121,12 @@ func getPostContext(t time.Time) (prev, next models.WpPosts, err error) {
 		{"post_date", ">", t.Format("2006-01-02 15:04:05")},
 		{"post_status", "in", ""},
 		{"post_type", "post"},
-	}, "ID,post_title,post_password", nil, []interface{}{"publish", "private"})
+	}, "ID,post_title,post_password", nil, []any{"publish", "private"})
 	prev, err = models.FirstOne[models.WpPosts](models.SqlBuilder{
 		{"post_date", "<", t.Format("2006-01-02 15:04:05")},
 		{"post_status", "in", ""},
 		{"post_type", "post"},
-	}, "ID,post_title", models.SqlBuilder{{"post_date", "desc"}}, []interface{}{"publish", "private"})
+	}, "ID,post_title", models.SqlBuilder{{"post_date", "desc"}}, []any{"publish", "private"})
 	if err == sql.ErrNoRows {
 		err = nil
 	}
@@ -143,7 +143,7 @@ func GetPostFromCache(Id uint64) (r models.WpPosts) {
 
 func QueryAndSetPostCache(postIds []models.WpPosts) (err error) {
 	var all []uint64
-	var needQuery []interface{}
+	var needQuery []any
 	for _, wpPosts := range postIds {
 		all = append(all, wpPosts.Id)
 		if _, ok := PostsCache.Load(wpPosts.Id); !ok {
@@ -214,7 +214,7 @@ func Categories(ctx context.Context) []models.WpTermsMy {
 }
 
 func categories(...any) (terms []models.WpTermsMy, err error) {
-	var in = []interface{}{"category"}
+	var in = []any{"category"}
 	terms, err = models.Find[models.WpTermsMy](models.SqlBuilder{
 		{"tt.count", ">", "0", "int"},
 		{"tt.taxonomy", "in", ""},

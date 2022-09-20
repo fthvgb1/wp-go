@@ -31,8 +31,8 @@ type indexHandle struct {
 	orderBy        models.SqlBuilder
 	order          string
 	join           models.SqlBuilder
-	postType       []interface{}
-	status         []interface{}
+	postType       []any
+	status         []any
 	header         string
 	paginationStep int
 }
@@ -52,8 +52,8 @@ func newIndexHandle(ctx *gin.Context) *indexHandle {
 		},
 		orderBy:  models.SqlBuilder{},
 		join:     models.SqlBuilder{},
-		postType: []interface{}{"post"},
-		status:   []interface{}{"publish"},
+		postType: []any{"post"},
+		status:   []any{"publish"},
 	}
 }
 func (h *indexHandle) setTitleLR(l, r string) {

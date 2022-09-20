@@ -16,7 +16,7 @@ type Model interface {
 }
 
 type ParseWhere interface {
-	ParseWhere(in ...[]interface{}) (string, []interface{})
+	ParseWhere(in ...[]any) (string, []any)
 }
 
 type SqlBuilder [][]string
@@ -38,7 +38,7 @@ func (w SqlBuilder) parseField(ss []string, s *strings.Builder) {
 	}
 }
 
-func (w SqlBuilder) parseIn(ss []string, s *strings.Builder, c *int, args *[]interface{}, in [][]interface{}) (t bool) {
+func (w SqlBuilder) parseIn(ss []string, s *strings.Builder, c *int, args *[]any, in [][]any) (t bool) {
 	if ss[1] == "in" && len(in) > 0 {
 		s.WriteString(" (")
 		for _, p := range in[*c] {
@@ -55,7 +55,7 @@ func (w SqlBuilder) parseIn(ss []string, s *strings.Builder, c *int, args *[]int
 	return t
 }
 
-func (w SqlBuilder) parseType(ss []string, args *[]interface{}) {
+func (w SqlBuilder) parseType(ss []string, args *[]any) {
 	if len(ss) == 4 && ss[3] == "int" {
 		i, _ := strconv.Atoi(ss[2])
 		*args = append(*args, i)
@@ -67,9 +67,9 @@ func (w SqlBuilder) parseType(ss []string, args *[]interface{}) {
 	}
 }
 
-func (w SqlBuilder) ParseWhere(in ...[]interface{}) (string, []interface{}) {
+func (w SqlBuilder) ParseWhere(in ...[]any) (string, []any) {
 	var s strings.Builder
-	args := make([]interface{}, 0, len(w))
+	args := make([]any, 0, len(w))
 	c := 0
 	for _, ss := range w {
 		if len(ss) == 2 {
@@ -163,7 +163,7 @@ func (w SqlBuilder) parseJoin() string {
 	return s.String()
 }
 
-func SimplePagination[T Model](where ParseWhere, fields, group string, page, pageSize int, order SqlBuilder, join SqlBuilder, in ...[]interface{}) (r []T, total int, err error) {
+func SimplePagination[T Model](where ParseWhere, fields, group string, page, pageSize int, order SqlBuilder, join SqlBuilder, in ...[]any) (r []T, total int, err error) {
 	var rr T
 	w, args := where.ParseWhere(in...)
 	n := struct {
@@ -221,7 +221,7 @@ func FindOneById[T Model](id int) (T, error) {
 	return r, nil
 }
 
-func FirstOne[T Model](where ParseWhere, fields string, order SqlBuilder, in ...[]interface{}) (T, error) {
+func FirstOne[T Model](where ParseWhere, fields string, order SqlBuilder, in ...[]any) (T, error) {
 	var r T
 	w, args := where.ParseWhere(in...)
 	tp := "select %s from %s %s %s"
@@ -233,7 +233,7 @@ func FirstOne[T Model](where ParseWhere, fields string, order SqlBuilder, in ...
 	return r, nil
 }
 
-func LastOne[T Model](where ParseWhere, fields string, in ...[]interface{}) (T, error) {
+func LastOne[T Model](where ParseWhere, fields string, in ...[]any) (T, error) {
 	var r T
 	w, args := where.ParseWhere(in...)
 	tp := "select %s from %s %s order by %s desc limit 1"
@@ -245,7 +245,7 @@ func LastOne[T Model](where ParseWhere, fields string, in ...[]interface{}) (T, 
 	return r, nil
 }
 
-func SimpleFind[T Model](where ParseWhere, fields string, in ...[]interface{}) ([]T, error) {
+func SimpleFind[T Model](where ParseWhere, fields string, in ...[]any) ([]T, error) {
 	var r []T
 	var rr T
 	w, args := where.ParseWhere(in...)
@@ -258,7 +258,7 @@ func SimpleFind[T Model](where ParseWhere, fields string, in ...[]interface{}) (
 	return r, nil
 }
 
-func Select[T Model](sql string, params ...interface{}) ([]T, error) {
+func Select[T Model](sql string, params ...any) ([]T, error) {
 	var r []T
 	var rr T
 	sql = strings.Replace(sql, "{table}", rr.Table(), -1)
@@ -269,10 +269,10 @@ func Select[T Model](sql string, params ...interface{}) ([]T, error) {
 	return r, nil
 }
 
-func Find[T Model](where ParseWhere, fields, group string, order SqlBuilder, join SqlBuilder, limit int, in ...[]interface{}) (r []T, err error) {
+func Find[T Model](where ParseWhere, fields, group string, order SqlBuilder, join SqlBuilder, limit int, in ...[]any) (r []T, err error) {
 	var rr T
 	w := ""
-	var args []interface{}
+	var args []any
 	if where != nil {
 		w, args = where.ParseWhere(in...)
 	}
@@ -295,7 +295,7 @@ func Find[T Model](where ParseWhere, fields, group string, order SqlBuilder, joi
 	return
 }
 
-func Get[T Model](sql string, params ...interface{}) (r T, err error) {
+func Get[T Model](sql string, params ...any) (r T, err error) {
 	sql = strings.Replace(sql, "{table}", r.Table(), -1)
 	err = db.Db.Get(&r, sql, params...)
 	return
