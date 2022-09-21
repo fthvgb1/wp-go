@@ -153,16 +153,16 @@ func Index(c *gin.Context) {
 	archive := common.Archives()
 	recent := common.RecentPosts(ctx)
 	categoryItems := common.Categories(ctx)
-	comments := common.RecentComments(ctx)
+	recentComments := common.RecentComments(ctx)
 	ginH := gin.H{
-		"options":     models.Options,
-		"recentPosts": recent,
-		"archives":    archive,
-		"categories":  categoryItems,
-		"search":      h.search,
-		"header":      h.header,
-		"title":       h.getTitle(),
-		"comments":    comments,
+		"options":        models.Options,
+		"recentPosts":    recent,
+		"archives":       archive,
+		"categories":     categoryItems,
+		"search":         h.search,
+		"header":         h.header,
+		"title":          h.getTitle(),
+		"recentComments": recentComments,
 	}
 	postIds, totalRaw, err := models.SimplePagination[models.WpPosts](h.where, "ID", "", h.page, h.pageSize, h.orderBy, h.join, h.postType, h.status)
 	defer func() {

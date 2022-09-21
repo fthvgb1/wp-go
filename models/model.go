@@ -39,7 +39,7 @@ func (w SqlBuilder) parseField(ss []string, s *strings.Builder) {
 }
 
 func (w SqlBuilder) parseIn(ss []string, s *strings.Builder, c *int, args *[]any, in [][]any) (t bool) {
-	if ss[1] == "in" && len(in) > 0 {
+	if helper.IsContainInArr(ss[1], []string{"in", "not in"}) && len(in) > 0 {
 		s.WriteString(" (")
 		for _, p := range in[*c] {
 			s.WriteString("?,")

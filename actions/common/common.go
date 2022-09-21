@@ -8,6 +8,7 @@ import (
 	"github/fthvgb1/wp-go/models"
 	"github/fthvgb1/wp-go/vars"
 	"log"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -21,6 +22,7 @@ var categoryCaches *cache.SliceCache[models.WpTermsMy]
 var recentPostsCaches *cache.SliceCache[models.WpPosts]
 var monthCaches *cache.MapCache[string, []models.WpPosts]
 var recentCommentsCaches *cache.SliceCache[models.WpComments]
+var postCommentCaches *cache.MapCache[uint64, []models.WpComments]
 
 func InitCache() {
 	archivesCaches = &Arch{
@@ -31,6 +33,7 @@ func InitCache() {
 	recentPostsCaches = cache.NewSliceCache[models.WpPosts](recentPosts, vars.Conf.RecentPostCacheTime)
 	monthCaches = cache.NewMapCache[string, []models.WpPosts](getMonthPost, 30*time.Minute)
 	recentCommentsCaches = cache.NewSliceCache[models.WpComments](recentComments, vars.Conf.RecentCommentsCacheTime)
+	postCommentCaches = cache.NewMapCache[uint64, []models.WpComments](postComments, time.Minute*5)
 }
 
 type Arch struct {
@@ -66,6 +69,21 @@ type PostContext struct {
 
 func GetMonthPost(ctx context.Context, year, month string) ([]models.WpPosts, error) {
 	return monthCaches.GetCache(ctx, fmt.Sprintf("%s%s", year, month), time.Second, year, month)
+}
+
+func PostComments(ctx context.Context, Id uint64) ([]models.WpComments, error) {
+	return postCommentCaches.GetCache(ctx, Id, time.Second, Id)
+}
+
+func postComments(args ...any) ([]models.WpComments, error) {
+	postId := args[0].(uint64)
+	return models.Find[models.WpComments](models.SqlBuilder{
+		{"comment_approved", "1"},
+		{"comment_post_ID", "=", strconv.FormatUint(postId, 10), "int"},
+	}, "*", "", models.SqlBuilder{
+		{"comment_date_gmt", "asc"},
+		{"comment_ID", "asc"},
+	}, nil, 0)
 }
 
 func RecentComments(ctx context.Context) (r []models.WpComments) {
