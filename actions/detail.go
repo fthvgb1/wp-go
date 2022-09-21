@@ -72,7 +72,7 @@ func Detail(c *gin.Context) {
 	h["post"] = post
 	h["showComment"] = showComment
 	h["prev"] = prev
-	h["comments"] = formatComment(commentss, 1)
+	h["comments"] = formatComment(commentss, 1, 5)
 	h["next"] = next
 }
 
@@ -95,9 +95,9 @@ func (c Comments) Swap(i, j int) {
 	c[i], c[j] = c[j], c[i]
 }
 
-func formatComment(comments Comments, depth int) (html string) {
+func formatComment(comments Comments, depth, maxDepth int) (html string) {
 	s := strings.Builder{}
-	if depth > 5 {
+	if depth > maxDepth {
 		comments = findComments(comments)
 	}
 	sort.Sort(comments)
@@ -107,9 +107,8 @@ func formatComment(comments Comments, depth int) (html string) {
 			eo = "odd"
 		}
 		p := ""
-
 		fl := false
-		if len(comment.Children) > 0 && depth < 6 {
+		if len(comment.Children) > 0 && depth < maxDepth+1 {
 			p = "parent"
 			fl = true
 		}
@@ -117,7 +116,7 @@ func formatComment(comments Comments, depth int) (html string) {
 		if fl {
 			depth++
 			s.WriteString(`<ol class="children">`)
-			s.WriteString(formatComment(comment.Children, depth))
+			s.WriteString(formatComment(comment.Children, depth, maxDepth))
 			s.WriteString(`</ol>`)
 		}
 		s.WriteString("</li><!-- #comment-## -->")
@@ -134,9 +133,9 @@ func formatComment(comments Comments, depth int) (html string) {
 func findComments(comments Comments) Comments {
 	var r Comments
 	for _, comment := range comments {
-		tmp := comment
+		tmp := *comment
 		tmp.Children = nil
-		r = append(r, tmp)
+		r = append(r, &tmp)
 		if len(comment.Children) > 0 {
 			t := findComments(comment.Children)
 			r = append(r, t...)
