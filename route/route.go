@@ -32,6 +32,7 @@ func SetupRouter() *gin.Engine {
 	})))*/
 
 	f := static.Fs{FS: static.FsEx, Path: "wp-includes"}
+	r.StaticFileFS("/favicon.ico", "favicon.ico", http.FS(static.FsEx))
 	r.StaticFS("/wp-includes", http.FS(f))
 	r.StaticFS("/wp-content", http.FS(static.Fs{
 		FS:   static.FsEx,

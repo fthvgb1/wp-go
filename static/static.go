@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-//go:embed wp-content wp-includes
+//go:embed wp-content wp-includes favicon.ico
 var FsEx embed.FS
 
 type Fs struct {
