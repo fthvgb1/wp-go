@@ -6,15 +6,26 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github/fthvgb1/wp-go/actions/common"
+	"github/fthvgb1/wp-go/helper"
 	"github/fthvgb1/wp-go/models"
+	"math/rand"
 	"net/http"
+	"net/url"
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 )
+
+type detailHandler struct {
+	*gin.Context
+}
 
 func Detail(c *gin.Context) {
 	var err error
+	hh := detailHandler{
+		c,
+	}
 	ctx := context.TODO()
 	recent := common.RecentPosts(ctx)
 	archive := common.Archives()
@@ -29,10 +40,12 @@ func Detail(c *gin.Context) {
 		"recentComments": recentComments,
 	}
 	defer func() {
-		c.HTML(http.StatusOK, "posts/detail.gohtml", h)
+		status := http.StatusOK
 		if err != nil {
+			status = http.StatusInternalServerError
 			c.Error(err)
 		}
+		c.HTML(status, "posts/detail.gohtml", h)
 	}()
 	id := c.Param("id")
 	Id := 0
@@ -72,7 +85,7 @@ func Detail(c *gin.Context) {
 	h["post"] = post
 	h["showComment"] = showComment
 	h["prev"] = prev
-	h["comments"] = formatComment(commentss, 1, 5)
+	h["comments"] = hh.formatComment(commentss, 1, 5)
 	h["next"] = next
 }
 
@@ -95,7 +108,7 @@ func (c Comments) Swap(i, j int) {
 	c[i], c[j] = c[j], c[i]
 }
 
-func formatComment(comments Comments, depth, maxDepth int) (html string) {
+func (d detailHandler) formatComment(comments Comments, depth, maxDepth int) (html string) {
 	s := strings.Builder{}
 	if depth > maxDepth {
 		comments = findComments(comments)
@@ -112,11 +125,11 @@ func formatComment(comments Comments, depth, maxDepth int) (html string) {
 			p = "parent"
 			fl = true
 		}
-		s.WriteString(formatLi(comment.WpComments, depth, eo, p))
+		s.WriteString(d.formatLi(comment.WpComments, depth, eo, p))
 		if fl {
 			depth++
 			s.WriteString(`<ol class="children">`)
-			s.WriteString(formatComment(comment.Children, depth, maxDepth))
+			s.WriteString(d.formatComment(comment.Children, depth, maxDepth))
 			s.WriteString(`</ol>`)
 		}
 		s.WriteString("</li><!-- #comment-## -->")
@@ -171,7 +184,7 @@ func treeComments(comments []models.WpComments) Comments {
 	return top
 }
 
-func formatLi(comments models.WpComments, d int, eo, parent string) string {
+func (d detailHandler) formatLi(comments models.WpComments, depth int, eo, parent string) string {
 	li := `
 <li id="comment-{{CommentId}}" class="comment {{eo}} thread-even depth-{{Depth}} {{parent}}">
     <article id="div-comment-{{CommentId}}" class="comment-body">
@@ -210,8 +223,8 @@ func formatLi(comments models.WpComments, d int, eo, parent string) string {
 `
 	for k, v := range map[string]string{
 		"{{CommentId}}":        strconv.FormatUint(comments.CommentId, 10),
-		"{{Depth}}":            strconv.Itoa(d),
-		"{{Gravatar}}":         "http://1.gravatar.com/avatar/d7a973c7dab26985da5f961be7b74480?s=56&d=mm&r=g",
+		"{{Depth}}":            strconv.Itoa(depth),
+		"{{Gravatar}}":         gravatar(d.Context, comments.CommentAuthorEmail),
 		"{{CommentAuthorUrl}}": comments.CommentAuthorUrl,
 		"{{CommentAuthor}}":    comments.CommentAuthor,
 		"{{PostId}}":           strconv.FormatUint(comments.CommentPostId, 10),
@@ -224,4 +237,26 @@ func formatLi(comments models.WpComments, d int, eo, parent string) string {
 		li = strings.Replace(li, k, v, -1)
 	}
 	return li
+}
+
+func gravatar(c *gin.Context, email string) (u string) {
+	email = strings.Trim(email, " \t\n\r\000\x0B")
+	rand.Seed(time.Now().UnixNano())
+	num := rand.Intn(3)
+	h := ""
+	if email != "" {
+		h = helper.StringMd5(strings.ToLower(email))
+		num = int(h[0] % 3)
+	}
+	if c.Request.TLS != nil {
+		u = fmt.Sprintf("%s%s", "https://secure.gravatar.com/avatar/", h)
+	} else {
+		u = fmt.Sprintf("http://%d.gravatar.com/avatar/%s", num, h)
+	}
+	q := url.Values{}
+	q.Add("s", "112")
+	q.Add("d", "mm")
+	q.Add("r", "g")
+	u = fmt.Sprintf("%s?%s", u, q.Encode())
+	return
 }

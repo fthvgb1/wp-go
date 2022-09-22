@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+var _ ParseWhere = SqlBuilder{}
+
 type Model interface {
 	PrimaryKey() string
 	Table() string

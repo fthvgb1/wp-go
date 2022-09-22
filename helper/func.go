@@ -1,6 +1,9 @@
 package helper
 
 import (
+	"crypto/md5"
+	"fmt"
+	"io"
 	"reflect"
 	"strings"
 )
@@ -57,4 +60,10 @@ func SlicePagination[T any](arr []T, page, pageSize int) []T {
 		end = l
 	}
 	return arr[start:end]
+}
+
+func StringMd5(str string) string {
+	h := md5.New()
+	io.WriteString(h, str)
+	return fmt.Sprintf("%x", h.Sum(nil))
 }
