@@ -8,6 +8,7 @@ import (
 	"github/fthvgb1/wp-go/actions/common"
 	"github/fthvgb1/wp-go/helper"
 	"github/fthvgb1/wp-go/models"
+	"github/fthvgb1/wp-go/plugins"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -78,6 +79,7 @@ func Detail(c *gin.Context) {
 		common.PasswdProjectContent(&post)
 		showComment = false
 	}
+	plugins.ApplyPlugin(plugins.NewPostPlugin(c, plugins.Detail), &post)
 	comments, err := common.PostComments(ctx, post.Id)
 	commentss := treeComments(comments)
 	prev, next, err := common.GetContextPost(post.Id, post.PostDate)

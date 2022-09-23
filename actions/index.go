@@ -8,6 +8,7 @@ import (
 	"github/fthvgb1/wp-go/actions/common"
 	"github/fthvgb1/wp-go/helper"
 	"github/fthvgb1/wp-go/models"
+	"github/fthvgb1/wp-go/plugins"
 	"math"
 	"net/http"
 	"regexp"
@@ -35,6 +36,7 @@ type indexHandle struct {
 	status         []any
 	header         string
 	paginationStep int
+	scene          uint
 }
 
 func newIndexHandle(ctx *gin.Context) *indexHandle {
@@ -54,6 +56,7 @@ func newIndexHandle(ctx *gin.Context) *indexHandle {
 		join:     models.SqlBuilder{},
 		postType: []any{"post"},
 		status:   []any{"publish"},
+		scene:    plugins.Home,
 	}
 }
 func (h *indexHandle) setTitleLR(l, r string) {
@@ -85,6 +88,7 @@ func (h *indexHandle) parseParams() {
 		ss := fmt.Sprintf("%s年%s月", year, strings.TrimLeft(month, "0"))
 		h.header = fmt.Sprintf("月度归档： <span>%s</span>", ss)
 		h.setTitleLR(ss, models.Options["blogname"])
+		h.scene = plugins.Archive
 	}
 	category := h.c.Param("category")
 	if category == "" {
@@ -111,6 +115,7 @@ func (h *indexHandle) parseParams() {
 			"left join", "wp_terms d", "c.term_id=d.term_id",
 		})
 		h.setTitleLR(category, models.Options["blogname"])
+		h.scene = plugins.Category
 	}
 	s := h.c.Query("s")
 	if s != "" && strings.Replace(s, " ", "", -1) != "" {
@@ -124,6 +129,7 @@ func (h *indexHandle) parseParams() {
 		h.header = fmt.Sprintf("%s的搜索结果", s)
 		h.setTitleLR(helper.StrJoin(`"`, s, `"`, "的搜索结果"), models.Options["blogname"])
 		h.search = s
+		h.scene = plugins.Search
 	} else {
 		h.status = append(h.status, "private")
 	}
@@ -179,6 +185,8 @@ func Index(c *gin.Context) {
 	}
 	err = common.QueryAndSetPostCache(postIds)
 	pw := h.session.Get("post_password")
+	c.Set("post_password", pw)
+	plug := plugins.NewPostPlugin(c, h.scene)
 	for i, v := range postIds {
 		post, _ := common.PostsCache.Load(v.Id)
 		pp := post.(*models.WpPosts)
@@ -188,8 +196,11 @@ func Index(c *gin.Context) {
 			common.PasswdProjectContent(&px)
 		}
 		postIds[i] = px
+		plugins.ApplyPlugin(plug, &postIds[i])
+
 	}
 	for i, post := range recent {
+
 		if post.PostPassword != "" && pw != post.PostPassword {
 			common.PasswdProjectContent(&recent[i])
 		}
@@ -200,6 +211,8 @@ func Index(c *gin.Context) {
 	ginH["pagination"] = pagination(h.page, h.totalPage, h.paginationStep, c.Request.URL.Path, q)
 	ginH["title"] = h.getTitle()
 }
+
+var complie = regexp.MustCompile(`(/page)/(\d+)`)
 
 func pagination(currentPage, totalPage, step int, path, query string) (html string) {
 	if totalPage < 2 {
@@ -213,7 +226,7 @@ func pagination(currentPage, totalPage, step int, path, query string) (html stri
 	if currentPage > totalPage {
 		currentPage = totalPage
 	}
-	r := regexp.MustCompile(`(/page)/(\d+)`)
+	r := complie
 	start := currentPage - step
 	end := currentPage + step
 	if start < 1 {

@@ -3,8 +3,10 @@ package helper
 import (
 	"crypto/md5"
 	"fmt"
+	"github.com/dlclark/regexp2"
 	"io"
 	"reflect"
+	"regexp"
 	"strings"
 )
 
@@ -64,6 +66,39 @@ func SlicePagination[T any](arr []T, page, pageSize int) []T {
 
 func StringMd5(str string) string {
 	h := md5.New()
-	io.WriteString(h, str)
+	_, err := io.WriteString(h, str)
+	if err != nil {
+		return ""
+	}
 	return fmt.Sprintf("%x", h.Sum(nil))
+}
+
+var allHtmlTag = regexp.MustCompile("</?.*>")
+
+func StripTags(str, allowable string) string {
+	html := ""
+	if allowable == "" {
+		return allHtmlTag.ReplaceAllString(str, "")
+	}
+	r := strings.Split(allowable, ">")
+	re := ""
+	for _, reg := range r {
+		if reg == "" {
+			continue
+		}
+		tag := strings.TrimLeft(reg, "<")
+		ree := fmt.Sprintf(`%s|\/%s`, tag, tag)
+		re = fmt.Sprintf("%s|%s", re, ree)
+	}
+	ree := strings.Trim(re, "|")
+	reg := fmt.Sprintf("<(?!%s).*?>", ree)
+	compile, err := regexp2.Compile(reg, regexp2.IgnoreCase)
+	if err != nil {
+		return str
+	}
+	html, err = compile.Replace(str, "", 0, -1)
+	if err != nil {
+		return str
+	}
+	return html
 }

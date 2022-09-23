@@ -196,3 +196,31 @@ func TestSlicePagination(t *testing.T) {
 		})
 	}
 }
+
+func TestStripTags(t *testing.T) {
+	type args struct {
+		str       string
+		allowable string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "t1",
+			args: args{
+				str:       "<p>ppppp<span>ffff</span></p><img />",
+				allowable: "<p><img>",
+			},
+			want: "<p>pppppffff</p><img />",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := StripTags(tt.args.str, tt.args.allowable); got != tt.want {
+				t.Errorf("StripTags() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

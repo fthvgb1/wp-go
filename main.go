@@ -13,19 +13,23 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	common.InitCache()
+
 	err = db.InitDb()
 	if err != nil {
 		panic(err)
 	}
+
 	err = models.InitOptions()
 	if err != nil {
 		panic(err)
 	}
+
 	err = models.InitTerms()
 	if err != nil {
 		panic(err)
 	}
+
+	common.InitCache()
 }
 
 func main() {
