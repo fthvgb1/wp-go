@@ -30,10 +30,17 @@ func StructColumn[T any, M any](arr []M, field string) (r []T) {
 }
 
 func RangeSlice[T ~int | ~uint | ~int64 | ~int8 | ~int16 | ~int32 | ~uint64](start, end, step T) []T {
-	r := make([]T, 0, int((end-start+1)/step+1))
-	for i := start; i <= end; {
+	l := int((end-start+1)/step + 1)
+	if l < 0 {
+		l = 0 - l
+	}
+	r := make([]T, 0, l)
+	for i := start; ; {
 		r = append(r, i)
 		i = i + step
+		if (step > 0 && i > end) || (step < 0 && i < end) {
+			break
+		}
 	}
 	return r
 }
@@ -196,6 +203,14 @@ func SliceFilter[T any](arr []T, fn func(T) bool) []T {
 func SliceReduce[T, R any](arr []T, fn func(T, R) R, r R) R {
 	for _, t := range arr {
 		r = fn(t, r)
+	}
+	return r
+}
+
+func SliceReverse[T any](arr []T) []T {
+	var r []T
+	for i := len(arr); i > 0; i-- {
+		r = append(r, arr[i-1])
 	}
 	return r
 }

@@ -112,6 +112,15 @@ func TestRangeSlice(t *testing.T) {
 			},
 			want: []int{1, 4, 7, 10},
 		},
+		{
+			name: "t4",
+			args: args{
+				start: 0,
+				end:   -5,
+				step:  -1,
+			},
+			want: []int{0, -1, -2, -3, -4, -5},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -407,6 +416,30 @@ func TestSliceMap(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := SliceMap(tt.args.arr, tt.args.fn); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("SliceMap() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSliceReverse(t *testing.T) {
+	type args struct {
+		arr []int
+	}
+	tests := []struct {
+		name string
+		args args
+		want []int
+	}{
+		{
+			name: "t1",
+			args: args{arr: RangeSlice(1, 10, 1)},
+			want: RangeSlice(10, 1, -1),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := SliceReverse(tt.args.arr); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("SliceReverse() = %v, want %v", got, tt.want)
 			}
 		})
 	}
