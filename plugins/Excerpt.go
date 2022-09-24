@@ -83,7 +83,7 @@ func CloseHtmlTag(str string) string {
 		}
 		tagss = append(tagss, ss)
 	}
-	r := helper.SliceMap[string, string](helper.ClearClosedTag(tagss), func(s string) string {
+	r := helper.SliceMap(helper.ClearClosedTag(tagss), func(s string) string {
 		return fmt.Sprintf("</%s>", strings.Trim(s, "<>"))
 	})
 	return strings.Join(r, "")
