@@ -16,7 +16,6 @@ var tag = regexp.MustCompile(`<.*?>`)
 var limit = 300
 
 func ExceptRaw(str string, limit, id int) string {
-
 	if r := more.FindString(str); r != "" {
 		m := strings.Split(str, r)
 		str = m[0]
@@ -40,7 +39,6 @@ func ExceptRaw(str string, limit, id int) string {
 				count += len(t)
 				l += len(t)
 			}
-
 			if count > 0 && length > l {
 				start = end
 				end += count
@@ -48,8 +46,12 @@ func ExceptRaw(str string, limit, id int) string {
 				break
 			} else {
 				content = string(ru[:end])
-				content = fmt.Sprintf(`%s...<p class="read-more"><a href="/p/%d">继续阅读</a></p>`, content, id)
-				// todo 标签闭合
+				closeTag := CloseHtmlTag(content)
+				if strings.Contains(closeTag, "pre") || strings.Contains(closeTag, "code") {
+					content = fmt.Sprintf(`%s%s......<p class="read-more"><a href="/p/%d">继续阅读</a></p>`, content, closeTag, id)
+				} else {
+					content = fmt.Sprintf(`%s......%s<p class="read-more"><a href="/p/%d">继续阅读</a></p>`, content, closeTag, id)
+				}
 				break
 			}
 		}
@@ -63,4 +65,26 @@ func Except(p *Plugin[models.WpPosts], c *gin.Context, post *models.WpPosts, sce
 	}
 	post.PostContent = ExceptRaw(post.PostContent, limit, int(post.Id))
 
+}
+
+var tagx = regexp.MustCompile(`(</?[a-z0-9]+?)( |>)`)
+var tagAllow = regexp.MustCompile(`<(a|b|blockquote|cite|code|dd|del|div|dl|dt|em|h1|h2|h3|h4|h5|h6|i|li|ol|p|pre|span|strong|ul).*?>`)
+
+func CloseHtmlTag(str string) string {
+	tags := tagAllow.FindAllString(str, -1)
+	if len(tags) < 1 {
+		return str
+	}
+	var tagss = make([]string, 0, len(tags))
+	for _, s := range tags {
+		ss := strings.TrimSpace(tagx.FindString(s))
+		if ss[len(ss)-1] != '>' {
+			ss = fmt.Sprintf("%s>", ss)
+		}
+		tagss = append(tagss, ss)
+	}
+	r := helper.SliceMap[string, string](helper.ClearClosedTag(tagss), func(s string) string {
+		return fmt.Sprintf("</%s>", strings.Trim(s, "<>"))
+	})
+	return strings.Join(r, "")
 }

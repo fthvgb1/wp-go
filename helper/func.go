@@ -126,3 +126,59 @@ func StripTagsX(str, allowable string) string {
 	html := rex.ReplaceAllString(tmp, "<$1>")
 	return html
 }
+
+var tagx = regexp.MustCompile(`(</?[a-z0-9]+?)( |>)`)
+var selfCloseTags = []string{"area", "base", "basefont", "br", "col", "command", "embed", "frame", "hr", "img", "input", "isindex", "link", "meta", "param", "source", "track", "wbr"}
+
+func CloseHtmlTag(str string) string {
+	tags := tag.FindAllString(str, -1)
+	if len(tags) < 1 {
+		return str
+	}
+	var tagss = make([]string, 0, len(tags))
+	for _, s := range tags {
+		ss := strings.TrimSpace(tagx.FindString(s))
+		if ss[len(ss)-1] != '>' {
+			ss = fmt.Sprintf("%s>", ss)
+			if IsContainInArr(ss, selfCloseTags) {
+				continue
+			}
+		}
+		tagss = append(tagss, ss)
+	}
+	r := SliceMap[string, string](ClearClosedTag(tagss), func(s string) string {
+		return fmt.Sprintf("</%s>", strings.Trim(s, "<>"))
+	})
+	return strings.Join(r, "")
+}
+
+func ClearClosedTag(s []string) []string {
+	i := 0
+	for {
+		if len(s[i:]) < 2 {
+			return s
+		}
+		l := s[i]
+		r := fmt.Sprintf(`</%s>`, strings.Trim(l, "<>"))
+		if s[i+1] == r {
+			if len(s[i+1:]) > 1 {
+				ss := s[:i]
+				s = append(ss, s[i+2:]...)
+
+			} else {
+				s = s[:i]
+			}
+			i = 0
+			continue
+		}
+		i++
+	}
+}
+
+func SliceMap[T any, R any](arr []T, fun func(T) R) []R {
+	r := make([]R, 0, len(arr))
+	for _, t := range arr {
+		r = append(r, fun(t))
+	}
+	return r
+}
