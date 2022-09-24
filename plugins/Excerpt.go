@@ -47,11 +47,11 @@ func ExceptRaw(str string, limit, id int) string {
 			} else {
 				content = string(ru[:end])
 				closeTag := CloseHtmlTag(content)
+				tmp := `%s......%s<p class="read-more"><a href="/p/%d">继续阅读</a></p>`
 				if strings.Contains(closeTag, "pre") || strings.Contains(closeTag, "code") {
-					content = fmt.Sprintf(`%s%s......<p class="read-more"><a href="/p/%d">继续阅读</a></p>`, content, closeTag, id)
-				} else {
-					content = fmt.Sprintf(`%s......%s<p class="read-more"><a href="/p/%d">继续阅读</a></p>`, content, closeTag, id)
+					tmp = `%s%s......<p class="read-more"><a href="/p/%d">继续阅读</a></p>`
 				}
+				content = fmt.Sprintf(tmp, content, closeTag, id)
 				break
 			}
 		}
