@@ -1,6 +1,7 @@
 package route
 
 import (
+	"github.com/gin-contrib/pprof"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
@@ -50,6 +51,6 @@ func SetupRouter() *gin.Engine {
 	r.GET("/p/date/:year/:month/page/:page", actions.Index)
 	r.POST("/login", actions.Login)
 	r.GET("/p/:id", actions.Detail)
-
+	pprof.Register(r, "dev/pprof")
 	return r
 }

@@ -224,3 +224,42 @@ func TestStripTags(t *testing.T) {
 		})
 	}
 }
+
+func TestStripTagsX(t *testing.T) {
+	type args struct {
+		str       string
+		allowable string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "t1",
+			args: args{
+				str:       "<p>ppppp<span>ffff</span></p><img />",
+				allowable: "<p><img>",
+			},
+			want: "<p>pppppffff</p><img />",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := StripTagsX(tt.args.str, tt.args.allowable); got != tt.want {
+				t.Errorf("StripTagsX() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func BenchmarkStripTags(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		StripTags(`<p>ppppp<span>ffff</span></p><img />`, "<p><img>")
+	}
+}
+func BenchmarkStripTagsX(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		StripTagsX(`<p>ppppp<span>ffff</span></p><img />`, "<p><img>")
+	}
+}

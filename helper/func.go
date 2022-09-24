@@ -102,3 +102,27 @@ func StripTags(str, allowable string) string {
 	}
 	return html
 }
+
+var tag = regexp.MustCompile(`<(.*?)>`)
+
+func StripTagsX(str, allowable string) string {
+	if allowable == "" {
+		return allHtmlTag.ReplaceAllString(str, "")
+	}
+	tags := tag.ReplaceAllString(allowable, "$1|")
+	or := strings.TrimRight(tags, "|")
+	reg := fmt.Sprintf(`<(/?(%s).*?)>`, or)
+	regx := fmt.Sprintf(`\{\[(/?(%s).*?)\]\}`, or)
+	cp, err := regexp.Compile(reg)
+	if err != nil {
+		return str
+	}
+	rep := cp.ReplaceAllString(str, "{[$1]}")
+	tmp := tag.ReplaceAllString(rep, "")
+	rex, err := regexp.Compile(regx)
+	if err != nil {
+		return str
+	}
+	html := rex.ReplaceAllString(tmp, "<$1>")
+	return html
+}

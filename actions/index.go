@@ -191,13 +191,13 @@ func Index(c *gin.Context) {
 		post, _ := common.PostsCache.Load(v.Id)
 		pp := post.(*models.WpPosts)
 		px := *pp
-		common.PasswordProjectTitle(&px)
-		if px.PostPassword != "" && pw != px.PostPassword {
-			common.PasswdProjectContent(&px)
-		}
 		postIds[i] = px
-		plugins.ApplyPlugin(plug, &postIds[i])
-
+		common.PasswordProjectTitle(&postIds[i])
+		if px.PostPassword != "" && pw != px.PostPassword {
+			common.PasswdProjectContent(&postIds[i])
+		} else {
+			plugins.ApplyPlugin(plug, &postIds[i])
+		}
 	}
 	for i, post := range recent {
 

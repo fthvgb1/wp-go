@@ -25,16 +25,18 @@ func ExceptRaw(str string, limit, id int) string {
 	content := removeWpBlock.ReplaceAllString(str, "")
 	content = strings.Trim(content, " \t\n\r\000\x0B")
 	content = strings.Replace(content, "]]>", "]]&gt;", -1)
-	content = helper.StripTags(content, "<a><b><blockquote><br><cite><code><dd><del><div><dl><dt><em><h1><h2><h3><h4><h5><h6><i><img><li><ol><p><pre><span><strong><ul>")
+	content = helper.StripTagsX(content, "<a><b><blockquote><br><cite><code><dd><del><div><dl><dt><em><h1><h2><h3><h4><h5><h6><i><img><li><ol><p><pre><span><strong><ul>")
 	length := utf8.RuneCountInString(content) + 1
 	if length > limit {
-		start, l := 0, limit+1
+		start, l := 0, limit
 		end := l
+		ru := []rune(content)
+
 		for {
-			txt := string([]rune(content)[start:end])
+			txt := string(ru[start:end])
 			count := 0
 			for _, ints := range tag.FindAllStringIndex(txt, -1) {
-				t := []rune(content[ints[0]:ints[1]])
+				t := txt[ints[0]:ints[1]]
 				count += len(t)
 				l += len(t)
 			}
@@ -45,8 +47,9 @@ func ExceptRaw(str string, limit, id int) string {
 			} else if count > 0 && length < l {
 				break
 			} else {
-				content = string([]rune(content)[:end])
+				content = string(ru[:end])
 				content = fmt.Sprintf(`%s...<p class="read-more"><a href="/p/%d">继续阅读</a></p>`, content, id)
+				// todo 标签闭合
 				break
 			}
 		}
