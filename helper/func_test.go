@@ -381,3 +381,33 @@ func TestSliceFilter(t *testing.T) {
 		})
 	}
 }
+
+func TestSliceMap(t *testing.T) {
+	type args struct {
+		arr []int8
+		fn  func(int8) int
+	}
+	tests := []struct {
+		name string
+		args args
+		want []int
+	}{
+		{
+			name: "t1",
+			args: args{
+				arr: RangeSlice[int8](1, 10, 1),
+				fn: func(i int8) int {
+					return int(i)
+				},
+			},
+			want: RangeSlice(1, 10, 1),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := SliceMap(tt.args.arr, tt.args.fn); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("SliceMap() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
