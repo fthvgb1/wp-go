@@ -287,6 +287,11 @@ func TestCloseHtmlTag(t *testing.T) {
 			args: args{str: `<pre class="wp-block-preformatted">GRANT privileges ON databasename.tablename TO 'username'@'h...<p class="read-more"><a href="/p/305">继续阅读</a></p>`},
 			want: "</pre>",
 		},
+		{
+			name: "t2",
+			args: args{str: `<pre><div>`},
+			want: "</div></pre>",
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

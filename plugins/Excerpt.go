@@ -46,7 +46,7 @@ func ExceptRaw(str string, limit, id int) string {
 				break
 			} else {
 				content = string(ru[:end])
-				closeTag := CloseHtmlTag(content)
+				closeTag := helper.CloseHtmlTag(content)
 				tmp := `%s......%s<p class="read-more"><a href="/p/%d">继续阅读</a></p>`
 				if strings.Contains(closeTag, "pre") || strings.Contains(closeTag, "code") {
 					tmp = `%s%s......<p class="read-more"><a href="/p/%d">继续阅读</a></p>`
@@ -65,26 +65,4 @@ func Except(p *Plugin[models.WpPosts], c *gin.Context, post *models.WpPosts, sce
 	}
 	post.PostContent = ExceptRaw(post.PostContent, limit, int(post.Id))
 
-}
-
-var tagx = regexp.MustCompile(`(</?[a-z0-9]+?)( |>)`)
-var tagAllow = regexp.MustCompile(`<(a|b|blockquote|cite|code|dd|del|div|dl|dt|em|h1|h2|h3|h4|h5|h6|i|li|ol|p|pre|span|strong|ul).*?>`)
-
-func CloseHtmlTag(str string) string {
-	tags := tagAllow.FindAllString(str, -1)
-	if len(tags) < 1 {
-		return str
-	}
-	var tagss = make([]string, 0, len(tags))
-	for _, s := range tags {
-		ss := strings.TrimSpace(tagx.FindString(s))
-		if ss[len(ss)-1] != '>' {
-			ss = fmt.Sprintf("%s>", ss)
-		}
-		tagss = append(tagss, ss)
-	}
-	r := helper.SliceMap(helper.ClearClosedTag(tagss), func(s string) string {
-		return fmt.Sprintf("</%s>", strings.Trim(s, "<>"))
-	})
-	return strings.Join(r, "")
 }

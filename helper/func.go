@@ -135,7 +135,7 @@ func StripTagsX(str, allowable string) string {
 }
 
 var tagx = regexp.MustCompile(`(</?[a-z0-9]+?)( |>)`)
-var selfCloseTags = []string{"area", "base", "basefont", "br", "col", "command", "embed", "frame", "hr", "img", "input", "isindex", "link", "meta", "param", "source", "track", "wbr"}
+var selfCloseTags = map[string]string{"area": "", "base": "", "basefont": "", "br": "", "col": "", "command": "", "embed": "", "frame": "", "hr": "", "img": "", "input": "", "isindex": "", "link": "", "meta": "", "param": "", "source": "", "track": "", "wbr": ""}
 
 func CloseHtmlTag(str string) string {
 	tags := tag.FindAllString(str, -1)
@@ -147,13 +147,13 @@ func CloseHtmlTag(str string) string {
 		ss := strings.TrimSpace(tagx.FindString(s))
 		if ss[len(ss)-1] != '>' {
 			ss = fmt.Sprintf("%s>", ss)
-			if IsContainInArr(ss, selfCloseTags) {
+			if _, ok := selfCloseTags[ss]; ok {
 				continue
 			}
 		}
 		tagss = append(tagss, ss)
 	}
-	r := SliceMap(ClearClosedTag(tagss), func(s string) string {
+	r := SliceMap(SliceReverse(ClearClosedTag(tagss)), func(s string) string {
 		return fmt.Sprintf("</%s>", strings.Trim(s, "<>"))
 	})
 	return strings.Join(r, "")
