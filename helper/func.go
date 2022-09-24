@@ -191,14 +191,13 @@ func SliceMap[T, R any](arr []T, fn func(T) R) []R {
 }
 
 func SliceFilter[T any](arr []T, fn func(T) bool) []T {
-	j := 0
+	var r []T
 	for _, t := range arr {
 		if fn(t) {
-			arr[j] = t
-			j++
+			r = append(r, t)
 		}
 	}
-	return arr[:j]
+	return r
 }
 
 func SliceReduce[T, R any](arr []T, fn func(T, R) R, r R) R {
