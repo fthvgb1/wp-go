@@ -175,10 +175,27 @@ func ClearClosedTag(s []string) []string {
 	}
 }
 
-func SliceMap[T any, R any](arr []T, fun func(T) R) []R {
+func SliceMap[T, R any](arr []T, fn func(T) R) []R {
 	r := make([]R, 0, len(arr))
 	for _, t := range arr {
-		r = append(r, fun(t))
+		r = append(r, fn(t))
+	}
+	return r
+}
+
+func SliceFilter[T any](arr []T, fn func(T) bool) []T {
+	var r []T
+	for _, t := range arr {
+		if fn(t) {
+			r = append(r, t)
+		}
+	}
+	return r
+}
+
+func SliceReduce[T, R any](arr []T, fn func(T, R) R, r R) R {
+	for _, t := range arr {
+		r = fn(t, r)
 	}
 	return r
 }

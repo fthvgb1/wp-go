@@ -326,3 +326,58 @@ func Test_clearTag(t *testing.T) {
 		})
 	}
 }
+
+func TestSliceReduce(t *testing.T) {
+	type args struct {
+		arr []int
+		fn  func(int, int) int
+		r   int
+	}
+	tests := []struct {
+		name string
+		args args
+		want int
+	}{
+		{
+			name: "t1",
+			args: args{arr: RangeSlice(1, 10, 1), fn: func(i int, i2 int) int {
+				return i + i2
+			}},
+			want: 55,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := SliceReduce(tt.args.arr, tt.args.fn, tt.args.r); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("SliceReduce() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSliceFilter(t *testing.T) {
+	type args struct {
+		arr []int
+		fn  func(int) bool
+	}
+	tests := []struct {
+		name string
+		args args
+		want []int
+	}{
+		{
+			name: "t1",
+			args: args{arr: RangeSlice(1, 10, 1), fn: func(i int) bool {
+				return i > 4
+			}},
+			want: RangeSlice(5, 10, 1),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := SliceFilter(tt.args.arr, tt.args.fn); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("SliceFilter() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
