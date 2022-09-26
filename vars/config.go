@@ -16,6 +16,8 @@ type Config struct {
 	ArchiveCacheTime        time.Duration `yaml:"archiveCacheTime"`
 	ContextPostCacheTime    time.Duration `yaml:"contextPostCacheTime"`
 	RecentCommentsCacheTime time.Duration `yaml:"recentCommentsCacheTime"`
+	DigestCacheTime         time.Duration `yaml:"digestCacheTime"`
+	DigestWordCount         int           `yaml:"digestWordCount"`
 }
 
 type Mysql struct {

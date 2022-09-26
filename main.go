@@ -4,6 +4,7 @@ import (
 	"github/fthvgb1/wp-go/actions/common"
 	"github/fthvgb1/wp-go/db"
 	"github/fthvgb1/wp-go/models"
+	"github/fthvgb1/wp-go/plugins"
 	"github/fthvgb1/wp-go/route"
 	"github/fthvgb1/wp-go/vars"
 )
@@ -30,6 +31,7 @@ func init() {
 	}
 
 	common.InitCache()
+	plugins.InitDigest()
 }
 
 func main() {

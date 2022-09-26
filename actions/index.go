@@ -1,7 +1,6 @@
 package actions
 
 import (
-	"context"
 	"fmt"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -155,11 +154,10 @@ func (h *indexHandle) getTotalPage(totalRaws int) int {
 func Index(c *gin.Context) {
 	h := newIndexHandle(c)
 	h.parseParams()
-	ctx := context.TODO()
 	archive := common.Archives()
-	recent := common.RecentPosts(ctx)
-	categoryItems := common.Categories(ctx)
-	recentComments := common.RecentComments(ctx)
+	recent := common.RecentPosts(c)
+	categoryItems := common.Categories(c)
+	recentComments := common.RecentComments(c)
 	ginH := gin.H{
 		"options":        models.Options,
 		"recentPosts":    recent,
@@ -185,7 +183,6 @@ func Index(c *gin.Context) {
 	}
 	err = common.QueryAndSetPostCache(postIds)
 	pw := h.session.Get("post_password")
-	c.Set("post_password", pw)
 	plug := plugins.NewPostPlugin(c, h.scene)
 	for i, v := range postIds {
 		post, _ := common.PostsCache.Load(v.Id)

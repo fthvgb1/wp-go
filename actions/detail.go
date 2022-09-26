@@ -1,7 +1,6 @@
 package actions
 
 import (
-	"context"
 	"fmt"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -27,11 +26,10 @@ func Detail(c *gin.Context) {
 	hh := detailHandler{
 		c,
 	}
-	ctx := context.TODO()
-	recent := common.RecentPosts(ctx)
+	recent := common.RecentPosts(c)
 	archive := common.Archives()
-	categoryItems := common.Categories(ctx)
-	recentComments := common.RecentComments(ctx)
+	categoryItems := common.Categories(c)
+	recentComments := common.RecentComments(c)
 	var h = gin.H{
 		"title":          models.Options["blogname"],
 		"options":        models.Options,
@@ -80,7 +78,7 @@ func Detail(c *gin.Context) {
 		showComment = false
 	}
 	plugins.ApplyPlugin(plugins.NewPostPlugin(c, plugins.Detail), &post)
-	comments, err := common.PostComments(ctx, post.Id)
+	comments, err := common.PostComments(c, post.Id)
 	commentss := treeComments(comments)
 	prev, next, err := common.GetContextPost(post.Id, post.PostDate)
 	h["title"] = fmt.Sprintf("%s-%s", post.PostTitle, models.Options["blogname"])

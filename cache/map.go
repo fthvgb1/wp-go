@@ -17,11 +17,11 @@ type MapCache[K comparable, V any] struct {
 	incr         int
 }
 
-func NewMapCache[K comparable, V any](fun func(...any) (V, error), duration time.Duration) *MapCache[K, V] {
+func NewMapCache[K comparable, V any](fun func(...any) (V, error), expireTime time.Duration) *MapCache[K, V] {
 	return &MapCache[K, V]{
 		mutex:        &sync.Mutex{},
 		setCacheFunc: fun,
-		expireTime:   duration,
+		expireTime:   expireTime,
 		data:         make(map[K]V),
 	}
 }

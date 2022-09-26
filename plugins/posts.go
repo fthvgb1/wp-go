@@ -7,7 +7,7 @@ import (
 
 func NewPostPlugin(ctx *gin.Context, scene uint) *Plugin[models.WpPosts] {
 	p := NewPlugin[models.WpPosts](nil, -1, nil, scene, ctx)
-	p.Push(Except)
+	p.Push(Digest)
 	return p
 }
 
