@@ -449,3 +449,27 @@ func TestSliceReverse(t *testing.T) {
 		})
 	}
 }
+
+func TestToInterface(t *testing.T) {
+	type args struct {
+		v int
+	}
+	tests := []struct {
+		name string
+		args args
+		want any
+	}{
+		{
+			name: "t1",
+			args: args{v: 1},
+			want: any(1),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ToAny(tt.args.v); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ToAny() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

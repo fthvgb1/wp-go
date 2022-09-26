@@ -18,8 +18,8 @@ var more = regexp.MustCompile("<!--more(.*?)?-->")
 var digestCache *cache.MapCache[uint64, string]
 var quto = regexp.MustCompile(`&quot; *|&amp; *|&lt; *|&gt; ?|&nbsp; *`)
 
-func InitDigest() {
-	digestCache = cache.NewMapCache[uint64](digestRaw, time.Second)
+func InitDigestCache() {
+	digestCache = cache.NewMapCache[uint64](digestRaw, vars.Conf.DigestCacheTime)
 }
 
 func digestRaw(arg ...any) (string, error) {
@@ -108,6 +108,5 @@ func Digest(p *Plugin[models.WpPosts], c *gin.Context, post *models.WpPosts, sce
 	if scene == Detail {
 		return
 	}
-	//post.PostContent = DigestCache(c, post.Id, post.PostContent)
-	post.PostContent = DigestRaw(post.PostContent, vars.Conf.DigestWordCount, post.Id)
+	post.PostContent = DigestCache(c, post.Id, post.PostContent)
 }

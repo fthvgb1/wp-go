@@ -10,6 +10,10 @@ import (
 	"strings"
 )
 
+func ToAny[T any](v T) any {
+	return v
+}
+
 func IsContainInArr[T comparable](a T, arr []T) bool {
 	for _, v := range arr {
 		if a == v {

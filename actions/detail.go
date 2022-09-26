@@ -55,17 +55,9 @@ func Detail(c *gin.Context) {
 		}
 	}
 	ID := uint64(Id)
-	post := common.GetPostFromCache(ID)
-	if post.Id == 0 {
-		er := common.QueryAndSetPostCache([]models.WpPosts{{Id: ID}})
-		if er != nil {
-			err = er
-			return
-		}
-		post = common.GetPostFromCache(ID)
-		if post.Id == 0 {
-			return
-		}
+	post, err := common.GetPostById(c, ID, ID)
+	if post.Id == 0 || err != nil {
+		return
 	}
 	pw := sessions.Default(c).Get("post_password")
 	showComment := false

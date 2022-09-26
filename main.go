@@ -30,8 +30,8 @@ func init() {
 		panic(err)
 	}
 
-	common.InitCache()
-	plugins.InitDigest()
+	common.InitActionsCommonCache()
+	plugins.InitDigestCache()
 }
 
 func main() {

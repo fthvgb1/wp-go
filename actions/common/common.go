@@ -20,18 +20,21 @@ var PostContextCache sync.Map
 var archivesCaches *Arch
 var categoryCaches *cache.SliceCache[models.WpTermsMy]
 var recentPostsCaches *cache.SliceCache[models.WpPosts]
-var monthCaches *cache.MapCache[string, []models.WpPosts]
 var recentCommentsCaches *cache.SliceCache[models.WpComments]
 var postCommentCaches *cache.MapCache[uint64, []models.WpComments]
+var postsCache *cache.MapCache[uint64, models.WpPosts]
 
-func InitCache() {
+func InitActionsCommonCache() {
 	archivesCaches = &Arch{
 		mutex:        &sync.Mutex{},
 		setCacheFunc: archives,
 	}
+	postsCache = cache.NewMapBatchCache[uint64, models.WpPosts](getPosts, time.Hour)
+
 	categoryCaches = cache.NewSliceCache[models.WpTermsMy](categories, vars.Conf.CategoryCacheTime)
+
 	recentPostsCaches = cache.NewSliceCache[models.WpPosts](recentPosts, vars.Conf.RecentPostCacheTime)
-	monthCaches = cache.NewMapCache[string, []models.WpPosts](getMonthPost, 30*time.Minute)
+
 	recentCommentsCaches = cache.NewSliceCache[models.WpComments](recentComments, vars.Conf.RecentCommentsCacheTime)
 	postCommentCaches = cache.NewMapCache[uint64, []models.WpComments](postComments, time.Minute*5)
 }
@@ -43,7 +46,7 @@ type Arch struct {
 	month        time.Month
 }
 
-func (c *Arch) GetCache() []models.PostArchive {
+func (c *Arch) getArchiveCache() []models.PostArchive {
 	l := len(c.data)
 	m := time.Now().Month()
 	if l > 0 && c.month != m || l < 1 {
@@ -65,10 +68,6 @@ type PostContext struct {
 	Next       models.WpPosts
 	expireTime time.Duration
 	setTime    time.Time
-}
-
-func GetMonthPost(ctx context.Context, year, month string) ([]models.WpPosts, error) {
-	return monthCaches.GetCache(ctx, fmt.Sprintf("%s%s", year, month), time.Second, year, month)
 }
 
 func PostComments(ctx context.Context, Id uint64) ([]models.WpComments, error) {
@@ -151,14 +150,6 @@ func getPostContext(t time.Time) (prev, next models.WpPosts, err error) {
 	return
 }
 
-func GetPostFromCache(Id uint64) (r models.WpPosts) {
-	p, ok := PostsCache.Load(Id)
-	if ok {
-		r = *p.(*models.WpPosts)
-	}
-	return
-}
-
 func QueryAndSetPostCache(postIds []models.WpPosts) (err error) {
 	var all []uint64
 	var needQuery []any
@@ -223,7 +214,7 @@ func archives() ([]models.PostArchive, error) {
 }
 
 func Archives() (r []models.PostArchive) {
-	return archivesCaches.GetCache()
+	return archivesCaches.getArchiveCache()
 }
 
 func Categories(ctx context.Context) []models.WpTermsMy {
