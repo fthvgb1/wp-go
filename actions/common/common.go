@@ -5,18 +5,15 @@ import (
 	"database/sql"
 	"fmt"
 	"github/fthvgb1/wp-go/cache"
+	"github/fthvgb1/wp-go/logs"
 	"github/fthvgb1/wp-go/models"
 	"github/fthvgb1/wp-go/vars"
-	"log"
 	"strconv"
-	"strings"
 	"sync"
 	"time"
 )
 
-var PostsCache sync.Map
-var PostContextCache sync.Map
-
+var postContextCache *cache.MapCache[uint64, PostContext]
 var archivesCaches *Arch
 var categoryCaches *cache.SliceCache[models.WpTermsMy]
 var recentPostsCaches *cache.SliceCache[models.WpPosts]
@@ -29,6 +26,9 @@ func InitActionsCommonCache() {
 		mutex:        &sync.Mutex{},
 		setCacheFunc: archives,
 	}
+
+	postContextCache = cache.NewMapCache[uint64, PostContext](getPostContext, vars.Conf.ContextPostCacheTime)
+
 	postsCache = cache.NewMapBatchCache[uint64, models.WpPosts](getPosts, time.Hour)
 
 	categoryCaches = cache.NewSliceCache[models.WpTermsMy](categories, vars.Conf.CategoryCacheTime)
@@ -52,7 +52,7 @@ func (c *Arch) getArchiveCache() []models.PostArchive {
 	if l > 0 && c.month != m || l < 1 {
 		r, err := c.setCacheFunc()
 		if err != nil {
-			log.Printf("set cache err[%s]", err)
+			logs.ErrPrintln(err, "set cache err[%s]")
 			return nil
 		}
 		c.mutex.Lock()
@@ -64,10 +64,8 @@ func (c *Arch) getArchiveCache() []models.PostArchive {
 }
 
 type PostContext struct {
-	Prev       models.WpPosts
-	Next       models.WpPosts
-	expireTime time.Duration
-	setTime    time.Time
+	prev models.WpPosts
+	next models.WpPosts
 }
 
 func PostComments(ctx context.Context, Id uint64) ([]models.WpComments, error) {
@@ -86,7 +84,8 @@ func postComments(args ...any) ([]models.WpComments, error) {
 }
 
 func RecentComments(ctx context.Context) (r []models.WpComments) {
-	r, _ = recentCommentsCaches.GetCache(ctx, time.Second)
+	r, err := recentCommentsCaches.GetCache(ctx, time.Second)
+	logs.ErrPrintln(err, "get recent comment")
 	return
 }
 func recentComments(...any) (r []models.WpComments, err error) {
@@ -98,48 +97,30 @@ func recentComments(...any) (r []models.WpComments, err error) {
 	}, 5)
 }
 
-func getMonthPost(args ...any) ([]models.WpPosts, error) {
-	y := args[0].(string)
-	m := args[1].(string)
-	where := models.SqlBuilder{
-		{"post_type", "in", ""},
-		{"post_status", "in", ""},
-		{"month(post_date)", m},
-		{"year(post_date)", y},
+func GetContextPost(ctx context.Context, id uint64, date time.Time) (prev, next models.WpPosts, err error) {
+	postCtx, err := postContextCache.GetCache(ctx, id, time.Second, date)
+	if err != nil {
+		return models.WpPosts{}, models.WpPosts{}, err
 	}
-	return models.Find[models.WpPosts](where, "ID", "",
-		models.SqlBuilder{{"post_date", "asc"}},
-		nil, 0, []any{"post"}, []any{"publish"},
-	)
-}
-
-func GetContextPost(id uint64, t time.Time) (prev, next models.WpPosts, err error) {
-	post, ok := PostContextCache.Load(id)
-	if ok {
-		c := post.(PostContext)
-		isExp := c.expireTime/time.Second+time.Duration(c.setTime.Unix()) < time.Duration(time.Now().Unix())
-		if !isExp && (c.Prev.Id > 0 || c.Next.Id > 0) {
-			return c.Prev, c.Next, nil
-		}
-	}
-	prev, next, err = getPostContext(t)
-	post = PostContext{
-		Prev:       prev,
-		Next:       next,
-		expireTime: vars.Conf.ContextPostCacheTime,
-		setTime:    time.Now(),
-	}
-	PostContextCache.Store(id, post)
+	prev = postCtx.prev
+	next = postCtx.next
 	return
 }
 
-func getPostContext(t time.Time) (prev, next models.WpPosts, err error) {
-	next, err = models.FirstOne[models.WpPosts](models.SqlBuilder{
+func getPostContext(arg ...any) (r PostContext, err error) {
+	t := arg[0].(time.Time)
+	next, err := models.FirstOne[models.WpPosts](models.SqlBuilder{
 		{"post_date", ">", t.Format("2006-01-02 15:04:05")},
 		{"post_status", "in", ""},
 		{"post_type", "post"},
 	}, "ID,post_title,post_password", nil, []any{"publish", "private"})
-	prev, err = models.FirstOne[models.WpPosts](models.SqlBuilder{
+	if err == sql.ErrNoRows {
+		err = nil
+	}
+	if err != nil {
+		return
+	}
+	prev, err := models.FirstOne[models.WpPosts](models.SqlBuilder{
 		{"post_date", "<", t.Format("2006-01-02 15:04:05")},
 		{"post_status", "in", ""},
 		{"post_type", "post"},
@@ -147,62 +128,12 @@ func getPostContext(t time.Time) (prev, next models.WpPosts, err error) {
 	if err == sql.ErrNoRows {
 		err = nil
 	}
-	return
-}
-
-func QueryAndSetPostCache(postIds []models.WpPosts) (err error) {
-	var all []uint64
-	var needQuery []any
-	for _, wpPosts := range postIds {
-		all = append(all, wpPosts.Id)
-		if _, ok := PostsCache.Load(wpPosts.Id); !ok {
-			needQuery = append(needQuery, wpPosts.Id)
-		}
+	if err != nil {
+		return
 	}
-	if len(needQuery) > 0 {
-		rawPosts, er := models.Find[models.WpPosts](models.SqlBuilder{{
-			"Id", "in", "",
-		}}, "a.*,ifnull(d.name,'') category_name,ifnull(taxonomy,'') `taxonomy`", "", nil, models.SqlBuilder{{
-			"a", "left join", "wp_term_relationships b", "a.Id=b.object_id",
-		}, {
-			"left join", "wp_term_taxonomy c", "b.term_taxonomy_id=c.term_taxonomy_id",
-		}, {
-			"left join", "wp_terms d", "c.term_id=d.term_id",
-		}}, 0, needQuery)
-		if er != nil {
-			err = er
-			return
-		}
-		postsMap := make(map[uint64]*models.WpPosts)
-		for i, post := range rawPosts {
-			v, ok := postsMap[post.Id]
-			if !ok {
-				v = &rawPosts[i]
-			}
-			if post.Taxonomy == "category" {
-				v.Categories = append(v.Categories, post.CategoryName)
-			} else if post.Taxonomy == "post_tag" {
-				v.Tags = append(v.Tags, post.CategoryName)
-			}
-			postsMap[post.Id] = v
-		}
-		for _, pp := range postsMap {
-			if len(pp.Categories) > 0 {
-				t := make([]string, 0, len(pp.Categories))
-				for _, cat := range pp.Categories {
-					t = append(t, fmt.Sprintf(`<a href="/p/category/%s" rel="category tag">%s</a>`, cat, cat))
-				}
-				pp.CategoriesHtml = strings.Join(t, "、")
-			}
-			if len(pp.Tags) > 0 {
-				t := make([]string, 0, len(pp.Tags))
-				for _, cat := range pp.Tags {
-					t = append(t, fmt.Sprintf(`<a href="/p/tag/%s" rel="tag">%s</a>`, cat, cat))
-				}
-				pp.TagsHtml = strings.Join(t, "、")
-			}
-			PostsCache.Store(pp.Id, pp)
-		}
+	r = PostContext{
+		prev: prev,
+		next: next,
 	}
 	return
 }
@@ -218,7 +149,8 @@ func Archives() (r []models.PostArchive) {
 }
 
 func Categories(ctx context.Context) []models.WpTermsMy {
-	r, _ := categoryCaches.GetCache(ctx, time.Second)
+	r, err := categoryCaches.GetCache(ctx, time.Second)
+	logs.ErrPrintln(err, "get category ")
 	return r
 }
 
@@ -244,7 +176,8 @@ func categories(...any) (terms []models.WpTermsMy, err error) {
 }
 
 func RecentPosts(ctx context.Context) (r []models.WpPosts) {
-	r, _ = recentPostsCaches.GetCache(ctx, time.Second)
+	r, err := recentPostsCaches.GetCache(ctx, time.Second)
+	logs.ErrPrintln(err, "get recent post")
 	return
 }
 func recentPosts(...any) (r []models.WpPosts, err error) {

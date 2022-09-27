@@ -6,6 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github/fthvgb1/wp-go/actions/common"
 	"github/fthvgb1/wp-go/helper"
+	"github/fthvgb1/wp-go/logs"
 	"github/fthvgb1/wp-go/models"
 	"github/fthvgb1/wp-go/plugins"
 	"math/rand"
@@ -55,7 +56,7 @@ func Detail(c *gin.Context) {
 		}
 	}
 	ID := uint64(Id)
-	post, err := common.GetPostById(c, ID, ID)
+	post, err := common.GetPostAndCache(c, ID, ID)
 	if post.Id == 0 || err != nil {
 		return
 	}
@@ -71,8 +72,10 @@ func Detail(c *gin.Context) {
 	}
 	plugins.ApplyPlugin(plugins.NewPostPlugin(c, plugins.Detail), &post)
 	comments, err := common.PostComments(c, post.Id)
+	logs.ErrPrintln(err, "get post comment", post.Id)
 	commentss := treeComments(comments)
-	prev, next, err := common.GetContextPost(post.Id, post.PostDate)
+	prev, next, err := common.GetContextPost(c, post.Id, post.PostDate)
+	logs.ErrPrintln(err, "get pre and next post", post.Id, post.PostDate)
 	h["title"] = fmt.Sprintf("%s-%s", post.PostTitle, models.Options["blogname"])
 	h["post"] = post
 	h["showComment"] = showComment

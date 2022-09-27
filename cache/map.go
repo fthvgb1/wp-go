@@ -56,6 +56,20 @@ func (m *MapCache[K, V]) Set(k K, v V) {
 	m.set(k, v)
 }
 
+func (m *MapCache[K, V]) SetByBatchFn(params ...any) error {
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+
+	r, err := m.setBatchCacheFn(params...)
+	if err != nil {
+		return err
+	}
+	for k, v := range r {
+		m.set(k, v)
+	}
+	return nil
+}
+
 func (m *MapCache[K, V]) set(k K, v V) {
 	data, ok := m.data[k]
 	t := time.Now()

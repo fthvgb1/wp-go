@@ -181,23 +181,23 @@ func Index(c *gin.Context) {
 	if len(postIds) < 1 && h.category != "" {
 		h.titleL = "未找到页面"
 	}
-	err = common.QueryAndSetPostCache(postIds)
+	err = common.SetPostCache(postIds)
+	if err != nil {
+		return
+	}
 	pw := h.session.Get("post_password")
 	plug := plugins.NewPostPlugin(c, h.scene)
 	for i, v := range postIds {
-		post, _ := common.PostsCache.Load(v.Id)
-		pp := post.(*models.WpPosts)
-		px := *pp
-		postIds[i] = px
+		post := common.GetPost(v.Id)
+		postIds[i] = post
 		common.PasswordProjectTitle(&postIds[i])
-		if px.PostPassword != "" && pw != px.PostPassword {
+		if post.PostPassword != "" && pw != post.PostPassword {
 			common.PasswdProjectContent(&postIds[i])
 		} else {
 			plugins.ApplyPlugin(plug, &postIds[i])
 		}
 	}
 	for i, post := range recent {
-
 		if post.PostPassword != "" && pw != post.PostPassword {
 			common.PasswdProjectContent(&recent[i])
 		}
