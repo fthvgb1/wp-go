@@ -56,7 +56,7 @@ func Detail(c *gin.Context) {
 		}
 	}
 	ID := uint64(Id)
-	post, err := common.GetPostAndCache(c, ID, ID)
+	post, err := common.GetPostAndCache(c, ID)
 	if post.Id == 0 || err != nil {
 		return
 	}

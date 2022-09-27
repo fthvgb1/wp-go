@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github/fthvgb1/wp-go/cache"
+	"github/fthvgb1/wp-go/helper"
 	"github/fthvgb1/wp-go/logs"
 	"github/fthvgb1/wp-go/models"
 	"github/fthvgb1/wp-go/vars"
@@ -20,6 +21,7 @@ var recentPostsCaches *cache.SliceCache[models.WpPosts]
 var recentCommentsCaches *cache.SliceCache[models.WpComments]
 var postCommentCaches *cache.MapCache[uint64, []models.WpComments]
 var postsCache *cache.MapCache[uint64, models.WpPosts]
+var monthPostsCache *cache.MapCache[string, []uint64]
 
 func InitActionsCommonCache() {
 	archivesCaches = &Arch{
@@ -27,9 +29,12 @@ func InitActionsCommonCache() {
 		setCacheFunc: archives,
 	}
 
+	monthPostsCache = cache.NewMapCache[string, []uint64](monthPost, time.Hour)
+
 	postContextCache = cache.NewMapCache[uint64, PostContext](getPostContext, vars.Conf.ContextPostCacheTime)
 
 	postsCache = cache.NewMapBatchCache[uint64, models.WpPosts](getPosts, time.Hour)
+	postsCache.SetCacheFunc(getPost)
 
 	categoryCaches = cache.NewSliceCache[models.WpTermsMy](categories, vars.Conf.CategoryCacheTime)
 
@@ -37,6 +42,45 @@ func InitActionsCommonCache() {
 
 	recentCommentsCaches = cache.NewSliceCache[models.WpComments](recentComments, vars.Conf.RecentCommentsCacheTime)
 	postCommentCaches = cache.NewMapCache[uint64, []models.WpComments](postComments, time.Minute*5)
+}
+
+func GetMonthPostIds(ctx context.Context, year, month string, page, limit int, order string) (r []models.WpPosts, total int, err error) {
+	res, err := monthPostsCache.GetCache(ctx, fmt.Sprintf("%s%s", year, month), time.Second, year, month)
+	if err != nil {
+		return
+	}
+	if order == "desc" {
+		res = helper.SliceReverse(res)
+	}
+	total = len(res)
+	rr := helper.SlicePagination(res, page, limit)
+	r, err = GetPosts(ctx, rr)
+	return
+}
+
+func monthPost(args ...any) (r []uint64, err error) {
+	year, month := args[0].(string), args[1].(string)
+	where := models.SqlBuilder{
+		{"post_type", "in", ""},
+		{"post_status", "in", ""},
+		{"year(post_date)", year},
+		{"month(post_date)", month},
+	}
+	postType := []any{"post"}
+	status := []any{"publish"}
+	ids, err := models.Find[models.WpPosts](where, "ID", "", models.SqlBuilder{{"Id", "asc"}}, nil, 0, postType, status)
+	if err != nil {
+		return
+	}
+	for _, post := range ids {
+		r = append(r, post.Id)
+	}
+	return
+}
+
+type PostIds struct {
+	Ids    []uint64
+	Length int
 }
 
 type Arch struct {

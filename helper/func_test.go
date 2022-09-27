@@ -473,3 +473,35 @@ func TestToInterface(t *testing.T) {
 		})
 	}
 }
+
+func TestSliceSelfReverse(t *testing.T) {
+	type args struct {
+		arr []int
+	}
+	tests := []struct {
+		name string
+		args args
+		want []int
+	}{
+		{
+			name: "t1",
+			args: args{
+				arr: RangeSlice(1, 10, 1),
+			},
+			want: RangeSlice(10, 1, -1),
+		}, {
+			name: "t2",
+			args: args{
+				arr: RangeSlice(1, 9, 1),
+			},
+			want: RangeSlice(9, 1, -1),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := SliceSelfReverse(tt.args.arr); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("SliceSelfReverse() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

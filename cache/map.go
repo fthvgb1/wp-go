@@ -22,6 +22,14 @@ type mapCacheStruct[T any] struct {
 	data    T
 }
 
+func (m *MapCache[K, V]) SetCacheFunc(fn func(...any) (V, error)) {
+	m.setCacheFunc = fn
+}
+
+func (m *MapCache[K, V]) SetCacheBatchFunc(fn func(...any) (map[K]V, error)) {
+	m.setBatchCacheFn = fn
+}
+
 func NewMapCache[K comparable, V any](fun func(...any) (V, error), expireTime time.Duration) *MapCache[K, V] {
 	return &MapCache[K, V]{
 		mutex:        &sync.Mutex{},
@@ -133,20 +141,35 @@ func (m *MapCache[K, V]) GetCache(c context.Context, key K, timeout time.Duratio
 	return data.data, err
 }
 
-func (m *MapCache[K, V]) GetCacheBatch(c context.Context, key K, timeout time.Duration, params ...any) (V, error) {
-	data, ok := m.data[key]
-	if !ok {
-		data = mapCacheStruct[V]{}
+func (m *MapCache[K, V]) GetCacheBatch(c context.Context, key []K, timeout time.Duration, params ...any) ([]V, error) {
+	var needFlush []K
+	var res []V
+	t := 0
+	for _, k := range key {
+		d, ok := m.data[k]
+		if !ok {
+			needFlush = append(needFlush, k)
+			continue
+		}
+		expired := time.Duration(d.setTime.Unix())+m.expireTime/time.Second < time.Duration(time.Now().Unix())
+		if expired {
+			needFlush = append(needFlush, k)
+		}
+		t = t + d.incr
 	}
 	var err error
-	expired := time.Duration(data.setTime.Unix())+m.expireTime/time.Second < time.Duration(time.Now().Unix())
 	//todo 这里应该判断下取出的值是否为零值，不过怎么操作呢？
-	if !ok || (ok && m.expireTime >= 0 && expired) {
-		t := data.incr
+	if len(needFlush) > 0 {
 		call := func() {
 			m.mutex.Lock()
 			defer m.mutex.Unlock()
-			if data.incr > t {
+			tt := 0
+			for _, dd := range needFlush {
+				if ddd, ok := m.data[dd]; ok {
+					tt = tt + ddd.incr
+				}
+			}
+			if tt > t {
 				return
 			}
 			r, er := m.setBatchCacheFn(params...)
@@ -157,7 +180,6 @@ func (m *MapCache[K, V]) GetCacheBatch(c context.Context, key K, timeout time.Du
 			for k, v := range r {
 				m.set(k, v)
 			}
-			data.data = m.data[key].data
 		}
 		if timeout > 0 {
 			ctx, cancel := context.WithTimeout(c, timeout)
@@ -175,7 +197,10 @@ func (m *MapCache[K, V]) GetCacheBatch(c context.Context, key K, timeout time.Du
 		} else {
 			call()
 		}
-
 	}
-	return data.data, err
+	for _, k := range key {
+		d := m.data[k]
+		res = append(res, d.data)
+	}
+	return res, err
 }

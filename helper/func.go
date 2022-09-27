@@ -34,6 +34,9 @@ func StructColumn[T any, M any](arr []M, field string) (r []T) {
 }
 
 func RangeSlice[T ~int | ~uint | ~int64 | ~int8 | ~int16 | ~int32 | ~uint64](start, end, step T) []T {
+	if step == 0 {
+		panic("step can't be 0")
+	}
 	l := int((end-start+1)/step + 1)
 	if l < 0 {
 		l = 0 - l
@@ -217,4 +220,13 @@ func SliceReverse[T any](arr []T) []T {
 		r = append(r, arr[i-1])
 	}
 	return r
+}
+
+func SliceSelfReverse[T any](arr []T) []T {
+	l := len(arr)
+	half := l / 2
+	for i := 0; i < half; i++ {
+		arr[i], arr[l-i-1] = arr[l-i-1], arr[i]
+	}
+	return arr
 }

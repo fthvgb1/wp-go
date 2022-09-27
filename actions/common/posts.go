@@ -9,13 +9,17 @@ import (
 	"time"
 )
 
-func GetPostAndCache(ctx context.Context, id uint64, ids ...uint64) (models.WpPosts, error) {
+func GetPostAndCache(ctx context.Context, id uint64) (models.WpPosts, error) {
 
-	return postsCache.GetCacheBatch(ctx, id, time.Second, ids)
+	return postsCache.GetCache(ctx, id, time.Second, id)
 }
 
 func GetPost(id uint64) models.WpPosts {
 	return postsCache.Get(id)
+}
+
+func GetPosts(ctx context.Context, ids []uint64) ([]models.WpPosts, error) {
+	return postsCache.GetCacheBatch(ctx, ids, time.Second, ids)
 }
 
 func SetPostCache(ids []models.WpPosts) error {
@@ -24,6 +28,16 @@ func SetPostCache(ids []models.WpPosts) error {
 		arg = append(arg, posts.Id)
 	}
 	return postsCache.SetByBatchFn(arg)
+}
+
+func getPost(id ...any) (post models.WpPosts, err error) {
+	Id := id[0].(uint64)
+	posts, err := getPosts([]uint64{Id})
+	if err != nil {
+		return models.WpPosts{}, err
+	}
+	post = posts[Id]
+	return
 }
 
 func getPosts(ids ...any) (m map[uint64]models.WpPosts, err error) {

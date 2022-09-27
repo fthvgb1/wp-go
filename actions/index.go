@@ -168,12 +168,25 @@ func Index(c *gin.Context) {
 		"title":          h.getTitle(),
 		"recentComments": recentComments,
 	}
-	postIds, totalRaw, err := models.SimplePagination[models.WpPosts](h.where, "ID", "", h.page, h.pageSize, h.orderBy, h.join, h.postType, h.status)
+	var postIds []models.WpPosts
+	var totalRaw int
+	var err error
+	if c.Param("month") != "" {
+		postIds, totalRaw, err = common.GetMonthPostIds(c, c.Param("year"), c.Param("month"), h.page, h.pageSize, h.order)
+		if err != nil {
+			return
+		}
+	} else {
+		postIds, totalRaw, err = models.SimplePagination[models.WpPosts](h.where, "ID", "", h.page, h.pageSize, h.orderBy, h.join, h.postType, h.status)
+	}
+
 	defer func() {
-		c.HTML(http.StatusOK, "posts/index.gohtml", ginH)
+		stat := http.StatusOK
 		if err != nil {
 			c.Error(err)
+			stat = http.StatusInternalServerError
 		}
+		c.HTML(stat, "posts/index.gohtml", ginH)
 	}()
 	if err != nil {
 		return
@@ -181,10 +194,7 @@ func Index(c *gin.Context) {
 	if len(postIds) < 1 && h.category != "" {
 		h.titleL = "未找到页面"
 	}
-	err = common.SetPostCache(postIds)
-	if err != nil {
-		return
-	}
+
 	pw := h.session.Get("post_password")
 	plug := plugins.NewPostPlugin(c, h.scene)
 	for i, v := range postIds {
@@ -203,6 +213,9 @@ func Index(c *gin.Context) {
 		}
 	}
 	q := c.Request.URL.Query().Encode()
+	if q != "" {
+		q = fmt.Sprintf("?%s", q)
+	}
 	ginH["posts"] = postIds
 	ginH["totalPage"] = h.getTotalPage(totalRaw)
 	ginH["pagination"] = pagination(h.page, h.totalPage, h.paginationStep, c.Request.URL.Path, q)
