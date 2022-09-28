@@ -28,7 +28,7 @@ type indexHandle struct {
 	category       string
 	categoryType   string
 	where          models.SqlBuilder
-	orderBy        models.SqlBuilder
+	orderBy        string
 	order          string
 	join           models.SqlBuilder
 	postType       []any
@@ -51,7 +51,7 @@ func newIndexHandle(ctx *gin.Context) *indexHandle {
 			{"post_type", "in", ""},
 			{"post_status", "in", ""},
 		},
-		orderBy:  models.SqlBuilder{},
+		orderBy:  "post_date",
 		join:     models.SqlBuilder{},
 		postType: []any{"post"},
 		status:   []any{"publish"},
@@ -66,6 +66,10 @@ func (h *indexHandle) setTitleLR(l, r string) {
 func (h *indexHandle) getTitle() string {
 	h.title = fmt.Sprintf("%s-%s", h.titleL, h.titleR)
 	return h.title
+}
+
+func (h *indexHandle) getSearchKey() string {
+	return fmt.Sprintf("action:%s|%s|%s|%s|%s|%d|%d", h.search, h.orderBy, h.order, h.category, h.categoryType, h.page, h.pageSize)
 }
 
 func (h *indexHandle) parseParams() {
@@ -177,7 +181,7 @@ func Index(c *gin.Context) {
 			return
 		}
 	} else {
-		postIds, totalRaw, err = models.SimplePagination[models.WpPosts](h.where, "ID", "", h.page, h.pageSize, h.orderBy, h.join, h.postType, h.status)
+		postIds, totalRaw, err = common.SearchPostIds(c, h.getSearchKey(), h.where, h.page, h.pageSize, models.SqlBuilder{{h.orderBy, h.order}}, h.join, h.postType, h.status)
 	}
 
 	defer func() {
@@ -198,7 +202,7 @@ func Index(c *gin.Context) {
 	pw := h.session.Get("post_password")
 	plug := plugins.NewPostPlugin(c, h.scene)
 	for i, v := range postIds {
-		post := common.GetPost(v.Id)
+		post := common.GetPostById(v.Id)
 		postIds[i] = post
 		common.PasswordProjectTitle(&postIds[i])
 		if post.PostPassword != "" && pw != post.PostPassword {

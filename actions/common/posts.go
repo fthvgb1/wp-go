@@ -14,11 +14,11 @@ func GetPostAndCache(ctx context.Context, id uint64) (models.WpPosts, error) {
 	return postsCache.GetCache(ctx, id, time.Second, id)
 }
 
-func GetPost(id uint64) models.WpPosts {
+func GetPostById(id uint64) models.WpPosts {
 	return postsCache.Get(id)
 }
 
-func GetPosts(ctx context.Context, ids []uint64) ([]models.WpPosts, error) {
+func GetPostsByIds(ctx context.Context, ids []uint64) ([]models.WpPosts, error) {
 	return postsCache.GetCacheBatch(ctx, ids, time.Second, ids)
 }
 
@@ -30,9 +30,9 @@ func SetPostCache(ids []models.WpPosts) error {
 	return postsCache.SetByBatchFn(arg)
 }
 
-func getPost(id ...any) (post models.WpPosts, err error) {
+func getPostById(id ...any) (post models.WpPosts, err error) {
 	Id := id[0].(uint64)
-	posts, err := getPosts([]uint64{Id})
+	posts, err := getPostsByIds([]uint64{Id})
 	if err != nil {
 		return models.WpPosts{}, err
 	}
@@ -40,7 +40,7 @@ func getPost(id ...any) (post models.WpPosts, err error) {
 	return
 }
 
-func getPosts(ids ...any) (m map[uint64]models.WpPosts, err error) {
+func getPostsByIds(ids ...any) (m map[uint64]models.WpPosts, err error) {
 	m = make(map[uint64]models.WpPosts)
 	id := ids[0].([]uint64)
 	arg := helper.SliceMap(id, helper.ToAny[uint64])
@@ -86,5 +86,31 @@ func getPosts(ids ...any) (m map[uint64]models.WpPosts, err error) {
 		}
 		m[k] = pp
 	}
+	return
+}
+
+func SearchPostIds(ctx context.Context, key string, args ...any) (r []models.WpPosts, total int, err error) {
+	ids, err := searchPostIdsCache.GetCache(ctx, key, time.Second, args...)
+	if err != nil {
+		return
+	}
+	total = ids.Length
+	r, err = GetPostsByIds(ctx, ids.Ids)
+	return
+}
+
+func searchPostIds(args ...any) (ids PostIds, err error) {
+	where := args[0].(models.SqlBuilder)
+	page := args[1].(int)
+	limit := args[2].(int)
+	order := args[3].(models.SqlBuilder)
+	join := args[4].(models.SqlBuilder)
+	postType := args[5].([]any)
+	postStatus := args[6].([]any)
+	res, total, err := models.SimplePagination[models.WpPosts](where, "ID", "", page, limit, order, join, postType, postStatus)
+	for _, posts := range res {
+		ids.Ids = append(ids.Ids, posts.Id)
+	}
+	ids.Length = total
 	return
 }

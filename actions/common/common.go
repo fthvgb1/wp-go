@@ -22,6 +22,7 @@ var recentCommentsCaches *cache.SliceCache[models.WpComments]
 var postCommentCaches *cache.MapCache[uint64, []models.WpComments]
 var postsCache *cache.MapCache[uint64, models.WpPosts]
 var monthPostsCache *cache.MapCache[string, []uint64]
+var searchPostIdsCache *cache.MapCache[string, PostIds]
 
 func InitActionsCommonCache() {
 	archivesCaches = &Arch{
@@ -29,12 +30,14 @@ func InitActionsCommonCache() {
 		setCacheFunc: archives,
 	}
 
+	searchPostIdsCache = cache.NewMapCache[string, PostIds](searchPostIds, time.Hour)
+
 	monthPostsCache = cache.NewMapCache[string, []uint64](monthPost, time.Hour)
 
 	postContextCache = cache.NewMapCache[uint64, PostContext](getPostContext, vars.Conf.ContextPostCacheTime)
 
-	postsCache = cache.NewMapBatchCache[uint64, models.WpPosts](getPosts, time.Hour)
-	postsCache.SetCacheFunc(getPost)
+	postsCache = cache.NewMapBatchCache[uint64, models.WpPosts](getPostsByIds, time.Hour)
+	postsCache.SetCacheFunc(getPostById)
 
 	categoryCaches = cache.NewSliceCache[models.WpTermsMy](categories, vars.Conf.CategoryCacheTime)
 
@@ -54,7 +57,7 @@ func GetMonthPostIds(ctx context.Context, year, month string, page, limit int, o
 	}
 	total = len(res)
 	rr := helper.SlicePagination(res, page, limit)
-	r, err = GetPosts(ctx, rr)
+	r, err = GetPostsByIds(ctx, rr)
 	return
 }
 
