@@ -31,15 +31,15 @@ func InitActionsCommonCache() {
 		setCacheFunc: archives,
 	}
 
-	searchPostIdsCache = cache.NewMapCache[string, PostIds](searchPostIds, vars.Conf.SearchPostCacheTime)
+	searchPostIdsCache = cache.NewMapCacheByFn[string, PostIds](searchPostIds, vars.Conf.SearchPostCacheTime)
 
-	postListIdsCache = cache.NewMapCache[string, PostIds](searchPostIds, vars.Conf.PostListCacheTime)
+	postListIdsCache = cache.NewMapCacheByFn[string, PostIds](searchPostIds, vars.Conf.PostListCacheTime)
 
-	monthPostsCache = cache.NewMapCache[string, []uint64](monthPost, vars.Conf.MonthPostCacheTime)
+	monthPostsCache = cache.NewMapCacheByFn[string, []uint64](monthPost, vars.Conf.MonthPostCacheTime)
 
-	postContextCache = cache.NewMapCache[uint64, PostContext](getPostContext, vars.Conf.ContextPostCacheTime)
+	postContextCache = cache.NewMapCacheByFn[uint64, PostContext](getPostContext, vars.Conf.ContextPostCacheTime)
 
-	postsCache = cache.NewMapBatchCache[uint64, models.WpPosts](getPostsByIds, vars.Conf.PostDataCacheTime)
+	postsCache = cache.NewMapCacheByBatchFn[uint64, models.WpPosts](getPostsByIds, vars.Conf.PostDataCacheTime)
 	postsCache.SetCacheFunc(getPostById)
 
 	categoryCaches = cache.NewSliceCache[models.WpTermsMy](categories, vars.Conf.CategoryCacheTime)
@@ -48,7 +48,16 @@ func InitActionsCommonCache() {
 
 	recentCommentsCaches = cache.NewSliceCache[models.WpComments](recentComments, vars.Conf.RecentCommentsCacheTime)
 
-	postCommentCaches = cache.NewMapCache[uint64, []models.WpComments](postComments, time.Minute*5)
+	postCommentCaches = cache.NewMapCacheByFn[uint64, []models.WpComments](postComments, vars.Conf.CommentsCacheTime)
+}
+
+func ClearCache() {
+	searchPostIdsCache.ClearExpired()
+	postsCache.ClearExpired()
+	postsCache.ClearExpired()
+	postListIdsCache.ClearExpired()
+	monthPostsCache.ClearExpired()
+	postContextCache.ClearExpired()
 }
 
 func GetMonthPostIds(ctx context.Context, year, month string, page, limit int, order string) (r []models.WpPosts, total int, err error) {

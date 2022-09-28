@@ -7,6 +7,7 @@ import (
 	"github/fthvgb1/wp-go/plugins"
 	"github/fthvgb1/wp-go/route"
 	"github/fthvgb1/wp-go/vars"
+	"time"
 )
 
 func init() {
@@ -32,6 +33,18 @@ func init() {
 
 	common.InitActionsCommonCache()
 	plugins.InitDigestCache()
+	go cronClearCache()
+}
+
+func cronClearCache() {
+	t := time.NewTicker(vars.Conf.CrontabClearCacheTime)
+	for {
+		select {
+		case <-t.C:
+			common.ClearCache()
+			plugins.ClearDigestCache()
+		}
+	}
 }
 
 func main() {

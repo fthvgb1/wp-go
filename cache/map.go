@@ -16,6 +16,10 @@ type MapCache[K comparable, V any] struct {
 	expireTime      time.Duration
 }
 
+func NewMapCache[K comparable, V any](expireTime time.Duration) *MapCache[K, V] {
+	return &MapCache[K, V]{expireTime: expireTime}
+}
+
 type mapCacheStruct[T any] struct {
 	setTime time.Time
 	incr    int
@@ -30,7 +34,7 @@ func (m *MapCache[K, V]) SetCacheBatchFunc(fn func(...any) (map[K]V, error)) {
 	m.setBatchCacheFn = fn
 }
 
-func NewMapCache[K comparable, V any](fun func(...any) (V, error), expireTime time.Duration) *MapCache[K, V] {
+func NewMapCacheByFn[K comparable, V any](fun func(...any) (V, error), expireTime time.Duration) *MapCache[K, V] {
 	return &MapCache[K, V]{
 		mutex:        &sync.Mutex{},
 		setCacheFunc: fun,
@@ -38,7 +42,7 @@ func NewMapCache[K comparable, V any](fun func(...any) (V, error), expireTime ti
 		data:         make(map[K]mapCacheStruct[V]),
 	}
 }
-func NewMapBatchCache[K comparable, V any](fn func(...any) (map[K]V, error), expireTime time.Duration) *MapCache[K, V] {
+func NewMapCacheByBatchFn[K comparable, V any](fn func(...any) (map[K]V, error), expireTime time.Duration) *MapCache[K, V] {
 	return &MapCache[K, V]{
 		mutex:           &sync.Mutex{},
 		setBatchCacheFn: fn,
@@ -47,11 +51,10 @@ func NewMapBatchCache[K comparable, V any](fn func(...any) (map[K]V, error), exp
 	}
 }
 
-func (m *MapCache[K, V]) FlushCache(k any) {
+func (m *MapCache[K, V]) Flush() {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
-	key := k.(K)
-	delete(m.data, key)
+	m.data = make(map[K]mapCacheStruct[V])
 }
 
 func (m *MapCache[K, V]) Get(k K) V {
@@ -207,7 +210,7 @@ func (m *MapCache[K, V]) GetCacheBatch(c context.Context, key []K, timeout time.
 	return res, err
 }
 
-func (m *MapCache[K, V]) ClearExpiredCache() {
+func (m *MapCache[K, V]) ClearExpired() {
 	now := time.Duration(time.Now().UnixNano())
 	m.mutex.Lock()
 	defer m.mutex.Unlock()

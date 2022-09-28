@@ -22,6 +22,8 @@ type Config struct {
 	SearchPostCacheTime     time.Duration `yaml:"searchPostCacheTime"`
 	MonthPostCacheTime      time.Duration `yaml:"monthPostCacheTime"`
 	PostDataCacheTime       time.Duration `yaml:"postDataCacheTime"`
+	CommentsCacheTime       time.Duration `yaml:"commentsCacheTime"`
+	CrontabClearCacheTime   time.Duration `yaml:"crontabClearCacheTime"`
 }
 
 type Mysql struct {

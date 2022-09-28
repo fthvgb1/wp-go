@@ -31,7 +31,11 @@ digestWordCount: 300
 postListCacheTime: 1h
 # 搜索文档id缓存时间
 searchPostCacheTime: 5m
-# 月归档文章id缓存
+# 月归档文章id缓存时间
 monthPostCacheTime: 1h
 # 文档数据缓存时间
 postDataCacheTime: 1h
+# 文章评论缓存时间
+commentsCacheTime: 5m
+# 定时清理缓存周期时间
+crontabClearCacheTime: 5m
