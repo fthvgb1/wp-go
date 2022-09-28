@@ -18,6 +18,10 @@ type Config struct {
 	RecentCommentsCacheTime time.Duration `yaml:"recentCommentsCacheTime"`
 	DigestCacheTime         time.Duration `yaml:"digestCacheTime"`
 	DigestWordCount         int           `yaml:"digestWordCount"`
+	PostListCacheTime       time.Duration `yaml:"postListCacheTime"`
+	SearchPostCacheTime     time.Duration `yaml:"searchPostCacheTime"`
+	MonthPostCacheTime      time.Duration `yaml:"monthPostCacheTime"`
+	PostDataCacheTime       time.Duration `yaml:"postDataCacheTime"`
 }
 
 type Mysql struct {

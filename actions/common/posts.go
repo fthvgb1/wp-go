@@ -22,12 +22,14 @@ func GetPostsByIds(ctx context.Context, ids []uint64) ([]models.WpPosts, error) 
 	return postsCache.GetCacheBatch(ctx, ids, time.Second, ids)
 }
 
-func SetPostCache(ids []models.WpPosts) error {
-	var arg []uint64
-	for _, posts := range ids {
-		arg = append(arg, posts.Id)
+func SearchPost(ctx context.Context, key string, args ...any) (r []models.WpPosts, total int, err error) {
+	ids, err := searchPostIdsCache.GetCache(ctx, key, time.Second, args...)
+	if err != nil {
+		return
 	}
-	return postsCache.SetByBatchFn(arg)
+	total = ids.Length
+	r, err = GetPostsByIds(ctx, ids.Ids)
+	return
 }
 
 func getPostById(id ...any) (post models.WpPosts, err error) {
@@ -89,8 +91,8 @@ func getPostsByIds(ids ...any) (m map[uint64]models.WpPosts, err error) {
 	return
 }
 
-func SearchPostIds(ctx context.Context, key string, args ...any) (r []models.WpPosts, total int, err error) {
-	ids, err := searchPostIdsCache.GetCache(ctx, key, time.Second, args...)
+func PostLists(ctx context.Context, key string, args ...any) (r []models.WpPosts, total int, err error) {
+	ids, err := postListIdsCache.GetCache(ctx, key, time.Second, args...)
 	if err != nil {
 		return
 	}

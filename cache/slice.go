@@ -35,7 +35,7 @@ func (c *SliceCache[T]) GetCache(ctx context.Context, timeout time.Duration, par
 	l := len(c.data)
 	data := c.data
 	var err error
-	expired := time.Duration(c.setTime.Unix())+c.expireTime/time.Second < time.Duration(time.Now().Unix())
+	expired := time.Duration(c.setTime.UnixNano())+c.expireTime < time.Duration(time.Now().UnixNano())
 	if l < 1 || (l > 0 && c.expireTime >= 0 && expired) {
 		t := c.incr
 		call := func() {

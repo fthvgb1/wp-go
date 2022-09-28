@@ -180,8 +180,10 @@ func Index(c *gin.Context) {
 		if err != nil {
 			return
 		}
+	} else if h.search != "" {
+		postIds, totalRaw, err = common.SearchPost(c, h.getSearchKey(), h.where, h.page, h.pageSize, models.SqlBuilder{{h.orderBy, h.order}}, h.join, h.postType, h.status)
 	} else {
-		postIds, totalRaw, err = common.SearchPostIds(c, h.getSearchKey(), h.where, h.page, h.pageSize, models.SqlBuilder{{h.orderBy, h.order}}, h.join, h.postType, h.status)
+		postIds, totalRaw, err = common.PostLists(c, h.getSearchKey(), h.where, h.page, h.pageSize, models.SqlBuilder{{h.orderBy, h.order}}, h.join, h.postType, h.status)
 	}
 
 	defer func() {

@@ -99,8 +99,9 @@ func (m *MapCache[K, V]) GetCache(c context.Context, key K, timeout time.Duratio
 	if !ok {
 		data = mapCacheStruct[V]{}
 	}
+	now := time.Duration(time.Now().UnixNano())
 	var err error
-	expired := time.Duration(data.setTime.Unix())+m.expireTime/time.Second < time.Duration(time.Now().Unix())
+	expired := time.Duration(data.setTime.UnixNano())+m.expireTime < now
 	//todo 这里应该判断下取出的值是否为零值，不过怎么操作呢？
 	if !ok || (ok && m.expireTime >= 0 && expired) {
 		t := data.incr
@@ -145,13 +146,14 @@ func (m *MapCache[K, V]) GetCacheBatch(c context.Context, key []K, timeout time.
 	var needFlush []K
 	var res []V
 	t := 0
+	now := time.Duration(time.Now().UnixNano())
 	for _, k := range key {
 		d, ok := m.data[k]
 		if !ok {
 			needFlush = append(needFlush, k)
 			continue
 		}
-		expired := time.Duration(d.setTime.Unix())+m.expireTime/time.Second < time.Duration(time.Now().Unix())
+		expired := time.Duration(d.setTime.UnixNano())+m.expireTime < now
 		if expired {
 			needFlush = append(needFlush, k)
 		}
@@ -203,4 +205,15 @@ func (m *MapCache[K, V]) GetCacheBatch(c context.Context, key []K, timeout time.
 		res = append(res, d.data)
 	}
 	return res, err
+}
+
+func (m *MapCache[K, V]) ClearExpiredCache() {
+	now := time.Duration(time.Now().UnixNano())
+	m.mutex.Lock()
+	defer m.mutex.Unlock()
+	for k, v := range m.data {
+		if now > time.Duration(v.setTime.UnixNano())+m.expireTime {
+			delete(m.data, k)
+		}
+	}
 }

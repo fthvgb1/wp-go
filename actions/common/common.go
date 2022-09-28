@@ -22,6 +22,7 @@ var recentCommentsCaches *cache.SliceCache[models.WpComments]
 var postCommentCaches *cache.MapCache[uint64, []models.WpComments]
 var postsCache *cache.MapCache[uint64, models.WpPosts]
 var monthPostsCache *cache.MapCache[string, []uint64]
+var postListIdsCache *cache.MapCache[string, PostIds]
 var searchPostIdsCache *cache.MapCache[string, PostIds]
 
 func InitActionsCommonCache() {
@@ -30,13 +31,15 @@ func InitActionsCommonCache() {
 		setCacheFunc: archives,
 	}
 
-	searchPostIdsCache = cache.NewMapCache[string, PostIds](searchPostIds, time.Hour)
+	searchPostIdsCache = cache.NewMapCache[string, PostIds](searchPostIds, vars.Conf.SearchPostCacheTime)
 
-	monthPostsCache = cache.NewMapCache[string, []uint64](monthPost, time.Hour)
+	postListIdsCache = cache.NewMapCache[string, PostIds](searchPostIds, vars.Conf.PostListCacheTime)
+
+	monthPostsCache = cache.NewMapCache[string, []uint64](monthPost, vars.Conf.MonthPostCacheTime)
 
 	postContextCache = cache.NewMapCache[uint64, PostContext](getPostContext, vars.Conf.ContextPostCacheTime)
 
-	postsCache = cache.NewMapBatchCache[uint64, models.WpPosts](getPostsByIds, time.Hour)
+	postsCache = cache.NewMapBatchCache[uint64, models.WpPosts](getPostsByIds, vars.Conf.PostDataCacheTime)
 	postsCache.SetCacheFunc(getPostById)
 
 	categoryCaches = cache.NewSliceCache[models.WpTermsMy](categories, vars.Conf.CategoryCacheTime)
@@ -44,6 +47,7 @@ func InitActionsCommonCache() {
 	recentPostsCaches = cache.NewSliceCache[models.WpPosts](recentPosts, vars.Conf.RecentPostCacheTime)
 
 	recentCommentsCaches = cache.NewSliceCache[models.WpComments](recentComments, vars.Conf.RecentCommentsCacheTime)
+
 	postCommentCaches = cache.NewMapCache[uint64, []models.WpComments](postComments, time.Minute*5)
 }
 

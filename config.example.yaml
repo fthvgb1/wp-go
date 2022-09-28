@@ -27,3 +27,11 @@ recentCommentsCacheTime: 5m
 digestCacheTime: 5m
 # 摘要字数
 digestWordCount: 300
+# 文档列表id页缓存 包括默认列表、分类
+postListCacheTime: 1h
+# 搜索文档id缓存时间
+searchPostCacheTime: 5m
+# 月归档文章id缓存
+monthPostCacheTime: 1h
+# 文档数据缓存时间
+postDataCacheTime: 1h
