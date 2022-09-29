@@ -39,7 +39,8 @@ func FlowLimit() func(ctx *gin.Context) {
 			c.Next()
 			return
 		}
-		if m.searchLimit(true, c, f) {
+		ip := c.ClientIP()
+		if m.searchLimit(true, c, ip, f) {
 			c.Abort()
 			return
 		}
@@ -51,12 +52,12 @@ func FlowLimit() func(ctx *gin.Context) {
 			c.String(http.StatusForbidden, "请求太多了，服务器君压力山大中==!, 请稍后访问")
 			c.Abort()
 			atomic.AddInt64(&flow, -1)
-			m.searchLimit(false, c, f)
+			m.searchLimit(false, c, ip, f)
 			return
 		}
 
 		c.Next()
-		m.searchLimit(false, c, f)
+		m.searchLimit(false, c, ip, f)
 		atomic.AddInt64(&flow, -1)
 	}
 }
@@ -67,8 +68,8 @@ func (m *IpLimitMap) set(k string, n int) {
 	m.m[k] = n
 }
 
-func (m *IpLimitMap) searchLimit(a bool, c *gin.Context, f []string) (isForbid bool) {
-	ip := c.ClientIP()
+func (m *IpLimitMap) searchLimit(a bool, c *gin.Context, ip string, f []string) (isForbid bool) {
+
 	if f[0] == "" && c.Query("s") != "" {
 		if a {
 			i, ok := m.m[ip]
