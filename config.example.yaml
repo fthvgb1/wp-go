@@ -39,3 +39,11 @@ postDataCacheTime: 1h
 commentsCacheTime: 5m
 # 定时清理缓存周期时间
 crontabClearCacheTime: 5m
+# 到达指定并发请求数时随机sleep
+maxRequestSleepNum: 100
+# 随机sleep时间
+sleepTime: [1s,3s]
+# 全局最大请求数，超过直接403
+maxRequestNum: 500
+# 单ip同时最大搜索请求数
+singleIpSearchNum: 10

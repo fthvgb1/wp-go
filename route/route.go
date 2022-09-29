@@ -6,6 +6,7 @@ import (
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
 	"github/fthvgb1/wp-go/actions"
+	"github/fthvgb1/wp-go/helper"
 	"github/fthvgb1/wp-go/middleware"
 	"github/fthvgb1/wp-go/static"
 	"github/fthvgb1/wp-go/templates"
@@ -17,7 +18,7 @@ import (
 func SetupRouter() *gin.Engine {
 	// Disable Console Color
 	// gin.DisableConsoleColor()
-	r := gin.Default()
+	r := gin.New()
 	r.HTMLRender = templates.NewFsTemplate(template.FuncMap{
 		"unescaped": func(s string) any {
 			return template.HTML(s)
@@ -26,7 +27,7 @@ func SetupRouter() *gin.Engine {
 			return t.Format("2006年 01月 02日")
 		},
 	}).SetTemplate()
-	r.Use(middleware.SetStaticFileCache)
+	r.Use(gin.Logger(), gin.Recovery(), middleware.FlowLimit(), middleware.SetStaticFileCache)
 	//gzip 因为一般会用nginx做反代时自动使用gzip,所以go这边本身可以不用
 	/*r.Use(gzip.Gzip(gzip.DefaultCompression, gzip.WithExcludedPaths([]string{
 		"/wp-includes/", "/wp-content/",
@@ -51,6 +52,8 @@ func SetupRouter() *gin.Engine {
 	r.GET("/p/date/:year/:month/page/:page", actions.Index)
 	r.POST("/login", actions.Login)
 	r.GET("/p/:id", actions.Detail)
-	pprof.Register(r, "dev/pprof")
+	if helper.IsContainInArr(gin.Mode(), []string{gin.DebugMode, gin.TestMode}) {
+		pprof.Register(r, "dev/pprof")
+	}
 	return r
 }

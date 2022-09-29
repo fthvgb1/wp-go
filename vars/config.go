@@ -10,20 +10,24 @@ import (
 var Conf Config
 
 type Config struct {
-	Mysql                   Mysql         `yaml:"mysql"`
-	RecentPostCacheTime     time.Duration `yaml:"recentPostCacheTime"`
-	CategoryCacheTime       time.Duration `yaml:"categoryCacheTime"`
-	ArchiveCacheTime        time.Duration `yaml:"archiveCacheTime"`
-	ContextPostCacheTime    time.Duration `yaml:"contextPostCacheTime"`
-	RecentCommentsCacheTime time.Duration `yaml:"recentCommentsCacheTime"`
-	DigestCacheTime         time.Duration `yaml:"digestCacheTime"`
-	DigestWordCount         int           `yaml:"digestWordCount"`
-	PostListCacheTime       time.Duration `yaml:"postListCacheTime"`
-	SearchPostCacheTime     time.Duration `yaml:"searchPostCacheTime"`
-	MonthPostCacheTime      time.Duration `yaml:"monthPostCacheTime"`
-	PostDataCacheTime       time.Duration `yaml:"postDataCacheTime"`
-	CommentsCacheTime       time.Duration `yaml:"commentsCacheTime"`
-	CrontabClearCacheTime   time.Duration `yaml:"crontabClearCacheTime"`
+	Mysql                   Mysql           `yaml:"mysql"`
+	RecentPostCacheTime     time.Duration   `yaml:"recentPostCacheTime"`
+	CategoryCacheTime       time.Duration   `yaml:"categoryCacheTime"`
+	ArchiveCacheTime        time.Duration   `yaml:"archiveCacheTime"`
+	ContextPostCacheTime    time.Duration   `yaml:"contextPostCacheTime"`
+	RecentCommentsCacheTime time.Duration   `yaml:"recentCommentsCacheTime"`
+	DigestCacheTime         time.Duration   `yaml:"digestCacheTime"`
+	DigestWordCount         int             `yaml:"digestWordCount"`
+	PostListCacheTime       time.Duration   `yaml:"postListCacheTime"`
+	SearchPostCacheTime     time.Duration   `yaml:"searchPostCacheTime"`
+	MonthPostCacheTime      time.Duration   `yaml:"monthPostCacheTime"`
+	PostDataCacheTime       time.Duration   `yaml:"postDataCacheTime"`
+	CommentsCacheTime       time.Duration   `yaml:"commentsCacheTime"`
+	CrontabClearCacheTime   time.Duration   `yaml:"crontabClearCacheTime"`
+	MaxRequestSleepNum      int64           `yaml:"maxRequestSleepNum"`
+	SleepTime               []time.Duration `yaml:"sleepTime"`
+	MaxRequestNum           int64           `yaml:"maxRequestNum"`
+	SingleIpSearchNum       int             `yaml:"singleIpSearchNum"`
 }
 
 type Mysql struct {

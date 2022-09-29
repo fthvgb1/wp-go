@@ -113,4 +113,5 @@ func Digest(p *Plugin[models.WpPosts], c *gin.Context, post *models.WpPosts, sce
 		return
 	}
 	post.PostContent = DigestCache(c, post.Id, post.PostContent)
+	p.Next()
 }
