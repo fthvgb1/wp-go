@@ -3,6 +3,7 @@ package common
 import (
 	"context"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"github/fthvgb1/wp-go/helper"
 	"github/fthvgb1/wp-go/models"
 	"strings"
@@ -114,5 +115,22 @@ func searchPostIds(args ...any) (ids PostIds, err error) {
 		ids.Ids = append(ids.Ids, posts.Id)
 	}
 	ids.Length = total
+	if total > TotalRaw {
+		TotalRaw = total
+	}
 	return
+}
+
+func getMaxPostId(...any) ([]uint64, error) {
+	r, err := models.Find[models.WpPosts](models.SqlBuilder{{"post_type", "post"}, {"post_status", "publish"}}, "max(ID) ID", "", nil, nil, 0)
+	var id uint64
+	if len(r) > 0 {
+		id = r[0].Id
+	}
+	return []uint64{id}, err
+}
+
+func GetMaxPostId(ctx *gin.Context) (uint64, error) {
+	Id, err := maxPostIdCache.GetCache(ctx, time.Second)
+	return Id[0], err
 }

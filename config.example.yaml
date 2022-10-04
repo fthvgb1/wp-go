@@ -47,3 +47,5 @@ sleepTime: [1s,3s]
 maxRequestNum: 500
 # 单ip同时最大搜索请求数
 singleIpSearchNum: 10
+# 文档最大id缓存时间
+maxPostIdCacheTime: 1h

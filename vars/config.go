@@ -28,6 +28,7 @@ type Config struct {
 	SleepTime               []time.Duration `yaml:"sleepTime"`
 	MaxRequestNum           int64           `yaml:"maxRequestNum"`
 	SingleIpSearchNum       int64           `yaml:"singleIpSearchNum"`
+	MaxPostIdCacheTime      time.Duration   `yaml:"maxPostIdCacheTime"`
 }
 
 type Mysql struct {

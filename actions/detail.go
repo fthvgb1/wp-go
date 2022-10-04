@@ -56,6 +56,11 @@ func Detail(c *gin.Context) {
 		}
 	}
 	ID := uint64(Id)
+	maxId, err := common.GetMaxPostId(c)
+	logs.ErrPrintln(err, "get max post id")
+	if ID > maxId || err != nil {
+		return
+	}
 	post, err := common.GetPostAndCache(c, ID)
 	if post.Id == 0 || err != nil {
 		return

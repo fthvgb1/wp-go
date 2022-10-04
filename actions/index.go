@@ -145,6 +145,9 @@ func (h *indexHandle) parseParams() {
 			h.page = pa
 		}
 	}
+	if common.TotalRaw > 0 && h.getTotalPage(common.TotalRaw) < h.page*h.page {
+		h.page = 1
+	}
 	if h.page > 1 && (h.category != "" || h.search != "" || month != "") {
 		h.setTitleLR(fmt.Sprintf("%s-第%d页", h.titleL, h.page), models.Options["blogname"])
 	}

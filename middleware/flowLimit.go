@@ -54,7 +54,7 @@ func FlowLimit() func(ctx *gin.Context) {
 			t := randFn(vars.Conf.SleepTime[0], vars.Conf.SleepTime[1])
 			time.Sleep(t)
 		} else if flow > vars.Conf.MaxRequestNum {
-			c.String(http.StatusForbidden, "请求太多了，服务器君压力山大中==!, 请稍后访问")
+			c.String(http.StatusForbidden, "请求太多了，服务器君表示压力山大==!, 请稍后访问")
 			c.Abort()
 
 			return
