@@ -26,6 +26,7 @@ var postListIdsCache *cache.MapCache[string, PostIds]
 var searchPostIdsCache *cache.MapCache[string, PostIds]
 var maxPostIdCache *cache.SliceCache[uint64]
 var TotalRaw int
+var usersCache *cache.MapCache[uint64, models.WpUsers]
 
 func InitActionsCommonCache() {
 	archivesCaches = &Arch{
@@ -53,6 +54,9 @@ func InitActionsCommonCache() {
 	postCommentCaches = cache.NewMapCacheByFn[uint64, []models.WpComments](postComments, vars.Conf.CommentsCacheTime)
 
 	maxPostIdCache = cache.NewSliceCache[uint64](getMaxPostId, vars.Conf.MaxPostIdCacheTime)
+
+	usersCache = cache.NewMapCacheByBatchFn[uint64, models.WpUsers](getUsers, time.Hour)
+	usersCache.SetCacheFunc(getUser)
 }
 
 func ClearCache() {
@@ -147,8 +151,11 @@ func postComments(args ...any) ([]models.WpComments, error) {
 	}, nil, 0)
 }
 
-func RecentComments(ctx context.Context) (r []models.WpComments) {
+func RecentComments(ctx context.Context, n int) (r []models.WpComments) {
 	r, err := recentCommentsCaches.GetCache(ctx, time.Second)
+	if len(r) > n {
+		r = r[0:n]
+	}
 	logs.ErrPrintln(err, "get recent comment")
 	return
 }
@@ -158,7 +165,7 @@ func recentComments(...any) (r []models.WpComments, err error) {
 		{"post_status", "publish"},
 	}, "comment_ID,comment_author,comment_post_ID,post_title", "", models.SqlBuilder{{"comment_date_gmt", "desc"}}, models.SqlBuilder{
 		{"a", "left join", "wp_posts b", "a.comment_post_ID=b.ID"},
-	}, 5)
+	}, 10)
 }
 
 func GetContextPost(ctx context.Context, id uint64, date time.Time) (prev, next models.WpPosts, err error) {
@@ -177,7 +184,7 @@ func getPostContext(arg ...any) (r PostContext, err error) {
 		{"post_date", ">", t.Format("2006-01-02 15:04:05")},
 		{"post_status", "in", ""},
 		{"post_type", "post"},
-	}, "ID,post_title,post_password", nil, []any{"publish", "private"})
+	}, "ID,post_title,post_password", nil, []any{"publish"})
 	if err == sql.ErrNoRows {
 		err = nil
 	}
@@ -188,7 +195,7 @@ func getPostContext(arg ...any) (r PostContext, err error) {
 		{"post_date", "<", t.Format("2006-01-02 15:04:05")},
 		{"post_status", "in", ""},
 		{"post_type", "post"},
-	}, "ID,post_title", models.SqlBuilder{{"post_date", "desc"}}, []any{"publish", "private"})
+	}, "ID,post_title", models.SqlBuilder{{"post_date", "desc"}}, []any{"publish"})
 	if err == sql.ErrNoRows {
 		err = nil
 	}
@@ -239,15 +246,18 @@ func categories(...any) (terms []models.WpTermsMy, err error) {
 	return
 }
 
-func RecentPosts(ctx context.Context) (r []models.WpPosts) {
+func RecentPosts(ctx context.Context, n int) (r []models.WpPosts) {
 	r, err := recentPostsCaches.GetCache(ctx, time.Second)
+	if n < len(r) {
+		r = r[:n]
+	}
 	logs.ErrPrintln(err, "get recent post")
 	return
 }
 func recentPosts(...any) (r []models.WpPosts, err error) {
 	r, err = models.Find[models.WpPosts](models.SqlBuilder{{
 		"post_type", "post",
-	}, {"post_status", "publish"}}, "ID,post_title,post_password", "", models.SqlBuilder{{"post_date", "desc"}}, nil, 5)
+	}, {"post_status", "publish"}}, "ID,post_title,post_password", "", models.SqlBuilder{{"post_date", "desc"}}, nil, 10)
 	for i, post := range r {
 		if post.PostPassword != "" {
 			PasswordProjectTitle(&r[i])

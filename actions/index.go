@@ -133,8 +133,6 @@ func (h *indexHandle) parseParams() {
 		h.setTitleLR(helper.StrJoin(`"`, s, `"`, "的搜索结果"), models.Options["blogname"])
 		h.search = s
 		h.scene = plugins.Search
-	} else {
-		h.status = append(h.status, "private")
 	}
 	p := h.c.Query("paged")
 	if p == "" {
@@ -162,9 +160,9 @@ func Index(c *gin.Context) {
 	h := newIndexHandle(c)
 	h.parseParams()
 	archive := common.Archives()
-	recent := common.RecentPosts(c)
+	recent := common.RecentPosts(c, 5)
 	categoryItems := common.Categories(c)
-	recentComments := common.RecentComments(c)
+	recentComments := common.RecentComments(c, 5)
 	ginH := gin.H{
 		"options":        models.Options,
 		"recentPosts":    recent,

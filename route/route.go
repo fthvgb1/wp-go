@@ -52,6 +52,7 @@ func SetupRouter() *gin.Engine {
 	r.GET("/p/date/:year/:month/page/:page", actions.Index)
 	r.POST("/login", actions.Login)
 	r.GET("/p/:id", actions.Detail)
+	r.GET("/feed", actions.Feed())
 	if helper.IsContainInArr(gin.Mode(), []string{gin.DebugMode, gin.TestMode}) {
 		pprof.Register(r, "dev/pprof")
 	}

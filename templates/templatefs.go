@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 )
 
-//go:embed posts layout
+//go:embed posts layout feed
 var TemplateFs embed.FS
 
 type FsTemplate struct {

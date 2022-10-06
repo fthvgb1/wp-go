@@ -27,10 +27,10 @@ func Detail(c *gin.Context) {
 	hh := detailHandler{
 		c,
 	}
-	recent := common.RecentPosts(c)
+	recent := common.RecentPosts(c, 5)
 	archive := common.Archives()
 	categoryItems := common.Categories(c)
-	recentComments := common.RecentComments(c)
+	recentComments := common.RecentComments(c, 5)
 	var h = gin.H{
 		"title":          models.Options["blogname"],
 		"options":        models.Options,
