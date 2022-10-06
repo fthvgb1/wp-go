@@ -66,6 +66,7 @@ func ClearCache() {
 	postListIdsCache.ClearExpired()
 	monthPostsCache.ClearExpired()
 	postContextCache.ClearExpired()
+	usersCache.ClearExpired()
 }
 
 func GetMonthPostIds(ctx context.Context, year, month string, page, limit int, order string) (r []models.WpPosts, total int, err error) {
