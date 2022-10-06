@@ -26,7 +26,9 @@
             <item>
                 <title>{{$v.PostTitle}}</title>
                 <link>{{$v.Link}}</link>
-                <comments>{{ $v.CommentLink}}</comments>
+                {{if $v.CommentLink}}
+                    <comments>{{ $v.CommentLink}}</comments>
+                {{end}}
                 <dc:creator><![CDATA[{{$v.Username}}]]></dc:creator>
                 <pubDate>{{$v.Date}}</pubDate>
                 <category><![CDATA[{{$v.Cates}}]]></category>

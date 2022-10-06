@@ -55,7 +55,7 @@ func Feed() func(ctx *gin.Context) {
 				common.PasswdProjectContent(&t)
 			}
 			l := ""
-			if t.CommentStatus == "open" {
+			if t.CommentStatus == "open" || t.CommentCount > 0 {
 				l = fmt.Sprintf("%s/p/%d#comments", models.Options["siteurl"], t.Id)
 			}
 			user := common.GetUser(c, t.PostAuthor)
