@@ -49,3 +49,5 @@ maxRequestNum: 500
 singleIpSearchNum: 10
 # 文档最大id缓存时间
 maxPostIdCacheTime: 1h
+# 用户信息缓存时间
+userInfoCacheTime: 24h

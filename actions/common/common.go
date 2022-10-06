@@ -55,7 +55,7 @@ func InitActionsCommonCache() {
 
 	maxPostIdCache = cache.NewSliceCache[uint64](getMaxPostId, vars.Conf.MaxPostIdCacheTime)
 
-	usersCache = cache.NewMapCacheByBatchFn[uint64, models.WpUsers](getUsers, time.Hour)
+	usersCache = cache.NewMapCacheByBatchFn[uint64, models.WpUsers](getUsers, vars.Conf.UserInfoCacheTime)
 	usersCache.SetCacheFunc(getUser)
 }
 
