@@ -1,6 +1,7 @@
 package route
 
 import (
+	"github.com/gin-contrib/gzip"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
@@ -10,6 +11,7 @@ import (
 	"github/fthvgb1/wp-go/middleware"
 	"github/fthvgb1/wp-go/static"
 	"github/fthvgb1/wp-go/templates"
+	"github/fthvgb1/wp-go/vars"
 	"html/template"
 	"net/http"
 	"time"
@@ -29,10 +31,11 @@ func SetupRouter() *gin.Engine {
 	}).SetTemplate()
 	r.Use(gin.Logger(), middleware.FlowLimit(), gin.Recovery(), middleware.SetStaticFileCache)
 	//gzip 因为一般会用nginx做反代时自动使用gzip,所以go这边本身可以不用
-	/*r.Use(gzip.Gzip(gzip.DefaultCompression, gzip.WithExcludedPaths([]string{
-		"/wp-includes/", "/wp-content/",
-	})))*/
-
+	if vars.Conf.Gzip {
+		r.Use(gzip.Gzip(gzip.DefaultCompression, gzip.WithExcludedPaths([]string{
+			"/wp-includes/", "/wp-content/",
+		})))
+	}
 	f := static.Fs{FS: static.FsEx, Path: "wp-includes"}
 	r.StaticFileFS("/favicon.ico", "favicon.ico", http.FS(static.FsEx))
 	r.StaticFS("/wp-includes", http.FS(f))

@@ -3,6 +3,9 @@ module github/fthvgb1/wp-go
 go 1.18
 
 require (
+	github.com/dlclark/regexp2 v1.7.0
+	github.com/gin-contrib/gzip v0.0.6
+	github.com/gin-contrib/pprof v1.4.0
 	github.com/gin-contrib/sessions v0.0.5
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-sql-driver/mysql v1.6.0
@@ -11,8 +14,6 @@ require (
 )
 
 require (
-	github.com/dlclark/regexp2 v1.7.0 // indirect
-	github.com/gin-contrib/pprof v1.4.0 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect

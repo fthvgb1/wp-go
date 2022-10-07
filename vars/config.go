@@ -30,6 +30,7 @@ type Config struct {
 	SingleIpSearchNum       int64           `yaml:"singleIpSearchNum"`
 	MaxPostIdCacheTime      time.Duration   `yaml:"maxPostIdCacheTime"`
 	UserInfoCacheTime       time.Duration   `yaml:"userInfoCacheTime"`
+	Gzip                    bool            `yaml:"gzip"`
 }
 
 type Mysql struct {

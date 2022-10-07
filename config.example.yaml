@@ -51,3 +51,5 @@ singleIpSearchNum: 10
 maxPostIdCacheTime: 1h
 # 用户信息缓存时间
 userInfoCacheTime: 24h
+# Gzip
+gzip: false
