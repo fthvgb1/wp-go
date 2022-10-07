@@ -17,6 +17,10 @@ type SliceCache[T any] struct {
 	incr         int
 }
 
+func (c *SliceCache[T]) SetTime() time.Time {
+	return c.setTime
+}
+
 func NewSliceCache[T any](fun func(...any) ([]T, error), duration time.Duration) *SliceCache[T] {
 	return &SliceCache[T]{
 		mutex:        &sync.Mutex{},
