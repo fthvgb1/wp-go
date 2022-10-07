@@ -52,7 +52,14 @@ func Feed(c *gin.Context) {
 	if !isCacheExpired(c, feedCache.SetTime()) {
 		c.Status(http.StatusNotModified)
 	} else {
-		setFeed(feedCache, c)
+		r, err := feedCache.GetCache(c, time.Second, c)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			c.Abort()
+			c.Error(err)
+			return
+		}
+		setFeed(r[0], c, feedCache.SetTime())
 	}
 }
 
@@ -102,20 +109,13 @@ func feed(arg ...any) (xml []string, err error) {
 	return
 }
 
-func setFeed(sliceCache *cache.SliceCache[string], c *gin.Context) {
-	s, err := sliceCache.GetCache(c, time.Second, c)
-	if err != nil {
-		c.Status(http.StatusInternalServerError)
-		c.Abort()
-		c.Error(err)
-		return
-	}
-	lastTimeGMT := sliceCache.SetTime().Format(tmp)
+func setFeed(s string, c *gin.Context, t time.Time) {
+	lastTimeGMT := t.Format(tmp)
 	eTag := helper.StringMd5(lastTimeGMT)
 	c.Header("Content-Type", "application/rss+xml; charset=UTF-8")
 	c.Header("Last-Modified", lastTimeGMT)
 	c.Header("ETag", eTag)
-	c.String(http.StatusOK, s[0])
+	c.String(http.StatusOK, s)
 }
 
 func PostFeed(c *gin.Context) {
@@ -130,12 +130,7 @@ func PostFeed(c *gin.Context) {
 			c.Error(err)
 			return
 		}
-		lastTimeGMT := postFeedCache.GetSetTime(id).Format(tmp)
-		eTag := helper.StringMd5(lastTimeGMT)
-		c.Header("Content-Type", "application/rss+xml; charset=UTF-8")
-		c.Header("Last-Modified", lastTimeGMT)
-		c.Header("ETag", eTag)
-		c.String(http.StatusOK, s)
+		setFeed(s, c, postFeedCache.GetSetTime(id))
 	}
 }
 
