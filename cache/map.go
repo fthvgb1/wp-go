@@ -30,6 +30,14 @@ func (m *MapCache[K, V]) SetCacheFunc(fn func(...any) (V, error)) {
 	m.setCacheFunc = fn
 }
 
+func (m *MapCache[K, V]) GetSetTime(k K) (t time.Time) {
+	r, ok := m.data[k]
+	if ok {
+		t = r.setTime
+	}
+	return
+}
+
 func (m *MapCache[K, V]) SetCacheBatchFunc(fn func(...any) (map[K]V, error)) {
 	m.setBatchCacheFn = fn
 }

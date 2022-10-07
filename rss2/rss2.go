@@ -42,9 +42,9 @@ var templateItems = `
 				{$comments}
                 <dc:creator><![CDATA[{$author}]]></dc:creator>
                 <pubDate>{$pubDate}</pubDate>
-                <category><![CDATA[{$category}]]></category>
+                {$category}
                 <guid isPermaLink="false">{$guid}</guid>
-                <description><![CDATA[{$description}]]></description>
+                {$description}
                 <content:encoded><![CDATA[{$content}]]></content:encoded>
                 {$commentRss}
 				{$commentNumber}
@@ -105,12 +105,12 @@ func (i Item) GetXml() (xml string) {
 	for k, v := range map[string]string{
 		"{$title}":         i.Title,
 		"{$link}":          i.Link,
-		"{$comments}":      i.GetComments(),
+		"{$comments}":      i.getComments(),
 		"{$author}":        i.Creator,
 		"{$pubDate}":       i.PubDate,
-		"{$category}":      i.Category,
+		"{$category}":      i.getCategory(),
 		"{$guid}":          i.Guid,
-		"{$description}":   i.Description,
+		"{$description}":   i.getDescription(),
 		"{$content}":       i.Content,
 		"{$commentRss}":    i.getCommentRss(),
 		"{$commentNumber}": i.getSlashComments(),
@@ -120,7 +120,21 @@ func (i Item) GetXml() (xml string) {
 	return
 }
 
-func (i Item) GetComments() string {
+func (i Item) getCategory() string {
+	r := ""
+	if i.Category != "" {
+		r = fmt.Sprintf("<category><![CDATA[%s]]></category>", i.CommentLink)
+	}
+	return r
+}
+func (i Item) getDescription() string {
+	r := ""
+	if i.Description != "" {
+		r = fmt.Sprintf("<description><![CDATA[%s]]></description>", i.Description)
+	}
+	return r
+}
+func (i Item) getComments() string {
 	r := ""
 	if i.CommentLink != "" {
 		r = fmt.Sprintf("<comments>%s</comments>", i.CommentLink)

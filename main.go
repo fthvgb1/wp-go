@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github/fthvgb1/wp-go/actions"
 	"github/fthvgb1/wp-go/actions/common"
 	"github/fthvgb1/wp-go/db"
 	"github/fthvgb1/wp-go/models"
@@ -30,7 +31,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-
+	actions.InitFeed()
 	common.InitActionsCommonCache()
 	plugins.InitDigestCache()
 	go cronClearCache()

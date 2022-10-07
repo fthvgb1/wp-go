@@ -6,24 +6,32 @@ import (
 	"github/fthvgb1/wp-go/actions/common"
 	"github/fthvgb1/wp-go/cache"
 	"github/fthvgb1/wp-go/helper"
+	"github/fthvgb1/wp-go/logs"
 	"github/fthvgb1/wp-go/models"
 	"github/fthvgb1/wp-go/plugins"
 	"github/fthvgb1/wp-go/rss2"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 )
 
 var feedCache = cache.NewSliceCache[string](feed, time.Hour)
+var postFeedCache = cache.NewMapCacheByFn[string, string](postFeed, time.Hour)
 var tmp = "Mon, 02 Jan 2006 15:04:05 GMT"
+var templateRss rss2.Rss2
 
-func FeedCached(c *gin.Context) {
-	if !isCacheExpired(c, feedCache.SetTime()) {
-		c.Status(http.StatusNotModified)
-		c.Abort()
-		return
+func InitFeed() {
+	templateRss = rss2.Rss2{
+		Title:           models.Options["blogname"],
+		AtomLink:        fmt.Sprintf("%s/feed", models.Options["home"]),
+		Link:            models.Options["siteurl"],
+		Description:     models.Options["blogdescription"],
+		Language:        "zh-CN",
+		UpdatePeriod:    "hourly",
+		UpdateFrequency: 1,
+		Generator:       models.Options["home"],
 	}
-	c.Next()
 }
 
 func isCacheExpired(c *gin.Context, lastTime time.Time) bool {
@@ -41,19 +49,11 @@ func isCacheExpired(c *gin.Context, lastTime time.Time) bool {
 }
 
 func Feed(c *gin.Context) {
-	s, err := feedCache.GetCache(c, time.Second, c)
-	if err != nil {
-		c.Status(http.StatusInternalServerError)
-		c.Abort()
-		c.Error(err)
-		return
+	if !isCacheExpired(c, feedCache.SetTime()) {
+		c.Status(http.StatusNotModified)
+	} else {
+		setFeed(feedCache, c)
 	}
-	lastTimeGMT := feedCache.SetTime().Format(tmp)
-	eTag := helper.StringMd5(lastTimeGMT)
-	c.Header("Content-Type", "application/rss+xml; charset=UTF-8")
-	c.Header("Last-Modified", lastTimeGMT)
-	c.Header("ETag", eTag)
-	c.String(http.StatusOK, s[0])
 }
 
 func feed(arg ...any) (xml []string, err error) {
@@ -66,19 +66,8 @@ func feed(arg ...any) (xml []string, err error) {
 	if err != nil {
 		return
 	}
-	rs := rss2.Rss2{
-		Title:           models.Options["blogname"],
-		AtomLink:        fmt.Sprintf("%s/feed", models.Options["home"]),
-		Link:            models.Options["siteurl"],
-		Description:     models.Options["blogdescription"],
-		LastBuildDate:   time.Now().Format(time.RFC1123Z),
-		Language:        "zh-CN",
-		UpdatePeriod:    "hourly",
-		UpdateFrequency: 1,
-		Generator:       models.Options["home"],
-		Items:           nil,
-	}
-
+	rs := templateRss
+	rs.LastBuildDate = time.Now().Format(time.RFC1123Z)
 	rs.Items = helper.SliceMap(posts, func(t models.WpPosts) rss2.Item {
 		desc := "无法提供摘要。这是一篇受保护的文章。"
 		common.PasswordProjectTitle(&t)
@@ -110,5 +99,106 @@ func feed(arg ...any) (xml []string, err error) {
 		}
 	})
 	xml = []string{rs.GetXML()}
+	return
+}
+
+func setFeed(sliceCache *cache.SliceCache[string], c *gin.Context) {
+	s, err := sliceCache.GetCache(c, time.Second, c)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		c.Abort()
+		c.Error(err)
+		return
+	}
+	lastTimeGMT := sliceCache.SetTime().Format(tmp)
+	eTag := helper.StringMd5(lastTimeGMT)
+	c.Header("Content-Type", "application/rss+xml; charset=UTF-8")
+	c.Header("Last-Modified", lastTimeGMT)
+	c.Header("ETag", eTag)
+	c.String(http.StatusOK, s[0])
+}
+
+func PostFeed(c *gin.Context) {
+	id := c.Param("id")
+	if !isCacheExpired(c, postFeedCache.GetSetTime(id)) {
+		c.Status(http.StatusNotModified)
+	} else {
+		s, err := postFeedCache.GetCache(c, id, time.Second, c, id)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			c.Abort()
+			c.Error(err)
+			return
+		}
+		lastTimeGMT := postFeedCache.GetSetTime(id).Format(tmp)
+		eTag := helper.StringMd5(lastTimeGMT)
+		c.Header("Content-Type", "application/rss+xml; charset=UTF-8")
+		c.Header("Last-Modified", lastTimeGMT)
+		c.Header("ETag", eTag)
+		c.String(http.StatusOK, s)
+	}
+}
+
+func postFeed(arg ...any) (x string, err error) {
+	c := arg[0].(*gin.Context)
+	id := arg[1].(string)
+	Id := 0
+	if id != "" {
+		Id, err = strconv.Atoi(id)
+		if err != nil {
+			return
+		}
+	}
+	ID := uint64(Id)
+	maxId, err := common.GetMaxPostId(c)
+	logs.ErrPrintln(err, "get max post id")
+	if ID > maxId || err != nil {
+		return
+	}
+	post, err := common.GetPostAndCache(c, ID)
+	if post.Id == 0 || err != nil {
+		return
+	}
+	common.PasswordProjectTitle(&post)
+	comments, err := common.PostComments(c, post.Id)
+	if err != nil {
+		return
+	}
+	rs := templateRss
+
+	rs.Title = fmt.Sprintf("《%s》的评论", post.PostTitle)
+	rs.AtomLink = fmt.Sprintf("%s/p/%d/feed", models.Options["siteurl"], post.Id)
+	rs.Link = fmt.Sprintf("%s/p/%d", models.Options["siteurl"], post.Id)
+	rs.LastBuildDate = time.Now().Format(time.RFC1123Z)
+	if post.PostPassword != "" {
+		if len(comments) > 0 {
+			common.PasswdProjectContent(&post)
+			t := comments[len(comments)-1]
+			rs.Items = []rss2.Item{
+				{
+					Title:       fmt.Sprintf("评价者：%s", t.CommentAuthor),
+					Link:        fmt.Sprintf("%s/p/%d#comment-%d", models.Options["siteurl"], post.Id, t.CommentId),
+					Creator:     t.CommentAuthor,
+					PubDate:     t.CommentDateGmt.Format(time.RFC1123Z),
+					Guid:        fmt.Sprintf("%s#comment-%d", post.Guid, t.CommentId),
+					Description: "评论受保护：要查看请输入密码。",
+					Content:     post.PostContent,
+				},
+			}
+		}
+	} else {
+		rs.Items = helper.SliceMap(comments, func(t models.WpComments) rss2.Item {
+			return rss2.Item{
+				Title:   fmt.Sprintf("评价者：%s", t.CommentAuthor),
+				Link:    fmt.Sprintf("%s/p/%d#comment-%d", models.Options["siteurl"], post.Id, t.CommentId),
+				Creator: t.CommentAuthor,
+				PubDate: t.CommentDateGmt.Format(time.RFC1123Z),
+				Guid:    fmt.Sprintf("%s#comment-%d", post.Guid, t.CommentId),
+				Content: t.CommentContent,
+			}
+		})
+	}
+
+	x = rs.GetXML()
 	return
 }
