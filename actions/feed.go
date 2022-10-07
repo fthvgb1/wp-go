@@ -34,6 +34,10 @@ func InitFeed() {
 	}
 }
 
+func ClearCache() {
+	postFeedCache.ClearExpired()
+}
+
 func isCacheExpired(c *gin.Context, lastTime time.Time) bool {
 	eTag := helper.StringMd5(lastTime.Format(tmp))
 	since := c.Request.Header.Get("If-Modified-Since")

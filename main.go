@@ -44,6 +44,7 @@ func cronClearCache() {
 		case <-t.C:
 			common.ClearCache()
 			plugins.ClearDigestCache()
+			actions.ClearCache()
 		}
 	}
 }
