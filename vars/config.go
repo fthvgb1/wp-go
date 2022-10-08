@@ -32,6 +32,7 @@ type Config struct {
 	UserInfoCacheTime       time.Duration   `yaml:"userInfoCacheTime"`
 	CommentsCacheTime       time.Duration   `yaml:"commentsCacheTime"`
 	Gzip                    bool            `yaml:"gzip"`
+	PostCommentUrl          string          `yaml:"postCommentUrl"`
 }
 
 type Mysql struct {

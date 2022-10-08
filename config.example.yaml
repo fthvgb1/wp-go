@@ -55,3 +55,5 @@ userInfoCacheTime: 24h
 commentsCacheTime: 24h
 # Gzip
 gzip: false
+# 提交评论url
+postCommentUrl: http://wp.test/wp-comments-post.php
