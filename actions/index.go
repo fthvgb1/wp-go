@@ -143,7 +143,7 @@ func (h *indexHandle) parseParams() {
 			h.page = pa
 		}
 	}
-	if common.TotalRaw > 0 && h.getTotalPage(common.TotalRaw) < h.page*h.page {
+	if common.TotalRaw > 0 && common.TotalRaw < (h.page-1)*h.pageSize {
 		h.page = 1
 	}
 	if h.page > 1 && (h.category != "" || h.search != "" || month != "") {
