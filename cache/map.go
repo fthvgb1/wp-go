@@ -9,11 +9,11 @@ import (
 )
 
 type MapCache[K comparable, V any] struct {
-	data            map[K]mapCacheStruct[V]
-	mutex           *sync.Mutex
-	setCacheFunc    func(...any) (V, error)
-	setBatchCacheFn func(...any) (map[K]V, error)
-	expireTime      time.Duration
+	data         map[K]mapCacheStruct[V]
+	mutex        *sync.Mutex
+	cacheFunc    func(...any) (V, error)
+	batchCacheFn func(...any) (map[K]V, error)
+	expireTime   time.Duration
 }
 
 func NewMapCache[K comparable, V any](expireTime time.Duration) *MapCache[K, V] {
@@ -27,7 +27,7 @@ type mapCacheStruct[T any] struct {
 }
 
 func (m *MapCache[K, V]) SetCacheFunc(fn func(...any) (V, error)) {
-	m.setCacheFunc = fn
+	m.cacheFunc = fn
 }
 
 func (m *MapCache[K, V]) GetSetTime(k K) (t time.Time) {
@@ -39,24 +39,41 @@ func (m *MapCache[K, V]) GetSetTime(k K) (t time.Time) {
 }
 
 func (m *MapCache[K, V]) SetCacheBatchFunc(fn func(...any) (map[K]V, error)) {
-	m.setBatchCacheFn = fn
+	m.batchCacheFn = fn
+	if m.cacheFunc == nil {
+		m.setCacheFn(fn)
+	}
 }
 
-func NewMapCacheByFn[K comparable, V any](fun func(...any) (V, error), expireTime time.Duration) *MapCache[K, V] {
+func (m *MapCache[K, V]) setCacheFn(fn func(...any) (map[K]V, error)) {
+	m.cacheFunc = func(a ...any) (V, error) {
+		id := a[0].(K)
+		r, err := fn([]K{id})
+		if err != nil {
+			var rr V
+			return rr, err
+		}
+		return r[id], err
+	}
+}
+
+func NewMapCacheByFn[K comparable, V any](fn func(...any) (V, error), expireTime time.Duration) *MapCache[K, V] {
 	return &MapCache[K, V]{
-		mutex:        &sync.Mutex{},
-		setCacheFunc: fun,
-		expireTime:   expireTime,
-		data:         make(map[K]mapCacheStruct[V]),
+		mutex:      &sync.Mutex{},
+		cacheFunc:  fn,
+		expireTime: expireTime,
+		data:       make(map[K]mapCacheStruct[V]),
 	}
 }
 func NewMapCacheByBatchFn[K comparable, V any](fn func(...any) (map[K]V, error), expireTime time.Duration) *MapCache[K, V] {
-	return &MapCache[K, V]{
-		mutex:           &sync.Mutex{},
-		setBatchCacheFn: fn,
-		expireTime:      expireTime,
-		data:            make(map[K]mapCacheStruct[V]),
+	r := &MapCache[K, V]{
+		mutex:        &sync.Mutex{},
+		batchCacheFn: fn,
+		expireTime:   expireTime,
+		data:         make(map[K]mapCacheStruct[V]),
 	}
+	r.setCacheFn(fn)
+	return r
 }
 
 func (m *MapCache[K, V]) Flush() {
@@ -79,7 +96,7 @@ func (m *MapCache[K, V]) SetByBatchFn(params ...any) error {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
 
-	r, err := m.setBatchCacheFn(params...)
+	r, err := m.batchCacheFn(params...)
 	if err != nil {
 		return err
 	}
@@ -122,7 +139,7 @@ func (m *MapCache[K, V]) GetCache(c context.Context, key K, timeout time.Duratio
 			if data.incr > t {
 				return
 			}
-			r, er := m.setCacheFunc(params...)
+			r, er := m.cacheFunc(params...)
 			if err != nil {
 				err = er
 				return
@@ -185,7 +202,7 @@ func (m *MapCache[K, V]) GetCacheBatch(c context.Context, key []K, timeout time.
 			if tt > t {
 				return
 			}
-			r, er := m.setBatchCacheFn(params...)
+			r, er := m.batchCacheFn(params...)
 			if err != nil {
 				err = er
 				return

@@ -16,10 +16,11 @@ import (
 	"time"
 )
 
-var feedCache = cache.NewSliceCache[string](feed, time.Hour)
+var feedCache = cache.NewSliceCache(feed, time.Hour)
 var postFeedCache = cache.NewMapCacheByFn[string, string](postFeed, time.Hour)
 var tmp = "Mon, 02 Jan 2006 15:04:05 GMT"
 var templateRss rss2.Rss2
+var commentsFeedCache = cache.NewSliceCache(commentsFeed, time.Hour)
 
 func InitFeed() {
 	templateRss = rss2.Rss2{
@@ -85,7 +86,7 @@ func feed(arg ...any) (xml []string, err error) {
 		if t.PostPassword != "" {
 			common.PasswdProjectContent(&t)
 		} else {
-			desc = plugins.DigestRaw(t.PostContent, 55, t.Id)
+			desc = plugins.DigestRaw(t.PostContent, 55, fmt.Sprintf("/p/%d", t.Id))
 		}
 		l := ""
 		if t.CommentStatus == "open" && t.CommentCount > 0 {
@@ -199,5 +200,58 @@ func postFeed(arg ...any) (x string, err error) {
 	}
 
 	x = rs.GetXML()
+	return
+}
+
+func CommentsFeed(c *gin.Context) {
+	if !isCacheExpired(c, commentsFeedCache.SetTime()) {
+		c.Status(http.StatusNotModified)
+	} else {
+		r, err := commentsFeedCache.GetCache(c, time.Second, c)
+		if err != nil {
+			c.Status(http.StatusInternalServerError)
+			c.Abort()
+			c.Error(err)
+			return
+		}
+		setFeed(r[0], c, commentsFeedCache.SetTime())
+	}
+}
+
+func commentsFeed(args ...any) (r []string, err error) {
+	c := args[0].(*gin.Context)
+	commens := common.RecentComments(c, 10)
+	rs := templateRss
+	rs.LastBuildDate = time.Now().Format(time.RFC1123Z)
+	rs.AtomLink = fmt.Sprintf("%s/comments/feed", models.Options["siteurl"])
+	com, err := common.GetCommentByIds(c, helper.SliceMap(commens, func(t models.WpComments) uint64 {
+		return t.CommentId
+	}))
+	if nil != err {
+		return []string{}, err
+	}
+	rs.Items = helper.SliceMap(com, func(t models.WpComments) rss2.Item {
+		post, _ := common.GetPostAndCache(c, t.CommentPostId)
+		common.PasswordProjectTitle(&post)
+		desc := "评论受保护：要查看请输入密码。"
+		content := t.CommentContent
+		if post.PostPassword != "" {
+			common.PasswdProjectContent(&post)
+			content = post.PostContent
+		} else {
+			desc = plugins.DigestRaw(t.CommentContent, 55, fmt.Sprintf("%s/p/%d#comment-%d", models.Options["siteurl"], post.Id, t.CommentId))
+			content = t.CommentContent
+		}
+		return rss2.Item{
+			Title:       fmt.Sprintf("《%s》的评论", post.PostTitle),
+			Link:        fmt.Sprintf("%s/p/%d#comment-%d", models.Options["siteurl"], post.Id, t.CommentId),
+			Creator:     t.CommentAuthor,
+			Description: desc,
+			PubDate:     t.CommentDateGmt.Format(time.RFC1123Z),
+			Guid:        fmt.Sprintf("%s#commment-%d", post.Guid, t.CommentId),
+			Content:     content,
+		}
+	})
+	r = []string{rs.GetXML()}
 	return
 }

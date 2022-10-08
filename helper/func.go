@@ -230,3 +230,12 @@ func SliceSelfReverse[T any](arr []T) []T {
 	}
 	return arr
 }
+
+func SliceToMap[K comparable, V any](arr []V, fn func(V) K) map[K]V {
+	m := make(map[K]V)
+	for _, v := range arr {
+		k := fn(v)
+		m[k] = v
+	}
+	return m
+}

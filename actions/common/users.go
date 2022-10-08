@@ -16,11 +16,6 @@ func getUsers(...any) (m map[uint64]models.WpUsers, err error) {
 	return
 }
 
-func getUser(a ...any) (r models.WpUsers, err error) {
-	id := a[0].(uint64)
-	return models.FindOneById[models.WpUsers](id)
-}
-
 func GetUser(ctx *gin.Context, uid uint64) models.WpUsers {
 	r, err := usersCache.GetCache(ctx, uid, time.Second, uid)
 	logs.ErrPrintln(err, "get user", uid)

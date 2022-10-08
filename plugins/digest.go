@@ -35,7 +35,7 @@ func digestRaw(arg ...any) (string, error) {
 	} else if limit == 0 {
 		return "", nil
 	}
-	return DigestRaw(str, limit, id), nil
+	return DigestRaw(str, limit, fmt.Sprintf("/p/%d", id)), nil
 }
 
 func DigestCache(ctx *gin.Context, id uint64, str string) string {
@@ -43,7 +43,7 @@ func DigestCache(ctx *gin.Context, id uint64, str string) string {
 	return content
 }
 
-func DigestRaw(str string, limit int, id uint64) string {
+func DigestRaw(str string, limit int, u string) string {
 	if r := more.FindString(str); r != "" {
 		m := strings.Split(str, r)
 		str = m[0]
@@ -98,11 +98,11 @@ func DigestRaw(str string, limit int, id uint64) string {
 
 		content = string(ru[:i])
 		closeTag := helper.CloseHtmlTag(content)
-		tmp := `%s......%s<p class="read-more"><a href="/p/%d">继续阅读</a></p>`
+		tmp := `%s......%s<p class="read-more"><a href="%s">继续阅读</a></p>`
 		if strings.Contains(closeTag, "pre") || strings.Contains(closeTag, "code") {
-			tmp = `%s%s......<p class="read-more"><a href="/p/%d">继续阅读</a></p>`
+			tmp = `%s%s......<p class="read-more"><a href="%s">继续阅读</a></p>`
 		}
-		content = fmt.Sprintf(tmp, content, closeTag, id)
+		content = fmt.Sprintf(tmp, content, closeTag, u)
 	}
 
 	return content

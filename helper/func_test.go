@@ -505,3 +505,37 @@ func TestSliceSelfReverse(t *testing.T) {
 		})
 	}
 }
+
+func TestSliceToMap(t *testing.T) {
+	type ss struct {
+		id int
+		v  string
+	}
+	type args struct {
+		arr []ss
+		fn  func(ss) int
+	}
+	tests := []struct {
+		name string
+		args args
+		want map[int]ss
+	}{
+		{
+			name: "t1",
+			args: args{
+				arr: []ss{{1, "k1"}, {2, "v2"}},
+				fn: func(s ss) int {
+					return s.id
+				},
+			},
+			want: map[int]ss{1: {1, "k1"}, 2: {2, "v2"}},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := SliceToMap(tt.args.arr, tt.args.fn); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("SliceToMap() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

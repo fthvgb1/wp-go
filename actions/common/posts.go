@@ -2,16 +2,17 @@ package common
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github/fthvgb1/wp-go/helper"
+	"github/fthvgb1/wp-go/logs"
 	"github/fthvgb1/wp-go/models"
 	"strings"
 	"time"
 )
 
 func GetPostAndCache(ctx context.Context, id uint64) (models.WpPosts, error) {
-
 	return postsCache.GetCache(ctx, id, time.Second, id)
 }
 
@@ -30,16 +31,6 @@ func SearchPost(ctx context.Context, key string, args ...any) (r []models.WpPost
 	}
 	total = ids.Length
 	r, err = GetPostsByIds(ctx, ids.Ids)
-	return
-}
-
-func getPostById(id ...any) (post models.WpPosts, err error) {
-	Id := id[0].(uint64)
-	posts, err := getPostsByIds([]uint64{Id})
-	if err != nil {
-		return models.WpPosts{}, err
-	}
-	post = posts[Id]
 	return
 }
 
@@ -133,4 +124,99 @@ func getMaxPostId(...any) ([]uint64, error) {
 func GetMaxPostId(ctx *gin.Context) (uint64, error) {
 	Id, err := maxPostIdCache.GetCache(ctx, time.Second)
 	return Id[0], err
+}
+
+func RecentPosts(ctx context.Context, n int) (r []models.WpPosts) {
+	r, err := recentPostsCaches.GetCache(ctx, time.Second)
+	if n < len(r) {
+		r = r[:n]
+	}
+	logs.ErrPrintln(err, "get recent post")
+	return
+}
+func recentPosts(...any) (r []models.WpPosts, err error) {
+	r, err = models.Find[models.WpPosts](models.SqlBuilder{{
+		"post_type", "post",
+	}, {"post_status", "publish"}}, "ID,post_title,post_password", "", models.SqlBuilder{{"post_date", "desc"}}, nil, 10)
+	for i, post := range r {
+		if post.PostPassword != "" {
+			PasswordProjectTitle(&r[i])
+		}
+	}
+	return
+}
+
+func GetContextPost(ctx context.Context, id uint64, date time.Time) (prev, next models.WpPosts, err error) {
+	postCtx, err := postContextCache.GetCache(ctx, id, time.Second, date)
+	if err != nil {
+		return models.WpPosts{}, models.WpPosts{}, err
+	}
+	prev = postCtx.prev
+	next = postCtx.next
+	return
+}
+
+func getPostContext(arg ...any) (r PostContext, err error) {
+	t := arg[0].(time.Time)
+	next, err := models.FirstOne[models.WpPosts](models.SqlBuilder{
+		{"post_date", ">", t.Format("2006-01-02 15:04:05")},
+		{"post_status", "in", ""},
+		{"post_type", "post"},
+	}, "ID,post_title,post_password", nil, []any{"publish"})
+	if err == sql.ErrNoRows {
+		err = nil
+	}
+	if err != nil {
+		return
+	}
+	prev, err := models.FirstOne[models.WpPosts](models.SqlBuilder{
+		{"post_date", "<", t.Format("2006-01-02 15:04:05")},
+		{"post_status", "in", ""},
+		{"post_type", "post"},
+	}, "ID,post_title", models.SqlBuilder{{"post_date", "desc"}}, []any{"publish"})
+	if err == sql.ErrNoRows {
+		err = nil
+	}
+	if err != nil {
+		return
+	}
+	r = PostContext{
+		prev: prev,
+		next: next,
+	}
+	return
+}
+
+func GetMonthPostIds(ctx context.Context, year, month string, page, limit int, order string) (r []models.WpPosts, total int, err error) {
+	res, err := monthPostsCache.GetCache(ctx, fmt.Sprintf("%s%s", year, month), time.Second, year, month)
+	if err != nil {
+		return
+	}
+	if order == "desc" {
+		res = helper.SliceReverse(res)
+	}
+	total = len(res)
+	rr := helper.SlicePagination(res, page, limit)
+	r, err = GetPostsByIds(ctx, rr)
+	return
+}
+
+func monthPost(args ...any) (r []uint64, err error) {
+	year, month := args[0].(string), args[1].(string)
+	where := models.SqlBuilder{
+		{"post_type", "in", ""},
+		{"post_status", "in", ""},
+		{"year(post_date)", year},
+		{"month(post_date)", month},
+	}
+	postType := []any{"post"}
+	status := []any{"publish"}
+	ids, err := models.Find[models.WpPosts](where, "ID", "", models.SqlBuilder{{"Id", "asc"}}, nil, 0, postType, status)
+	if err != nil {
+		return
+	}
+	for _, post := range ids {
+		r = append(r, post.Id)
+	}
+	return
 }
