@@ -22,7 +22,7 @@ type Config struct {
 	SearchPostCacheTime     time.Duration   `yaml:"searchPostCacheTime"`
 	MonthPostCacheTime      time.Duration   `yaml:"monthPostCacheTime"`
 	PostDataCacheTime       time.Duration   `yaml:"postDataCacheTime"`
-	CommentsCacheTime       time.Duration   `yaml:"commentsCacheTime"`
+	PostCommentsCacheTime   time.Duration   `yaml:"postCommentsCacheTime"`
 	CrontabClearCacheTime   time.Duration   `yaml:"crontabClearCacheTime"`
 	MaxRequestSleepNum      int64           `yaml:"maxRequestSleepNum"`
 	SleepTime               []time.Duration `yaml:"sleepTime"`
@@ -30,6 +30,7 @@ type Config struct {
 	SingleIpSearchNum       int64           `yaml:"singleIpSearchNum"`
 	MaxPostIdCacheTime      time.Duration   `yaml:"maxPostIdCacheTime"`
 	UserInfoCacheTime       time.Duration   `yaml:"userInfoCacheTime"`
+	CommentsCacheTime       time.Duration   `yaml:"commentsCacheTime"`
 	Gzip                    bool            `yaml:"gzip"`
 }
 

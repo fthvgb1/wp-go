@@ -3,6 +3,7 @@ package rss2
 import (
 	"fmt"
 	"github/fthvgb1/wp-go/helper"
+	"strconv"
 	"strings"
 )
 
@@ -38,19 +39,28 @@ var template = `<?xml version="1.0" encoding="UTF-8"?>
 var templateItems = `
 			<item>
                 <title>{$title}</title>
-                <link>{$link}</link>
+                {$link}
 				{$comments}
-                <dc:creator><![CDATA[{$author}]]></dc:creator>
+                {$creator}
                 <pubDate>{$pubDate}</pubDate>
                 {$category}
-                <guid isPermaLink="false">{$guid}</guid>
+                {$guid}
                 {$description}
                 <content:encoded><![CDATA[{$content}]]></content:encoded>
                 {$commentRss}
 				{$commentNumber}
-
             </item>
 `
+var templateReplace = map[string]string{
+	"{$category}":      "<category><![CDATA[%s]]></category>",
+	"{$link}":          "<link>%s</link>",
+	"{$creator}":       "<dc:creator><![CDATA[%s]]></dc:creator>",
+	"{$description}":   "<description><![CDATA[%s]]></description>",
+	"{$comments}":      "<comments>%s</comments>",
+	"{$commentRss}":    "<wfw:commentRss>%s</wfw:commentRss>",
+	"{$commentNumber}": "<slash:comments>%s</slash:comments>",
+	"{$guid}":          "<guid isPermaLink=\"false\">%s</guid>",
+}
 
 type Rss2 struct {
 	Title           string
@@ -103,54 +113,41 @@ func (r Rss2) GetXML() (xml string) {
 func (i Item) GetXml() (xml string) {
 	xml = templateItems
 	for k, v := range map[string]string{
-		"{$title}":         i.Title,
-		"{$link}":          i.Link,
-		"{$comments}":      i.getComments(),
-		"{$author}":        i.Creator,
-		"{$pubDate}":       i.PubDate,
-		"{$category}":      i.getCategory(),
-		"{$guid}":          i.Guid,
-		"{$description}":   i.getDescription(),
-		"{$content}":       i.Content,
-		"{$commentRss}":    i.getCommentRss(),
-		"{$commentNumber}": i.getSlashComments(),
+		"{$title}":   i.Title,
+		"{$pubDate}": i.PubDate,
+		"{$content}": i.Content,
 	} {
 		xml = strings.Replace(xml, k, v, -1)
 	}
-	return
-}
 
-func (i Item) getCategory() string {
-	r := ""
-	if i.Category != "" {
-		r = fmt.Sprintf("<category><![CDATA[%s]]></category>", i.CommentLink)
+	m := map[string]string{
+		"{$category}":    i.Category,
+		"{$link}":        i.Link,
+		"{$creator}":     i.Creator,
+		"{$description}": i.Description,
+		"{$comments}":    i.CommentLink,
+		"{$guid}":        i.Guid,
+		"{$commentRss}":  i.CommentRss,
 	}
-	return r
-}
-func (i Item) getDescription() string {
-	r := ""
-	if i.Description != "" {
-		r = fmt.Sprintf("<description><![CDATA[%s]]></description>", i.Description)
-	}
-	return r
-}
-func (i Item) getComments() string {
-	r := ""
-	if i.CommentLink != "" {
-		r = fmt.Sprintf("<comments>%s</comments>", i.CommentLink)
-	}
-	return r
-}
 
-func (i Item) getCommentRss() (r string) {
-	if i.CommentLink != "" && i.SlashComments > 0 {
-		r = fmt.Sprintf("<wfw:commentRss>%s</wfw:commentRss>", i.CommentRss)
+	if i.CommentRss != "" && i.SlashComments > 0 {
+		m["{$commentRss}"] = i.CommentRss
+	} else {
+		m["{$commentRss}"] = ""
 	}
-	return
-}
-func (i Item) getSlashComments() (r string) {
 	if i.SlashComments > 0 {
-		r = fmt.Sprintf("<slash:comments>%d</slash:comments>", i.SlashComments)
+		m["{$commentNumber}"] = strconv.Itoa(i.SlashComments)
+	} else {
+		m["{$commentNumber}"] = ""
 	}
+
+	for k, v := range m {
+		t := ""
+		if v != "" {
+			t = fmt.Sprintf(templateReplace[k], v)
+		}
+		xml = strings.Replace(xml, k, t, -1)
+	}
+
 	return
 }

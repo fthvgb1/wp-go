@@ -48,13 +48,13 @@ func InitActionsCommonCache() {
 
 	recentCommentsCaches = cache.NewSliceCache[models.WpComments](recentComments, vars.Conf.RecentCommentsCacheTime)
 
-	postCommentCaches = cache.NewMapCacheByFn[uint64, []models.WpComments](postComments, vars.Conf.CommentsCacheTime)
+	postCommentCaches = cache.NewMapCacheByFn[uint64, []models.WpComments](postComments, vars.Conf.PostCommentsCacheTime)
 
 	maxPostIdCache = cache.NewSliceCache[uint64](getMaxPostId, vars.Conf.MaxPostIdCacheTime)
 
 	usersCache = cache.NewMapCacheByBatchFn[uint64, models.WpUsers](getUsers, vars.Conf.UserInfoCacheTime)
 
-	commentsCache = cache.NewMapCacheByBatchFn[uint64, models.WpComments](getCommentByIds, time.Hour)
+	commentsCache = cache.NewMapCacheByBatchFn[uint64, models.WpComments](getCommentByIds, vars.Conf.CommentsCacheTime)
 }
 
 func ClearCache() {
@@ -65,6 +65,7 @@ func ClearCache() {
 	monthPostsCache.ClearExpired()
 	postContextCache.ClearExpired()
 	usersCache.ClearExpired()
+	commentsCache.ClearExpired()
 }
 
 type PostIds struct {

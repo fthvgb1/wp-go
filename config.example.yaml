@@ -36,7 +36,7 @@ monthPostCacheTime: 1h
 # 文档数据缓存时间
 postDataCacheTime: 1h
 # 文章评论缓存时间
-commentsCacheTime: 5m
+postCommentsCacheTime: 5m
 # 定时清理缓存周期时间
 crontabClearCacheTime: 5m
 # 到达指定并发请求数时随机sleep
@@ -51,5 +51,7 @@ singleIpSearchNum: 10
 maxPostIdCacheTime: 1h
 # 用户信息缓存时间
 userInfoCacheTime: 24h
+# 单独评论缓存时间
+commentsCacheTime: 24h
 # Gzip
 gzip: false
