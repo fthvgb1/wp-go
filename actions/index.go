@@ -204,9 +204,7 @@ func Index(c *gin.Context) {
 
 	pw := h.session.Get("post_password")
 	plug := plugins.NewPostPlugin(c, h.scene)
-	for i, v := range postIds {
-		post := common.GetPostById(v.Id)
-		postIds[i] = post
+	for i, post := range postIds {
 		common.PasswordProjectTitle(&postIds[i])
 		if post.PostPassword != "" && pw != post.PostPassword {
 			common.PasswdProjectContent(&postIds[i])

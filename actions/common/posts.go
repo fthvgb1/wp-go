@@ -12,12 +12,8 @@ import (
 	"time"
 )
 
-func GetPostAndCache(ctx context.Context, id uint64) (models.WpPosts, error) {
+func GetPostById(ctx context.Context, id uint64) (models.WpPosts, error) {
 	return postsCache.GetCache(ctx, id, time.Second, id)
-}
-
-func GetPostById(id uint64) models.WpPosts {
-	return postsCache.Get(id)
 }
 
 func GetPostsByIds(ctx context.Context, ids []uint64) ([]models.WpPosts, error) {

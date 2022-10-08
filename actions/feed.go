@@ -19,6 +19,7 @@ import (
 var feedCache = cache.NewSliceCache(feed, time.Hour)
 var postFeedCache = cache.NewMapCacheByFn[string, string](postFeed, time.Hour)
 var tmp = "Mon, 02 Jan 2006 15:04:05 GMT"
+var timeFormat = "Mon, 02 Jan 2006 15:04:05 +0000"
 var templateRss rss2.Rss2
 var commentsFeedCache = cache.NewSliceCache(commentsFeed, time.Hour)
 
@@ -79,7 +80,7 @@ func feed(arg ...any) (xml []string, err error) {
 		return
 	}
 	rs := templateRss
-	rs.LastBuildDate = time.Now().Format(time.RFC1123Z)
+	rs.LastBuildDate = time.Now().Format(timeFormat)
 	rs.Items = helper.SliceMap(posts, func(t models.WpPosts) rss2.Item {
 		desc := "无法提供摘要。这是一篇受保护的文章。"
 		common.PasswordProjectTitle(&t)
@@ -107,7 +108,7 @@ func feed(arg ...any) (xml []string, err error) {
 			CommentRss:    fmt.Sprintf("%s/p/%d/feed", models.Options["siteurl"], t.Id),
 			Link:          fmt.Sprintf("%s/p/%d", models.Options["siteurl"], t.Id),
 			Description:   desc,
-			PubDate:       t.PostDateGmt.Format(time.RFC1123Z),
+			PubDate:       t.PostDateGmt.Format(timeFormat),
 		}
 	})
 	xml = []string{rs.GetXML()}
@@ -155,7 +156,7 @@ func postFeed(arg ...any) (x string, err error) {
 	if ID > maxId || err != nil {
 		return
 	}
-	post, err := common.GetPostAndCache(c, ID)
+	post, err := common.GetPostById(c, ID)
 	if post.Id == 0 || err != nil {
 		return
 	}
@@ -169,7 +170,7 @@ func postFeed(arg ...any) (x string, err error) {
 	rs.Title = fmt.Sprintf("《%s》的评论", post.PostTitle)
 	rs.AtomLink = fmt.Sprintf("%s/p/%d/feed", models.Options["siteurl"], post.Id)
 	rs.Link = fmt.Sprintf("%s/p/%d", models.Options["siteurl"], post.Id)
-	rs.LastBuildDate = time.Now().Format(time.RFC1123Z)
+	rs.LastBuildDate = time.Now().Format(timeFormat)
 	if post.PostPassword != "" {
 		if len(comments) > 0 {
 			common.PasswdProjectContent(&post)
@@ -179,7 +180,7 @@ func postFeed(arg ...any) (x string, err error) {
 					Title:       fmt.Sprintf("评价者：%s", t.CommentAuthor),
 					Link:        fmt.Sprintf("%s/p/%d#comment-%d", models.Options["siteurl"], post.Id, t.CommentId),
 					Creator:     t.CommentAuthor,
-					PubDate:     t.CommentDateGmt.Format(time.RFC1123Z),
+					PubDate:     t.CommentDateGmt.Format(timeFormat),
 					Guid:        fmt.Sprintf("%s#comment-%d", post.Guid, t.CommentId),
 					Description: "评论受保护：要查看请输入密码。",
 					Content:     post.PostContent,
@@ -192,7 +193,7 @@ func postFeed(arg ...any) (x string, err error) {
 				Title:   fmt.Sprintf("评价者：%s", t.CommentAuthor),
 				Link:    fmt.Sprintf("%s/p/%d#comment-%d", models.Options["siteurl"], post.Id, t.CommentId),
 				Creator: t.CommentAuthor,
-				PubDate: t.CommentDateGmt.Format(time.RFC1123Z),
+				PubDate: t.CommentDateGmt.Format(timeFormat),
 				Guid:    fmt.Sprintf("%s#comment-%d", post.Guid, t.CommentId),
 				Content: t.CommentContent,
 			}
@@ -222,7 +223,8 @@ func commentsFeed(args ...any) (r []string, err error) {
 	c := args[0].(*gin.Context)
 	commens := common.RecentComments(c, 10)
 	rs := templateRss
-	rs.LastBuildDate = time.Now().Format(time.RFC1123Z)
+	rs.Title = fmt.Sprintf("\"%s\"的评论", models.Options["blogname"])
+	rs.LastBuildDate = time.Now().Format(timeFormat)
 	rs.AtomLink = fmt.Sprintf("%s/comments/feed", models.Options["siteurl"])
 	com, err := common.GetCommentByIds(c, helper.SliceMap(commens, func(t models.WpComments) uint64 {
 		return t.CommentId
@@ -231,7 +233,7 @@ func commentsFeed(args ...any) (r []string, err error) {
 		return []string{}, err
 	}
 	rs.Items = helper.SliceMap(com, func(t models.WpComments) rss2.Item {
-		post, _ := common.GetPostAndCache(c, t.CommentPostId)
+		post, _ := common.GetPostById(c, t.CommentPostId)
 		common.PasswordProjectTitle(&post)
 		desc := "评论受保护：要查看请输入密码。"
 		content := t.CommentContent
@@ -239,15 +241,15 @@ func commentsFeed(args ...any) (r []string, err error) {
 			common.PasswdProjectContent(&post)
 			content = post.PostContent
 		} else {
-			desc = plugins.DigestRaw(t.CommentContent, 55, fmt.Sprintf("%s/p/%d#comment-%d", models.Options["siteurl"], post.Id, t.CommentId))
-			content = t.CommentContent
+			desc = plugins.ClearHtml(t.CommentContent)
+			content = desc
 		}
 		return rss2.Item{
-			Title:       fmt.Sprintf("《%s》的评论", post.PostTitle),
+			Title:       fmt.Sprintf("%s对《%s》的评论", t.CommentAuthor, post.PostTitle),
 			Link:        fmt.Sprintf("%s/p/%d#comment-%d", models.Options["siteurl"], post.Id, t.CommentId),
 			Creator:     t.CommentAuthor,
 			Description: desc,
-			PubDate:     t.CommentDateGmt.Format(time.RFC1123Z),
+			PubDate:     t.CommentDateGmt.Format(timeFormat),
 			Guid:        fmt.Sprintf("%s#commment-%d", post.Guid, t.CommentId),
 			Content:     content,
 		}

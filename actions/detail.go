@@ -61,7 +61,7 @@ func Detail(c *gin.Context) {
 	if ID > maxId || err != nil {
 		return
 	}
-	post, err := common.GetPostAndCache(c, ID)
+	post, err := common.GetPostById(c, ID)
 	if post.Id == 0 || err != nil {
 		return
 	}

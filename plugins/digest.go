@@ -43,6 +43,14 @@ func DigestCache(ctx *gin.Context, id uint64, str string) string {
 	return content
 }
 
+func ClearHtml(str string) string {
+	content := removeWpBlock.ReplaceAllString(str, "")
+	content = strings.Trim(content, " \t\n\r\000\x0B")
+	content = strings.Replace(content, "]]>", "]]&gt;", -1)
+	content = helper.StripTagsX(content, "<a><b><blockquote><br><cite><code><dd><del><div><dl><dt><em><h1><h2><h3><h4><h5><h6><i><img><li><ol><p><pre><span><strong><ul>")
+	return str
+}
+
 func DigestRaw(str string, limit int, u string) string {
 	if r := more.FindString(str); r != "" {
 		m := strings.Split(str, r)
