@@ -21,6 +21,13 @@ func SetupRouter() *gin.Engine {
 	// Disable Console Color
 	// gin.DisableConsoleColor()
 	r := gin.New()
+	if len(vars.Conf.TrustIps) > 0 {
+		err := r.SetTrustedProxies(vars.Conf.TrustIps)
+		if err != nil {
+			panic(err)
+		}
+	}
+
 	r.HTMLRender = templates.NewFsTemplate(template.FuncMap{
 		"unescaped": func(s string) any {
 			return template.HTML(s)
@@ -29,7 +36,7 @@ func SetupRouter() *gin.Engine {
 			return t.Format("2006年 01月 02日")
 		},
 	}).SetTemplate()
-	r.Use(gin.Logger(), middleware.FlowLimit(), gin.Recovery(), middleware.SetStaticFileCache)
+	r.Use(gin.Logger(), middleware.FlowLimit(vars.Conf.MaxRequestSleepNum, vars.Conf.MaxRequestNum, vars.Conf.SingleIpSearchNum, vars.Conf.SleepTime), gin.Recovery(), middleware.SetStaticFileCache)
 	//gzip 因为一般会用nginx做反代时自动使用gzip,所以go这边本身可以不用
 	if vars.Conf.Gzip {
 		r.Use(gzip.Gzip(gzip.DefaultCompression, gzip.WithExcludedPaths([]string{
