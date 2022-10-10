@@ -16,7 +16,7 @@ var archivesCaches *Arch
 var categoryCaches *cache.SliceCache[models.WpTermsMy]
 var recentPostsCaches *cache.SliceCache[models.WpPosts]
 var recentCommentsCaches *cache.SliceCache[models.WpComments]
-var postCommentCaches *cache.MapCache[uint64, []models.WpComments]
+var postCommentCaches *cache.MapCache[uint64, []uint64]
 var postsCache *cache.MapCache[uint64, models.WpPosts]
 var monthPostsCache *cache.MapCache[string, []uint64]
 var postListIdsCache *cache.MapCache[string, PostIds]
@@ -48,7 +48,7 @@ func InitActionsCommonCache() {
 
 	recentCommentsCaches = cache.NewSliceCache[models.WpComments](recentComments, vars.Conf.RecentCommentsCacheTime)
 
-	postCommentCaches = cache.NewMapCacheByFn[uint64, []models.WpComments](postComments, vars.Conf.PostCommentsCacheTime)
+	postCommentCaches = cache.NewMapCacheByFn[uint64, []uint64](postComments, vars.Conf.PostCommentsCacheTime)
 
 	maxPostIdCache = cache.NewSliceCache[uint64](getMaxPostId, vars.Conf.MaxPostIdCacheTime)
 

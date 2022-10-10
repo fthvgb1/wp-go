@@ -27,18 +27,28 @@ func recentComments(...any) (r []models.WpComments, err error) {
 }
 
 func PostComments(ctx context.Context, Id uint64) ([]models.WpComments, error) {
-	return postCommentCaches.GetCache(ctx, Id, time.Second, Id)
+	ids, err := postCommentCaches.GetCache(ctx, Id, time.Second, Id)
+	if err != nil {
+		return nil, err
+	}
+	return GetCommentByIds(ctx, ids)
 }
 
-func postComments(args ...any) ([]models.WpComments, error) {
+func postComments(args ...any) ([]uint64, error) {
 	postId := args[0].(uint64)
-	return models.Find[models.WpComments](models.SqlBuilder{
+	r, err := models.Find[models.WpComments](models.SqlBuilder{
 		{"comment_approved", "1"},
 		{"comment_post_ID", "=", strconv.FormatUint(postId, 10), "int"},
-	}, "*", "", models.SqlBuilder{
+	}, "comment_ID", "", models.SqlBuilder{
 		{"comment_date_gmt", "asc"},
 		{"comment_ID", "asc"},
 	}, nil, 0)
+	if err != nil {
+		return nil, err
+	}
+	return helper.SliceMap(r, func(t models.WpComments) uint64 {
+		return t.CommentId
+	}), err
 }
 
 func GetCommentById(ctx context.Context, id uint64) (models.WpComments, error) {
