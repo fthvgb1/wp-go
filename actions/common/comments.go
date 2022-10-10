@@ -60,5 +60,5 @@ func getCommentByIds(args ...any) (map[uint64]models.WpComments, error) {
 	}
 	return helper.SliceToMap(r, func(t models.WpComments) uint64 {
 		return t.CommentId
-	}), err
+	}, true), err
 }

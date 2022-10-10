@@ -57,3 +57,7 @@ commentsCacheTime: 24h
 gzip: false
 # 提交评论url
 postCommentUrl: http://wp.test/wp-comments-post.php
+# TrustIps
+trustIps: []
+# trust servername 信任的域名
+trustServerNames: ["xy.test","blog.xy.test"]

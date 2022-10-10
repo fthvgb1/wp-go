@@ -512,8 +512,9 @@ func TestSliceToMap(t *testing.T) {
 		v  string
 	}
 	type args struct {
-		arr []ss
-		fn  func(ss) int
+		arr         []ss
+		fn          func(ss) int
+		isCoverPrev bool
 	}
 	tests := []struct {
 		name string
@@ -523,17 +524,28 @@ func TestSliceToMap(t *testing.T) {
 		{
 			name: "t1",
 			args: args{
-				arr: []ss{{1, "k1"}, {2, "v2"}},
+				arr: []ss{{1, "k1"}, {2, "v2"}, {2, "v3"}},
 				fn: func(s ss) int {
 					return s.id
 				},
+				isCoverPrev: true,
+			},
+			want: map[int]ss{1: {1, "k1"}, 2: {2, "v3"}},
+		}, {
+			name: "t2",
+			args: args{
+				arr: []ss{{1, "k1"}, {2, "v2"}, {2, "v3"}},
+				fn: func(s ss) int {
+					return s.id
+				},
+				isCoverPrev: false,
 			},
 			want: map[int]ss{1: {1, "k1"}, 2: {2, "v2"}},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := SliceToMap(tt.args.arr, tt.args.fn); !reflect.DeepEqual(got, tt.want) {
+			if got := SliceToMap(tt.args.arr, tt.args.fn, tt.args.isCoverPrev); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("SliceToMap() = %v, want %v", got, tt.want)
 			}
 		})

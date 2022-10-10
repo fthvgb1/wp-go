@@ -34,6 +34,7 @@ type Config struct {
 	Gzip                    bool            `yaml:"gzip"`
 	PostCommentUrl          string          `yaml:"postCommentUrl"`
 	TrustIps                []string        `yaml:"trustIps"`
+	TrustServerNames        []string        `yaml:"trustServerNames"`
 }
 
 type Mysql struct {
