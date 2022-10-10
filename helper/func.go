@@ -231,16 +231,22 @@ func SliceSelfReverse[T any](arr []T) []T {
 	return arr
 }
 
-func SliceToMap[K comparable, V any](arr []V, fn func(V) K, isCoverPrev bool) map[K]V {
-	m := make(map[K]V)
+func SimpleSliceToMap[K comparable, V any](arr []V, fn func(V) K) map[K]V {
+	return SliceToMap(arr, func(v V) (K, V) {
+		return fn(v), v
+	}, true)
+}
+
+func SliceToMap[K comparable, V, T any](arr []V, fn func(V) (K, T), isCoverPrev bool) map[K]T {
+	m := make(map[K]T)
 	for _, v := range arr {
-		k := fn(v)
+		k, r := fn(v)
 		if !isCoverPrev {
 			if _, ok := m[k]; ok {
 				continue
 			}
 		}
-		m[k] = v
+		m[k] = r
 	}
 	return m
 }

@@ -9,9 +9,9 @@ import (
 )
 
 func ValidateServerNames() func(ctx *gin.Context) {
-	serverName := helper.SliceToMap(vars.Conf.TrustServerNames, func(v string) string {
+	serverName := helper.SimpleSliceToMap(vars.Conf.TrustServerNames, func(v string) string {
 		return v
-	}, true)
+	})
 	return func(c *gin.Context) {
 		if len(serverName) > 0 {
 			if _, ok := serverName[strings.Split(c.Request.Host, ":")[0]]; !ok {
