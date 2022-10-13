@@ -229,7 +229,7 @@ func SimplePagination[T Model](where ParseWhere, fields, group string, page, pag
 	return
 }
 
-func FindOneById[T Model, I ~int | ~uint64 | ~int64 | ~int32](id I) (T, error) {
+func FindOneById[T Model, I helper.IntNumber](id I) (T, error) {
 	var r T
 	sql := fmt.Sprintf("select * from `%s` where `%s`=?", r.Table(), r.PrimaryKey())
 	err := db.Db.Get(&r, sql, id)

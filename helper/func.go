@@ -5,10 +5,16 @@ import (
 	"fmt"
 	"github.com/dlclark/regexp2"
 	"io"
+	"math/rand"
 	"reflect"
 	"regexp"
 	"strings"
 )
+
+type IntNumber interface {
+	~int | ~int64 | ~int32 | ~int8 | ~int16 |
+		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64
+}
 
 func ToAny[T any](v T) any {
 	return v
@@ -33,7 +39,7 @@ func StructColumn[T any, M any](arr []M, field string) (r []T) {
 	return
 }
 
-func RangeSlice[T ~int | ~uint | ~int64 | ~int8 | ~int16 | ~int32 | ~uint64](start, end, step T) []T {
+func RangeSlice[T IntNumber](start, end, step T) []T {
 	if step == 0 {
 		panic("step can't be 0")
 	}
@@ -249,4 +255,9 @@ func SliceToMap[K comparable, V, T any](arr []V, fn func(V) (K, T), isCoverPrev 
 		m[k] = r
 	}
 	return m
+}
+
+func RandNum[T IntNumber](start, end T) T {
+	end++
+	return T(rand.Int63n(int64(end-start))) + start
 }
