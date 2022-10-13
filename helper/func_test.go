@@ -578,3 +578,32 @@ func TestSimpleSliceToMap(t *testing.T) {
 		})
 	}
 }
+
+func TestRandNum(t *testing.T) {
+	type args struct {
+		start int
+		end   int
+	}
+	tests := []struct {
+		name string
+		args args
+	}{
+		{
+			name: "t1",
+			args: args{
+				start: 1,
+				end:   2,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			for i := 0; i < 100; i++ {
+				got := RandNum(tt.args.start, tt.args.end)
+				if got > tt.args.end || got < tt.args.start {
+					t.Errorf("RandNum() = %v, range error", got)
+				}
+			}
+		})
+	}
+}

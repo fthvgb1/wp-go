@@ -5,11 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"sync"
+	"sync/atomic"
 	"time"
 )
 
 type MapCache[K comparable, V any] struct {
-	data         map[K]mapCacheStruct[V]
+	data         atomic.Value
 	mutex        *sync.Mutex
 	cacheFunc    func(...any) (V, error)
 	batchCacheFn func(...any) (map[K]V, error)
@@ -17,7 +18,9 @@ type MapCache[K comparable, V any] struct {
 }
 
 func NewMapCache[K comparable, V any](expireTime time.Duration) *MapCache[K, V] {
-	return &MapCache[K, V]{expireTime: expireTime}
+	var v atomic.Value
+	v.Store(make(map[K]mapCacheStruct[V]))
+	return &MapCache[K, V]{expireTime: expireTime, data: v}
 }
 
 type mapCacheStruct[T any] struct {
@@ -31,7 +34,7 @@ func (m *MapCache[K, V]) SetCacheFunc(fn func(...any) (V, error)) {
 }
 
 func (m *MapCache[K, V]) GetSetTime(k K) (t time.Time) {
-	r, ok := m.data[k]
+	r, ok := m.data.Load().(map[K]mapCacheStruct[V])[k]
 	if ok {
 		t = r.setTime
 	}
@@ -58,19 +61,23 @@ func (m *MapCache[K, V]) setCacheFn(fn func(...any) (map[K]V, error)) {
 }
 
 func NewMapCacheByFn[K comparable, V any](fn func(...any) (V, error), expireTime time.Duration) *MapCache[K, V] {
+	var d atomic.Value
+	d.Store(make(map[K]mapCacheStruct[V]))
 	return &MapCache[K, V]{
 		mutex:      &sync.Mutex{},
 		cacheFunc:  fn,
 		expireTime: expireTime,
-		data:       make(map[K]mapCacheStruct[V]),
+		data:       d,
 	}
 }
 func NewMapCacheByBatchFn[K comparable, V any](fn func(...any) (map[K]V, error), expireTime time.Duration) *MapCache[K, V] {
+	var d atomic.Value
+	d.Store(make(map[K]mapCacheStruct[V]))
 	r := &MapCache[K, V]{
 		mutex:        &sync.Mutex{},
 		batchCacheFn: fn,
 		expireTime:   expireTime,
-		data:         make(map[K]mapCacheStruct[V]),
+		data:         d,
 	}
 	r.setCacheFn(fn)
 	return r
@@ -79,11 +86,13 @@ func NewMapCacheByBatchFn[K comparable, V any](fn func(...any) (map[K]V, error),
 func (m *MapCache[K, V]) Flush() {
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
-	m.data = make(map[K]mapCacheStruct[V])
+	var d atomic.Value
+	d.Store(make(map[K]mapCacheStruct[V]))
+	m.data = d
 }
 
 func (m *MapCache[K, V]) Get(k K) V {
-	return m.data[k].data
+	return m.data.Load().(map[K]mapCacheStruct[V])[k].data
 }
 
 func (m *MapCache[K, V]) Set(k K, v V) {
@@ -107,23 +116,26 @@ func (m *MapCache[K, V]) SetByBatchFn(params ...any) error {
 }
 
 func (m *MapCache[K, V]) set(k K, v V) {
-	data, ok := m.data[k]
+	d, ok := m.data.Load().(map[K]mapCacheStruct[V])
 	t := time.Now()
+	data := d[k]
 	if !ok {
 		data.data = v
 		data.setTime = t
 		data.incr++
-		m.data[k] = data
 	} else {
-		m.data[k] = mapCacheStruct[V]{
+		data = mapCacheStruct[V]{
 			data:    v,
 			setTime: t,
 		}
 	}
+	d[k] = data
+	m.data.Store(d)
 }
 
 func (m *MapCache[K, V]) GetCache(c context.Context, key K, timeout time.Duration, params ...any) (V, error) {
-	data, ok := m.data[key]
+	d := m.data.Load().(map[K]mapCacheStruct[V])
+	data, ok := d[key]
 	if !ok {
 		data = mapCacheStruct[V]{}
 	}
@@ -134,11 +146,12 @@ func (m *MapCache[K, V]) GetCache(c context.Context, key K, timeout time.Duratio
 	if !ok || (ok && m.expireTime >= 0 && expired) {
 		t := data.incr
 		call := func() {
-			m.mutex.Lock()
-			defer m.mutex.Unlock()
-			if data.incr > t {
+			tmp, o := m.data.Load().(map[K]mapCacheStruct[V])[key]
+			if o && tmp.incr > t {
 				return
 			}
+			m.mutex.Lock()
+			defer m.mutex.Unlock()
 			r, er := m.cacheFunc(params...)
 			if err != nil {
 				err = er
@@ -146,8 +159,9 @@ func (m *MapCache[K, V]) GetCache(c context.Context, key K, timeout time.Duratio
 			}
 			data.setTime = time.Now()
 			data.data = r
-			m.data[key] = data
 			data.incr++
+			d[key] = data
+			m.data.Store(d)
 		}
 		if timeout > 0 {
 			ctx, cancel := context.WithTimeout(c, timeout)
@@ -175,8 +189,9 @@ func (m *MapCache[K, V]) GetCacheBatch(c context.Context, key []K, timeout time.
 	var res []V
 	t := 0
 	now := time.Duration(time.Now().UnixNano())
+	data := m.data.Load().(map[K]mapCacheStruct[V])
 	for _, k := range key {
-		d, ok := m.data[k]
+		d, ok := data[k]
 		if !ok {
 			needFlush = append(needFlush, k)
 			continue
@@ -195,7 +210,7 @@ func (m *MapCache[K, V]) GetCacheBatch(c context.Context, key []K, timeout time.
 			defer m.mutex.Unlock()
 			tt := 0
 			for _, dd := range needFlush {
-				if ddd, ok := m.data[dd]; ok {
+				if ddd, ok := data[dd]; ok {
 					tt = tt + ddd.incr
 				}
 			}
@@ -229,7 +244,7 @@ func (m *MapCache[K, V]) GetCacheBatch(c context.Context, key []K, timeout time.
 		}
 	}
 	for _, k := range key {
-		d := m.data[k]
+		d := data[k]
 		res = append(res, d.data)
 	}
 	return res, err
@@ -239,9 +254,11 @@ func (m *MapCache[K, V]) ClearExpired() {
 	now := time.Duration(time.Now().UnixNano())
 	m.mutex.Lock()
 	defer m.mutex.Unlock()
-	for k, v := range m.data {
+	data := m.data.Load().(map[K]mapCacheStruct[V])
+	for k, v := range data {
 		if now > time.Duration(v.setTime.UnixNano())+m.expireTime {
-			delete(m.data, k)
+			delete(data, k)
 		}
 	}
+	m.data.Store(data)
 }

@@ -8,10 +8,12 @@ import (
 	"github/fthvgb1/wp-go/plugins"
 	"github/fthvgb1/wp-go/route"
 	"github/fthvgb1/wp-go/vars"
+	"math/rand"
 	"time"
 )
 
 func init() {
+	rand.Seed(time.Now().UnixNano())
 	err := vars.InitConfig()
 	if err != nil {
 		panic(err)
