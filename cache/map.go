@@ -93,8 +93,6 @@ func (m *MapCache[K, V]) Get(k K) V {
 }
 
 func (m *MapCache[K, V]) Set(k K, v V) {
-	m.mutex.Lock()
-	defer m.mutex.Unlock()
 	m.set(k, v)
 }
 
