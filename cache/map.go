@@ -141,18 +141,19 @@ func (m *MapCache[K, V]) GetCache(c context.Context, key K, timeout time.Duratio
 		call := func() {
 			m.mutex.Lock()
 			defer m.mutex.Unlock()
-			if data.incr > t {
+			da, ok := m.data.Load(key)
+			if ok && da.incr > t {
 				return
+			} else {
+				da = data
 			}
 			r, er := m.cacheFunc(params...)
 			if err != nil {
 				err = er
 				return
 			}
-			data.setTime = time.Now()
+			m.set(key, r)
 			data.data = r
-			m.data.Store(key, data)
-			data.incr++
 		}
 		if timeout > 0 {
 			ctx, cancel := context.WithTimeout(c, timeout)

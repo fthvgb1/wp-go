@@ -53,22 +53,22 @@ func (c *SliceCache[T]) GetCache(ctx context.Context, timeout time.Duration, par
 	if l < 1 || (l > 0 && v.expireTime >= 0 && expired) {
 		t := v.incr
 		call := func() {
-			v := c.v.Load()
 			v.mutex.Lock()
 			defer v.mutex.Unlock()
-			if v.incr > t {
+			vv := c.v.Load()
+			if vv.incr > t {
 				return
 			}
-			r, er := v.setCacheFunc(params...)
+			r, er := vv.setCacheFunc(params...)
 			if err != nil {
 				err = er
 				return
 			}
-			v.setTime = time.Now()
-			v.data = r
+			vv.setTime = time.Now()
+			vv.data = r
 			data = r
-			v.incr++
-			c.v.Store(v)
+			vv.incr++
+			c.v.Store(vv)
 		}
 		if timeout > 0 {
 			ctx, cancel := context.WithTimeout(ctx, timeout)
