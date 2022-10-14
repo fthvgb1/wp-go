@@ -4,11 +4,16 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github/fthvgb1/wp-go/safety"
 	"sync"
 	"time"
 )
 
 type SliceCache[T any] struct {
+	v safety.Var[slice[T]]
+}
+
+type slice[T any] struct {
 	data         []T
 	mutex        *sync.Mutex
 	setCacheFunc func(...any) ([]T, error)
@@ -18,45 +23,52 @@ type SliceCache[T any] struct {
 }
 
 func (c *SliceCache[T]) SetTime() time.Time {
-	return c.setTime
+
+	return c.v.Load().setTime
 }
 
 func NewSliceCache[T any](fun func(...any) ([]T, error), duration time.Duration) *SliceCache[T] {
 	return &SliceCache[T]{
-		mutex:        &sync.Mutex{},
-		setCacheFunc: fun,
-		expireTime:   duration,
+		v: safety.NewVar(slice[T]{
+			mutex:        &sync.Mutex{},
+			setCacheFunc: fun,
+			expireTime:   duration,
+		}),
 	}
 }
 
 func (c *SliceCache[T]) FlushCache() {
-	c.mutex.Lock()
-	defer c.mutex.Unlock()
-	c.data = nil
+	mu := c.v.Load().mutex
+	mu.Lock()
+	defer mu.Unlock()
+	c.v.Delete()
 }
 
 func (c *SliceCache[T]) GetCache(ctx context.Context, timeout time.Duration, params ...any) ([]T, error) {
-	l := len(c.data)
-	data := c.data
+	v := c.v.Load()
+	l := len(v.data)
+	data := v.data
 	var err error
-	expired := time.Duration(c.setTime.UnixNano())+c.expireTime < time.Duration(time.Now().UnixNano())
-	if l < 1 || (l > 0 && c.expireTime >= 0 && expired) {
-		t := c.incr
+	expired := time.Duration(v.setTime.UnixNano())+v.expireTime < time.Duration(time.Now().UnixNano())
+	if l < 1 || (l > 0 && v.expireTime >= 0 && expired) {
+		t := v.incr
 		call := func() {
-			c.mutex.Lock()
-			defer c.mutex.Unlock()
-			if c.incr > t {
+			v := c.v.Load()
+			v.mutex.Lock()
+			defer v.mutex.Unlock()
+			if v.incr > t {
 				return
 			}
-			r, er := c.setCacheFunc(params...)
+			r, er := v.setCacheFunc(params...)
 			if err != nil {
 				err = er
 				return
 			}
-			c.setTime = time.Now()
-			c.data = r
+			v.setTime = time.Now()
+			v.data = r
 			data = r
-			c.incr++
+			v.incr++
+			c.v.Store(v)
 		}
 		if timeout > 0 {
 			ctx, cancel := context.WithTimeout(ctx, timeout)

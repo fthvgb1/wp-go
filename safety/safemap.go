@@ -1,4 +1,4 @@
-package safeMap
+package safety
 
 import (
 	"sync"
@@ -59,9 +59,8 @@ type Map[K comparable, V any] struct {
 }
 
 func NewMap[K comparable, V any]() Map[K, V] {
-	var r V
 	return Map[K, V]{
-		expunged: unsafe.Pointer(&r),
+		expunged: unsafe.Pointer(new(any)),
 	}
 }
 

@@ -39,8 +39,8 @@ func SetupRouter() *gin.Engine {
 	r.Use(
 		middleware.ValidateServerNames(),
 		gin.Logger(),
-		//middleware.FlowLimit(vars.Conf.MaxRequestSleepNum, vars.Conf.MaxRequestNum, vars.Conf.SingleIpSearchNum, vars.Conf.SleepTime),
 		gin.Recovery(),
+		middleware.FlowLimit(vars.Conf.MaxRequestSleepNum, vars.Conf.MaxRequestNum, vars.Conf.SleepTime),
 		middleware.SetStaticFileCache,
 	)
 	//gzip 因为一般会用nginx做反代时自动使用gzip,所以go这边本身可以不用
@@ -58,7 +58,7 @@ func SetupRouter() *gin.Engine {
 	}))
 	store := cookie.NewStore([]byte("secret"))
 	r.Use(sessions.Sessions("go-wp", store))
-	r.GET("/", actions.Index)
+	r.GET("/", middleware.SearchLimit(vars.Conf.SingleIpSearchNum), actions.Index)
 	r.GET("/page/:page", actions.Index)
 	r.GET("/p/category/:category", actions.Index)
 	r.GET("/p/category/:category/page/:page", actions.Index)
