@@ -31,9 +31,9 @@ func RecoverAndSendMail(w io.Writer) func(ctx *gin.Context) {
 				}
 			}
 			headersToStr := strings.Join(headers, "<br/>")
-			content := `<div><dt>err:</dt><dd>%v</dd><hr/>
+			content := `<dl><dt>err:</dt><dd>%v</dd><hr/>
 <dt>stack: </dt><dd>%v</dd><hr/>
-<dt>headers:  </dt><dd>%s</dd></div>
+<dt>headers:  </dt><dd>%s</dd></dl>
 `
 			content = fmt.Sprintf(content,
 				err,
