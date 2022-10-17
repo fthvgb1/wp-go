@@ -39,7 +39,7 @@ func SetupRouter() *gin.Engine {
 	r.Use(
 		middleware.ValidateServerNames(),
 		gin.Logger(),
-		gin.Recovery(),
+		middleware.RecoverAndSendMail(gin.DefaultErrorWriter),
 		middleware.FlowLimit(vars.Conf.MaxRequestSleepNum, vars.Conf.MaxRequestNum, vars.Conf.SleepTime),
 		middleware.SetStaticFileCache,
 	)

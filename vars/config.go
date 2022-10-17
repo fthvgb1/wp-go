@@ -11,6 +11,7 @@ var Conf Config
 
 type Config struct {
 	Mysql                   Mysql           `yaml:"mysql"`
+	Mail                    Mail            `yaml:"mail"`
 	RecentPostCacheTime     time.Duration   `yaml:"recentPostCacheTime"`
 	CategoryCacheTime       time.Duration   `yaml:"categoryCacheTime"`
 	ArchiveCacheTime        time.Duration   `yaml:"archiveCacheTime"`
@@ -35,6 +36,15 @@ type Config struct {
 	PostCommentUrl          string          `yaml:"postCommentUrl"`
 	TrustIps                []string        `yaml:"trustIps"`
 	TrustServerNames        []string        `yaml:"trustServerNames"`
+}
+
+type Mail struct {
+	User  string `yaml:"user"`
+	Alias string `yaml:"alias"`
+	Pass  string `yaml:"pass"`
+	Host  string `yaml:"host"`
+	Port  int    `yaml:"port"`
+	Ssl   bool   `yaml:"ssl"`
 }
 
 type Mysql struct {

@@ -15,6 +15,14 @@ mysql:
     maxIdleConn: 10
     # 连接的生命时长
     connMaxLifetime: 236
+Mail:
+  user: xx@163.com
+  alias: xx
+  pass:
+  Host: smtp.163.com
+  Port: 465
+  Ssl: true
+
 # 最近文章缓存时间
 recentPostCacheTime: 5m
 # 分类缓存时间
