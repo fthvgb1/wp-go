@@ -85,7 +85,13 @@ func Detail(c *gin.Context) {
 	h["post"] = post
 	h["showComment"] = showComment
 	h["prev"] = prev
-	h["comments"] = hh.formatComment(commentss, 1, 5)
+	depth := models.Options["thread_comments_depth"]
+	d, err := strconv.Atoi(depth)
+	if err != nil {
+		logs.ErrPrintln(err, "get comment depth")
+		d = 5
+	}
+	h["comments"] = hh.formatComment(commentss, 1, d)
 	h["next"] = next
 }
 
