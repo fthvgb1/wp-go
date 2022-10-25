@@ -8,6 +8,7 @@ import (
 	"math/rand"
 	"reflect"
 	"regexp"
+	"sort"
 	"strings"
 )
 
@@ -260,4 +261,30 @@ func SliceToMap[K comparable, V, T any](arr []V, fn func(V) (K, T), isCoverPrev 
 func RandNum[T IntNumber](start, end T) T {
 	end++
 	return T(rand.Int63n(int64(end-start))) + start
+}
+
+type anyArr[T any] struct {
+	data []T
+	fn   func(i, j T) bool
+}
+
+func (r anyArr[T]) Len() int {
+	return len(r.data)
+}
+
+func (r anyArr[T]) Swap(i, j int) {
+	r.data[i], r.data[j] = r.data[j], r.data[i]
+}
+
+func (r anyArr[T]) Less(i, j int) bool {
+	return r.fn(r.data[i], r.data[j])
+}
+
+func SampleSort[T any](arr []T, fn func(i, j T) bool) {
+	slice := anyArr[T]{
+		data: arr,
+		fn:   fn,
+	}
+	sort.Sort(slice)
+	return
 }

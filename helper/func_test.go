@@ -607,3 +607,33 @@ func TestRandNum(t *testing.T) {
 		})
 	}
 }
+
+func TestSampleSort(t *testing.T) {
+	type args struct {
+		arr []int
+		fn  func(i, j int) bool
+	}
+	tests := []struct {
+		name  string
+		args  args
+		wantR []int
+	}{
+		{
+			name: "t1",
+			args: args{
+				arr: []int{3, 5, 6, 1},
+				fn: func(i, j int) bool {
+					return i < j
+				},
+			},
+			wantR: []int{1, 3, 5, 6},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if SampleSort(tt.args.arr, tt.args.fn); !reflect.DeepEqual(tt.args.arr, tt.wantR) {
+				t.Errorf("SampleSort() = %v, want %v", tt.args.arr, tt.wantR)
+			}
+		})
+	}
+}
