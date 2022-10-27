@@ -609,24 +609,47 @@ func TestRandNum(t *testing.T) {
 }
 
 func TestSampleSort(t *testing.T) {
+	type xy struct {
+		x int
+		y int
+	}
+
 	type args struct {
-		arr []int
-		fn  func(i, j int) bool
+		arr []xy
+		fn  func(i, j xy) bool
 	}
 	tests := []struct {
 		name  string
 		args  args
-		wantR []int
+		wantR []xy
 	}{
 		{
 			name: "t1",
 			args: args{
-				arr: []int{3, 5, 6, 1},
-				fn: func(i, j int) bool {
-					return i < j
+				arr: []xy{
+					{1, 2},
+					{3, 4},
+					{1, 3},
+					{2, 1},
+					{1, 6},
+				},
+				fn: func(i, j xy) bool {
+					if i.x < j.x {
+						return true
+					}
+					if i.x == j.x && i.y > i.y {
+						return true
+					}
+					return false
 				},
 			},
-			wantR: []int{1, 3, 5, 6},
+			wantR: []xy{
+				{1, 2},
+				{1, 3},
+				{1, 6},
+				{2, 1},
+				{3, 4},
+			},
 		},
 	}
 	for _, tt := range tests {
