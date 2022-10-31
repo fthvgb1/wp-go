@@ -71,7 +71,7 @@ func SetupRouter() *gin.Engine {
 	r.GET("/p/:id/feed", actions.PostFeed)
 	r.GET("/feed", actions.Feed)
 	r.GET("/comments/feed", actions.CommentsFeed)
-	r.POST("/comment", actions.PostComment)
+	r.POST("/comment", middleware.FlowLimit(vars.Conf.MaxRequestSleepNum, 5, vars.Conf.SleepTime), actions.PostComment)
 	if helper.IsContainInArr(gin.Mode(), []string{gin.DebugMode, gin.TestMode}) {
 		pprof.Register(r, "dev/pprof")
 	}

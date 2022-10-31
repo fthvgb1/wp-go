@@ -34,12 +34,13 @@
             {{end}}
         </div>
         <footer id="colophon" class="site-footer">
-            {{template "layout/footer" .}}
+            <div class="site-info">
+                <a href="https://cn.wordpress.org/" class="imprint">自豪地采用WordPress</a>
+            </div>
         </footer>
 
     </div>
-    {{ block "footer" .}}
-    {{end}}
+    {{template "layout/footer" .}}
     </body>
     </html>
 {{ end }}

@@ -1,8 +1,12 @@
 package actions
 
 import (
+	"fmt"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github/fthvgb1/wp-go/helper"
+	"github/fthvgb1/wp-go/models"
+	"github/fthvgb1/wp-go/phpass"
 	"net/http"
 	"strings"
 )
@@ -24,5 +28,13 @@ func Login(c *gin.Context) {
 		c.Error(err)
 		return
 	}
+	pass, err := phpass.NewPasswordHash(8, true).HashPassword(password)
+	if err != nil {
+		c.Error(err)
+		return
+	}
+	cohash := fmt.Sprintf("wp-postpass_%s", helper.StringMd5(models.Options["siteurl"]))
+	c.SetCookie(cohash, pass, 24*3600, "/", "", false, false)
+
 	c.Redirect(http.StatusFound, ref)
 }
