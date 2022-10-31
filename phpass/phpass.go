@@ -64,10 +64,7 @@ func (p *PasswordHash) getRandomBytes(count int) (r string, err error) {
 func (p *PasswordHash) Encode64(input string, count int) (out string) {
 	i := 0
 	s := strings.Builder{}
-	for {
-		if i >= count {
-			break
-		}
+	for i < count {
 		v := 0
 		if i < len(input) {
 			v = int(input[i])
