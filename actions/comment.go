@@ -8,6 +8,7 @@ import (
 	"github/fthvgb1/wp-go/actions/common"
 	"github/fthvgb1/wp-go/logs"
 	"github/fthvgb1/wp-go/mail"
+	"github/fthvgb1/wp-go/models"
 	"github/fthvgb1/wp-go/vars"
 	"io"
 	"net/http"
@@ -38,11 +39,7 @@ func PostComment(c *gin.Context) {
 	m := c.PostForm("email")
 	comment := c.PostForm("comment")
 	c.Request.Body = io.NopCloser(bytes.NewBuffer(data))
-	body, err := io.ReadAll(c.Request.Body)
-	if err != nil {
-		return
-	}
-	req, err := http.NewRequest("POST", vars.Conf.PostCommentUrl, strings.NewReader(string(body)))
+	req, err := http.NewRequest("POST", vars.Conf.PostCommentUrl, strings.NewReader(c.Request.PostForm.Encode()))
 	if err != nil {
 		return
 	}
@@ -54,7 +51,6 @@ func PostComment(c *gin.Context) {
 	if err != nil {
 		return
 	}
-	//todo 待优化
 	if res.Request.Response != nil && res.Request.Response.StatusCode == http.StatusFound {
 		for _, cookie := range res.Request.Response.Cookies() {
 			c.SetCookie(cookie.Name, cookie.Value, cookie.MaxAge, cookie.Path, cookie.Domain, cookie.Secure, cookie.HttpOnly)
@@ -72,7 +68,7 @@ func PostComment(c *gin.Context) {
 				logs.ErrPrintln(err, "获取文档", id)
 				return
 			}
-			su := fmt.Sprintf("%s[%s]发表了评论对文档[%v]的评论", author, m, post.PostTitle)
+			su := fmt.Sprintf("%s: %s[%s]发表了评论对文档[%v]的评论", models.Options["siteurl"], author, m, post.PostTitle)
 			err = mail.SendMail([]string{vars.Conf.Mail.User}, su, comment)
 			logs.ErrPrintln(err, "发送邮件")
 		}()
