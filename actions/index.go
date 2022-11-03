@@ -39,11 +39,13 @@ type indexHandle struct {
 }
 
 func newIndexHandle(ctx *gin.Context) *indexHandle {
+	size := models.Options["posts_per_page"]
+	si, _ := strconv.Atoi(size)
 	return &indexHandle{
 		c:              ctx,
 		session:        sessions.Default(ctx),
 		page:           1,
-		pageSize:       10,
+		pageSize:       si,
 		paginationStep: 1,
 		titleL:         models.Options["blogname"],
 		titleR:         models.Options["blogdescription"],
