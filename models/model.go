@@ -183,10 +183,15 @@ func (w SqlBuilder) parseJoin() string {
 
 func SimplePagination[T Model](where ParseWhere, fields, group string, page, pageSize int, order SqlBuilder, join SqlBuilder, having SqlBuilder, in ...[]any) (r []T, total int, err error) {
 	var rr T
-	w, args, err := where.ParseWhere(&in)
-	if err != nil {
-		return r, total, err
+	var w string
+	var args []any
+	if where != nil {
+		w, args, err = where.ParseWhere(&in)
+		if err != nil {
+			return r, total, err
+		}
 	}
+
 	h := ""
 	if having != nil {
 		hh, arg, err := having.ParseWhere(&in)
@@ -266,9 +271,14 @@ func FindOneById[T Model, I helper.IntNumber](id I) (T, error) {
 
 func FirstOne[T Model](where ParseWhere, fields string, order SqlBuilder, in ...[]any) (T, error) {
 	var r T
-	w, args, err := where.ParseWhere(&in)
-	if err != nil {
-		return r, err
+	var w string
+	var args []any
+	var err error
+	if where != nil {
+		w, args, err = where.ParseWhere(&in)
+		if err != nil {
+			return r, err
+		}
 	}
 	tp := "select %s from %s %s %s"
 	sql := fmt.Sprintf(tp, fields, r.Table(), w, order.parseOrderBy())
@@ -281,9 +291,14 @@ func FirstOne[T Model](where ParseWhere, fields string, order SqlBuilder, in ...
 
 func LastOne[T Model](where ParseWhere, fields string, in ...[]any) (T, error) {
 	var r T
-	w, args, err := where.ParseWhere(&in)
-	if err != nil {
-		return r, err
+	var w string
+	var args []any
+	var err error
+	if where != nil {
+		w, args, err = where.ParseWhere(&in)
+		if err != nil {
+			return r, err
+		}
 	}
 	tp := "select %s from %s %s order by %s desc limit 1"
 	sql := fmt.Sprintf(tp, fields, r.Table(), w, r.PrimaryKey())
@@ -298,7 +313,7 @@ func SimpleFind[T Model](where ParseWhere, fields string, in ...[]any) ([]T, err
 	var r []T
 	var rr T
 	var err error
-	args := make([]any, 0, 0)
+	var args []any
 	var w string
 	if where != nil {
 		w, args, err = where.ParseWhere(&in)
