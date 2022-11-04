@@ -2,7 +2,6 @@ package templates
 
 import (
 	"embed"
-	"fmt"
 	"github.com/gin-gonic/gin/render"
 	"html/template"
 	"io/fs"
@@ -31,7 +30,7 @@ func (t *FsTemplate) SetTemplate() *FsTemplate {
 		name := filepath.Base(include)
 		c := strings.Split(include, "/")
 		base := c[0]
-		t.Templates[include] = template.Must(template.New(name).Funcs(t.FuncMap).ParseFS(TemplateFs, include, fmt.Sprintf("%s/layout/*.gohtml", base)))
+		t.Templates[include] = template.Must(template.New(name).Funcs(t.FuncMap).ParseFS(TemplateFs, include, filepath.Join(base, "layout/*.gohtml")))
 	}
 	return t
 }
