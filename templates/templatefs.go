@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-//go:embed twentyfifteen
+//go:embed *[^templatefs.go]
 var TemplateFs embed.FS
 
 type FsTemplate struct {
