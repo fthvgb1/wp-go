@@ -62,9 +62,9 @@ func GetCommentByIds(ctx context.Context, ids []uint64) ([]models.WpComments, er
 func getCommentByIds(args ...any) (map[uint64]models.WpComments, error) {
 	ids := args[0].([]uint64)
 	m := make(map[uint64]models.WpComments)
-	r, err := models.Find[models.WpComments](models.SqlBuilder{
+	r, err := models.SimpleFind[models.WpComments](models.SqlBuilder{
 		{"comment_ID", "in", ""}, {"comment_approved", "1"},
-	}, "*", "", nil, nil, nil, 0, helper.SliceMap(ids, helper.ToAny[uint64]))
+	}, "*", helper.SliceMap(ids, helper.ToAny[uint64]))
 	if err != nil {
 		return m, err
 	}

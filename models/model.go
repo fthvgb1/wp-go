@@ -297,9 +297,14 @@ func LastOne[T Model](where ParseWhere, fields string, in ...[]any) (T, error) {
 func SimpleFind[T Model](where ParseWhere, fields string, in ...[]any) ([]T, error) {
 	var r []T
 	var rr T
-	w, args, err := where.ParseWhere(&in)
-	if err != nil {
-		return r, err
+	var err error
+	args := make([]any, 0, 0)
+	var w string
+	if where != nil {
+		w, args, err = where.ParseWhere(&in)
+		if err != nil {
+			return r, err
+		}
 	}
 	tp := "select %s from %s %s"
 	sql := fmt.Sprintf(tp, fields, rr.Table(), w)

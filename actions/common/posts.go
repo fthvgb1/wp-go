@@ -109,7 +109,7 @@ func searchPostIds(args ...any) (ids PostIds, err error) {
 }
 
 func getMaxPostId(...any) ([]uint64, error) {
-	r, err := models.Find[models.WpPosts](models.SqlBuilder{{"post_type", "post"}, {"post_status", "publish"}}, "max(ID) ID", "", nil, nil, nil, 0)
+	r, err := models.SimpleFind[models.WpPosts](models.SqlBuilder{{"post_type", "post"}, {"post_status", "publish"}}, "max(ID) ID")
 	var id uint64
 	if len(r) > 0 {
 		id = r[0].Id
