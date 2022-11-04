@@ -45,7 +45,7 @@ func Detail(c *gin.Context) {
 			status = http.StatusInternalServerError
 			c.Error(err)
 		}
-		c.HTML(status, "posts/detail.gohtml", h)
+		c.HTML(status, "twentyfifteen/posts/detail.gohtml", h)
 	}()
 	id := c.Param("id")
 	Id := 0

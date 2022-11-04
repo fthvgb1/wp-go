@@ -195,7 +195,7 @@ func Index(c *gin.Context) {
 			c.Error(err)
 			stat = http.StatusInternalServerError
 		}
-		c.HTML(stat, "posts/index.gohtml", ginH)
+		c.HTML(stat, "twentyfifteen/posts/index.gohtml", ginH)
 	}()
 	if err != nil {
 		return

@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 )
 
-//go:embed posts layout feed
+//go:embed twentyfifteen
 var TemplateFs embed.FS
 
 type FsTemplate struct {
@@ -21,13 +21,13 @@ func NewFsTemplate(funcMap template.FuncMap) *FsTemplate {
 }
 
 func (t *FsTemplate) SetTemplate() *FsTemplate {
-	mainTemplates, err := fs.Glob(TemplateFs, "*[^layout]/*.gohtml")
+	mainTemplates, err := fs.Glob(TemplateFs, `twentyfifteen/*[^layout]/*.gohtml`)
 	if err != nil {
 		panic(err)
 	}
 	for _, include := range mainTemplates {
 		name := filepath.Base(include)
-		t.Templates[include] = template.Must(template.New(name).Funcs(t.FuncMap).ParseFS(TemplateFs, include, "layout/*.gohtml"))
+		t.Templates[include] = template.Must(template.New(name).Funcs(t.FuncMap).ParseFS(TemplateFs, include, "twentyfifteen/layout/*.gohtml"))
 	}
 	return t
 }
