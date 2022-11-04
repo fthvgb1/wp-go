@@ -9,7 +9,7 @@ import (
 
 func getUsers(...any) (m map[uint64]models.WpUsers, err error) {
 	m = make(map[uint64]models.WpUsers)
-	r, err := models.Find[models.WpUsers](nil, "*", "", nil, nil, 0)
+	r, err := models.Find[models.WpUsers](nil, "*", "", nil, nil, nil, 0)
 	for _, user := range r {
 		m[user.Id] = user
 	}

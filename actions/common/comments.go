@@ -23,7 +23,7 @@ func recentComments(...any) (r []models.WpComments, err error) {
 		{"post_status", "publish"},
 	}, "comment_ID,comment_author,comment_post_ID,post_title", "", models.SqlBuilder{{"comment_date_gmt", "desc"}}, models.SqlBuilder{
 		{"a", "left join", "wp_posts b", "a.comment_post_ID=b.ID"},
-	}, 10)
+	}, nil, 10)
 }
 
 func PostComments(ctx context.Context, Id uint64) ([]models.WpComments, error) {
@@ -42,7 +42,7 @@ func postComments(args ...any) ([]uint64, error) {
 	}, "comment_ID", "", models.SqlBuilder{
 		{"comment_date_gmt", "asc"},
 		{"comment_ID", "asc"},
-	}, nil, 0)
+	}, nil, nil, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -64,7 +64,7 @@ func getCommentByIds(args ...any) (map[uint64]models.WpComments, error) {
 	m := make(map[uint64]models.WpComments)
 	r, err := models.Find[models.WpComments](models.SqlBuilder{
 		{"comment_ID", "in", ""}, {"comment_approved", "1"},
-	}, "*", "", nil, nil, 0, helper.SliceMap(ids, helper.ToAny[uint64]))
+	}, "*", "", nil, nil, nil, 0, helper.SliceMap(ids, helper.ToAny[uint64]))
 	if err != nil {
 		return m, err
 	}

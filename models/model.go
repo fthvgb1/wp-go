@@ -18,7 +18,7 @@ type Model interface {
 }
 
 type ParseWhere interface {
-	ParseWhere(...[]any) (string, []any, error)
+	ParseWhere(*[][]any) (string, []any, error)
 }
 
 type SqlBuilder [][]string
@@ -40,10 +40,10 @@ func (w SqlBuilder) parseField(ss []string, s *strings.Builder) {
 	}
 }
 
-func (w SqlBuilder) parseIn(ss []string, s *strings.Builder, c *int, args *[]any, in [][]any) (t bool) {
-	if helper.IsContainInArr(ss[1], []string{"in", "not in"}) && len(in) > 0 {
+func (w SqlBuilder) parseIn(ss []string, s *strings.Builder, c *int, args *[]any, in *[][]any) (t bool) {
+	if helper.IsContainInArr(ss[1], []string{"in", "not in"}) && len(*in) > 0 {
 		s.WriteString(" (")
-		for _, p := range in[*c] {
+		for _, p := range (*in)[*c] {
 			s.WriteString("?,")
 			*args = append(*args, p)
 		}
@@ -76,7 +76,7 @@ func (w SqlBuilder) parseType(ss []string, args *[]any) error {
 	return nil
 }
 
-func (w SqlBuilder) ParseWhere(in ...[]any) (string, []any, error) {
+func (w SqlBuilder) ParseWhere(in *[][]any) (string, []any, error) {
 	var s strings.Builder
 	args := make([]any, 0, len(w))
 	c := 0
@@ -138,6 +138,9 @@ func (w SqlBuilder) ParseWhere(in ...[]any) (string, []any, error) {
 		s.WriteString(ss)
 		ss = s.String()
 	}
+	if len(*in) > c {
+		*in = (*in)[c:]
+	}
 	return ss, args, nil
 }
 
@@ -178,12 +181,22 @@ func (w SqlBuilder) parseJoin() string {
 	return s.String()
 }
 
-func SimplePagination[T Model](where ParseWhere, fields, group string, page, pageSize int, order SqlBuilder, join SqlBuilder, in ...[]any) (r []T, total int, err error) {
+func SimplePagination[T Model](where ParseWhere, fields, group string, page, pageSize int, order SqlBuilder, join SqlBuilder, having SqlBuilder, in ...[]any) (r []T, total int, err error) {
 	var rr T
-	w, args, err := where.ParseWhere(in...)
+	w, args, err := where.ParseWhere(&in)
 	if err != nil {
 		return r, total, err
 	}
+	h := ""
+	if having != nil {
+		hh, arg, err := having.ParseWhere(&in)
+		if err != nil {
+			return r, total, err
+		}
+		args = append(args, arg...)
+		h = strings.Replace(hh, " where", " having", 1)
+	}
+
 	n := struct {
 		N int `db:"n" json:"n"`
 	}{}
@@ -194,15 +207,27 @@ func SimplePagination[T Model](where ParseWhere, fields, group string, page, pag
 		g.WriteString(group)
 		groupBy = g.String()
 	}
+	if having != nil {
+		tm := map[string]struct{}{}
+		for _, s := range strings.Split(group, ",") {
+			tm[s] = struct{}{}
+		}
+		for _, ss := range having {
+			if _, ok := tm[ss[0]]; !ok {
+				group = fmt.Sprintf("%s,%s", group, ss[0])
+			}
+		}
+		group = strings.Trim(group, ",")
+	}
 	j := join.parseJoin()
 	if group == "" {
 		tpx := "select count(*) n from %s %s %s limit 1"
 		sq := fmt.Sprintf(tpx, rr.Table(), j, w)
 		err = db.Db.Get(&n, sq, args...)
 	} else {
-		tpx := "select count(*) n from (select %s from %s %s %s %s ) %s"
+		tpx := "select count(*) n from (select %s from %s %s %s %s %s ) %s"
 		rand.Seed(int64(time.Now().Nanosecond()))
-		sq := fmt.Sprintf(tpx, group, rr.Table(), j, w, groupBy, fmt.Sprintf("table%d", rand.Int()))
+		sq := fmt.Sprintf(tpx, group, rr.Table(), j, w, groupBy, h, fmt.Sprintf("table%d", rand.Int()))
 		err = db.Db.Get(&n, sq, args...)
 	}
 
@@ -220,8 +245,8 @@ func SimplePagination[T Model](where ParseWhere, fields, group string, page, pag
 	if offset >= total {
 		return
 	}
-	tp := "select %s from %s %s %s %s %s limit %d,%d"
-	sql := fmt.Sprintf(tp, fields, rr.Table(), j, w, groupBy, order.parseOrderBy(), offset, pageSize)
+	tp := "select %s from %s %s %s %s %s %s limit %d,%d"
+	sql := fmt.Sprintf(tp, fields, rr.Table(), j, w, groupBy, h, order.parseOrderBy(), offset, pageSize)
 	err = db.Db.Select(&r, sql, args...)
 	if err != nil {
 		return
@@ -241,7 +266,7 @@ func FindOneById[T Model, I helper.IntNumber](id I) (T, error) {
 
 func FirstOne[T Model](where ParseWhere, fields string, order SqlBuilder, in ...[]any) (T, error) {
 	var r T
-	w, args, err := where.ParseWhere(in...)
+	w, args, err := where.ParseWhere(&in)
 	if err != nil {
 		return r, err
 	}
@@ -256,7 +281,7 @@ func FirstOne[T Model](where ParseWhere, fields string, order SqlBuilder, in ...
 
 func LastOne[T Model](where ParseWhere, fields string, in ...[]any) (T, error) {
 	var r T
-	w, args, err := where.ParseWhere(in...)
+	w, args, err := where.ParseWhere(&in)
 	if err != nil {
 		return r, err
 	}
@@ -272,7 +297,7 @@ func LastOne[T Model](where ParseWhere, fields string, in ...[]any) (T, error) {
 func SimpleFind[T Model](where ParseWhere, fields string, in ...[]any) ([]T, error) {
 	var r []T
 	var rr T
-	w, args, err := where.ParseWhere(in...)
+	w, args, err := where.ParseWhere(&in)
 	if err != nil {
 		return r, err
 	}
@@ -296,15 +321,24 @@ func Select[T Model](sql string, params ...any) ([]T, error) {
 	return r, nil
 }
 
-func Find[T Model](where ParseWhere, fields, group string, order SqlBuilder, join SqlBuilder, limit int, in ...[]any) (r []T, err error) {
+func Find[T Model](where ParseWhere, fields, group string, order SqlBuilder, join SqlBuilder, having SqlBuilder, limit int, in ...[]any) (r []T, err error) {
 	var rr T
 	w := ""
 	var args []any
 	if where != nil {
-		w, args, err = where.ParseWhere(in...)
+		w, args, err = where.ParseWhere(&in)
 		if err != nil {
 			return r, err
 		}
+	}
+	h := ""
+	if having != nil {
+		hh, arg, err := having.ParseWhere(&in)
+		if err != nil {
+			return r, err
+		}
+		args = append(args, arg...)
+		h = strings.Replace(hh, " where", " having", 1)
 	}
 
 	j := join.parseJoin()
@@ -315,12 +349,12 @@ func Find[T Model](where ParseWhere, fields, group string, order SqlBuilder, joi
 		g.WriteString(group)
 		groupBy = g.String()
 	}
-	tp := "select %s from %s %s %s %s %s %s"
+	tp := "select %s from %s %s %s %s %s %s %s"
 	l := ""
 	if limit > 0 {
 		l = fmt.Sprintf(" limit %d", limit)
 	}
-	sql := fmt.Sprintf(tp, fields, rr.Table(), j, w, groupBy, order.parseOrderBy(), l)
+	sql := fmt.Sprintf(tp, fields, rr.Table(), j, w, groupBy, h, order.parseOrderBy(), l)
 	err = db.Db.Select(&r, sql, args...)
 	return
 }

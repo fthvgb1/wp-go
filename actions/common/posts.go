@@ -42,7 +42,7 @@ func getPostsByIds(ids ...any) (m map[uint64]models.WpPosts, err error) {
 		"left join", "wp_term_taxonomy c", "b.term_taxonomy_id=c.term_taxonomy_id",
 	}, {
 		"left join", "wp_terms d", "c.term_id=d.term_id",
-	}}, 0, arg)
+	}}, nil, 0, arg)
 	if err != nil {
 		return m, err
 	}
@@ -97,7 +97,7 @@ func searchPostIds(args ...any) (ids PostIds, err error) {
 	join := args[4].(models.SqlBuilder)
 	postType := args[5].([]any)
 	postStatus := args[6].([]any)
-	res, total, err := models.SimplePagination[models.WpPosts](where, "ID", "", page, limit, order, join, postType, postStatus)
+	res, total, err := models.SimplePagination[models.WpPosts](where, "ID", "", page, limit, order, join, nil, postType, postStatus)
 	for _, posts := range res {
 		ids.Ids = append(ids.Ids, posts.Id)
 	}
@@ -109,7 +109,7 @@ func searchPostIds(args ...any) (ids PostIds, err error) {
 }
 
 func getMaxPostId(...any) ([]uint64, error) {
-	r, err := models.Find[models.WpPosts](models.SqlBuilder{{"post_type", "post"}, {"post_status", "publish"}}, "max(ID) ID", "", nil, nil, 0)
+	r, err := models.Find[models.WpPosts](models.SqlBuilder{{"post_type", "post"}, {"post_status", "publish"}}, "max(ID) ID", "", nil, nil, nil, 0)
 	var id uint64
 	if len(r) > 0 {
 		id = r[0].Id
@@ -133,7 +133,7 @@ func RecentPosts(ctx context.Context, n int) (r []models.WpPosts) {
 func recentPosts(...any) (r []models.WpPosts, err error) {
 	r, err = models.Find[models.WpPosts](models.SqlBuilder{{
 		"post_type", "post",
-	}, {"post_status", "publish"}}, "ID,post_title,post_password", "", models.SqlBuilder{{"post_date", "desc"}}, nil, 10)
+	}, {"post_status", "publish"}}, "ID,post_title,post_password", "", models.SqlBuilder{{"post_date", "desc"}}, nil, nil, 10)
 	for i, post := range r {
 		if post.PostPassword != "" {
 			PasswordProjectTitle(&r[i])
@@ -207,7 +207,7 @@ func monthPost(args ...any) (r []uint64, err error) {
 	}
 	postType := []any{"post"}
 	status := []any{"publish"}
-	ids, err := models.Find[models.WpPosts](where, "ID", "", models.SqlBuilder{{"Id", "asc"}}, nil, 0, postType, status)
+	ids, err := models.Find[models.WpPosts](where, "ID", "", models.SqlBuilder{{"Id", "asc"}}, nil, nil, 0, postType, status)
 	if err != nil {
 		return
 	}

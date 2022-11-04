@@ -105,7 +105,7 @@ type PostContext struct {
 func archives() ([]models.PostArchive, error) {
 	return models.Find[models.PostArchive](models.SqlBuilder{
 		{"post_type", "post"}, {"post_status", "publish"},
-	}, "YEAR(post_date) AS `year`, MONTH(post_date) AS `month`, count(ID) as posts", "year,month", models.SqlBuilder{{"year", "desc"}, {"month", "desc"}}, nil, 0)
+	}, "YEAR(post_date) AS `year`, MONTH(post_date) AS `month`, count(ID) as posts", "year,month", models.SqlBuilder{{"year", "desc"}, {"month", "desc"}}, nil, nil, 0)
 }
 
 func Archives() (r []models.PostArchive) {
@@ -127,7 +127,7 @@ func categories(...any) (terms []models.WpTermsMy, err error) {
 		{"t.name", "asc"},
 	}, models.SqlBuilder{
 		{"t", "inner join", "wp_term_taxonomy tt", "t.term_id = tt.term_id"},
-	}, 0, in)
+	}, nil, 0, in)
 	for i := 0; i < len(terms); i++ {
 		if v, ok := models.Terms[terms[i].WpTerms.TermId]; ok {
 			terms[i].WpTerms = v

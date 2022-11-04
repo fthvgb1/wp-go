@@ -22,14 +22,14 @@ func InitOptions() error {
 }
 
 func InitTerms() (err error) {
-	terms, err := Find[WpTerms](nil, "*", "", nil, nil, 0)
+	terms, err := Find[WpTerms](nil, "*", "", nil, nil, nil, 0)
 	if err != nil {
 		return err
 	}
 	for _, wpTerms := range terms {
 		Terms[wpTerms.TermId] = wpTerms
 	}
-	termTax, err := Find[WpTermTaxonomy](nil, "*", "", nil, nil, 0)
+	termTax, err := Find[WpTermTaxonomy](nil, "*", "", nil, nil, nil, 0)
 	if err != nil {
 		return err
 	}
