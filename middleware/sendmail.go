@@ -4,10 +4,10 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github/fthvgb1/wp-go/config"
 	"github/fthvgb1/wp-go/logs"
 	"github/fthvgb1/wp-go/mail"
 	"github/fthvgb1/wp-go/models"
-	"github/fthvgb1/wp-go/vars"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -42,7 +42,7 @@ func RecoverAndSendMail(w io.Writer) func(ctx *gin.Context) {
 			)
 
 			er := mail.SendMail(
-				[]string{vars.Conf.Mail.User},
+				[]string{config.Conf.Mail.User},
 				fmt.Sprintf("%s%s %s 发生错误", fmt.Sprintf(models.Options["siteurl"]), c.FullPath(), time.Now().Format(time.RFC1123Z)), content)
 
 			if er != nil {

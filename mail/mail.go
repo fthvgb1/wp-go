@@ -3,7 +3,7 @@ package mail
 import (
 	"crypto/tls"
 	"fmt"
-	"github/fthvgb1/wp-go/vars"
+	"github/fthvgb1/wp-go/config"
 	"gopkg.in/gomail.v2"
 	"mime"
 	"strings"
@@ -24,8 +24,8 @@ func SendMail(mailTo []string, subject string, body string, a ...AttacheFile) er
 		gomail.SetEncoding(gomail.Base64),
 	)
 	m.SetHeader("From",
-		m.FormatAddress(vars.Conf.Mail.User,
-			vars.Conf.Mail.Alias,
+		m.FormatAddress(config.Conf.Mail.User,
+			config.Conf.Mail.Alias,
 		))
 	m.SetHeader("To", mailTo...)
 	m.SetHeader("Subject", subject)
@@ -43,12 +43,12 @@ func SendMail(mailTo []string, subject string, body string, a ...AttacheFile) er
 	}
 
 	d := gomail.NewDialer(
-		vars.Conf.Mail.Host,
-		vars.Conf.Mail.Port,
-		vars.Conf.Mail.User,
-		vars.Conf.Mail.Pass,
+		config.Conf.Mail.Host,
+		config.Conf.Mail.Port,
+		config.Conf.Mail.User,
+		config.Conf.Mail.Pass,
 	)
-	if vars.Conf.Mail.Ssl {
+	if config.Conf.Mail.Ssl {
 		d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 	}
 	err := d.DialAndSend(m)

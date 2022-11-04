@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github/fthvgb1/wp-go/cache"
+	"github/fthvgb1/wp-go/config"
 	"github/fthvgb1/wp-go/helper"
 	"github/fthvgb1/wp-go/models"
-	"github/fthvgb1/wp-go/vars"
 	"regexp"
 	"strings"
 	"time"
@@ -19,7 +19,7 @@ var digestCache *cache.MapCache[uint64, string]
 var quto = regexp.MustCompile(`&quot; *|&amp; *|&lt; *|&gt; ?|&nbsp; *`)
 
 func InitDigestCache() {
-	digestCache = cache.NewMapCacheByFn[uint64](digestRaw, vars.Conf.DigestCacheTime)
+	digestCache = cache.NewMapCacheByFn[uint64](digestRaw, config.Conf.DigestCacheTime)
 }
 
 func ClearDigestCache() {
@@ -29,7 +29,7 @@ func ClearDigestCache() {
 func digestRaw(arg ...any) (string, error) {
 	str := arg[0].(string)
 	id := arg[1].(uint64)
-	limit := vars.Conf.DigestWordCount
+	limit := config.Conf.DigestWordCount
 	if limit < 0 {
 		return str, nil
 	} else if limit == 0 {

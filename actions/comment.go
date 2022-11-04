@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github/fthvgb1/wp-go/actions/common"
+	"github/fthvgb1/wp-go/config"
 	"github/fthvgb1/wp-go/logs"
 	"github/fthvgb1/wp-go/mail"
 	"github/fthvgb1/wp-go/models"
-	"github/fthvgb1/wp-go/vars"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
@@ -39,7 +39,7 @@ func PostComment(c *gin.Context) {
 	m := c.PostForm("email")
 	comment := c.PostForm("comment")
 	c.Request.Body = io.NopCloser(bytes.NewBuffer(data))
-	req, err := http.NewRequest("POST", vars.Conf.PostCommentUrl, strings.NewReader(c.Request.PostForm.Encode()))
+	req, err := http.NewRequest("POST", config.Conf.PostCommentUrl, strings.NewReader(c.Request.PostForm.Encode()))
 	if err != nil {
 		return
 	}
@@ -69,7 +69,7 @@ func PostComment(c *gin.Context) {
 				return
 			}
 			su := fmt.Sprintf("%s: %s[%s]发表了评论对文档[%v]的评论", models.Options["siteurl"], author, m, post.PostTitle)
-			err = mail.SendMail([]string{vars.Conf.Mail.User}, su, comment)
+			err = mail.SendMail([]string{config.Conf.Mail.User}, su, comment)
 			logs.ErrPrintln(err, "发送邮件")
 		}()
 		return

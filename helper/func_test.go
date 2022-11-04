@@ -608,7 +608,7 @@ func TestRandNum(t *testing.T) {
 	}
 }
 
-func TestSampleSort(t *testing.T) {
+func TestSimpleSort(t *testing.T) {
 	type xy struct {
 		x int
 		y int
@@ -654,8 +654,8 @@ func TestSampleSort(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if SampleSort(tt.args.arr, tt.args.fn); !reflect.DeepEqual(tt.args.arr, tt.wantR) {
-				t.Errorf("SampleSort() = %v, want %v", tt.args.arr, tt.wantR)
+			if SimpleSort(tt.args.arr, tt.args.fn); !reflect.DeepEqual(tt.args.arr, tt.wantR) {
+				t.Errorf("SimpleSort() = %v, want %v", tt.args.arr, tt.wantR)
 			}
 		})
 	}

@@ -3,18 +3,18 @@ package main
 import (
 	"github/fthvgb1/wp-go/actions"
 	"github/fthvgb1/wp-go/actions/common"
+	"github/fthvgb1/wp-go/config"
 	"github/fthvgb1/wp-go/db"
 	"github/fthvgb1/wp-go/models"
 	"github/fthvgb1/wp-go/plugins"
 	"github/fthvgb1/wp-go/route"
-	"github/fthvgb1/wp-go/vars"
 	"math/rand"
 	"time"
 )
 
 func init() {
 	rand.Seed(time.Now().UnixNano())
-	err := vars.InitConfig()
+	err := config.InitConfig()
 	if err != nil {
 		panic(err)
 	}
@@ -40,7 +40,7 @@ func init() {
 }
 
 func cronClearCache() {
-	t := time.NewTicker(vars.Conf.CrontabClearCacheTime)
+	t := time.NewTicker(config.Conf.CrontabClearCacheTime)
 	for {
 		select {
 		case <-t.C:

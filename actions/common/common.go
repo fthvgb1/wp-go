@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 	"github/fthvgb1/wp-go/cache"
+	"github/fthvgb1/wp-go/config"
 	"github/fthvgb1/wp-go/logs"
 	"github/fthvgb1/wp-go/models"
-	"github/fthvgb1/wp-go/vars"
 	"sync"
 	"time"
 )
@@ -32,29 +32,29 @@ func InitActionsCommonCache() {
 		setCacheFunc: archives,
 	}
 
-	searchPostIdsCache = cache.NewMapCacheByFn[string, PostIds](searchPostIds, vars.Conf.SearchPostCacheTime)
+	searchPostIdsCache = cache.NewMapCacheByFn[string, PostIds](searchPostIds, config.Conf.SearchPostCacheTime)
 
-	postListIdsCache = cache.NewMapCacheByFn[string, PostIds](searchPostIds, vars.Conf.PostListCacheTime)
+	postListIdsCache = cache.NewMapCacheByFn[string, PostIds](searchPostIds, config.Conf.PostListCacheTime)
 
-	monthPostsCache = cache.NewMapCacheByFn[string, []uint64](monthPost, vars.Conf.MonthPostCacheTime)
+	monthPostsCache = cache.NewMapCacheByFn[string, []uint64](monthPost, config.Conf.MonthPostCacheTime)
 
-	postContextCache = cache.NewMapCacheByFn[uint64, PostContext](getPostContext, vars.Conf.ContextPostCacheTime)
+	postContextCache = cache.NewMapCacheByFn[uint64, PostContext](getPostContext, config.Conf.ContextPostCacheTime)
 
-	postsCache = cache.NewMapCacheByBatchFn[uint64, models.WpPosts](getPostsByIds, vars.Conf.PostDataCacheTime)
+	postsCache = cache.NewMapCacheByBatchFn[uint64, models.WpPosts](getPostsByIds, config.Conf.PostDataCacheTime)
 
-	categoryCaches = cache.NewSliceCache[models.WpTermsMy](categories, vars.Conf.CategoryCacheTime)
+	categoryCaches = cache.NewSliceCache[models.WpTermsMy](categories, config.Conf.CategoryCacheTime)
 
-	recentPostsCaches = cache.NewSliceCache[models.WpPosts](recentPosts, vars.Conf.RecentPostCacheTime)
+	recentPostsCaches = cache.NewSliceCache[models.WpPosts](recentPosts, config.Conf.RecentPostCacheTime)
 
-	recentCommentsCaches = cache.NewSliceCache[models.WpComments](recentComments, vars.Conf.RecentCommentsCacheTime)
+	recentCommentsCaches = cache.NewSliceCache[models.WpComments](recentComments, config.Conf.RecentCommentsCacheTime)
 
-	postCommentCaches = cache.NewMapCacheByFn[uint64, []uint64](postComments, vars.Conf.PostCommentsCacheTime)
+	postCommentCaches = cache.NewMapCacheByFn[uint64, []uint64](postComments, config.Conf.PostCommentsCacheTime)
 
-	maxPostIdCache = cache.NewSliceCache[uint64](getMaxPostId, vars.Conf.MaxPostIdCacheTime)
+	maxPostIdCache = cache.NewSliceCache[uint64](getMaxPostId, config.Conf.MaxPostIdCacheTime)
 
-	usersCache = cache.NewMapCacheByBatchFn[uint64, models.WpUsers](getUsers, vars.Conf.UserInfoCacheTime)
+	usersCache = cache.NewMapCacheByBatchFn[uint64, models.WpUsers](getUsers, config.Conf.UserInfoCacheTime)
 
-	commentsCache = cache.NewMapCacheByBatchFn[uint64, models.WpComments](getCommentByIds, vars.Conf.CommentsCacheTime)
+	commentsCache = cache.NewMapCacheByBatchFn[uint64, models.WpComments](getCommentByIds, config.Conf.CommentsCacheTime)
 }
 
 func ClearCache() {

@@ -280,7 +280,7 @@ func (r anyArr[T]) Less(i, j int) bool {
 	return r.fn(r.data[i], r.data[j])
 }
 
-func SampleSort[T any](arr []T, fn func(i, j T) bool) {
+func SimpleSort[T any](arr []T, fn func(i, j T) bool) {
 	slice := anyArr[T]{
 		data: arr,
 		fn:   fn,

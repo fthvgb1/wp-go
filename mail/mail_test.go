@@ -1,12 +1,12 @@
 package mail
 
 import (
-	"github/fthvgb1/wp-go/vars"
+	"github/fthvgb1/wp-go/config"
 	"testing"
 )
 
 func TestSendMail(t *testing.T) {
-	vars.InitConfig()
+	config.InitConfig()
 	type args struct {
 		mailTo  []string
 		subject string
