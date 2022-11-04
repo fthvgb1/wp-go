@@ -2,10 +2,12 @@ package templates
 
 import (
 	"embed"
+	"fmt"
 	"github.com/gin-gonic/gin/render"
 	"html/template"
 	"io/fs"
 	"path/filepath"
+	"strings"
 )
 
 //go:embed twentyfifteen
@@ -21,13 +23,15 @@ func NewFsTemplate(funcMap template.FuncMap) *FsTemplate {
 }
 
 func (t *FsTemplate) SetTemplate() *FsTemplate {
-	mainTemplates, err := fs.Glob(TemplateFs, `twentyfifteen/*[^layout]/*.gohtml`)
+	mainTemplates, err := fs.Glob(TemplateFs, `*/*[^layout]/*.gohtml`)
 	if err != nil {
 		panic(err)
 	}
 	for _, include := range mainTemplates {
 		name := filepath.Base(include)
-		t.Templates[include] = template.Must(template.New(name).Funcs(t.FuncMap).ParseFS(TemplateFs, include, "twentyfifteen/layout/*.gohtml"))
+		c := strings.Split(include, "/")
+		base := c[0]
+		t.Templates[include] = template.Must(template.New(name).Funcs(t.FuncMap).ParseFS(TemplateFs, include, fmt.Sprintf("%s/layout/*.gohtml", base)))
 	}
 	return t
 }
