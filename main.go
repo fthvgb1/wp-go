@@ -5,7 +5,7 @@ import (
 	"github/fthvgb1/wp-go/actions/common"
 	"github/fthvgb1/wp-go/config"
 	"github/fthvgb1/wp-go/db"
-	"github/fthvgb1/wp-go/models"
+	"github/fthvgb1/wp-go/models/wp"
 	"github/fthvgb1/wp-go/plugins"
 	"github/fthvgb1/wp-go/route"
 	"math/rand"
@@ -24,12 +24,12 @@ func init() {
 		panic(err)
 	}
 
-	err = models.InitOptions()
+	err = wp.InitOptions()
 	if err != nil {
 		panic(err)
 	}
 
-	err = models.InitTerms()
+	err = wp.InitTerms()
 	if err != nil {
 		panic(err)
 	}

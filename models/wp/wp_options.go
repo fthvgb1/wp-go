@@ -1,4 +1,4 @@
-package models
+package wp
 
 type WpOptions struct {
 	OptionId    uint64 `gorm:"column:option_id" db:"option_id" json:"option_id" form:"option_id"`

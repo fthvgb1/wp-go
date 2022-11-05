@@ -9,7 +9,7 @@ import (
 	"github/fthvgb1/wp-go/config"
 	"github/fthvgb1/wp-go/logs"
 	"github/fthvgb1/wp-go/mail"
-	"github/fthvgb1/wp-go/models"
+	"github/fthvgb1/wp-go/models/wp"
 	"io"
 	"net/http"
 	"net/http/cookiejar"
@@ -68,7 +68,7 @@ func PostComment(c *gin.Context) {
 				logs.ErrPrintln(err, "获取文档", id)
 				return
 			}
-			su := fmt.Sprintf("%s: %s[%s]发表了评论对文档[%v]的评论", models.Options["siteurl"], author, m, post.PostTitle)
+			su := fmt.Sprintf("%s: %s[%s]发表了评论对文档[%v]的评论", wp.Options["siteurl"], author, m, post.PostTitle)
 			err = mail.SendMail([]string{config.Conf.Mail.User}, su, comment)
 			logs.ErrPrintln(err, "发送邮件")
 		}()

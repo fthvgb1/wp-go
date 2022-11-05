@@ -1,4 +1,4 @@
-package models
+package wp
 
 type WpTerms struct {
 	TermId    uint64 `gorm:"column:term_id" db:"term_id" json:"term_id" form:"term_id"`

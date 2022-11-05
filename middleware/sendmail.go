@@ -7,7 +7,7 @@ import (
 	"github/fthvgb1/wp-go/config"
 	"github/fthvgb1/wp-go/logs"
 	"github/fthvgb1/wp-go/mail"
-	"github/fthvgb1/wp-go/models"
+	"github/fthvgb1/wp-go/models/wp"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -43,7 +43,7 @@ func RecoverAndSendMail(w io.Writer) func(ctx *gin.Context) {
 
 			er := mail.SendMail(
 				[]string{config.Conf.Mail.User},
-				fmt.Sprintf("%s%s %s 发生错误", fmt.Sprintf(models.Options["siteurl"]), c.FullPath(), time.Now().Format(time.RFC1123Z)), content)
+				fmt.Sprintf("%s%s %s 发生错误", fmt.Sprintf(wp.Options["siteurl"]), c.FullPath(), time.Now().Format(time.RFC1123Z)), content)
 
 			if er != nil {
 				logs.ErrPrintln(er, "recover send mail fail", fmt.Sprintf("%v", err))

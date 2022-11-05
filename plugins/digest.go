@@ -6,7 +6,7 @@ import (
 	"github/fthvgb1/wp-go/cache"
 	"github/fthvgb1/wp-go/config"
 	"github/fthvgb1/wp-go/helper"
-	"github/fthvgb1/wp-go/models"
+	"github/fthvgb1/wp-go/models/wp"
 	"regexp"
 	"strings"
 	"time"
@@ -116,7 +116,7 @@ func DigestRaw(str string, limit int, u string) string {
 	return content
 }
 
-func Digest(p *Plugin[models.WpPosts], c *gin.Context, post *models.WpPosts, scene uint) {
+func Digest(p *Plugin[wp.WpPosts], c *gin.Context, post *wp.WpPosts, scene uint) {
 	if scene == Detail {
 		return
 	}

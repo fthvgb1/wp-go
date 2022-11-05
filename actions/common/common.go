@@ -7,24 +7,25 @@ import (
 	"github/fthvgb1/wp-go/config"
 	"github/fthvgb1/wp-go/logs"
 	"github/fthvgb1/wp-go/models"
+	"github/fthvgb1/wp-go/models/wp"
 	"sync"
 	"time"
 )
 
 var postContextCache *cache.MapCache[uint64, PostContext]
 var archivesCaches *Arch
-var categoryCaches *cache.SliceCache[models.WpTermsMy]
-var recentPostsCaches *cache.SliceCache[models.WpPosts]
-var recentCommentsCaches *cache.SliceCache[models.WpComments]
+var categoryCaches *cache.SliceCache[wp.WpTermsMy]
+var recentPostsCaches *cache.SliceCache[wp.WpPosts]
+var recentCommentsCaches *cache.SliceCache[wp.WpComments]
 var postCommentCaches *cache.MapCache[uint64, []uint64]
-var postsCache *cache.MapCache[uint64, models.WpPosts]
+var postsCache *cache.MapCache[uint64, wp.WpPosts]
 var monthPostsCache *cache.MapCache[string, []uint64]
 var postListIdsCache *cache.MapCache[string, PostIds]
 var searchPostIdsCache *cache.MapCache[string, PostIds]
 var maxPostIdCache *cache.SliceCache[uint64]
 var TotalRaw int
-var usersCache *cache.MapCache[uint64, models.WpUsers]
-var commentsCache *cache.MapCache[uint64, models.WpComments]
+var usersCache *cache.MapCache[uint64, wp.WpUsers]
+var commentsCache *cache.MapCache[uint64, wp.WpComments]
 
 func InitActionsCommonCache() {
 	archivesCaches = &Arch{
@@ -40,21 +41,21 @@ func InitActionsCommonCache() {
 
 	postContextCache = cache.NewMapCacheByFn[uint64, PostContext](getPostContext, config.Conf.ContextPostCacheTime)
 
-	postsCache = cache.NewMapCacheByBatchFn[uint64, models.WpPosts](getPostsByIds, config.Conf.PostDataCacheTime)
+	postsCache = cache.NewMapCacheByBatchFn[uint64, wp.WpPosts](getPostsByIds, config.Conf.PostDataCacheTime)
 
-	categoryCaches = cache.NewSliceCache[models.WpTermsMy](categories, config.Conf.CategoryCacheTime)
+	categoryCaches = cache.NewSliceCache[wp.WpTermsMy](categories, config.Conf.CategoryCacheTime)
 
-	recentPostsCaches = cache.NewSliceCache[models.WpPosts](recentPosts, config.Conf.RecentPostCacheTime)
+	recentPostsCaches = cache.NewSliceCache[wp.WpPosts](recentPosts, config.Conf.RecentPostCacheTime)
 
-	recentCommentsCaches = cache.NewSliceCache[models.WpComments](recentComments, config.Conf.RecentCommentsCacheTime)
+	recentCommentsCaches = cache.NewSliceCache[wp.WpComments](recentComments, config.Conf.RecentCommentsCacheTime)
 
 	postCommentCaches = cache.NewMapCacheByFn[uint64, []uint64](postComments, config.Conf.PostCommentsCacheTime)
 
 	maxPostIdCache = cache.NewSliceCache[uint64](getMaxPostId, config.Conf.MaxPostIdCacheTime)
 
-	usersCache = cache.NewMapCacheByBatchFn[uint64, models.WpUsers](getUsers, config.Conf.UserInfoCacheTime)
+	usersCache = cache.NewMapCacheByBatchFn[uint64, wp.WpUsers](getUsers, config.Conf.UserInfoCacheTime)
 
-	commentsCache = cache.NewMapCacheByBatchFn[uint64, models.WpComments](getCommentByIds, config.Conf.CommentsCacheTime)
+	commentsCache = cache.NewMapCacheByBatchFn[uint64, wp.WpComments](getCommentByIds, config.Conf.CommentsCacheTime)
 }
 
 func ClearCache() {
@@ -74,13 +75,13 @@ type PostIds struct {
 }
 
 type Arch struct {
-	data         []models.PostArchive
+	data         []wp.PostArchive
 	mutex        *sync.Mutex
-	setCacheFunc func() ([]models.PostArchive, error)
+	setCacheFunc func() ([]wp.PostArchive, error)
 	month        time.Month
 }
 
-func (c *Arch) getArchiveCache() []models.PostArchive {
+func (c *Arch) getArchiveCache() []wp.PostArchive {
 	l := len(c.data)
 	m := time.Now().Month()
 	if l > 0 && c.month != m || l < 1 {
@@ -98,29 +99,29 @@ func (c *Arch) getArchiveCache() []models.PostArchive {
 }
 
 type PostContext struct {
-	prev models.WpPosts
-	next models.WpPosts
+	prev wp.WpPosts
+	next wp.WpPosts
 }
 
-func archives() ([]models.PostArchive, error) {
-	return models.Find[models.PostArchive](models.SqlBuilder{
+func archives() ([]wp.PostArchive, error) {
+	return models.Find[wp.PostArchive](models.SqlBuilder{
 		{"post_type", "post"}, {"post_status", "publish"},
 	}, "YEAR(post_date) AS `year`, MONTH(post_date) AS `month`, count(ID) as posts", "year,month", models.SqlBuilder{{"year", "desc"}, {"month", "desc"}}, nil, nil, 0)
 }
 
-func Archives() (r []models.PostArchive) {
+func Archives() (r []wp.PostArchive) {
 	return archivesCaches.getArchiveCache()
 }
 
-func Categories(ctx context.Context) []models.WpTermsMy {
+func Categories(ctx context.Context) []wp.WpTermsMy {
 	r, err := categoryCaches.GetCache(ctx, time.Second)
 	logs.ErrPrintln(err, "get category ")
 	return r
 }
 
-func categories(...any) (terms []models.WpTermsMy, err error) {
+func categories(...any) (terms []wp.WpTermsMy, err error) {
 	var in = []any{"category"}
-	terms, err = models.Find[models.WpTermsMy](models.SqlBuilder{
+	terms, err = models.Find[wp.WpTermsMy](models.SqlBuilder{
 		{"tt.count", ">", "0", "int"},
 		{"tt.taxonomy", "in", ""},
 	}, "t.term_id", "", models.SqlBuilder{
@@ -129,23 +130,23 @@ func categories(...any) (terms []models.WpTermsMy, err error) {
 		{"t", "inner join", "wp_term_taxonomy tt", "t.term_id = tt.term_id"},
 	}, nil, 0, in)
 	for i := 0; i < len(terms); i++ {
-		if v, ok := models.Terms[terms[i].WpTerms.TermId]; ok {
+		if v, ok := wp.Terms[terms[i].WpTerms.TermId]; ok {
 			terms[i].WpTerms = v
 		}
-		if v, ok := models.TermTaxonomy[terms[i].WpTerms.TermId]; ok {
+		if v, ok := wp.TermTaxonomy[terms[i].WpTerms.TermId]; ok {
 			terms[i].WpTermTaxonomy = v
 		}
 	}
 	return
 }
 
-func PasswordProjectTitle(post *models.WpPosts) {
+func PasswordProjectTitle(post *wp.WpPosts) {
 	if post.PostPassword != "" {
 		post.PostTitle = fmt.Sprintf("密码保护：%s", post.PostTitle)
 	}
 }
 
-func PasswdProjectContent(post *models.WpPosts) {
+func PasswdProjectContent(post *wp.WpPosts) {
 	if post.PostContent != "" {
 		format := `
 <form action="/login" class="post-password-form" method="post">
