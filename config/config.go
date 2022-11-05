@@ -3,7 +3,7 @@ package config
 import (
 	"fmt"
 	"gopkg.in/yaml.v2"
-	"io/ioutil"
+	"os"
 	"time"
 )
 
@@ -36,6 +36,7 @@ type Config struct {
 	PostCommentUrl          string          `yaml:"postCommentUrl"`
 	TrustIps                []string        `yaml:"trustIps"`
 	TrustServerNames        []string        `yaml:"trustServerNames"`
+	Port                    string          `yaml:"port"`
 }
 
 type Mail struct {
@@ -52,8 +53,11 @@ type Mysql struct {
 	Pool Pool `yaml:"pool"`
 }
 
-func InitConfig() error {
-	file, err := ioutil.ReadFile("config.yaml")
+func InitConfig(conf string) error {
+	if conf == "" {
+		conf = "config.yaml"
+	}
+	file, err := os.ReadFile(conf)
 	if err != nil {
 		return err
 	}

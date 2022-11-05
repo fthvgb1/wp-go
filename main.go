@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"github/fthvgb1/wp-go/actions"
 	"github/fthvgb1/wp-go/actions/common"
 	"github/fthvgb1/wp-go/config"
@@ -13,8 +14,11 @@ import (
 )
 
 func init() {
+	var c string
+	flag.StringVar(&c, "c", "config.yaml", "config file")
+	flag.Parse()
 	rand.Seed(time.Now().UnixNano())
-	err := config.InitConfig()
+	err := config.InitConfig(c)
 	if err != nil {
 		panic(err)
 	}
@@ -52,7 +56,10 @@ func cronClearCache() {
 }
 
 func main() {
-	err := route.SetupRouter().Run(":8082")
+	if config.Conf.Port == "" {
+		config.Conf.Port = "80"
+	}
+	err := route.SetupRouter().Run(config.Conf.Port)
 	if err != nil {
 		panic(err)
 	}

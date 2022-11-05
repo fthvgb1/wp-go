@@ -69,3 +69,5 @@ postCommentUrl: http://wp.test/wp-comments-post.php
 trustIps: []
 # trust servername 信任的域名
 trustServerNames: ["xy.test","blog.xy.test"]
+# port
+port: 8082

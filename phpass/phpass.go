@@ -13,7 +13,7 @@ import (
 	"unicode/utf8"
 )
 
-// PasswordHash 目前还不完善，只有encode64 getRandomBytes CryptPrivate 方法能用
+// PasswordHash 目前还不完善，只有 Encode64 getRandomBytes CryptPrivate 方法能用
 type PasswordHash struct {
 	itoa64             string
 	iterationCountLog2 int

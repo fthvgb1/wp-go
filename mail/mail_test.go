@@ -6,7 +6,7 @@ import (
 )
 
 func TestSendMail(t *testing.T) {
-	config.InitConfig()
+	config.InitConfig("config.yaml")
 	type args struct {
 		mailTo  []string
 		subject string
