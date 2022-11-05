@@ -9,8 +9,14 @@ import (
 )
 
 func init() {
-	config.InitConfig("../config.yaml")
-	db.InitDb()
+	err := config.InitConfig("../config.yaml")
+	if err != nil {
+		panic(err)
+	}
+	err = db.InitDb()
+	if err != nil {
+		panic(err)
+	}
 }
 func TestFind(t *testing.T) {
 	type args struct {
