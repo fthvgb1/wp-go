@@ -2,7 +2,7 @@ package wp
 
 import "time"
 
-type WpPosts struct {
+type Posts struct {
 	Id                  uint64    `gorm:"column:ID" db:"ID" json:"ID" form:"ID"`
 	PostAuthor          uint64    `gorm:"column:post_author" db:"post_author" json:"post_author" form:"post_author"`
 	PostDate            time.Time `gorm:"column:post_date" db:"post_date" json:"post_date" form:"post_date"`
@@ -36,11 +36,11 @@ type WpPosts struct {
 	TagsHtml       string
 }
 
-func (w WpPosts) PrimaryKey() string {
+func (w Posts) PrimaryKey() string {
 	return "ID"
 }
 
-func (w WpPosts) Table() string {
+func (w Posts) Table() string {
 	return "wp_posts"
 }
 

@@ -33,7 +33,7 @@ func Login(c *gin.Context) {
 		c.Error(err)
 		return
 	}
-	cohash := fmt.Sprintf("wp-postpass_%s", helper.StringMd5(wp.Options["siteurl"]))
+	cohash := fmt.Sprintf("wp-postpass_%s", helper.StringMd5(wp.Option["siteurl"]))
 	c.SetCookie(cohash, pass, 24*3600, "/", "", false, false)
 
 	c.Redirect(http.StatusFound, ref)

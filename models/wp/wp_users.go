@@ -2,7 +2,7 @@ package wp
 
 import "time"
 
-type WpUsers struct {
+type Users struct {
 	Id                uint64    `gorm:"column:ID" db:"ID" json:"ID"`
 	UserLogin         string    `gorm:"column:user_login" db:"user_login" json:"user_login"`
 	UserPass          string    `gorm:"column:user_pass" db:"user_pass" json:"user_pass"`
@@ -15,10 +15,10 @@ type WpUsers struct {
 	DisplayName       string    `gorm:"column:display_name" db:"display_name" json:"display_name"`
 }
 
-func (u WpUsers) Table() string {
+func (u Users) Table() string {
 	return "wp_users"
 }
 
-func (u WpUsers) PrimaryKey() string {
+func (u Users) PrimaryKey() string {
 	return "ID"
 }

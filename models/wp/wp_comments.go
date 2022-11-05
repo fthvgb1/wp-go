@@ -2,7 +2,7 @@ package wp
 
 import "time"
 
-type WpComments struct {
+type Comments struct {
 	CommentId          uint64    `gorm:"column:comment_ID" db:"comment_ID" json:"comment_ID" form:"comment_ID"`
 	CommentPostId      uint64    `gorm:"column:comment_post_ID" db:"comment_post_ID" json:"comment_post_ID" form:"comment_post_ID"`
 	CommentAuthor      string    `gorm:"column:comment_author" db:"comment_author" json:"comment_author" form:"comment_author"`
@@ -22,10 +22,10 @@ type WpComments struct {
 	PostTitle string `db:"post_title"`
 }
 
-func (w WpComments) PrimaryKey() string {
+func (w Comments) PrimaryKey() string {
 	return "comment_ID"
 }
 
-func (w WpComments) Table() string {
+func (w Comments) Table() string {
 	return "wp_comments"
 }

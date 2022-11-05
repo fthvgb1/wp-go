@@ -15,17 +15,17 @@ import (
 var postContextCache *cache.MapCache[uint64, PostContext]
 var archivesCaches *Arch
 var categoryCaches *cache.SliceCache[wp.WpTermsMy]
-var recentPostsCaches *cache.SliceCache[wp.WpPosts]
-var recentCommentsCaches *cache.SliceCache[wp.WpComments]
+var recentPostsCaches *cache.SliceCache[wp.Posts]
+var recentCommentsCaches *cache.SliceCache[wp.Comments]
 var postCommentCaches *cache.MapCache[uint64, []uint64]
-var postsCache *cache.MapCache[uint64, wp.WpPosts]
+var postsCache *cache.MapCache[uint64, wp.Posts]
 var monthPostsCache *cache.MapCache[string, []uint64]
 var postListIdsCache *cache.MapCache[string, PostIds]
 var searchPostIdsCache *cache.MapCache[string, PostIds]
 var maxPostIdCache *cache.SliceCache[uint64]
 var TotalRaw int
-var usersCache *cache.MapCache[uint64, wp.WpUsers]
-var commentsCache *cache.MapCache[uint64, wp.WpComments]
+var usersCache *cache.MapCache[uint64, wp.Users]
+var commentsCache *cache.MapCache[uint64, wp.Comments]
 
 func InitActionsCommonCache() {
 	archivesCaches = &Arch{
@@ -41,21 +41,21 @@ func InitActionsCommonCache() {
 
 	postContextCache = cache.NewMapCacheByFn[uint64, PostContext](getPostContext, config.Conf.ContextPostCacheTime)
 
-	postsCache = cache.NewMapCacheByBatchFn[uint64, wp.WpPosts](getPostsByIds, config.Conf.PostDataCacheTime)
+	postsCache = cache.NewMapCacheByBatchFn[uint64, wp.Posts](getPostsByIds, config.Conf.PostDataCacheTime)
 
 	categoryCaches = cache.NewSliceCache[wp.WpTermsMy](categories, config.Conf.CategoryCacheTime)
 
-	recentPostsCaches = cache.NewSliceCache[wp.WpPosts](recentPosts, config.Conf.RecentPostCacheTime)
+	recentPostsCaches = cache.NewSliceCache[wp.Posts](recentPosts, config.Conf.RecentPostCacheTime)
 
-	recentCommentsCaches = cache.NewSliceCache[wp.WpComments](recentComments, config.Conf.RecentCommentsCacheTime)
+	recentCommentsCaches = cache.NewSliceCache[wp.Comments](recentComments, config.Conf.RecentCommentsCacheTime)
 
 	postCommentCaches = cache.NewMapCacheByFn[uint64, []uint64](postComments, config.Conf.PostCommentsCacheTime)
 
 	maxPostIdCache = cache.NewSliceCache[uint64](getMaxPostId, config.Conf.MaxPostIdCacheTime)
 
-	usersCache = cache.NewMapCacheByBatchFn[uint64, wp.WpUsers](getUsers, config.Conf.UserInfoCacheTime)
+	usersCache = cache.NewMapCacheByBatchFn[uint64, wp.Users](getUsers, config.Conf.UserInfoCacheTime)
 
-	commentsCache = cache.NewMapCacheByBatchFn[uint64, wp.WpComments](getCommentByIds, config.Conf.CommentsCacheTime)
+	commentsCache = cache.NewMapCacheByBatchFn[uint64, wp.Comments](getCommentByIds, config.Conf.CommentsCacheTime)
 }
 
 func ClearCache() {
@@ -99,8 +99,8 @@ func (c *Arch) getArchiveCache() []wp.PostArchive {
 }
 
 type PostContext struct {
-	prev wp.WpPosts
-	next wp.WpPosts
+	prev wp.Posts
+	next wp.Posts
 }
 
 func archives() ([]wp.PostArchive, error) {
@@ -133,20 +133,20 @@ func categories(...any) (terms []wp.WpTermsMy, err error) {
 		if v, ok := wp.Terms[terms[i].WpTerms.TermId]; ok {
 			terms[i].WpTerms = v
 		}
-		if v, ok := wp.TermTaxonomy[terms[i].WpTerms.TermId]; ok {
-			terms[i].WpTermTaxonomy = v
+		if v, ok := wp.TermTaxonomies[terms[i].WpTerms.TermId]; ok {
+			terms[i].TermTaxonomy = v
 		}
 	}
 	return
 }
 
-func PasswordProjectTitle(post *wp.WpPosts) {
+func PasswordProjectTitle(post *wp.Posts) {
 	if post.PostPassword != "" {
 		post.PostTitle = fmt.Sprintf("密码保护：%s", post.PostTitle)
 	}
 }
 
-func PasswdProjectContent(post *wp.WpPosts) {
+func PasswdProjectContent(post *wp.Posts) {
 	if post.PostContent != "" {
 		format := `
 <form action="/login" class="post-password-form" method="post">

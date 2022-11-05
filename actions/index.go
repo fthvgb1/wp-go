@@ -40,7 +40,7 @@ type indexHandle struct {
 }
 
 func newIndexHandle(ctx *gin.Context) *indexHandle {
-	size := wp.Options["posts_per_page"]
+	size := wp.Option["posts_per_page"]
 	si, _ := strconv.Atoi(size)
 	return &indexHandle{
 		c:              ctx,
@@ -48,8 +48,8 @@ func newIndexHandle(ctx *gin.Context) *indexHandle {
 		page:           1,
 		pageSize:       si,
 		paginationStep: 1,
-		titleL:         wp.Options["blogname"],
-		titleR:         wp.Options["blogdescription"],
+		titleL:         wp.Option["blogname"],
+		titleR:         wp.Option["blogdescription"],
 		where: models.SqlBuilder{
 			{"post_type", "in", ""},
 			{"post_status", "in", ""},
@@ -93,7 +93,7 @@ func (h *indexHandle) parseParams() {
 		})
 		ss := fmt.Sprintf("%s年%s月", year, strings.TrimLeft(month, "0"))
 		h.header = fmt.Sprintf("月度归档： <span>%s</span>", ss)
-		h.setTitleLR(ss, wp.Options["blogname"])
+		h.setTitleLR(ss, wp.Option["blogname"])
 		h.scene = plugins.Archive
 	}
 	category := h.c.Param("category")
@@ -120,7 +120,7 @@ func (h *indexHandle) parseParams() {
 		}, []string{
 			"left join", "wp_terms d", "c.term_id=d.term_id",
 		})
-		h.setTitleLR(category, wp.Options["blogname"])
+		h.setTitleLR(category, wp.Option["blogname"])
 		h.scene = plugins.Category
 	}
 	s := h.c.Query("s")
@@ -133,7 +133,7 @@ func (h *indexHandle) parseParams() {
 		}, []string{"post_password", ""})
 		h.postType = append(h.postType, "page", "attachment")
 		h.header = fmt.Sprintf("%s的搜索结果", s)
-		h.setTitleLR(helper.StrJoin(`"`, s, `"`, "的搜索结果"), wp.Options["blogname"])
+		h.setTitleLR(helper.StrJoin(`"`, s, `"`, "的搜索结果"), wp.Option["blogname"])
 		h.search = s
 		h.scene = plugins.Search
 	}
@@ -150,7 +150,7 @@ func (h *indexHandle) parseParams() {
 		h.page = 1
 	}
 	if h.page > 1 && (h.category != "" || h.search != "" || month != "") {
-		h.setTitleLR(fmt.Sprintf("%s-第%d页", h.titleL, h.page), wp.Options["blogname"])
+		h.setTitleLR(fmt.Sprintf("%s-第%d页", h.titleL, h.page), wp.Option["blogname"])
 	}
 }
 
@@ -167,7 +167,7 @@ func Index(c *gin.Context) {
 	categoryItems := common.Categories(c)
 	recentComments := common.RecentComments(c, 5)
 	ginH := gin.H{
-		"options":        wp.Options,
+		"options":        wp.Option,
 		"recentPosts":    recent,
 		"archives":       archive,
 		"categories":     categoryItems,
@@ -176,7 +176,7 @@ func Index(c *gin.Context) {
 		"title":          h.getTitle(),
 		"recentComments": recentComments,
 	}
-	var postIds []wp.WpPosts
+	var postIds []wp.Posts
 	var totalRaw int
 	var err error
 	if c.Param("month") != "" {

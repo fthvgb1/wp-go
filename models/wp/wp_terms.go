@@ -16,7 +16,7 @@ func (t WpTerms) Table() string {
 
 type WpTermsMy struct {
 	WpTerms
-	WpTermTaxonomy
+	TermTaxonomy
 }
 
 func (t WpTermsMy) PrimaryKey() string {

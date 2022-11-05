@@ -68,7 +68,7 @@ func PostComment(c *gin.Context) {
 				logs.ErrPrintln(err, "获取文档", id)
 				return
 			}
-			su := fmt.Sprintf("%s: %s[%s]发表了评论对文档[%v]的评论", wp.Options["siteurl"], author, m, post.PostTitle)
+			su := fmt.Sprintf("%s: %s[%s]发表了评论对文档[%v]的评论", wp.Option["siteurl"], author, m, post.PostTitle)
 			err = mail.SendMail([]string{config.Conf.Mail.User}, su, comment)
 			logs.ErrPrintln(err, "发送邮件")
 		}()

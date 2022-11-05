@@ -116,7 +116,7 @@ func DigestRaw(str string, limit int, u string) string {
 	return content
 }
 
-func Digest(p *Plugin[wp.WpPosts], c *gin.Context, post *wp.WpPosts, scene uint) {
+func Digest(p *Plugin[wp.Posts], c *gin.Context, post *wp.Posts, scene uint) {
 	if scene == Detail {
 		return
 	}

@@ -13,15 +13,15 @@ import (
 	"time"
 )
 
-func GetPostById(ctx context.Context, id uint64) (wp.WpPosts, error) {
+func GetPostById(ctx context.Context, id uint64) (wp.Posts, error) {
 	return postsCache.GetCache(ctx, id, time.Second, id)
 }
 
-func GetPostsByIds(ctx context.Context, ids []uint64) ([]wp.WpPosts, error) {
+func GetPostsByIds(ctx context.Context, ids []uint64) ([]wp.Posts, error) {
 	return postsCache.GetCacheBatch(ctx, ids, time.Second, ids)
 }
 
-func SearchPost(ctx context.Context, key string, args ...any) (r []wp.WpPosts, total int, err error) {
+func SearchPost(ctx context.Context, key string, args ...any) (r []wp.Posts, total int, err error) {
 	ids, err := searchPostIdsCache.GetCache(ctx, key, time.Second, args...)
 	if err != nil {
 		return
@@ -31,11 +31,11 @@ func SearchPost(ctx context.Context, key string, args ...any) (r []wp.WpPosts, t
 	return
 }
 
-func getPostsByIds(ids ...any) (m map[uint64]wp.WpPosts, err error) {
-	m = make(map[uint64]wp.WpPosts)
+func getPostsByIds(ids ...any) (m map[uint64]wp.Posts, err error) {
+	m = make(map[uint64]wp.Posts)
 	id := ids[0].([]uint64)
 	arg := helper.SliceMap(id, helper.ToAny[uint64])
-	rawPosts, err := models.Find[wp.WpPosts](models.SqlBuilder{{
+	rawPosts, err := models.Find[wp.Posts](models.SqlBuilder{{
 		"Id", "in", "",
 	}}, "a.*,ifnull(d.name,'') category_name,ifnull(taxonomy,'') `taxonomy`", "", nil, models.SqlBuilder{{
 		"a", "left join", "wp_term_relationships b", "a.Id=b.object_id",
@@ -47,7 +47,7 @@ func getPostsByIds(ids ...any) (m map[uint64]wp.WpPosts, err error) {
 	if err != nil {
 		return m, err
 	}
-	postsMap := make(map[uint64]wp.WpPosts)
+	postsMap := make(map[uint64]wp.Posts)
 	for i, post := range rawPosts {
 		v, ok := postsMap[post.Id]
 		if !ok {
@@ -80,7 +80,7 @@ func getPostsByIds(ids ...any) (m map[uint64]wp.WpPosts, err error) {
 	return
 }
 
-func PostLists(ctx context.Context, key string, args ...any) (r []wp.WpPosts, total int, err error) {
+func PostLists(ctx context.Context, key string, args ...any) (r []wp.Posts, total int, err error) {
 	ids, err := postListIdsCache.GetCache(ctx, key, time.Second, args...)
 	if err != nil {
 		return
@@ -98,7 +98,7 @@ func searchPostIds(args ...any) (ids PostIds, err error) {
 	join := args[4].(models.SqlBuilder)
 	postType := args[5].([]any)
 	postStatus := args[6].([]any)
-	res, total, err := models.SimplePagination[wp.WpPosts](where, "ID", "", page, limit, order, join, nil, postType, postStatus)
+	res, total, err := models.SimplePagination[wp.Posts](where, "ID", "", page, limit, order, join, nil, postType, postStatus)
 	for _, posts := range res {
 		ids.Ids = append(ids.Ids, posts.Id)
 	}
@@ -110,7 +110,7 @@ func searchPostIds(args ...any) (ids PostIds, err error) {
 }
 
 func getMaxPostId(...any) ([]uint64, error) {
-	r, err := models.SimpleFind[wp.WpPosts](models.SqlBuilder{{"post_type", "post"}, {"post_status", "publish"}}, "max(ID) ID")
+	r, err := models.SimpleFind[wp.Posts](models.SqlBuilder{{"post_type", "post"}, {"post_status", "publish"}}, "max(ID) ID")
 	var id uint64
 	if len(r) > 0 {
 		id = r[0].Id
@@ -123,7 +123,7 @@ func GetMaxPostId(ctx *gin.Context) (uint64, error) {
 	return Id[0], err
 }
 
-func RecentPosts(ctx context.Context, n int) (r []wp.WpPosts) {
+func RecentPosts(ctx context.Context, n int) (r []wp.Posts) {
 	r, err := recentPostsCaches.GetCache(ctx, time.Second)
 	if n < len(r) {
 		r = r[:n]
@@ -131,8 +131,8 @@ func RecentPosts(ctx context.Context, n int) (r []wp.WpPosts) {
 	logs.ErrPrintln(err, "get recent post")
 	return
 }
-func recentPosts(...any) (r []wp.WpPosts, err error) {
-	r, err = models.Find[wp.WpPosts](models.SqlBuilder{{
+func recentPosts(...any) (r []wp.Posts, err error) {
+	r, err = models.Find[wp.Posts](models.SqlBuilder{{
 		"post_type", "post",
 	}, {"post_status", "publish"}}, "ID,post_title,post_password", "", models.SqlBuilder{{"post_date", "desc"}}, nil, nil, 10)
 	for i, post := range r {
@@ -143,10 +143,10 @@ func recentPosts(...any) (r []wp.WpPosts, err error) {
 	return
 }
 
-func GetContextPost(ctx context.Context, id uint64, date time.Time) (prev, next wp.WpPosts, err error) {
+func GetContextPost(ctx context.Context, id uint64, date time.Time) (prev, next wp.Posts, err error) {
 	postCtx, err := postContextCache.GetCache(ctx, id, time.Second, date)
 	if err != nil {
-		return wp.WpPosts{}, wp.WpPosts{}, err
+		return wp.Posts{}, wp.Posts{}, err
 	}
 	prev = postCtx.prev
 	next = postCtx.next
@@ -155,7 +155,7 @@ func GetContextPost(ctx context.Context, id uint64, date time.Time) (prev, next 
 
 func getPostContext(arg ...any) (r PostContext, err error) {
 	t := arg[0].(time.Time)
-	next, err := models.FirstOne[wp.WpPosts](models.SqlBuilder{
+	next, err := models.FirstOne[wp.Posts](models.SqlBuilder{
 		{"post_date", ">", t.Format("2006-01-02 15:04:05")},
 		{"post_status", "in", ""},
 		{"post_type", "post"},
@@ -166,7 +166,7 @@ func getPostContext(arg ...any) (r PostContext, err error) {
 	if err != nil {
 		return
 	}
-	prev, err := models.FirstOne[wp.WpPosts](models.SqlBuilder{
+	prev, err := models.FirstOne[wp.Posts](models.SqlBuilder{
 		{"post_date", "<", t.Format("2006-01-02 15:04:05")},
 		{"post_status", "in", ""},
 		{"post_type", "post"},
@@ -184,7 +184,7 @@ func getPostContext(arg ...any) (r PostContext, err error) {
 	return
 }
 
-func GetMonthPostIds(ctx context.Context, year, month string, page, limit int, order string) (r []wp.WpPosts, total int, err error) {
+func GetMonthPostIds(ctx context.Context, year, month string, page, limit int, order string) (r []wp.Posts, total int, err error) {
 	res, err := monthPostsCache.GetCache(ctx, fmt.Sprintf("%s%s", year, month), time.Second, year, month)
 	if err != nil {
 		return
@@ -208,7 +208,7 @@ func monthPost(args ...any) (r []uint64, err error) {
 	}
 	postType := []any{"post"}
 	status := []any{"publish"}
-	ids, err := models.Find[wp.WpPosts](where, "ID", "", models.SqlBuilder{{"Id", "asc"}}, nil, nil, 0, postType, status)
+	ids, err := models.Find[wp.Posts](where, "ID", "", models.SqlBuilder{{"Id", "asc"}}, nil, nil, 0, postType, status)
 	if err != nil {
 		return
 	}

@@ -32,8 +32,8 @@ func Detail(c *gin.Context) {
 	categoryItems := common.Categories(c)
 	recentComments := common.RecentComments(c, 5)
 	var h = gin.H{
-		"title":          wp.Options["blogname"],
-		"options":        wp.Options,
+		"title":          wp.Option["blogname"],
+		"options":        wp.Option,
 		"recentPosts":    recent,
 		"archives":       archive,
 		"categories":     categoryItems,
@@ -81,11 +81,11 @@ func Detail(c *gin.Context) {
 	commentss := treeComments(comments)
 	prev, next, err := common.GetContextPost(c, post.Id, post.PostDate)
 	logs.ErrPrintln(err, "get pre and next post", post.Id, post.PostDate)
-	h["title"] = fmt.Sprintf("%s-%s", post.PostTitle, wp.Options["blogname"])
+	h["title"] = fmt.Sprintf("%s-%s", post.PostTitle, wp.Option["blogname"])
 	h["post"] = post
 	h["showComment"] = showComment
 	h["prev"] = prev
-	depth := wp.Options["thread_comments_depth"]
+	depth := wp.Option["thread_comments_depth"]
 	d, err := strconv.Atoi(depth)
 	if err != nil {
 		logs.ErrPrintln(err, "get comment depth")
@@ -96,7 +96,7 @@ func Detail(c *gin.Context) {
 }
 
 type Comment struct {
-	wp.WpComments
+	wp.Comments
 	Children []*Comment
 }
 
@@ -131,7 +131,7 @@ func (d detailHandler) formatComment(comments Comments, depth, maxDepth int) (ht
 			p = "parent"
 			fl = true
 		}
-		s.WriteString(d.formatLi(comment.WpComments, depth, eo, p))
+		s.WriteString(d.formatLi(comment.Comments, depth, eo, p))
 		if fl {
 			depth++
 			s.WriteString(`<ol class="children">`)
@@ -163,17 +163,17 @@ func findComments(comments Comments) Comments {
 	return r
 }
 
-func treeComments(comments []wp.WpComments) Comments {
+func treeComments(comments []wp.Comments) Comments {
 	var r = map[uint64]*Comment{
 		0: {
-			WpComments: wp.WpComments{},
+			Comments: wp.Comments{},
 		},
 	}
 	var top []*Comment
 	for _, comment := range comments {
 		c := Comment{
-			WpComments: comment,
-			Children:   []*Comment{},
+			Comments: comment,
+			Children: []*Comment{},
 		}
 		r[comment.CommentId] = &c
 		if comment.CommentParent == 0 {
@@ -190,7 +190,7 @@ func treeComments(comments []wp.WpComments) Comments {
 	return top
 }
 
-func (d detailHandler) formatLi(comments wp.WpComments, depth int, eo, parent string) string {
+func (d detailHandler) formatLi(comments wp.Comments, depth int, eo, parent string) string {
 	li := `
 <li id="comment-{{CommentId}}" class="comment {{eo}} thread-even depth-{{Depth}} {{parent}}">
     <article id="div-comment-{{CommentId}}" class="comment-body">
@@ -262,7 +262,7 @@ func gravatar(c *gin.Context, email string) (u string) {
 	q := url.Values{}
 	q.Add("s", "112")
 	q.Add("d", "mm")
-	q.Add("r", strings.ToLower(wp.Options["avatar_rating"]))
+	q.Add("r", strings.ToLower(wp.Option["avatar_rating"]))
 	u = fmt.Sprintf("%s?%s", u, q.Encode())
 	return
 }
