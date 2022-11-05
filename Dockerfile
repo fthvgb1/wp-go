@@ -2,7 +2,6 @@ FROM golang:latest
 COPY ./ /go/src/wp-go
 WORKDIR /go/src/wp-go
 #ENV GOPROXY="https://goproxy.cn"
-#ENV CGO=0
 RUN go build -tags netgo
 
 FROM alpine:latest

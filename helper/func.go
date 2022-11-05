@@ -288,3 +288,23 @@ func SimpleSort[T any](arr []T, fn func(i, j T) bool) {
 	sort.Sort(slice)
 	return
 }
+
+func Min[T IntNumber | ~float64 | ~float32](a ...T) T {
+	min := a[0]
+	for _, t := range a {
+		if min > t {
+			min = t
+		}
+	}
+	return min
+}
+
+func Max[T IntNumber | ~float64 | ~float32](a ...T) T {
+	max := a[0]
+	for _, t := range a {
+		if max < t {
+			max = t
+		}
+	}
+	return max
+}
