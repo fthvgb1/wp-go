@@ -8,7 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"github/fthvgb1/wp-go/actions"
 	"github/fthvgb1/wp-go/config"
-	"github/fthvgb1/wp-go/helper"
 	"github/fthvgb1/wp-go/middleware"
 	"github/fthvgb1/wp-go/static"
 	"github/fthvgb1/wp-go/templates"
@@ -37,8 +36,8 @@ func SetupRouter() *gin.Engine {
 		},
 	}).SetTemplate()
 	r.Use(
-		middleware.ValidateServerNames(),
 		gin.Logger(),
+		middleware.ValidateServerNames(),
 		middleware.RecoverAndSendMail(gin.DefaultErrorWriter),
 		middleware.FlowLimit(config.Conf.MaxRequestSleepNum, config.Conf.MaxRequestNum, config.Conf.SleepTime),
 		middleware.SetStaticFileCache,
@@ -72,7 +71,7 @@ func SetupRouter() *gin.Engine {
 	r.GET("/feed", actions.Feed)
 	r.GET("/comments/feed", actions.CommentsFeed)
 	r.POST("/comment", middleware.FlowLimit(config.Conf.MaxRequestSleepNum, 5, config.Conf.SleepTime), actions.PostComment)
-	if helper.IsContainInArr(gin.Mode(), []string{gin.DebugMode, gin.TestMode}) {
+	if gin.Mode() != gin.ReleaseMode {
 		pprof.Register(r, "dev/pprof")
 	}
 	return r
