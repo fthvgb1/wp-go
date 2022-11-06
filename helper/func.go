@@ -222,7 +222,7 @@ func SliceReduce[T, R any](arr []T, fn func(T, R) R, r R) R {
 }
 
 func SliceReverse[T any](arr []T) []T {
-	var r []T
+	var r = make([]T, 0, len(arr))
 	for i := len(arr); i > 0; i-- {
 		r = append(r, arr[i-1])
 	}
@@ -307,4 +307,18 @@ func Max[T IntNumber | ~float64 | ~float32](a ...T) T {
 		}
 	}
 	return max
+}
+
+func SliceChunk[T any](arr []T, size int) [][]T {
+	var r [][]T
+	i := 0
+	for {
+		if len(arr) <= size+i {
+			r = append(r, arr[i:])
+			break
+		}
+		r = append(r, arr[i:i+size])
+		i += size
+	}
+	return r
 }

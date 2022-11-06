@@ -29,17 +29,112 @@ func TestFind(t *testing.T) {
 		limit  int
 		in     [][]any
 	}
+	type posts struct {
+		wp.Posts
+		N int `db:"n"`
+	}
 	tests := []struct {
 		name    string
 		args    args
-		wantR   []wp.Posts
+		wantR   []posts
 		wantErr bool
 	}{
-		{},
+		{
+			name: "in,orderBy",
+			args: args{
+				where: SqlBuilder{{
+					"post_status", "publish",
+				}, {"ID", "in", ""}},
+				fields: "*",
+				group:  "",
+				order:  SqlBuilder{{"ID", "desc"}},
+				join:   nil,
+				having: nil,
+				limit:  0,
+				in:     [][]any{{1, 2, 3, 4}},
+			},
+			wantR: func() []posts {
+				r, err := Select[posts]("select * from " + posts{}.Table() + " where post_status='publish' and ID in (1,2,3,4) order by ID desc")
+				if err != nil {
+					panic(err)
+				}
+				return r
+			}(),
+			wantErr: false,
+		},
+		{
+			name: "or",
+			args: args{
+				where: SqlBuilder{{
+					"and", "ID", "=", "1", "int",
+				}, {"or", "ID", "=", "2", "int"}},
+				fields: "*",
+				group:  "",
+				order:  nil,
+				join:   nil,
+				having: nil,
+				limit:  0,
+				in:     nil,
+			},
+			wantR: func() []posts {
+				r, err := Select[posts]("select * from " + posts{}.Table() + " where (ID=1 or ID=2)")
+				if err != nil {
+					panic(err)
+				}
+				return r
+			}(),
+		},
+		{
+			name: "group,having",
+			args: args{
+				where: SqlBuilder{
+					{"ID", "<", "1000", "int"},
+				},
+				fields: "post_status,count(*) n",
+				group:  "post_status",
+				order:  nil,
+				join:   nil,
+				having: SqlBuilder{
+					{"n", ">", "1"},
+				},
+				limit: 0,
+				in:    nil,
+			},
+			wantR: func() []posts {
+				r, err := Select[posts]("select post_status,count(*) n from " + wp.Posts{}.Table() + " where ID<1000 group by post_status having n>1")
+				if err != nil {
+					panic(err)
+				}
+				return r
+			}(),
+		},
+		{
+			name: "or、多个in",
+			args: args{
+				where: SqlBuilder{
+					{"and", "ID", "in", "", "", "or", "ID", "in", "", ""},
+					{"or", "post_status", "=", "publish", "", "and", "post_status", "=", "closed", ""},
+				},
+				fields: "*",
+				group:  "",
+				order:  nil,
+				join:   nil,
+				having: nil,
+				limit:  0,
+				in:     [][]any{{1, 2, 3}, {4, 5, 6}},
+			},
+			wantR: func() []posts {
+				r, err := Select[posts]("select * from " + posts{}.Table() + " where (ID in (1,2,3) or ID in (4,5,6)) or (post_status='publish' and post_status='closed')")
+				if err != nil {
+					panic(err)
+				}
+				return r
+			}(),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotR, err := Find[wp.Posts](tt.args.where, tt.args.fields, tt.args.group, tt.args.order, tt.args.join, tt.args.having, tt.args.limit, tt.args.in...)
+			gotR, err := Find[posts](tt.args.where, tt.args.fields, tt.args.group, tt.args.order, tt.args.join, tt.args.having, tt.args.limit, tt.args.in...)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Find() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -55,10 +150,7 @@ func TestFindOneById(t *testing.T) {
 	type args struct {
 		id int
 	}
-	r, err := Get[wp.Posts]("select * from "+wp.Posts{}.Table()+" where ID=?", 1)
-	if err != nil {
-		panic(err)
-	}
+
 	tests := []struct {
 		name    string
 		args    args
@@ -70,7 +162,13 @@ func TestFindOneById(t *testing.T) {
 			args: args{
 				1,
 			},
-			want:    r,
+			want: func() wp.Posts {
+				r, err := Get[wp.Posts]("select * from "+wp.Posts{}.Table()+" where ID=?", 1)
+				if err != nil {
+					panic(err)
+				}
+				return r
+			}(),
 			wantErr: false,
 		},
 	}
@@ -95,10 +193,6 @@ func TestFirstOne(t *testing.T) {
 		order  SqlBuilder
 		in     [][]any
 	}
-	r, err := Get[wp.Posts]("select * from " + wp.Posts{}.Table() + " where post_status='publish' order by ID desc")
-	if err != nil {
-		panic(err)
-	}
 	tests := []struct {
 		name    string
 		args    args
@@ -114,7 +208,13 @@ func TestFirstOne(t *testing.T) {
 				in:     nil,
 			},
 			wantErr: false,
-			want:    r,
+			want: func() wp.Posts {
+				r, err := Get[wp.Posts]("select * from " + wp.Posts{}.Table() + " where post_status='publish' order by ID desc limit 1")
+				if err != nil {
+					panic(err)
+				}
+				return r
+			}(),
 		},
 	}
 	for _, tt := range tests {
@@ -170,7 +270,23 @@ func TestLastOne(t *testing.T) {
 		want    wp.Posts
 		wantErr bool
 	}{
-		{},
+		{
+			name: "t1",
+			args: args{
+				where: SqlBuilder{{
+					"post_status", "publish",
+				}},
+				fields: "*",
+				in:     nil,
+			},
+			want: func() wp.Posts {
+				r, err := Get[wp.Posts]("select * from " + wp.Posts{}.Table() + " where post_status='publish' order by  " + wp.Posts{}.PrimaryKey() + " desc limit 1")
+				if err != nil {
+					panic(err)
+				}
+				return r
+			}(),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

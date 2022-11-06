@@ -73,6 +73,23 @@ func (w SqlBuilder) parseType(ss []string, args *[]any) error {
 	return nil
 }
 
+// ParseWhere 解析为where条件，支持3种风格,具体用法参照query_test中的 Find 的测试方法
+//
+// 1. 2个为一组 {{"field1","value1"},{"field2","value2"}} => where field1='value1' and field2='value2'
+//
+// 2. 3个或4个为一组 {{"field","operator","value"[,"int|float"]}} =>  where field operator 'string'|int|float
+//
+//	{{"a",">","1","int"}} => where 'a'> 1
+//
+//	{{ "a",">","1"}} => where 'a'>'1'
+//
+// 另外如果是操作符为in的话为 {{"field","in",""}} => where field in (?,..) in的条件传给 in参数
+//
+// 3. 5的倍数为一组{{"and|or","field","operator","value","int|float"}}会忽然掉第一组的and|or
+//
+//	{{"and","field","=","value1","","and","field","=","value2",""}} => where (field = 'value1' and field = 'value2')
+//
+//	{{"and","field","=","num1","int","or","field","=","num2","int"}} => where (field = num1 or field = num2')
 func (w SqlBuilder) ParseWhere(in *[][]any) (string, []any, error) {
 	var s strings.Builder
 	args := make([]any, 0, len(w))

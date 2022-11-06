@@ -708,3 +708,39 @@ func TestMax(t *testing.T) {
 		})
 	}
 }
+
+func TestSliceChunk(t *testing.T) {
+	type args struct {
+		arr  []int
+		size int
+	}
+	tests := []struct {
+		name string
+		args args
+		want [][]int
+	}{
+		{
+			name: "t1",
+			args: args{
+				arr:  RangeSlice(1, 7, 1),
+				size: 2,
+			},
+			want: [][]int{{1, 2}, {3, 4}, {5, 6}, {7}},
+		},
+		{
+			name: "t2",
+			args: args{
+				arr:  RangeSlice(1, 8, 1),
+				size: 2,
+			},
+			want: [][]int{{1, 2}, {3, 4}, {5, 6}, {7, 8}},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := SliceChunk(tt.args.arr, tt.args.size); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("SliceChunk() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
