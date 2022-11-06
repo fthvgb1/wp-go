@@ -309,6 +309,14 @@ func Max[T IntNumber | ~float64 | ~float32](a ...T) T {
 	return max
 }
 
+func Sum[T IntNumber | ~float64 | ~float32](a ...T) T {
+	s := T(0)
+	for _, t := range a {
+		s += t
+	}
+	return s
+}
+
 func SliceChunk[T any](arr []T, size int) [][]T {
 	var r [][]T
 	i := 0
