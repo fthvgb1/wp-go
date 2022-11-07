@@ -5,6 +5,9 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"github/fthvgb1/wp-go/config"
+	"log"
+	"os"
+	"strings"
 )
 
 var Db *sqlx.DB
@@ -18,10 +21,16 @@ func NewSqlxDb(sqlx *sqlx.DB) *SqlxDb {
 }
 
 func (r SqlxDb) Select(ctx context.Context, dest any, sql string, params ...any) error {
+	if os.Getenv("SHOW_SQL") == "true" {
+		log.Printf(strings.Replace(sql, "?", "'%v'", -1), params...)
+	}
 	return r.sqlx.Select(dest, sql, params...)
 }
 
 func (r SqlxDb) Get(ctx context.Context, dest any, sql string, params ...any) error {
+	if os.Getenv("SHOW_SQL") == "true" {
+		log.Printf(strings.Replace(sql, "?", "'%v'", -1), params...)
+	}
 	return r.sqlx.Get(dest, sql, params...)
 }
 
