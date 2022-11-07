@@ -6,6 +6,7 @@ import (
 	"github/fthvgb1/wp-go/actions/common"
 	"github/fthvgb1/wp-go/config"
 	"github/fthvgb1/wp-go/db"
+	"github/fthvgb1/wp-go/models"
 	"github/fthvgb1/wp-go/models/wp"
 	"github/fthvgb1/wp-go/plugins"
 	"github/fthvgb1/wp-go/route"
@@ -27,7 +28,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-
+	models.InitDB(db.NewSqlxDb(db.Db))
 	err = wp.InitOptions()
 	if err != nil {
 		panic(err)

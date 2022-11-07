@@ -11,15 +11,16 @@ import (
 )
 
 func RecentComments(ctx context.Context, n int) (r []wp.Comments) {
-	r, err := recentCommentsCaches.GetCache(ctx, time.Second)
+	r, err := recentCommentsCaches.GetCache(ctx, time.Second, ctx)
 	if len(r) > n {
 		r = r[0:n]
 	}
 	logs.ErrPrintln(err, "get recent comment")
 	return
 }
-func recentComments(...any) (r []wp.Comments, err error) {
-	return models.Find[wp.Comments](models.SqlBuilder{
+func recentComments(a ...any) (r []wp.Comments, err error) {
+	ctx := a[0].(context.Context)
+	return models.Find[wp.Comments](ctx, models.SqlBuilder{
 		{"comment_approved", "1"},
 		{"post_status", "publish"},
 	}, "comment_ID,comment_author,comment_post_ID,post_title", "", models.SqlBuilder{{"comment_date_gmt", "desc"}}, models.SqlBuilder{
@@ -28,7 +29,7 @@ func recentComments(...any) (r []wp.Comments, err error) {
 }
 
 func PostComments(ctx context.Context, Id uint64) ([]wp.Comments, error) {
-	ids, err := postCommentCaches.GetCache(ctx, Id, time.Second, Id)
+	ids, err := postCommentCaches.GetCache(ctx, Id, time.Second, ctx, Id)
 	if err != nil {
 		return nil, err
 	}
@@ -36,8 +37,9 @@ func PostComments(ctx context.Context, Id uint64) ([]wp.Comments, error) {
 }
 
 func postComments(args ...any) ([]uint64, error) {
-	postId := args[0].(uint64)
-	r, err := models.Find[wp.Comments](models.SqlBuilder{
+	ctx := args[0].(context.Context)
+	postId := args[1].(uint64)
+	r, err := models.Find[wp.Comments](ctx, models.SqlBuilder{
 		{"comment_approved", "1"},
 		{"comment_post_ID", "=", strconv.FormatUint(postId, 10), "int"},
 	}, "comment_ID", "", models.SqlBuilder{
@@ -53,17 +55,18 @@ func postComments(args ...any) ([]uint64, error) {
 }
 
 func GetCommentById(ctx context.Context, id uint64) (wp.Comments, error) {
-	return commentsCache.GetCache(ctx, id, time.Second, id)
+	return commentsCache.GetCache(ctx, id, time.Second, ctx, id)
 }
 
 func GetCommentByIds(ctx context.Context, ids []uint64) ([]wp.Comments, error) {
-	return commentsCache.GetCacheBatch(ctx, ids, time.Second, ids)
+	return commentsCache.GetCacheBatch(ctx, ids, time.Second, ctx, ids)
 }
 
 func getCommentByIds(args ...any) (map[uint64]wp.Comments, error) {
-	ids := args[0].([]uint64)
+	ctx := args[0].(context.Context)
+	ids := args[1].([]uint64)
 	m := make(map[uint64]wp.Comments)
-	r, err := models.SimpleFind[wp.Comments](models.SqlBuilder{
+	r, err := models.SimpleFind[wp.Comments](ctx, models.SqlBuilder{
 		{"comment_ID", "in", ""}, {"comment_approved", "1"},
 	}, "*", helper.SliceMap(ids, helper.ToAny[uint64]))
 	if err != nil {

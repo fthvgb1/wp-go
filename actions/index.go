@@ -162,7 +162,7 @@ func (h *indexHandle) getTotalPage(totalRaws int) int {
 func Index(c *gin.Context) {
 	h := newIndexHandle(c)
 	h.parseParams()
-	archive := common.Archives()
+	archive := common.Archives(c)
 	recent := common.RecentPosts(c, 5)
 	categoryItems := common.Categories(c)
 	recentComments := common.RecentComments(c, 5)
@@ -185,9 +185,9 @@ func Index(c *gin.Context) {
 			return
 		}
 	} else if h.search != "" {
-		postIds, totalRaw, err = common.SearchPost(c, h.getSearchKey(), h.where, h.page, h.pageSize, models.SqlBuilder{{h.orderBy, h.order}}, h.join, h.postType, h.status)
+		postIds, totalRaw, err = common.SearchPost(c, h.getSearchKey(), c, h.where, h.page, h.pageSize, models.SqlBuilder{{h.orderBy, h.order}}, h.join, h.postType, h.status)
 	} else {
-		postIds, totalRaw, err = common.PostLists(c, h.getSearchKey(), h.where, h.page, h.pageSize, models.SqlBuilder{{h.orderBy, h.order}}, h.join, h.postType, h.status)
+		postIds, totalRaw, err = common.PostLists(c, h.getSearchKey(), c, h.where, h.page, h.pageSize, models.SqlBuilder{{h.orderBy, h.order}}, h.join, h.postType, h.status)
 	}
 
 	defer func() {

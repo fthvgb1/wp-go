@@ -1,12 +1,29 @@
 package db
 
 import (
+	"context"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"github/fthvgb1/wp-go/config"
 )
 
 var Db *sqlx.DB
+
+type SqlxDb struct {
+	sqlx *sqlx.DB
+}
+
+func NewSqlxDb(sqlx *sqlx.DB) *SqlxDb {
+	return &SqlxDb{sqlx: sqlx}
+}
+
+func (r SqlxDb) Select(ctx context.Context, dest any, sql string, params ...any) error {
+	return r.sqlx.Select(dest, sql, params...)
+}
+
+func (r SqlxDb) Get(ctx context.Context, dest any, sql string, params ...any) error {
+	return r.sqlx.Get(dest, sql, params...)
+}
 
 func InitDb() error {
 	dsn := config.Conf.Mysql.Dsn.GetDsn()

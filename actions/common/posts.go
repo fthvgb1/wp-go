@@ -14,11 +14,11 @@ import (
 )
 
 func GetPostById(ctx context.Context, id uint64) (wp.Posts, error) {
-	return postsCache.GetCache(ctx, id, time.Second, id)
+	return postsCache.GetCache(ctx, id, time.Second, ctx, id)
 }
 
 func GetPostsByIds(ctx context.Context, ids []uint64) ([]wp.Posts, error) {
-	return postsCache.GetCacheBatch(ctx, ids, time.Second, ids)
+	return postsCache.GetCacheBatch(ctx, ids, time.Second, ctx, ids)
 }
 
 func SearchPost(ctx context.Context, key string, args ...any) (r []wp.Posts, total int, err error) {
@@ -32,10 +32,11 @@ func SearchPost(ctx context.Context, key string, args ...any) (r []wp.Posts, tot
 }
 
 func getPostsByIds(ids ...any) (m map[uint64]wp.Posts, err error) {
+	ctx := ids[0].(context.Context)
 	m = make(map[uint64]wp.Posts)
-	id := ids[0].([]uint64)
+	id := ids[1].([]uint64)
 	arg := helper.SliceMap(id, helper.ToAny[uint64])
-	rawPosts, err := models.Find[wp.Posts](models.SqlBuilder{{
+	rawPosts, err := models.Find[wp.Posts](ctx, models.SqlBuilder{{
 		"Id", "in", "",
 	}}, "a.*,ifnull(d.name,'') category_name,ifnull(taxonomy,'') `taxonomy`", "", nil, models.SqlBuilder{{
 		"a", "left join", "wp_term_relationships b", "a.Id=b.object_id",
@@ -91,14 +92,15 @@ func PostLists(ctx context.Context, key string, args ...any) (r []wp.Posts, tota
 }
 
 func searchPostIds(args ...any) (ids PostIds, err error) {
-	where := args[0].(models.SqlBuilder)
-	page := args[1].(int)
-	limit := args[2].(int)
-	order := args[3].(models.SqlBuilder)
-	join := args[4].(models.SqlBuilder)
-	postType := args[5].([]any)
-	postStatus := args[6].([]any)
-	res, total, err := models.SimplePagination[wp.Posts](where, "ID", "", page, limit, order, join, nil, postType, postStatus)
+	ctx := args[0].(context.Context)
+	where := args[1].(models.SqlBuilder)
+	page := args[2].(int)
+	limit := args[3].(int)
+	order := args[4].(models.SqlBuilder)
+	join := args[5].(models.SqlBuilder)
+	postType := args[6].([]any)
+	postStatus := args[7].([]any)
+	res, total, err := models.SimplePagination[wp.Posts](ctx, where, "ID", "", page, limit, order, join, nil, postType, postStatus)
 	for _, posts := range res {
 		ids.Ids = append(ids.Ids, posts.Id)
 	}
@@ -109,8 +111,9 @@ func searchPostIds(args ...any) (ids PostIds, err error) {
 	return
 }
 
-func getMaxPostId(...any) ([]uint64, error) {
-	r, err := models.SimpleFind[wp.Posts](models.SqlBuilder{{"post_type", "post"}, {"post_status", "publish"}}, "max(ID) ID")
+func getMaxPostId(a ...any) ([]uint64, error) {
+	ctx := a[0].(context.Context)
+	r, err := models.SimpleFind[wp.Posts](ctx, models.SqlBuilder{{"post_type", "post"}, {"post_status", "publish"}}, "max(ID) ID")
 	var id uint64
 	if len(r) > 0 {
 		id = r[0].Id
@@ -119,20 +122,21 @@ func getMaxPostId(...any) ([]uint64, error) {
 }
 
 func GetMaxPostId(ctx *gin.Context) (uint64, error) {
-	Id, err := maxPostIdCache.GetCache(ctx, time.Second)
+	Id, err := maxPostIdCache.GetCache(ctx, time.Second, ctx)
 	return Id[0], err
 }
 
 func RecentPosts(ctx context.Context, n int) (r []wp.Posts) {
-	r, err := recentPostsCaches.GetCache(ctx, time.Second)
+	r, err := recentPostsCaches.GetCache(ctx, time.Second, ctx)
 	if n < len(r) {
 		r = r[:n]
 	}
 	logs.ErrPrintln(err, "get recent post")
 	return
 }
-func recentPosts(...any) (r []wp.Posts, err error) {
-	r, err = models.Find[wp.Posts](models.SqlBuilder{{
+func recentPosts(a ...any) (r []wp.Posts, err error) {
+	ctx := a[0].(context.Context)
+	r, err = models.Find[wp.Posts](ctx, models.SqlBuilder{{
 		"post_type", "post",
 	}, {"post_status", "publish"}}, "ID,post_title,post_password", "", models.SqlBuilder{{"post_date", "desc"}}, nil, nil, 10)
 	for i, post := range r {
@@ -144,7 +148,7 @@ func recentPosts(...any) (r []wp.Posts, err error) {
 }
 
 func GetContextPost(ctx context.Context, id uint64, date time.Time) (prev, next wp.Posts, err error) {
-	postCtx, err := postContextCache.GetCache(ctx, id, time.Second, date)
+	postCtx, err := postContextCache.GetCache(ctx, id, time.Second, ctx, date)
 	if err != nil {
 		return wp.Posts{}, wp.Posts{}, err
 	}
@@ -154,8 +158,9 @@ func GetContextPost(ctx context.Context, id uint64, date time.Time) (prev, next 
 }
 
 func getPostContext(arg ...any) (r PostContext, err error) {
-	t := arg[0].(time.Time)
-	next, err := models.FirstOne[wp.Posts](models.SqlBuilder{
+	ctx := arg[0].(context.Context)
+	t := arg[1].(time.Time)
+	next, err := models.FirstOne[wp.Posts](ctx, models.SqlBuilder{
 		{"post_date", ">", t.Format("2006-01-02 15:04:05")},
 		{"post_status", "in", ""},
 		{"post_type", "post"},
@@ -166,7 +171,7 @@ func getPostContext(arg ...any) (r PostContext, err error) {
 	if err != nil {
 		return
 	}
-	prev, err := models.FirstOne[wp.Posts](models.SqlBuilder{
+	prev, err := models.FirstOne[wp.Posts](ctx, models.SqlBuilder{
 		{"post_date", "<", t.Format("2006-01-02 15:04:05")},
 		{"post_status", "in", ""},
 		{"post_type", "post"},
@@ -199,7 +204,8 @@ func GetMonthPostIds(ctx context.Context, year, month string, page, limit int, o
 }
 
 func monthPost(args ...any) (r []uint64, err error) {
-	year, month := args[0].(string), args[1].(string)
+	ctx := args[0].(context.Context)
+	year, month := args[1].(string), args[2].(string)
 	where := models.SqlBuilder{
 		{"post_type", "in", ""},
 		{"post_status", "in", ""},
@@ -208,7 +214,7 @@ func monthPost(args ...any) (r []uint64, err error) {
 	}
 	postType := []any{"post"}
 	status := []any{"publish"}
-	ids, err := models.Find[wp.Posts](where, "ID", "", models.SqlBuilder{{"Id", "asc"}}, nil, nil, 0, postType, status)
+	ids, err := models.Find[wp.Posts](ctx, where, "ID", "", models.SqlBuilder{{"Id", "asc"}}, nil, nil, 0, postType, status)
 	if err != nil {
 		return
 	}

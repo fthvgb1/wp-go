@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"fmt"
 	"github/fthvgb1/wp-go/helper"
 	"strconv"
@@ -8,6 +9,11 @@ import (
 )
 
 var _ ParseWhere = SqlBuilder{}
+var globalBb dbQuery
+
+func InitDB(db dbQuery) {
+	globalBb = db
+}
 
 type Model interface {
 	PrimaryKey() string
@@ -16,6 +22,11 @@ type Model interface {
 
 type ParseWhere interface {
 	ParseWhere(*[][]any) (string, []any, error)
+}
+
+type dbQuery interface {
+	Select(context.Context, any, string, ...any) error
+	Get(context.Context, any, string, ...any) error
 }
 
 type SqlBuilder [][]string

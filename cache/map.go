@@ -48,8 +48,18 @@ func (m *MapCache[K, V]) SetCacheBatchFunc(fn func(...any) (map[K]V, error)) {
 
 func (m *MapCache[K, V]) setCacheFn(fn func(...any) (map[K]V, error)) {
 	m.cacheFunc = func(a ...any) (V, error) {
-		id := a[0].(K)
-		r, err := fn([]K{id})
+		var err error
+		var r map[K]V
+		var id K
+		ctx, ok := a[0].(context.Context)
+		if ok {
+			id = a[1].(K)
+			r, err = fn(ctx, []K{id})
+		} else {
+			id = a[0].(K)
+			r, err = fn([]K{id})
+		}
+
 		if err != nil {
 			var rr V
 			return rr, err

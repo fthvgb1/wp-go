@@ -77,15 +77,15 @@ type PostIds struct {
 type Arch struct {
 	data         []wp.PostArchive
 	mutex        *sync.Mutex
-	setCacheFunc func() ([]wp.PostArchive, error)
+	setCacheFunc func(context.Context) ([]wp.PostArchive, error)
 	month        time.Month
 }
 
-func (c *Arch) getArchiveCache() []wp.PostArchive {
+func (c *Arch) getArchiveCache(ctx context.Context) []wp.PostArchive {
 	l := len(c.data)
 	m := time.Now().Month()
 	if l > 0 && c.month != m || l < 1 {
-		r, err := c.setCacheFunc()
+		r, err := c.setCacheFunc(ctx)
 		if err != nil {
 			logs.ErrPrintln(err, "set cache err[%s]")
 			return nil
@@ -103,25 +103,26 @@ type PostContext struct {
 	next wp.Posts
 }
 
-func archives() ([]wp.PostArchive, error) {
-	return models.Find[wp.PostArchive](models.SqlBuilder{
+func archives(ctx context.Context) ([]wp.PostArchive, error) {
+	return models.Find[wp.PostArchive](ctx, models.SqlBuilder{
 		{"post_type", "post"}, {"post_status", "publish"},
 	}, "YEAR(post_date) AS `year`, MONTH(post_date) AS `month`, count(ID) as posts", "year,month", models.SqlBuilder{{"year", "desc"}, {"month", "desc"}}, nil, nil, 0)
 }
 
-func Archives() (r []wp.PostArchive) {
-	return archivesCaches.getArchiveCache()
+func Archives(ctx context.Context) (r []wp.PostArchive) {
+	return archivesCaches.getArchiveCache(ctx)
 }
 
 func Categories(ctx context.Context) []wp.WpTermsMy {
-	r, err := categoryCaches.GetCache(ctx, time.Second)
+	r, err := categoryCaches.GetCache(ctx, time.Second, ctx)
 	logs.ErrPrintln(err, "get category ")
 	return r
 }
 
-func categories(...any) (terms []wp.WpTermsMy, err error) {
+func categories(a ...any) (terms []wp.WpTermsMy, err error) {
+	ctx := a[0].(context.Context)
 	var in = []any{"category"}
-	terms, err = models.Find[wp.WpTermsMy](models.SqlBuilder{
+	terms, err = models.Find[wp.WpTermsMy](ctx, models.SqlBuilder{
 		{"tt.count", ">", "0", "int"},
 		{"tt.taxonomy", "in", ""},
 	}, "t.term_id", "", models.SqlBuilder{

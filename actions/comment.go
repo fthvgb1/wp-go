@@ -55,7 +55,7 @@ func PostComment(c *gin.Context) {
 		for _, cookie := range res.Request.Response.Cookies() {
 			c.SetCookie(cookie.Name, cookie.Value, cookie.MaxAge, cookie.Path, cookie.Domain, cookie.Secure, cookie.HttpOnly)
 		}
-		c.Redirect(http.StatusFound, res.Request.Response.Header.Get("Location"))
+		//c.Redirect(http.StatusFound, res.Request.Response.Header.Get("Location"))
 		cc := c.Copy()
 		go func() {
 			id, err := strconv.ParseUint(i, 10, 64)
@@ -70,8 +70,13 @@ func PostComment(c *gin.Context) {
 			}
 			su := fmt.Sprintf("%s: %s[%s]发表了评论对文档[%v]的评论", wp.Option["siteurl"], author, m, post.PostTitle)
 			err = mail.SendMail([]string{config.Conf.Mail.User}, su, comment)
-			logs.ErrPrintln(err, "发送邮件")
+			logs.ErrPrintln(err, "发送邮件", config.Conf.Mail.User, su, comment)
 		}()
+		s, err := io.ReadAll(res.Body)
+		if err != nil {
+			return
+		}
+		c.String(http.StatusOK, string(s))
 		return
 	}
 	s, err := io.ReadAll(res.Body)

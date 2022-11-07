@@ -1,15 +1,15 @@
 package models
 
 import (
+	"context"
 	"fmt"
-	"github/fthvgb1/wp-go/db"
 	"github/fthvgb1/wp-go/helper"
 	"math/rand"
 	"strings"
 	"time"
 )
 
-func SimplePagination[T Model](where ParseWhere, fields, group string, page, pageSize int, order SqlBuilder, join SqlBuilder, having SqlBuilder, in ...[]any) (r []T, total int, err error) {
+func SimplePagination[T Model](ctx context.Context, where ParseWhere, fields, group string, page, pageSize int, order SqlBuilder, join SqlBuilder, having SqlBuilder, in ...[]any) (r []T, total int, err error) {
 	var rr T
 	var w string
 	var args []any
@@ -56,12 +56,12 @@ func SimplePagination[T Model](where ParseWhere, fields, group string, page, pag
 	if group == "" {
 		tpx := "select count(*) n from %s %s %s limit 1"
 		sq := fmt.Sprintf(tpx, rr.Table(), j, w)
-		err = db.Db.Get(&n, sq, args...)
+		err = globalBb.Get(ctx, &n, sq, args...)
 	} else {
 		tpx := "select count(*) n from (select %s from %s %s %s %s %s ) %s"
 		rand.Seed(int64(time.Now().Nanosecond()))
 		sq := fmt.Sprintf(tpx, group, rr.Table(), j, w, groupBy, h, fmt.Sprintf("table%d", rand.Int()))
-		err = db.Db.Get(&n, sq, args...)
+		err = globalBb.Get(ctx, &n, sq, args...)
 	}
 
 	if err != nil {
@@ -80,24 +80,24 @@ func SimplePagination[T Model](where ParseWhere, fields, group string, page, pag
 	}
 	tp := "select %s from %s %s %s %s %s %s limit %d,%d"
 	sql := fmt.Sprintf(tp, fields, rr.Table(), j, w, groupBy, h, order.parseOrderBy(), offset, pageSize)
-	err = db.Db.Select(&r, sql, args...)
+	err = globalBb.Select(ctx, &r, sql, args...)
 	if err != nil {
 		return
 	}
 	return
 }
 
-func FindOneById[T Model, I helper.IntNumber](id I) (T, error) {
+func FindOneById[T Model, I helper.IntNumber](ctx context.Context, id I) (T, error) {
 	var r T
 	sql := fmt.Sprintf("select * from `%s` where `%s`=?", r.Table(), r.PrimaryKey())
-	err := db.Db.Get(&r, sql, id)
+	err := globalBb.Get(ctx, &r, sql, id)
 	if err != nil {
 		return r, err
 	}
 	return r, nil
 }
 
-func FirstOne[T Model](where ParseWhere, fields string, order SqlBuilder, in ...[]any) (T, error) {
+func FirstOne[T Model](ctx context.Context, where ParseWhere, fields string, order SqlBuilder, in ...[]any) (T, error) {
 	var r T
 	var w string
 	var args []any
@@ -110,14 +110,14 @@ func FirstOne[T Model](where ParseWhere, fields string, order SqlBuilder, in ...
 	}
 	tp := "select %s from %s %s %s"
 	sql := fmt.Sprintf(tp, fields, r.Table(), w, order.parseOrderBy())
-	err = db.Db.Get(&r, sql, args...)
+	err = globalBb.Get(ctx, &r, sql, args...)
 	if err != nil {
 		return r, err
 	}
 	return r, nil
 }
 
-func LastOne[T Model](where ParseWhere, fields string, in ...[]any) (T, error) {
+func LastOne[T Model](ctx context.Context, where ParseWhere, fields string, in ...[]any) (T, error) {
 	var r T
 	var w string
 	var args []any
@@ -130,14 +130,14 @@ func LastOne[T Model](where ParseWhere, fields string, in ...[]any) (T, error) {
 	}
 	tp := "select %s from %s %s order by %s desc limit 1"
 	sql := fmt.Sprintf(tp, fields, r.Table(), w, r.PrimaryKey())
-	err = db.Db.Get(&r, sql, args...)
+	err = globalBb.Get(ctx, &r, sql, args...)
 	if err != nil {
 		return r, err
 	}
 	return r, nil
 }
 
-func SimpleFind[T Model](where ParseWhere, fields string, in ...[]any) ([]T, error) {
+func SimpleFind[T Model](ctx context.Context, where ParseWhere, fields string, in ...[]any) ([]T, error) {
 	var r []T
 	var rr T
 	var err error
@@ -151,25 +151,25 @@ func SimpleFind[T Model](where ParseWhere, fields string, in ...[]any) ([]T, err
 	}
 	tp := "select %s from %s %s"
 	sql := fmt.Sprintf(tp, fields, rr.Table(), w)
-	err = db.Db.Select(&r, sql, args...)
+	err = globalBb.Select(ctx, &r, sql, args...)
 	if err != nil {
 		return r, err
 	}
 	return r, nil
 }
 
-func Select[T Model](sql string, params ...any) ([]T, error) {
+func Select[T Model](ctx context.Context, sql string, params ...any) ([]T, error) {
 	var r []T
 	var rr T
 	sql = strings.Replace(sql, "{table}", rr.Table(), -1)
-	err := db.Db.Select(&r, sql, params...)
+	err := globalBb.Select(ctx, &r, sql, params...)
 	if err != nil {
 		return r, err
 	}
 	return r, nil
 }
 
-func Find[T Model](where ParseWhere, fields, group string, order SqlBuilder, join SqlBuilder, having SqlBuilder, limit int, in ...[]any) (r []T, err error) {
+func Find[T Model](ctx context.Context, where ParseWhere, fields, group string, order SqlBuilder, join SqlBuilder, having SqlBuilder, limit int, in ...[]any) (r []T, err error) {
 	var rr T
 	w := ""
 	var args []any
@@ -203,12 +203,12 @@ func Find[T Model](where ParseWhere, fields, group string, order SqlBuilder, joi
 		l = fmt.Sprintf(" limit %d", limit)
 	}
 	sql := fmt.Sprintf(tp, fields, rr.Table(), j, w, groupBy, h, order.parseOrderBy(), l)
-	err = db.Db.Select(&r, sql, args...)
+	err = globalBb.Select(ctx, &r, sql, args...)
 	return
 }
 
-func Get[T Model](sql string, params ...any) (r T, err error) {
+func Get[T Model](ctx context.Context, sql string, params ...any) (r T, err error) {
 	sql = strings.Replace(sql, "{table}", r.Table(), -1)
-	err = db.Db.Get(&r, sql, params...)
+	err = globalBb.Get(ctx, &r, sql, params...)
 	return
 }

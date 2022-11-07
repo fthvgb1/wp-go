@@ -28,7 +28,7 @@ func Detail(c *gin.Context) {
 		c,
 	}
 	recent := common.RecentPosts(c, 5)
-	archive := common.Archives()
+	archive := common.Archives(c)
 	categoryItems := common.Categories(c)
 	recentComments := common.RecentComments(c, 5)
 	var h = gin.H{
