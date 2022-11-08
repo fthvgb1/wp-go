@@ -54,6 +54,9 @@ func PostComment(c *gin.Context) {
 		return
 	}
 	if res.StatusCode == http.StatusFound {
+		for _, cookie := range res.Cookies() {
+			c.SetCookie(cookie.Name, cookie.Value, cookie.MaxAge, cookie.Path, cookie.Domain, cookie.Secure, cookie.HttpOnly)
+		}
 		u := res.Header.Get("Location")
 		up, err := url.Parse(u)
 		if err != nil {
