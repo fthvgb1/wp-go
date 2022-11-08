@@ -39,11 +39,15 @@ func Detail(c *gin.Context) {
 		"categories":     categoryItems,
 		"recentComments": recentComments,
 	}
+	isApproveComment := false
 	defer func() {
 		status := http.StatusOK
 		if err != nil {
 			status = http.StatusInternalServerError
 			c.Error(err)
+		}
+		if isApproveComment == true {
+			return
 		}
 		c.HTML(status, "twentyfifteen/posts/detail.gohtml", h)
 	}()
@@ -74,6 +78,12 @@ func Detail(c *gin.Context) {
 	if post.PostPassword != "" && pw != post.PostPassword {
 		common.PasswdProjectContent(&post)
 		showComment = false
+	} else if s, ok := commentCache.Get(c.Request.URL.RawQuery); ok && s != "" && (post.PostPassword == "" || post.PostPassword != "" && pw == post.PostPassword) {
+		c.Writer.WriteHeader(http.StatusOK)
+		c.Writer.Header().Set("Content-Type", "text/html; charset=utf-8")
+		_, err = c.Writer.WriteString(s)
+		isApproveComment = true
+		return
 	}
 	plugins.ApplyPlugin(plugins.NewPostPlugin(c, plugins.Detail), &post)
 	comments, err := common.PostComments(c, post.Id)

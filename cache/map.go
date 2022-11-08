@@ -31,7 +31,7 @@ func (m *MapCache[K, V]) SetCacheFunc(fn func(...any) (V, error)) {
 	m.cacheFunc = fn
 }
 
-func (m *MapCache[K, V]) GetSetTime(k K) (t time.Time) {
+func (m *MapCache[K, V]) GetLastSetTime(k K) (t time.Time) {
 	r, ok := m.data.Load(k)
 	if ok {
 		t = r.setTime
@@ -93,13 +93,13 @@ func (m *MapCache[K, V]) Flush() {
 	m.data = safety.NewMap[K, mapCacheStruct[V]]()
 }
 
-func (m *MapCache[K, V]) Get(k K) V {
+func (m *MapCache[K, V]) Get(k K) (V, bool) {
 	r, ok := m.data.Load(k)
 	if ok {
-		return r.data
+		return r.data, ok
 	}
 	var rr V
-	return rr
+	return rr, false
 }
 
 func (m *MapCache[K, V]) Set(k K, v V) {

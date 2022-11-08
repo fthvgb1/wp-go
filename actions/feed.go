@@ -38,6 +38,7 @@ func InitFeed() {
 
 func ClearCache() {
 	postFeedCache.ClearExpired()
+	commentCache.ClearExpired()
 }
 
 func isCacheExpired(c *gin.Context, lastTime time.Time) bool {
@@ -55,7 +56,7 @@ func isCacheExpired(c *gin.Context, lastTime time.Time) bool {
 }
 
 func Feed(c *gin.Context) {
-	if !isCacheExpired(c, feedCache.SetTime()) {
+	if !isCacheExpired(c, feedCache.GetLastSetTime()) {
 		c.Status(http.StatusNotModified)
 	} else {
 		r, err := feedCache.GetCache(c, time.Second, c)
@@ -65,7 +66,7 @@ func Feed(c *gin.Context) {
 			c.Error(err)
 			return
 		}
-		setFeed(r[0], c, feedCache.SetTime())
+		setFeed(r[0], c, feedCache.GetLastSetTime())
 	}
 }
 
@@ -126,7 +127,7 @@ func setFeed(s string, c *gin.Context, t time.Time) {
 
 func PostFeed(c *gin.Context) {
 	id := c.Param("id")
-	if !isCacheExpired(c, postFeedCache.GetSetTime(id)) {
+	if !isCacheExpired(c, postFeedCache.GetLastSetTime(id)) {
 		c.Status(http.StatusNotModified)
 	} else {
 		s, err := postFeedCache.GetCache(c, id, time.Second, c, id)
@@ -136,7 +137,7 @@ func PostFeed(c *gin.Context) {
 			c.Error(err)
 			return
 		}
-		setFeed(s, c, postFeedCache.GetSetTime(id))
+		setFeed(s, c, postFeedCache.GetLastSetTime(id))
 	}
 }
 
@@ -205,7 +206,7 @@ func postFeed(arg ...any) (x string, err error) {
 }
 
 func CommentsFeed(c *gin.Context) {
-	if !isCacheExpired(c, commentsFeedCache.SetTime()) {
+	if !isCacheExpired(c, commentsFeedCache.GetLastSetTime()) {
 		c.Status(http.StatusNotModified)
 	} else {
 		r, err := commentsFeedCache.GetCache(c, time.Second, c)
@@ -215,7 +216,7 @@ func CommentsFeed(c *gin.Context) {
 			c.Error(err)
 			return
 		}
-		setFeed(r[0], c, commentsFeedCache.SetTime())
+		setFeed(r[0], c, commentsFeedCache.GetLastSetTime())
 	}
 }
 

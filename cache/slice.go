@@ -22,8 +22,7 @@ type slice[T any] struct {
 	incr         int
 }
 
-func (c *SliceCache[T]) SetTime() time.Time {
-
+func (c *SliceCache[T]) GetLastSetTime() time.Time {
 	return c.v.Load().setTime
 }
 

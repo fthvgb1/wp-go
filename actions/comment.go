@@ -6,23 +6,27 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github/fthvgb1/wp-go/actions/common"
+	"github/fthvgb1/wp-go/cache"
 	"github/fthvgb1/wp-go/config"
 	"github/fthvgb1/wp-go/logs"
 	"github/fthvgb1/wp-go/mail"
 	"github/fthvgb1/wp-go/models/wp"
 	"io"
 	"net/http"
-	"net/http/cookiejar"
+	"net/url"
 	"strconv"
 	"strings"
 	"time"
 )
 
+var commentCache = cache.NewMapCacheByFn[string, string](nil, 15*time.Minute)
+
 func PostComment(c *gin.Context) {
-	jar, _ := cookiejar.New(nil)
 	cli := &http.Client{
-		Jar:     jar,
 		Timeout: time.Second * 3,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
 	}
 	data, err := c.GetRawData()
 	defer func() {
@@ -44,18 +48,28 @@ func PostComment(c *gin.Context) {
 		return
 	}
 	defer req.Body.Close()
-	for k, v := range c.Request.Header {
-		req.Header.Set(k, v[0])
-	}
+	req.Header = c.Request.Header.Clone()
 	res, err := cli.Do(req)
-	if err != nil {
+	if err != nil && err != http.ErrUseLastResponse {
 		return
 	}
-	if res.Request.Response != nil && res.Request.Response.StatusCode == http.StatusFound {
-		for _, cookie := range res.Request.Response.Cookies() {
-			c.SetCookie(cookie.Name, cookie.Value, cookie.MaxAge, cookie.Path, cookie.Domain, cookie.Secure, cookie.HttpOnly)
+	if res.StatusCode == http.StatusFound {
+		u := res.Header.Get("Location")
+		up, err := url.Parse(u)
+		if err != nil {
+			return
 		}
-		//c.Redirect(http.StatusFound, res.Request.Response.Header.Get("Location"))
+		cu, err := url.Parse(config.Conf.PostCommentUrl)
+		if err != nil {
+			return
+		}
+		up.Host = cu.Host
+
+		ress, err := http.DefaultClient.Get(up.String())
+
+		if err != nil {
+			return
+		}
 		cc := c.Copy()
 		go func() {
 			id, err := strconv.ParseUint(i, 10, 64)
@@ -72,11 +86,13 @@ func PostComment(c *gin.Context) {
 			err = mail.SendMail([]string{config.Conf.Mail.User}, su, comment)
 			logs.ErrPrintln(err, "发送邮件", config.Conf.Mail.User, su, comment)
 		}()
-		s, err := io.ReadAll(res.Body)
+
+		s, err := io.ReadAll(ress.Body)
 		if err != nil {
 			return
 		}
-		c.String(http.StatusOK, string(s))
+		commentCache.Set(up.RawQuery, string(s))
+		c.Redirect(http.StatusFound, res.Header.Get("Location"))
 		return
 	}
 	s, err := io.ReadAll(res.Body)
