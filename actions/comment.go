@@ -31,7 +31,9 @@ func PostComment(c *gin.Context) {
 	data, err := c.GetRawData()
 	defer func() {
 		if err != nil {
-			c.String(http.StatusConflict, err.Error())
+			c.Writer.WriteHeader(http.StatusConflict)
+			c.Writer.Header().Set("Content-Type", "text/html; charset=utf-8")
+			c.Writer.WriteString(err.Error())
 		}
 	}()
 	if err != nil {
@@ -49,6 +51,11 @@ func PostComment(c *gin.Context) {
 	}
 	defer req.Body.Close()
 	req.Header = c.Request.Header.Clone()
+	home, err := url.Parse(wp.Option["siteurl"])
+	if err != nil {
+		return
+	}
+	req.Host = home.Host
 	res, err := cli.Do(req)
 	if err != nil && err != http.ErrUseLastResponse {
 		return
@@ -67,8 +74,12 @@ func PostComment(c *gin.Context) {
 			return
 		}
 		up.Host = cu.Host
-
-		ress, err := http.DefaultClient.Get(up.String())
+		newReq, err := http.NewRequest("GET", up.String(), nil)
+		if err != nil {
+			return
+		}
+		newReq.Host = home.Host
+		ress, err := http.DefaultClient.Do(newReq)
 
 		if err != nil {
 			return
