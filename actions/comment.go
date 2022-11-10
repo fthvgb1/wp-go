@@ -65,23 +65,27 @@ func PostComment(c *gin.Context) {
 			c.SetCookie(cookie.Name, cookie.Value, cookie.MaxAge, cookie.Path, cookie.Domain, cookie.Secure, cookie.HttpOnly)
 		}
 		u := res.Header.Get("Location")
-		up, err := url.Parse(u)
-		if err != nil {
+		up, er := url.Parse(u)
+		if er != nil {
+			err = er
 			return
 		}
-		cu, err := url.Parse(config.Conf.PostCommentUrl)
-		if err != nil {
+		cu, er := url.Parse(config.Conf.PostCommentUrl)
+		if er != nil {
+			err = er
 			return
 		}
 		up.Host = cu.Host
-		newReq, err := http.NewRequest("GET", up.String(), nil)
-		if err != nil {
+		up.Scheme = "http"
+		newReq, er := http.NewRequest("GET", up.String(), nil)
+		if er != nil {
+			err = er
 			return
 		}
 		newReq.Host = home.Host
-		ress, err := http.DefaultClient.Do(newReq)
-
-		if err != nil {
+		ress, er := http.DefaultClient.Do(newReq)
+		if er != nil {
+			err = er
 			return
 		}
 		cc := c.Copy()
@@ -101,8 +105,9 @@ func PostComment(c *gin.Context) {
 			logs.ErrPrintln(err, "发送邮件", config.Conf.Mail.User, su, comment)
 		}()
 
-		s, err := io.ReadAll(ress.Body)
-		if err != nil {
+		s, er := io.ReadAll(ress.Body)
+		if er != nil {
+			err = er
 			return
 		}
 		commentCache.Set(up.RawQuery, string(s))
@@ -114,4 +119,8 @@ func PostComment(c *gin.Context) {
 		return
 	}
 	err = errors.New(string(s))
+}
+
+func fetchContent() {
+
 }
