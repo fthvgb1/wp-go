@@ -120,7 +120,3 @@ func PostComment(c *gin.Context) {
 	}
 	err = errors.New(string(s))
 }
-
-func fetchContent() {
-
-}
