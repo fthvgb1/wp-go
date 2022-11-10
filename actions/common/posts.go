@@ -190,7 +190,7 @@ func getPostContext(arg ...any) (r PostContext, err error) {
 }
 
 func GetMonthPostIds(ctx context.Context, year, month string, page, limit int, order string) (r []wp.Posts, total int, err error) {
-	res, err := monthPostsCache.GetCache(ctx, fmt.Sprintf("%s%s", year, month), time.Second, year, month)
+	res, err := monthPostsCache.GetCache(ctx, fmt.Sprintf("%s%s", year, month), time.Second, ctx, year, month)
 	if err != nil {
 		return
 	}
