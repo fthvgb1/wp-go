@@ -5,6 +5,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github/fthvgb1/wp-go/actions/common"
+	"github/fthvgb1/wp-go/config"
 	"github/fthvgb1/wp-go/helper"
 	"github/fthvgb1/wp-go/logs"
 	"github/fthvgb1/wp-go/models/wp"
@@ -32,8 +33,8 @@ func Detail(c *gin.Context) {
 	categoryItems := common.Categories(c)
 	recentComments := common.RecentComments(c, 5)
 	var h = gin.H{
-		"title":          wp.Option["blogname"],
-		"options":        wp.Option,
+		"title":          config.Options.Value("blogname"),
+		"options":        config.Options,
 		"recentPosts":    recent,
 		"archives":       archive,
 		"categories":     categoryItems,
@@ -91,11 +92,11 @@ func Detail(c *gin.Context) {
 	commentss := treeComments(comments)
 	prev, next, err := common.GetContextPost(c, post.Id, post.PostDate)
 	logs.ErrPrintln(err, "get pre and next post", post.Id, post.PostDate)
-	h["title"] = fmt.Sprintf("%s-%s", post.PostTitle, wp.Option["blogname"])
+	h["title"] = fmt.Sprintf("%s-%s", post.PostTitle, config.Options.Value("blogname"))
 	h["post"] = post
 	h["showComment"] = showComment
 	h["prev"] = prev
-	depth := wp.Option["thread_comments_depth"]
+	depth := config.Options.Value("thread_comments_depth")
 	d, err := strconv.Atoi(depth)
 	if err != nil {
 		logs.ErrPrintln(err, "get comment depth")
@@ -272,7 +273,7 @@ func gravatar(c *gin.Context, email string) (u string) {
 	q := url.Values{}
 	q.Add("s", "112")
 	q.Add("d", "mm")
-	q.Add("r", strings.ToLower(wp.Option["avatar_rating"]))
+	q.Add("r", strings.ToLower(config.Options.Value("avatar_rating")))
 	u = fmt.Sprintf("%s?%s", u, q.Encode())
 	return
 }

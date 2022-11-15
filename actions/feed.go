@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github/fthvgb1/wp-go/actions/common"
 	"github/fthvgb1/wp-go/cache"
+	"github/fthvgb1/wp-go/config"
 	"github/fthvgb1/wp-go/helper"
 	"github/fthvgb1/wp-go/logs"
 	"github/fthvgb1/wp-go/models/wp"
@@ -25,14 +26,14 @@ var commentsFeedCache = cache.NewSliceCache(commentsFeed, time.Hour)
 
 func InitFeed() {
 	templateRss = rss2.Rss2{
-		Title:           wp.Option["blogname"],
-		AtomLink:        fmt.Sprintf("%s/feed", wp.Option["home"]),
-		Link:            wp.Option["siteurl"],
-		Description:     wp.Option["blogdescription"],
+		Title:           config.Options.Value("blogname"),
+		AtomLink:        fmt.Sprintf("%s/feed", config.Options.Value("home")),
+		Link:            config.Options.Value("siteurl"),
+		Description:     config.Options.Value("blogdescription"),
 		Language:        "zh-CN",
 		UpdatePeriod:    "hourly",
 		UpdateFrequency: 1,
-		Generator:       wp.Option["home"],
+		Generator:       config.Options.Value("home"),
 	}
 }
 
@@ -92,9 +93,9 @@ func feed(arg ...any) (xml []string, err error) {
 		}
 		l := ""
 		if t.CommentStatus == "open" && t.CommentCount > 0 {
-			l = fmt.Sprintf("%s/p/%d#comments", wp.Option["siteurl"], t.Id)
+			l = fmt.Sprintf("%s/p/%d#comments", config.Options.Value("siteurl"), t.Id)
 		} else if t.CommentStatus == "open" && t.CommentCount == 0 {
-			l = fmt.Sprintf("%s/p/%d#respond", wp.Option["siteurl"], t.Id)
+			l = fmt.Sprintf("%s/p/%d#respond", config.Options.Value("siteurl"), t.Id)
 		}
 		user := common.GetUser(c, t.PostAuthor)
 
@@ -106,8 +107,8 @@ func feed(arg ...any) (xml []string, err error) {
 			Content:       t.PostContent,
 			Category:      strings.Join(t.Categories, "、"),
 			CommentLink:   l,
-			CommentRss:    fmt.Sprintf("%s/p/%d/feed", wp.Option["siteurl"], t.Id),
-			Link:          fmt.Sprintf("%s/p/%d", wp.Option["siteurl"], t.Id),
+			CommentRss:    fmt.Sprintf("%s/p/%d/feed", config.Options.Value("siteurl"), t.Id),
+			Link:          fmt.Sprintf("%s/p/%d", config.Options.Value("siteurl"), t.Id),
 			Description:   desc,
 			PubDate:       t.PostDateGmt.Format(timeFormat),
 		}
@@ -169,8 +170,8 @@ func postFeed(arg ...any) (x string, err error) {
 	rs := templateRss
 
 	rs.Title = fmt.Sprintf("《%s》的评论", post.PostTitle)
-	rs.AtomLink = fmt.Sprintf("%s/p/%d/feed", wp.Option["siteurl"], post.Id)
-	rs.Link = fmt.Sprintf("%s/p/%d", wp.Option["siteurl"], post.Id)
+	rs.AtomLink = fmt.Sprintf("%s/p/%d/feed", config.Options.Value("siteurl"), post.Id)
+	rs.Link = fmt.Sprintf("%s/p/%d", config.Options.Value("siteurl"), post.Id)
 	rs.LastBuildDate = time.Now().Format(timeFormat)
 	if post.PostPassword != "" {
 		if len(comments) > 0 {
@@ -179,7 +180,7 @@ func postFeed(arg ...any) (x string, err error) {
 			rs.Items = []rss2.Item{
 				{
 					Title:       fmt.Sprintf("评价者：%s", t.CommentAuthor),
-					Link:        fmt.Sprintf("%s/p/%d#comment-%d", wp.Option["siteurl"], post.Id, t.CommentId),
+					Link:        fmt.Sprintf("%s/p/%d#comment-%d", config.Options.Value("siteurl"), post.Id, t.CommentId),
 					Creator:     t.CommentAuthor,
 					PubDate:     t.CommentDateGmt.Format(timeFormat),
 					Guid:        fmt.Sprintf("%s#comment-%d", post.Guid, t.CommentId),
@@ -192,7 +193,7 @@ func postFeed(arg ...any) (x string, err error) {
 		rs.Items = helper.SliceMap(comments, func(t wp.Comments) rss2.Item {
 			return rss2.Item{
 				Title:   fmt.Sprintf("评价者：%s", t.CommentAuthor),
-				Link:    fmt.Sprintf("%s/p/%d#comment-%d", wp.Option["siteurl"], post.Id, t.CommentId),
+				Link:    fmt.Sprintf("%s/p/%d#comment-%d", config.Options.Value("siteurl"), post.Id, t.CommentId),
 				Creator: t.CommentAuthor,
 				PubDate: t.CommentDateGmt.Format(timeFormat),
 				Guid:    fmt.Sprintf("%s#comment-%d", post.Guid, t.CommentId),
@@ -224,9 +225,9 @@ func commentsFeed(args ...any) (r []string, err error) {
 	c := args[0].(*gin.Context)
 	commens := common.RecentComments(c, 10)
 	rs := templateRss
-	rs.Title = fmt.Sprintf("\"%s\"的评论", wp.Option["blogname"])
+	rs.Title = fmt.Sprintf("\"%s\"的评论", config.Options.Value("blogname"))
 	rs.LastBuildDate = time.Now().Format(timeFormat)
-	rs.AtomLink = fmt.Sprintf("%s/comments/feed", wp.Option["siteurl"])
+	rs.AtomLink = fmt.Sprintf("%s/comments/feed", config.Options.Value("siteurl"))
 	com, err := common.GetCommentByIds(c, helper.SliceMap(commens, func(t wp.Comments) uint64 {
 		return t.CommentId
 	}))
@@ -247,7 +248,7 @@ func commentsFeed(args ...any) (r []string, err error) {
 		}
 		return rss2.Item{
 			Title:       fmt.Sprintf("%s对《%s》的评论", t.CommentAuthor, post.PostTitle),
-			Link:        fmt.Sprintf("%s/p/%d#comment-%d", wp.Option["siteurl"], post.Id, t.CommentId),
+			Link:        fmt.Sprintf("%s/p/%d#comment-%d", config.Options.Value("siteurl"), post.Id, t.CommentId),
 			Creator:     t.CommentAuthor,
 			Description: desc,
 			PubDate:     t.CommentDateGmt.Format(timeFormat),

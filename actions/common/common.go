@@ -131,10 +131,10 @@ func categories(a ...any) (terms []wp.WpTermsMy, err error) {
 		{"t", "inner join", "wp_term_taxonomy tt", "t.term_id = tt.term_id"},
 	}, nil, 0, in)
 	for i := 0; i < len(terms); i++ {
-		if v, ok := wp.Terms[terms[i].WpTerms.TermId]; ok {
+		if v, ok := config.Terms.Load(terms[i].WpTerms.TermId); ok {
 			terms[i].WpTerms = v
 		}
-		if v, ok := wp.TermTaxonomies[terms[i].WpTerms.TermId]; ok {
+		if v, ok := config.TermTaxonomies.Load(terms[i].WpTerms.TermId); ok {
 			terms[i].TermTaxonomy = v
 		}
 	}

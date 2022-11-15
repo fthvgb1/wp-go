@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"github/fthvgb1/wp-go/config"
 	"github/fthvgb1/wp-go/helper"
-	"github/fthvgb1/wp-go/models/wp"
 	"github/fthvgb1/wp-go/phpass"
 	"net/http"
 	"strings"
@@ -33,7 +33,7 @@ func Login(c *gin.Context) {
 		c.Error(err)
 		return
 	}
-	cohash := fmt.Sprintf("wp-postpass_%s", helper.StringMd5(wp.Option["siteurl"]))
+	cohash := fmt.Sprintf("wp-postpass_%s", helper.StringMd5(config.Options.Value("siteurl")))
 	c.SetCookie(cohash, pass, 24*3600, "/", "", false, false)
 
 	c.Redirect(http.StatusFound, ref)

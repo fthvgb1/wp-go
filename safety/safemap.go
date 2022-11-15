@@ -98,6 +98,11 @@ func newEntry[V any](i V) *entry[V] {
 	return &entry[V]{p: unsafe.Pointer(&i)}
 }
 
+func (m *Map[K, V]) Value(key K) (v V) {
+	v, _ = m.Load(key)
+	return
+}
+
 // Load returns the value stored in the map for a key, or nil if no
 // value is present.
 // The ok result indicates whether value was found in the map.

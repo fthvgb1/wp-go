@@ -34,6 +34,9 @@ func SetupRouter() *gin.Engine {
 		"dateCh": func(t time.Time) any {
 			return t.Format("2006年 01月 02日")
 		},
+		"getOption": func(k string) string {
+			return config.Options.Value(k)
+		},
 	}).SetTemplate()
 	r.Use(
 		gin.Logger(),

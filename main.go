@@ -7,7 +7,6 @@ import (
 	"github/fthvgb1/wp-go/config"
 	"github/fthvgb1/wp-go/db"
 	"github/fthvgb1/wp-go/models"
-	"github/fthvgb1/wp-go/models/wp"
 	"github/fthvgb1/wp-go/plugins"
 	"github/fthvgb1/wp-go/route"
 	"math/rand"
@@ -29,12 +28,11 @@ func init() {
 		panic(err)
 	}
 	models.InitDB(db.NewSqlxDb(db.Db))
-	err = wp.InitOptions()
+	err = config.InitOptions()
 	if err != nil {
 		panic(err)
 	}
-
-	err = wp.InitTerms()
+	err = config.InitTerms()
 	if err != nil {
 		panic(err)
 	}
