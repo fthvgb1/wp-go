@@ -9,7 +9,7 @@ import (
 )
 
 func ValidateServerNames() func(ctx *gin.Context) {
-	serverName := helper.SimpleSliceToMap(config.Conf.TrustServerNames, func(v string) string {
+	serverName := helper.SimpleSliceToMap(config.Conf.Load().TrustServerNames, func(v string) string {
 		return v
 	})
 	return func(c *gin.Context) {

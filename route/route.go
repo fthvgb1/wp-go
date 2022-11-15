@@ -20,8 +20,9 @@ func SetupRouter() *gin.Engine {
 	// Disable Console Color
 	// gin.DisableConsoleColor()
 	r := gin.New()
-	if len(config.Conf.TrustIps) > 0 {
-		err := r.SetTrustedProxies(config.Conf.TrustIps)
+	c := config.Conf.Load()
+	if len(c.TrustIps) > 0 {
+		err := r.SetTrustedProxies(c.TrustIps)
 		if err != nil {
 			panic(err)
 		}
@@ -42,11 +43,11 @@ func SetupRouter() *gin.Engine {
 		gin.Logger(),
 		middleware.ValidateServerNames(),
 		middleware.RecoverAndSendMail(gin.DefaultErrorWriter),
-		middleware.FlowLimit(config.Conf.MaxRequestSleepNum, config.Conf.MaxRequestNum, config.Conf.SleepTime),
+		middleware.FlowLimit(c.MaxRequestSleepNum, c.MaxRequestNum, c.SleepTime),
 		middleware.SetStaticFileCache,
 	)
 	//gzip 因为一般会用nginx做反代时自动使用gzip,所以go这边本身可以不用
-	if config.Conf.Gzip {
+	if c.Gzip {
 		r.Use(gzip.Gzip(gzip.DefaultCompression, gzip.WithExcludedPaths([]string{
 			"/wp-includes/", "/wp-content/",
 		})))
@@ -60,7 +61,7 @@ func SetupRouter() *gin.Engine {
 	}))
 	store := cookie.NewStore([]byte("secret"))
 	r.Use(sessions.Sessions("go-wp", store))
-	r.GET("/", middleware.SearchLimit(config.Conf.SingleIpSearchNum), actions.Index)
+	r.GET("/", middleware.SearchLimit(c.SingleIpSearchNum), actions.Index)
 	r.GET("/page/:page", actions.Index)
 	r.GET("/p/category/:category", actions.Index)
 	r.GET("/p/category/:category/page/:page", actions.Index)
@@ -73,7 +74,7 @@ func SetupRouter() *gin.Engine {
 	r.GET("/p/:id/feed", actions.PostFeed)
 	r.GET("/feed", actions.Feed)
 	r.GET("/comments/feed", actions.CommentsFeed)
-	r.POST("/comment", middleware.FlowLimit(config.Conf.MaxRequestSleepNum, 5, config.Conf.SleepTime), actions.PostComment)
+	r.POST("/comment", middleware.FlowLimit(c.MaxRequestSleepNum, 5, c.SleepTime), actions.PostComment)
 	if gin.Mode() != gin.ReleaseMode {
 		pprof.Register(r, "dev/pprof")
 	}

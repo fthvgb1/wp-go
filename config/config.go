@@ -2,12 +2,13 @@ package config
 
 import (
 	"fmt"
+	"github/fthvgb1/wp-go/safety"
 	"gopkg.in/yaml.v2"
 	"os"
 	"time"
 )
 
-var Conf Config
+var Conf safety.Var[Config]
 
 type Config struct {
 	Mysql                   Mysql           `yaml:"mysql"`
@@ -61,10 +62,12 @@ func InitConfig(conf string) error {
 	if err != nil {
 		return err
 	}
-	err = yaml.Unmarshal(file, &Conf)
+	var c Config
+	err = yaml.Unmarshal(file, &c)
 	if err != nil {
 		return err
 	}
+	Conf.Store(c)
 	return nil
 }
 
@@ -77,7 +80,7 @@ type Dsn struct {
 	Charset  string `yaml:"charset"`
 }
 
-func (m *Dsn) GetDsn() string {
+func (m Dsn) GetDsn() string {
 	if m.Charset == "" {
 		m.Charset = "utf8"
 	}

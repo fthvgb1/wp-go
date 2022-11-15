@@ -28,34 +28,35 @@ var usersCache *cache.MapCache[uint64, wp.Users]
 var commentsCache *cache.MapCache[uint64, wp.Comments]
 
 func InitActionsCommonCache() {
+	c := config.Conf.Load()
 	archivesCaches = &Arch{
 		mutex:        &sync.Mutex{},
 		setCacheFunc: archives,
 	}
 
-	searchPostIdsCache = cache.NewMapCacheByFn[string, PostIds](searchPostIds, config.Conf.SearchPostCacheTime)
+	searchPostIdsCache = cache.NewMapCacheByFn[string, PostIds](searchPostIds, c.SearchPostCacheTime)
 
-	postListIdsCache = cache.NewMapCacheByFn[string, PostIds](searchPostIds, config.Conf.PostListCacheTime)
+	postListIdsCache = cache.NewMapCacheByFn[string, PostIds](searchPostIds, c.PostListCacheTime)
 
-	monthPostsCache = cache.NewMapCacheByFn[string, []uint64](monthPost, config.Conf.MonthPostCacheTime)
+	monthPostsCache = cache.NewMapCacheByFn[string, []uint64](monthPost, c.MonthPostCacheTime)
 
-	postContextCache = cache.NewMapCacheByFn[uint64, PostContext](getPostContext, config.Conf.ContextPostCacheTime)
+	postContextCache = cache.NewMapCacheByFn[uint64, PostContext](getPostContext, c.ContextPostCacheTime)
 
-	postsCache = cache.NewMapCacheByBatchFn[uint64, wp.Posts](getPostsByIds, config.Conf.PostDataCacheTime)
+	postsCache = cache.NewMapCacheByBatchFn[uint64, wp.Posts](getPostsByIds, c.PostDataCacheTime)
 
-	categoryCaches = cache.NewSliceCache[wp.WpTermsMy](categories, config.Conf.CategoryCacheTime)
+	categoryCaches = cache.NewSliceCache[wp.WpTermsMy](categories, c.CategoryCacheTime)
 
-	recentPostsCaches = cache.NewSliceCache[wp.Posts](recentPosts, config.Conf.RecentPostCacheTime)
+	recentPostsCaches = cache.NewSliceCache[wp.Posts](recentPosts, c.RecentPostCacheTime)
 
-	recentCommentsCaches = cache.NewSliceCache[wp.Comments](recentComments, config.Conf.RecentCommentsCacheTime)
+	recentCommentsCaches = cache.NewSliceCache[wp.Comments](recentComments, c.RecentCommentsCacheTime)
 
-	postCommentCaches = cache.NewMapCacheByFn[uint64, []uint64](postComments, config.Conf.PostCommentsCacheTime)
+	postCommentCaches = cache.NewMapCacheByFn[uint64, []uint64](postComments, c.PostCommentsCacheTime)
 
-	maxPostIdCache = cache.NewSliceCache[uint64](getMaxPostId, config.Conf.MaxPostIdCacheTime)
+	maxPostIdCache = cache.NewSliceCache[uint64](getMaxPostId, c.MaxPostIdCacheTime)
 
-	usersCache = cache.NewMapCacheByBatchFn[uint64, wp.Users](getUsers, config.Conf.UserInfoCacheTime)
+	usersCache = cache.NewMapCacheByBatchFn[uint64, wp.Users](getUsers, c.UserInfoCacheTime)
 
-	commentsCache = cache.NewMapCacheByBatchFn[uint64, wp.Comments](getCommentByIds, config.Conf.CommentsCacheTime)
+	commentsCache = cache.NewMapCacheByBatchFn[uint64, wp.Comments](getCommentByIds, c.CommentsCacheTime)
 }
 
 func ClearCache() {
@@ -67,6 +68,16 @@ func ClearCache() {
 	postContextCache.ClearExpired()
 	usersCache.ClearExpired()
 	commentsCache.ClearExpired()
+}
+func FlushCache() {
+	searchPostIdsCache.Flush()
+	postsCache.Flush()
+	postsCache.Flush()
+	postListIdsCache.Flush()
+	monthPostsCache.Flush()
+	postContextCache.Flush()
+	usersCache.Flush()
+	commentsCache.Flush()
 }
 
 type PostIds struct {

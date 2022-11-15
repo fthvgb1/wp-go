@@ -19,17 +19,20 @@ var digestCache *cache.MapCache[uint64, string]
 var quto = regexp.MustCompile(`&quot; *|&amp; *|&lt; *|&gt; ?|&nbsp; *`)
 
 func InitDigestCache() {
-	digestCache = cache.NewMapCacheByFn[uint64](digestRaw, config.Conf.DigestCacheTime)
+	digestCache = cache.NewMapCacheByFn[uint64](digestRaw, config.Conf.Load().DigestCacheTime)
 }
 
 func ClearDigestCache() {
 	digestCache.ClearExpired()
 }
+func FlushCache() {
+	digestCache.Flush()
+}
 
 func digestRaw(arg ...any) (string, error) {
 	str := arg[0].(string)
 	id := arg[1].(uint64)
-	limit := config.Conf.DigestWordCount
+	limit := config.Conf.Load().DigestWordCount
 	if limit < 0 {
 		return str, nil
 	} else if limit == 0 {

@@ -41,6 +41,10 @@ func ClearCache() {
 	postFeedCache.ClearExpired()
 	commentCache.ClearExpired()
 }
+func FlushCache() {
+	postFeedCache.Flush()
+	commentCache.Flush()
+}
 
 func isCacheExpired(c *gin.Context, lastTime time.Time) bool {
 	eTag := helper.StringMd5(lastTime.Format(tmp))

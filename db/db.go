@@ -35,23 +35,24 @@ func (r SqlxDb) Get(ctx context.Context, dest any, sql string, params ...any) er
 }
 
 func InitDb() error {
-	dsn := config.Conf.Mysql.Dsn.GetDsn()
+	c := config.Conf.Load()
+	dsn := c.Mysql.Dsn.GetDsn()
 	var err error
 	Db, err = sqlx.Open("mysql", dsn)
 	if err != nil {
 		return err
 	}
-	if config.Conf.Mysql.Pool.ConnMaxIdleTime != 0 {
-		Db.SetConnMaxIdleTime(config.Conf.Mysql.Pool.ConnMaxLifetime)
+	if c.Mysql.Pool.ConnMaxIdleTime != 0 {
+		Db.SetConnMaxIdleTime(c.Mysql.Pool.ConnMaxLifetime)
 	}
-	if config.Conf.Mysql.Pool.MaxIdleConn != 0 {
-		Db.SetMaxIdleConns(config.Conf.Mysql.Pool.MaxIdleConn)
+	if c.Mysql.Pool.MaxIdleConn != 0 {
+		Db.SetMaxIdleConns(c.Mysql.Pool.MaxIdleConn)
 	}
-	if config.Conf.Mysql.Pool.MaxOpenConn != 0 {
-		Db.SetMaxOpenConns(config.Conf.Mysql.Pool.MaxOpenConn)
+	if c.Mysql.Pool.MaxOpenConn != 0 {
+		Db.SetMaxOpenConns(c.Mysql.Pool.MaxOpenConn)
 	}
-	if config.Conf.Mysql.Pool.ConnMaxLifetime != 0 {
-		Db.SetConnMaxLifetime(config.Conf.Mysql.Pool.ConnMaxLifetime)
+	if c.Mysql.Pool.ConnMaxLifetime != 0 {
+		Db.SetConnMaxLifetime(c.Mysql.Pool.ConnMaxLifetime)
 	}
 	return err
 }

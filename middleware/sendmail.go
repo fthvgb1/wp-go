@@ -41,7 +41,7 @@ func RecoverAndSendMail(w io.Writer) func(ctx *gin.Context) {
 			)
 
 			er := mail.SendMail(
-				[]string{config.Conf.Mail.User},
+				[]string{config.Conf.Load().Mail.User},
 				fmt.Sprintf("%s%s %s 发生错误", fmt.Sprintf(config.Options.Value("siteurl")), c.FullPath(), time.Now().Format(time.RFC1123Z)), content)
 
 			if er != nil {

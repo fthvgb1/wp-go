@@ -23,9 +23,10 @@ func SendMail(mailTo []string, subject string, body string, a ...AttacheFile) er
 	m := gomail.NewMessage(
 		gomail.SetEncoding(gomail.Base64),
 	)
+	c := config.Conf.Load()
 	m.SetHeader("From",
-		m.FormatAddress(config.Conf.Mail.User,
-			config.Conf.Mail.Alias,
+		m.FormatAddress(c.Mail.User,
+			c.Mail.Alias,
 		))
 	m.SetHeader("To", mailTo...)
 	m.SetHeader("Subject", subject)
@@ -43,12 +44,12 @@ func SendMail(mailTo []string, subject string, body string, a ...AttacheFile) er
 	}
 
 	d := gomail.NewDialer(
-		config.Conf.Mail.Host,
-		config.Conf.Mail.Port,
-		config.Conf.Mail.User,
-		config.Conf.Mail.Pass,
+		c.Mail.Host,
+		c.Mail.Port,
+		c.Mail.User,
+		c.Mail.Pass,
 	)
-	if config.Conf.Mail.Ssl {
+	if c.Mail.Ssl {
 		d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 	}
 	err := d.DialAndSend(m)

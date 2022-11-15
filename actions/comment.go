@@ -45,7 +45,7 @@ func PostComment(c *gin.Context) {
 	m := c.PostForm("email")
 	comment := c.PostForm("comment")
 	c.Request.Body = io.NopCloser(bytes.NewBuffer(data))
-	req, err := http.NewRequest("POST", config.Conf.PostCommentUrl, strings.NewReader(c.Request.PostForm.Encode()))
+	req, err := http.NewRequest("POST", config.Conf.Load().PostCommentUrl, strings.NewReader(c.Request.PostForm.Encode()))
 	if err != nil {
 		return
 	}
@@ -70,7 +70,7 @@ func PostComment(c *gin.Context) {
 			err = er
 			return
 		}
-		cu, er := url.Parse(config.Conf.PostCommentUrl)
+		cu, er := url.Parse(config.Conf.Load().PostCommentUrl)
 		if er != nil {
 			err = er
 			return
@@ -104,8 +104,8 @@ func PostComment(c *gin.Context) {
 				return
 			}
 			su := fmt.Sprintf("%s: %s[%s]发表了评论对文档[%v]的评论", config.Options.Value("siteurl"), author, m, post.PostTitle)
-			err = mail.SendMail([]string{config.Conf.Mail.User}, su, comment)
-			logs.ErrPrintln(err, "发送邮件", config.Conf.Mail.User, su, comment)
+			err = mail.SendMail([]string{config.Conf.Load().Mail.User}, su, comment)
+			logs.ErrPrintln(err, "发送邮件", config.Conf.Load().Mail.User, su, comment)
 		}()
 
 		s, er := io.ReadAll(ress.Body)

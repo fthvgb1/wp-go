@@ -2,14 +2,20 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"github/fthvgb1/wp-go/actions"
 	"github/fthvgb1/wp-go/actions/common"
 	"github/fthvgb1/wp-go/config"
 	"github/fthvgb1/wp-go/db"
+	"github/fthvgb1/wp-go/mail"
 	"github/fthvgb1/wp-go/models"
 	"github/fthvgb1/wp-go/plugins"
 	"github/fthvgb1/wp-go/route"
+	"log"
 	"math/rand"
+	"os"
+	"os/signal"
+	"syscall"
 	"time"
 )
 
@@ -43,7 +49,7 @@ func init() {
 }
 
 func cronClearCache() {
-	t := time.NewTicker(config.Conf.CrontabClearCacheTime)
+	t := time.NewTicker(config.Conf.Load().CrontabClearCacheTime)
 	for {
 		select {
 		case <-t.C:
@@ -54,11 +60,38 @@ func cronClearCache() {
 	}
 }
 
-func main() {
-	if config.Conf.Port == "" {
-		config.Conf.Port = "80"
+func signalNotify() {
+	c := make(chan os.Signal)
+	signal.Notify(c, syscall.SIGUSR1, syscall.SIGUSR2)
+	conf := config.Conf.Load()
+	for {
+		switch <-c {
+		case syscall.SIGUSR1:
+		//todo 更新配置
+		case syscall.SIGUSR2:
+			go func() {
+				defer func() {
+					if r := recover(); r != nil {
+						mail.SendMail([]string{conf.Mail.User}, "清空缓存失败", fmt.Sprintf("err:[%s]", r))
+					}
+				}()
+				common.FlushCache()
+				plugins.FlushCache()
+				actions.FlushCache()
+				log.Println("清除缓存成功")
+			}()
+		}
 	}
-	err := route.SetupRouter().Run(config.Conf.Port)
+}
+
+func main() {
+	c := config.Conf.Load()
+	if c.Port == "" {
+		c.Port = "80"
+		config.Conf.Store(c)
+	}
+	go signalNotify()
+	err := route.SetupRouter().Run(c.Port)
 	if err != nil {
 		panic(err)
 	}
