@@ -16,7 +16,7 @@ import (
 	"time"
 )
 
-func SetupRouter() *gin.Engine {
+func SetupRouter() (*gin.Engine, func()) {
 	// Disable Console Color
 	// gin.DisableConsoleColor()
 	r := gin.New()
@@ -39,9 +39,10 @@ func SetupRouter() *gin.Engine {
 			return config.Options.Value(k)
 		},
 	}).SetTemplate()
+	validServerName, reloadValidServerNameFn := middleware.ValidateServerNames()
 	r.Use(
 		gin.Logger(),
-		middleware.ValidateServerNames(),
+		validServerName,
 		middleware.RecoverAndSendMail(gin.DefaultErrorWriter),
 		middleware.FlowLimit(c.MaxRequestSleepNum, c.MaxRequestNum, c.SleepTime),
 		middleware.SetStaticFileCache,
@@ -51,6 +52,9 @@ func SetupRouter() *gin.Engine {
 		r.Use(gzip.Gzip(gzip.DefaultCompression, gzip.WithExcludedPaths([]string{
 			"/wp-includes/", "/wp-content/",
 		})))
+	}
+	fn := func() {
+		reloadValidServerNameFn()
 	}
 	f := static.Fs{FS: static.FsEx, Path: "wp-includes"}
 	r.StaticFileFS("/favicon.ico", "favicon.ico", http.FS(static.FsEx))
@@ -78,5 +82,5 @@ func SetupRouter() *gin.Engine {
 	if gin.Mode() != gin.ReleaseMode {
 		pprof.Register(r, "dev/pprof")
 	}
-	return r
+	return r, fn
 }

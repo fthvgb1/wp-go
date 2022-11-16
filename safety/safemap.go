@@ -318,6 +318,32 @@ func (e *entry[V]) delete(px unsafe.Pointer) (value V, ok bool) {
 	}
 }
 
+func (m *Map[K, V]) Flush() {
+	m.mu.Lock()
+	m.missLocked()
+	m.mu.Unlock()
+}
+
+func (m *Map[K, V]) Len() int {
+	read, _ := m.read.Load().(readOnly[K, V])
+	if read.amended {
+		// m.dirty contains keys not in read.m. Fortunately, Range is already O(N)
+		// (assuming the caller does not break out early), so a call to Range
+		// amortizes an entire copy of the map: we can promote the dirty copy
+		// immediately!
+		m.mu.Lock()
+		read, _ = m.read.Load().(readOnly[K, V])
+		if read.amended {
+			read = readOnly[K, V]{m: m.dirty}
+			m.read.Store(read)
+			m.dirty = nil
+			m.misses = 0
+		}
+		m.mu.Unlock()
+	}
+	return len(read.m)
+}
+
 // Range calls f sequentially for each key and value present in the map.
 // If f returns false, range stops the iteration.
 //
