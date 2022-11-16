@@ -10,15 +10,19 @@ import (
 type IpLimitMap struct {
 	mux      *sync.RWMutex
 	m        map[string]*int64
-	limitNum int64
+	limitNum *int64
 }
 
-func IpLimit(num int64) func(ctx *gin.Context) {
+func IpLimit(num int64) (func(ctx *gin.Context), func(int64)) {
 	m := IpLimitMap{
 		mux:      &sync.RWMutex{},
 		m:        make(map[string]*int64),
-		limitNum: num,
+		limitNum: new(int64),
 	}
+	fn := func(num int64) {
+		atomic.StoreInt64(m.limitNum, num)
+	}
+	fn(num)
 
 	return func(c *gin.Context) {
 		ip := c.ClientIP()
@@ -45,7 +49,7 @@ func IpLimit(num int64) func(ctx *gin.Context) {
 			m.mux.Unlock()
 		}
 
-		if m.limitNum > 0 && atomic.LoadInt64(i) >= m.limitNum {
+		if atomic.LoadInt64(m.limitNum) > 0 && atomic.LoadInt64(i) >= atomic.LoadInt64(m.limitNum) {
 			c.Status(http.StatusForbidden)
 			c.Abort()
 			return
@@ -53,5 +57,5 @@ func IpLimit(num int64) func(ctx *gin.Context) {
 		atomic.AddInt64(i, 1)
 		s = true
 		c.Next()
-	}
+	}, fn
 }

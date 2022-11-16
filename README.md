@@ -5,12 +5,15 @@ a simple front of WordPress build with golang.
 
 #### 特色功能
 
-- 缓存配置
+- 多种缓存配置
 - 添加评论或panic时发邮件通知，包涵栈调用和请求信息
 - 简单的流量限制中间件
 - 除配置文件外将所有静态资源都打包到执行文件中
 - 支持密码查看，且cookie信息可被php版所验证
 - 支持rss2订阅
+- 热更新配置、清空缓存
+  - kill -SIGUSR1 PID 更新配置和清空缓存
+  - kill -SIGUSR2 PID 清空缓存
 
 #### 其它
 用的gin框架和sqlx,在外面封装了层查询的方法。后台可以设置的比较少，大部分设置还没打通。

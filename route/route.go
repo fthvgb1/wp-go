@@ -64,7 +64,8 @@ func SetupRouter() (*gin.Engine, func()) {
 	}))
 	store := cookie.NewStore([]byte("secret"))
 	r.Use(sessions.Sessions("go-wp", store))
-	r.GET("/", middleware.SearchLimit(c.SingleIpSearchNum), actions.Index)
+	sl, slRload := middleware.SearchLimit(c.SingleIpSearchNum)
+	r.GET("/", sl, actions.Index)
 	r.GET("/page/:page", actions.Index)
 	r.GET("/p/category/:category", actions.Index)
 	r.GET("/p/category/:category/page/:page", actions.Index)
@@ -86,6 +87,7 @@ func SetupRouter() (*gin.Engine, func()) {
 		reloadValidServerNameFn()
 		c := config.Conf.Load()
 		flReload(c.MaxRequestSleepNum, c.MaxRequestNum, c.SleepTime)
+		slRload(c.SingleIpSearchNum)
 	}
 	return r, fn
 }
