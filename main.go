@@ -21,6 +21,7 @@ import (
 )
 
 var confPath string
+var middleWareReloadFn func()
 
 func init() {
 	flag.StringVar(&confPath, "c", "config.yaml", "config file")
@@ -114,8 +115,6 @@ func signalNotify() {
 		}
 	}
 }
-
-var middleWareReloadFn func()
 
 func main() {
 	c := config.Conf.Load()
