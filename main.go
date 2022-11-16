@@ -16,16 +16,27 @@ import (
 	"math/rand"
 	"os"
 	"os/signal"
+	"regexp"
+	"strings"
 	"syscall"
 	"time"
 )
 
 var confPath string
+var port string
 var middleWareReloadFn func()
+var intReg = regexp.MustCompile(`^\d`)
 
 func init() {
 	flag.StringVar(&confPath, "c", "config.yaml", "config file")
+	flag.StringVar(&port, "p", "", "port")
 	flag.Parse()
+	if port == "" && os.Getenv("PORT") == "" {
+		port = "80"
+	}
+	if intReg.MatchString(port) && !strings.Contains(port, ":") {
+		port = ":" + port
+	}
 	rand.Seed(time.Now().UnixNano())
 	err := initConf(confPath)
 	if err != nil {
@@ -117,15 +128,10 @@ func signalNotify() {
 }
 
 func main() {
-	c := config.Conf.Load()
-	if c.Port == "" {
-		c.Port = "80"
-		config.Conf.Store(c)
-	}
 	go signalNotify()
 	Gin, reloadFn := route.SetupRouter()
 	middleWareReloadFn = reloadFn
-	err := Gin.Run(c.Port)
+	err := Gin.Run(port)
 	if err != nil {
 		panic(err)
 	}
