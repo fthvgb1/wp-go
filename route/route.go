@@ -40,11 +40,12 @@ func SetupRouter() (*gin.Engine, func()) {
 		},
 	}).SetTemplate()
 	validServerName, reloadValidServerNameFn := middleware.ValidateServerNames()
+	fl, flReload := middleware.FlowLimit(c.MaxRequestSleepNum, c.MaxRequestNum, c.SleepTime)
 	r.Use(
 		gin.Logger(),
 		validServerName,
 		middleware.RecoverAndSendMail(gin.DefaultErrorWriter),
-		middleware.FlowLimit(c.MaxRequestSleepNum, c.MaxRequestNum, c.SleepTime),
+		fl,
 		middleware.SetStaticFileCache,
 	)
 	//gzip 因为一般会用nginx做反代时自动使用gzip,所以go这边本身可以不用
@@ -53,9 +54,7 @@ func SetupRouter() (*gin.Engine, func()) {
 			"/wp-includes/", "/wp-content/",
 		})))
 	}
-	fn := func() {
-		reloadValidServerNameFn()
-	}
+
 	f := static.Fs{FS: static.FsEx, Path: "wp-includes"}
 	r.StaticFileFS("/favicon.ico", "favicon.ico", http.FS(static.FsEx))
 	r.StaticFS("/wp-includes", http.FS(f))
@@ -78,9 +77,15 @@ func SetupRouter() (*gin.Engine, func()) {
 	r.GET("/p/:id/feed", actions.PostFeed)
 	r.GET("/feed", actions.Feed)
 	r.GET("/comments/feed", actions.CommentsFeed)
-	r.POST("/comment", middleware.FlowLimit(c.MaxRequestSleepNum, 5, c.SleepTime), actions.PostComment)
+	cfl, _ := middleware.FlowLimit(c.MaxRequestSleepNum, 5, c.SleepTime)
+	r.POST("/comment", cfl, actions.PostComment)
 	if gin.Mode() != gin.ReleaseMode {
 		pprof.Register(r, "dev/pprof")
+	}
+	fn := func() {
+		reloadValidServerNameFn()
+		c := config.Conf.Load()
+		flReload(c.MaxRequestSleepNum, c.MaxRequestNum, c.SleepTime)
 	}
 	return r, fn
 }

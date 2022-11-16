@@ -80,7 +80,7 @@ func flushCache() {
 	common.FlushCache()
 	plugins.FlushCache()
 	actions.FlushCache()
-	log.Println("清除缓存成功")
+	log.Println("all cache flushed")
 }
 
 func reload() {
@@ -95,7 +95,10 @@ func reload() {
 	logs.ErrPrintln(err, "获取网站设置WpOption失败")
 	err = config.InitTerms()
 	logs.ErrPrintln(err, "获取WpTerms表失败")
-	middleWareReloadFn()
+	if middleWareReloadFn != nil {
+		middleWareReloadFn()
+	}
+	flushCache()
 	log.Println("reload complete")
 }
 
