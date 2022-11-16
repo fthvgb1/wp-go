@@ -6,7 +6,7 @@ import (
 	"github/fthvgb1/wp-go/config"
 	"gopkg.in/gomail.v2"
 	"mime"
-	"strings"
+	"path"
 )
 
 type AttacheFile struct {
@@ -14,12 +14,7 @@ type AttacheFile struct {
 	Path string
 }
 
-func (f AttacheFile) GetName() string {
-	t := strings.Split(f.Path, ".")
-	return fmt.Sprintf("%s.%s", f.Name, t[len(t)-1])
-}
-
-func SendMail(mailTo []string, subject string, body string, a ...AttacheFile) error {
+func SendMail(mailTo []string, subject string, body string, files ...string) error {
 	m := gomail.NewMessage(
 		gomail.SetEncoding(gomail.Base64),
 	)
@@ -32,12 +27,13 @@ func SendMail(mailTo []string, subject string, body string, a ...AttacheFile) er
 	m.SetHeader("Subject", subject)
 	m.SetBody("text/html", body)
 
-	for _, files := range a {
-		m.Attach(files.Path,
-			gomail.Rename(files.Name), //重命名
+	for _, file := range files {
+		_, f := path.Split(file)
+		m.Attach(file,
+			gomail.Rename(f), //重命名
 			gomail.SetHeader(map[string][]string{
 				"Content-Disposition": {
-					fmt.Sprintf(`attachment; filename="%s"`, mime.QEncoding.Encode("UTF-8", files.GetName())),
+					fmt.Sprintf(`attachment; filename="%s"`, mime.QEncoding.Encode("UTF-8", f)),
 				},
 			}),
 		)
