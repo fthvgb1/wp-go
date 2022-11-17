@@ -75,6 +75,7 @@ func Detail(c *gin.Context) {
 	if post.CommentCount > 0 || post.CommentStatus == "open" {
 		showComment = true
 	}
+	user := common.GetUserById(c, post.PostAuthor)
 	common.PasswordProjectTitle(&post)
 	if post.PostPassword != "" && pw != post.PostPassword {
 		common.PasswdProjectContent(&post)
@@ -104,6 +105,7 @@ func Detail(c *gin.Context) {
 	}
 	h["comments"] = hh.formatComment(commentss, 1, d)
 	h["next"] = next
+	h["user"] = user
 }
 
 type Comment struct {

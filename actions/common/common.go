@@ -25,6 +25,7 @@ var searchPostIdsCache *cache.MapCache[string, PostIds]
 var maxPostIdCache *cache.SliceCache[uint64]
 var TotalRaw int
 var usersCache *cache.MapCache[uint64, wp.Users]
+var usersNameCache *cache.MapCache[string, wp.Users]
 var commentsCache *cache.MapCache[uint64, wp.Comments]
 
 func InitActionsCommonCache() {
@@ -54,7 +55,9 @@ func InitActionsCommonCache() {
 
 	maxPostIdCache = cache.NewSliceCache[uint64](getMaxPostId, c.MaxPostIdCacheTime)
 
-	usersCache = cache.NewMapCacheByBatchFn[uint64, wp.Users](getUsers, c.UserInfoCacheTime)
+	usersCache = cache.NewMapCacheByFn[uint64, wp.Users](getUserById, c.UserInfoCacheTime)
+
+	usersNameCache = cache.NewMapCacheByFn[string, wp.Users](getUserByName, c.UserInfoCacheTime)
 
 	commentsCache = cache.NewMapCacheByBatchFn[uint64, wp.Comments](getCommentByIds, c.CommentsCacheTime)
 }
@@ -68,6 +71,7 @@ func ClearCache() {
 	postContextCache.ClearExpired()
 	usersCache.ClearExpired()
 	commentsCache.ClearExpired()
+	usersNameCache.ClearExpired()
 }
 func FlushCache() {
 	searchPostIdsCache.Flush()
@@ -78,6 +82,7 @@ func FlushCache() {
 	postContextCache.Flush()
 	usersCache.Flush()
 	commentsCache.Flush()
+	usersCache.Flush()
 }
 
 type PostIds struct {

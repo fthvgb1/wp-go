@@ -26,6 +26,7 @@ type indexHandle struct {
 	titleL         string
 	titleR         string
 	search         string
+	author         string
 	totalPage      int
 	category       string
 	categoryType   string
@@ -73,10 +74,10 @@ func (h *indexHandle) getTitle() string {
 }
 
 func (h *indexHandle) getSearchKey() string {
-	return fmt.Sprintf("action:%s|%s|%s|%s|%s|%d|%d", h.search, h.orderBy, h.order, h.category, h.categoryType, h.page, h.pageSize)
+	return fmt.Sprintf("action:%s|%s|%s|%s|%s|%s|%d|%d", h.author, h.search, h.orderBy, h.order, h.category, h.categoryType, h.page, h.pageSize)
 }
 
-func (h *indexHandle) parseParams() {
+func (h *indexHandle) parseParams() (err error) {
 	h.order = h.c.Query("order")
 	if !helper.IsContainInArr(h.order, []string{"asc", "desc"}) {
 		h.order = "asc"
@@ -109,7 +110,18 @@ func (h *indexHandle) parseParams() {
 		h.header = fmt.Sprintf("分类： <span>%s</span>", category)
 	}
 	h.category = category
-
+	username := h.c.Param("author")
+	if username != "" {
+		user, er := common.GetUserByName(h.c, username)
+		if er != nil {
+			err = er
+			return
+		}
+		h.author = username
+		h.where = append(h.where, []string{
+			"post_author", "=", strconv.FormatUint(user.Id, 10), "int",
+		})
+	}
 	if category != "" {
 		h.where = append(h.where, []string{
 			"d.name", category,
@@ -153,6 +165,7 @@ func (h *indexHandle) parseParams() {
 	if h.page > 1 && (h.category != "" || h.search != "" || month != "") {
 		h.setTitleLR(fmt.Sprintf("%s-第%d页", h.titleL, h.page), config.Options.Value("blogname"))
 	}
+	return
 }
 
 func (h *indexHandle) getTotalPage(totalRaws int) int {
@@ -162,7 +175,9 @@ func (h *indexHandle) getTotalPage(totalRaws int) int {
 
 func Index(c *gin.Context) {
 	h := newIndexHandle(c)
-	h.parseParams()
+	var postIds []wp.Posts
+	var totalRaw int
+	var err error
 	archive := common.Archives(c)
 	recent := common.RecentPosts(c, 5)
 	categoryItems := common.Categories(c)
@@ -174,12 +189,21 @@ func Index(c *gin.Context) {
 		"categories":     categoryItems,
 		"search":         h.search,
 		"header":         h.header,
-		"title":          h.getTitle(),
 		"recentComments": recentComments,
 	}
-	var postIds []wp.Posts
-	var totalRaw int
-	var err error
+	defer func() {
+		stat := http.StatusOK
+		if err != nil {
+			c.Error(err)
+			stat = http.StatusInternalServerError
+		}
+		c.HTML(stat, "twentyfifteen/posts/index.gohtml", ginH)
+	}()
+	err = h.parseParams()
+	if err != nil {
+		return
+	}
+	ginH["title"] = h.getTitle()
 	if c.Param("month") != "" {
 		postIds, totalRaw, err = common.GetMonthPostIds(c, c.Param("year"), c.Param("month"), h.page, h.pageSize, h.order)
 		if err != nil {
@@ -190,15 +214,6 @@ func Index(c *gin.Context) {
 	} else {
 		postIds, totalRaw, err = common.PostLists(c, h.getSearchKey(), c, h.where, h.page, h.pageSize, models.SqlBuilder{{h.orderBy, h.order}}, h.join, h.postType, h.status)
 	}
-
-	defer func() {
-		stat := http.StatusOK
-		if err != nil {
-			c.Error(err)
-			stat = http.StatusInternalServerError
-		}
-		c.HTML(stat, "twentyfifteen/posts/index.gohtml", ginH)
-	}()
 	if err != nil {
 		return
 	}

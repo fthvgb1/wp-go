@@ -73,6 +73,8 @@ func SetupRouter() (*gin.Engine, func()) {
 	r.GET("/p/tag/:tag/page/:page", actions.Index)
 	r.GET("/p/date/:year/:month", actions.Index)
 	r.GET("/p/date/:year/:month/page/:page", actions.Index)
+	r.GET("/p/author/:author", actions.Index)
+	r.GET("/p/author/:author/page/:page", actions.Index)
 	r.POST("/login", actions.Login)
 	r.GET("/p/:id", actions.Detail)
 	r.GET("/p/:id/feed", actions.PostFeed)

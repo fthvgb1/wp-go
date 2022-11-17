@@ -101,7 +101,7 @@ func feed(arg ...any) (xml []string, err error) {
 		} else if t.CommentStatus == "open" && t.CommentCount == 0 {
 			l = fmt.Sprintf("%s/p/%d#respond", config.Options.Value("siteurl"), t.Id)
 		}
-		user := common.GetUser(c, t.PostAuthor)
+		user := common.GetUserById(c, t.PostAuthor)
 
 		return rss2.Item{
 			Title:         t.PostTitle,
