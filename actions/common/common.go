@@ -15,7 +15,7 @@ import (
 
 var postContextCache *cache.MapCache[uint64, PostContext]
 var archivesCaches *Arch
-var categoryCaches *cache.SliceCache[wp.WpTermsMy]
+var categoryCaches *cache.SliceCache[wp.TermsMy]
 var recentPostsCaches *cache.SliceCache[wp.Posts]
 var recentCommentsCaches *cache.SliceCache[wp.Comments]
 var postCommentCaches *cache.MapCache[uint64, []uint64]
@@ -46,7 +46,7 @@ func InitActionsCommonCache() {
 
 	postsCache = cache.NewMapCacheByBatchFn[uint64, wp.Posts](getPostsByIds, c.PostDataCacheTime)
 
-	categoryCaches = cache.NewSliceCache[wp.WpTermsMy](categories, c.CategoryCacheTime)
+	categoryCaches = cache.NewSliceCache[wp.TermsMy](categories, c.CategoryCacheTime)
 
 	recentPostsCaches = cache.NewSliceCache[wp.Posts](recentPosts, c.RecentPostCacheTime)
 
@@ -130,16 +130,16 @@ func Archives(ctx context.Context) (r []wp.PostArchive) {
 	return archivesCaches.getArchiveCache(ctx)
 }
 
-func Categories(ctx context.Context) []wp.WpTermsMy {
+func Categories(ctx context.Context) []wp.TermsMy {
 	r, err := categoryCaches.GetCache(ctx, time.Second, ctx)
 	logs.ErrPrintln(err, "get category ")
 	return r
 }
 
-func categories(a ...any) (terms []wp.WpTermsMy, err error) {
+func categories(a ...any) (terms []wp.TermsMy, err error) {
 	ctx := a[0].(context.Context)
 	var in = []any{"category"}
-	terms, err = models.Find[wp.WpTermsMy](ctx, models.SqlBuilder{
+	terms, err = models.Find[wp.TermsMy](ctx, models.SqlBuilder{
 		{"tt.count", ">", "0", "int"},
 		{"tt.taxonomy", "in", ""},
 	}, "t.term_id", "", models.SqlBuilder{
@@ -148,10 +148,10 @@ func categories(a ...any) (terms []wp.WpTermsMy, err error) {
 		{"t", "inner join", "wp_term_taxonomy tt", "t.term_id = tt.term_id"},
 	}, nil, 0, in)
 	for i := 0; i < len(terms); i++ {
-		if v, ok := wpconfig.Terms.Load(terms[i].WpTerms.TermId); ok {
-			terms[i].WpTerms = v
+		if v, ok := wpconfig.Terms.Load(terms[i].Terms.TermId); ok {
+			terms[i].Terms = v
 		}
-		if v, ok := wpconfig.TermTaxonomies.Load(terms[i].WpTerms.TermId); ok {
+		if v, ok := wpconfig.TermTaxonomies.Load(terms[i].Terms.TermId); ok {
 			terms[i].TermTaxonomy = v
 		}
 	}

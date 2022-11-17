@@ -153,7 +153,7 @@ func TestFind(t *testing.T) {
 					{"a", "left join", wp.Users{}.Table() + " b", "a.post_author=b.ID"},
 					{"left join", "wp_term_relationships c", "a.Id=c.object_id"},
 					{"left join", wp.TermTaxonomy{}.Table() + " d", "c.term_taxonomy_id=d.term_taxonomy_id"},
-					{"left join", wp.WpTerms{}.Table() + " e", "d.term_id=e.term_id"},
+					{"left join", wp.Terms{}.Table() + " e", "d.term_id=e.term_id"},
 				},
 				having: SqlBuilder{{"n", ">", "0", "int"}},
 				limit:  10,

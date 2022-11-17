@@ -7,12 +7,12 @@ import (
 	"github/fthvgb1/wp-go/safety"
 )
 
-var Terms safety.Map[uint64, wp.WpTerms]
+var Terms safety.Map[uint64, wp.Terms]
 var TermTaxonomies safety.Map[uint64, wp.TermTaxonomy]
 
 func InitTerms() (err error) {
 	ctx := context.Background()
-	terms, err := models.SimpleFind[wp.WpTerms](ctx, nil, "*")
+	terms, err := models.SimpleFind[wp.Terms](ctx, nil, "*")
 	if err != nil {
 		return err
 	}
