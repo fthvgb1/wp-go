@@ -135,6 +135,39 @@ func TestFind(t *testing.T) {
 				return r
 			}(),
 		},
+		{
+			name: "all",
+			args: args{
+				where: SqlBuilder{
+					{"b.user_login", "in", ""},
+					{"and", "a.post_type", "=", "post", "", "or", "a.post_type", "=", "page", ""},
+					{"a.comment_count", ">", "0", "int"},
+					{"a.post_status", "publish"},
+					{"e.name", "in", ""},
+					{"d.taxonomy", "category"},
+				},
+				fields: "post_author,count(*) n",
+				group:  "a.post_author",
+				order:  SqlBuilder{{"n", "desc"}},
+				join: SqlBuilder{
+					{"a", "left join", wp.Users{}.Table() + " b", "a.post_author=b.ID"},
+					{"left join", "wp_term_relationships c", "a.Id=c.object_id"},
+					{"left join", wp.TermTaxonomy{}.Table() + " d", "c.term_taxonomy_id=d.term_taxonomy_id"},
+					{"left join", wp.WpTerms{}.Table() + " e", "d.term_id=e.term_id"},
+				},
+				having: SqlBuilder{{"n", ">", "0", "int"}},
+				limit:  10,
+				in:     [][]any{{"test", "test2"}, {"web", "golang", "php"}},
+			},
+			wantR: func() []posts {
+				r, err := Select[posts](ctx, "select post_author,count(*) n from wp_posts a left join wp_users b on a.post_author=b.ID left join  wp_term_relationships c  on a.Id=c.object_id  left join  wp_term_taxonomy d  on c.term_taxonomy_id=d.term_taxonomy_id  left join  wp_terms e on d.term_id=e.term_id where b.user_login in ('test','test2') and b.user_status=0 and (a.post_type='post' or a.post_type='page') and a.comment_count>0 and a.post_status='publish' and e.name in ('web','golang','php') and d.taxonomy='category' group by post_author having n > 0 order by n desc limit 10")
+				if err != nil {
+					panic(err)
+				}
+				return r
+			}(),
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

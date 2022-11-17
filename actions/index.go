@@ -197,7 +197,7 @@ func Index(c *gin.Context) {
 			c.Error(err)
 			stat = http.StatusInternalServerError
 		}
-		c.HTML(stat, "twentyfifteen/posts/index.gohtml", ginH)
+		c.HTML(stat, helper.StrJoin(wpconfig.Options.Value("template"), "/posts/index.gohtml"), ginH)
 	}()
 	err = h.parseParams()
 	if err != nil {

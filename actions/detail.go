@@ -50,7 +50,7 @@ func Detail(c *gin.Context) {
 		if isApproveComment == true {
 			return
 		}
-		c.HTML(status, "twentyfifteen/posts/detail.gohtml", h)
+		c.HTML(status, helper.StrJoin(wpconfig.Options.Value("template"), "/posts/detail.gohtml"), h)
 	}()
 	id := c.Param("id")
 	Id := 0
