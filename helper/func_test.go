@@ -768,3 +768,32 @@ func TestSum(t *testing.T) {
 		})
 	}
 }
+
+func TestNumberToString(t *testing.T) {
+	type args struct {
+		n float64
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "t1",
+			args: args{n: 111},
+			want: "111",
+		},
+		{
+			name: "t2",
+			args: args{n: 111.222222},
+			want: "111.222222",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := NumberToString(tt.args.n); got != tt.want {
+				t.Errorf("NumberToString() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

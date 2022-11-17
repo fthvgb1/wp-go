@@ -330,3 +330,7 @@ func SliceChunk[T any](arr []T, size int) [][]T {
 	}
 	return r
 }
+
+func NumberToString[T IntNumber | ~float64 | ~float32](n T) string {
+	return fmt.Sprintf("%v", n)
+}
