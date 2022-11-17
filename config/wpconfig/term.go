@@ -1,4 +1,4 @@
-package config
+package wpconfig
 
 import (
 	"context"

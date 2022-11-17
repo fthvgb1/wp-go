@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github/fthvgb1/wp-go/actions"
 	"github/fthvgb1/wp-go/config"
+	"github/fthvgb1/wp-go/config/wpconfig"
 	"github/fthvgb1/wp-go/middleware"
 	"github/fthvgb1/wp-go/static"
 	"github/fthvgb1/wp-go/templates"
@@ -36,7 +37,7 @@ func SetupRouter() (*gin.Engine, func()) {
 			return t.Format("2006年 01月 02日")
 		},
 		"getOption": func(k string) string {
-			return config.Options.Value(k)
+			return wpconfig.Options.Value(k)
 		},
 	}).SetTemplate()
 	validServerName, reloadValidServerNameFn := middleware.ValidateServerNames()

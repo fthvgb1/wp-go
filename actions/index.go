@@ -5,7 +5,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github/fthvgb1/wp-go/actions/common"
-	"github/fthvgb1/wp-go/config"
+	"github/fthvgb1/wp-go/config/wpconfig"
 	"github/fthvgb1/wp-go/helper"
 	"github/fthvgb1/wp-go/models"
 	"github/fthvgb1/wp-go/models/wp"
@@ -42,7 +42,7 @@ type indexHandle struct {
 }
 
 func newIndexHandle(ctx *gin.Context) *indexHandle {
-	size := config.Options.Value("posts_per_page")
+	size := wpconfig.Options.Value("posts_per_page")
 	si, _ := strconv.Atoi(size)
 	return &indexHandle{
 		c:              ctx,
@@ -50,8 +50,8 @@ func newIndexHandle(ctx *gin.Context) *indexHandle {
 		page:           1,
 		pageSize:       si,
 		paginationStep: 1,
-		titleL:         config.Options.Value("blogname"),
-		titleR:         config.Options.Value("blogdescription"),
+		titleL:         wpconfig.Options.Value("blogname"),
+		titleR:         wpconfig.Options.Value("blogdescription"),
 		where: models.SqlBuilder{
 			{"post_type", "in", ""},
 			{"post_status", "in", ""},
@@ -95,7 +95,7 @@ func (h *indexHandle) parseParams() (err error) {
 		})
 		ss := fmt.Sprintf("%s年%s月", year, strings.TrimLeft(month, "0"))
 		h.header = fmt.Sprintf("月度归档： <span>%s</span>", ss)
-		h.setTitleLR(ss, config.Options.Value("blogname"))
+		h.setTitleLR(ss, wpconfig.Options.Value("blogname"))
 		h.scene = plugins.Archive
 	}
 	category := h.c.Param("category")
@@ -133,7 +133,7 @@ func (h *indexHandle) parseParams() (err error) {
 		}, []string{
 			"left join", "wp_terms d", "c.term_id=d.term_id",
 		})
-		h.setTitleLR(category, config.Options.Value("blogname"))
+		h.setTitleLR(category, wpconfig.Options.Value("blogname"))
 		h.scene = plugins.Category
 	}
 	s := h.c.Query("s")
@@ -146,7 +146,7 @@ func (h *indexHandle) parseParams() (err error) {
 		}, []string{"post_password", ""})
 		h.postType = append(h.postType, "page", "attachment")
 		h.header = fmt.Sprintf("%s的搜索结果", s)
-		h.setTitleLR(helper.StrJoin(`"`, s, `"`, "的搜索结果"), config.Options.Value("blogname"))
+		h.setTitleLR(helper.StrJoin(`"`, s, `"`, "的搜索结果"), wpconfig.Options.Value("blogname"))
 		h.search = s
 		h.scene = plugins.Search
 	}
@@ -163,7 +163,7 @@ func (h *indexHandle) parseParams() (err error) {
 		h.page = 1
 	}
 	if h.page > 1 && (h.category != "" || h.search != "" || month != "") {
-		h.setTitleLR(fmt.Sprintf("%s-第%d页", h.titleL, h.page), config.Options.Value("blogname"))
+		h.setTitleLR(fmt.Sprintf("%s-第%d页", h.titleL, h.page), wpconfig.Options.Value("blogname"))
 	}
 	return
 }
@@ -183,7 +183,7 @@ func Index(c *gin.Context) {
 	categoryItems := common.Categories(c)
 	recentComments := common.RecentComments(c, 5)
 	ginH := gin.H{
-		"options":        config.Options,
+		"options":        wpconfig.Options,
 		"recentPosts":    recent,
 		"archives":       archive,
 		"categories":     categoryItems,
