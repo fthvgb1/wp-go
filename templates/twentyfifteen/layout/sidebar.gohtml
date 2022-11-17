@@ -48,7 +48,7 @@
             <nav aria-label="分类">
                 <ul>
                     {{range $k,$v := .categories}}
-                    <li class="cat-item cat-item-{{$v.WpTerms.TermId}}"><a
+                    <li class="cat-item cat-item-{{$v.Terms.TermId}}"><a
                                 href="/p/category/{{$v.Name}}">{{$v.Name}}</a>
                         {{end}}
                 </ul>
