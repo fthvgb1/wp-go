@@ -334,3 +334,40 @@ func SliceChunk[T any](arr []T, size int) [][]T {
 func NumberToString[T IntNumber | ~float64 | ~float32](n T) string {
 	return fmt.Sprintf("%v", n)
 }
+
+func Slice[T any](arr []T, offset, length int) (r []T) {
+	l := len(arr)
+	if length == 0 {
+		length = l - offset
+	}
+	if l > offset && l >= offset+length {
+		r = append(make([]T, 0, length), arr[offset:offset+length]...)
+		arr = append(arr[:offset], arr[offset+length:]...)
+	} else if l <= offset {
+		return
+	} else if l > offset && l < offset+length {
+		r = append(make([]T, 0, length), arr[offset:]...)
+		arr = arr[:offset]
+	}
+	return
+}
+
+func Comb[T any](arr []T, m int) (r [][]T) {
+	r = make([][]T, 0)
+	if m == 1 {
+		for _, t := range arr {
+			r = append(r, []T{t})
+		}
+		return
+	}
+	l := len(arr) - m
+	for i := 0; i <= l; i++ {
+		next := Slice(arr, i+1, 0)
+		nexRes := Comb(next, m-1)
+		for _, re := range nexRes {
+			t := append([]T{arr[i]}, re...)
+			r = append(r, t)
+		}
+	}
+	return r
+}
