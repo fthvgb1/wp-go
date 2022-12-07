@@ -72,7 +72,7 @@ func (c *SliceCache[T]) GetCache(ctx context.Context, timeout time.Duration, par
 		if timeout > 0 {
 			ctx, cancel := context.WithTimeout(ctx, timeout)
 			defer cancel()
-			done := make(chan struct{})
+			done := make(chan struct{}, 1)
 			go func() {
 				call()
 				done <- struct{}{}

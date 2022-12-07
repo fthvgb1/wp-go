@@ -353,7 +353,6 @@ func Slice[T any](arr []T, offset, length int) (r []T) {
 }
 
 func Comb[T any](arr []T, m int) (r [][]T) {
-	r = make([][]T, 0)
 	if m == 1 {
 		for _, t := range arr {
 			r = append(r, []T{t})

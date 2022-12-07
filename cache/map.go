@@ -168,7 +168,7 @@ func (m *MapCache[K, V]) GetCache(c context.Context, key K, timeout time.Duratio
 		if timeout > 0 {
 			ctx, cancel := context.WithTimeout(c, timeout)
 			defer cancel()
-			done := make(chan struct{})
+			done := make(chan struct{}, 1)
 			go func() {
 				call()
 				done <- struct{}{}
@@ -230,7 +230,7 @@ func (m *MapCache[K, V]) GetCacheBatch(c context.Context, key []K, timeout time.
 		if timeout > 0 {
 			ctx, cancel := context.WithTimeout(c, timeout)
 			defer cancel()
-			done := make(chan struct{})
+			done := make(chan struct{}, 1)
 			go func() {
 				call()
 				done <- struct{}{}
