@@ -3,8 +3,8 @@ package mail
 import (
 	"crypto/tls"
 	"fmt"
+	"github.com/soxfmr/gomail"
 	"github/fthvgb1/wp-go/config"
-	"gopkg.in/gomail.v2"
 	"mime"
 	"path"
 )
@@ -45,7 +45,7 @@ func SendMail(mailTo []string, subject string, body string, files ...string) err
 		c.Mail.User,
 		c.Mail.Pass,
 	)
-	if c.Mail.Ssl {
+	if !c.Mail.Ssl {
 		d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 	}
 	err := d.DialAndSend(m)
