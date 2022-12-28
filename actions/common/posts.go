@@ -10,6 +10,7 @@ import (
 	"github/fthvgb1/wp-go/models"
 	"github/fthvgb1/wp-go/models/wp"
 	"strings"
+	"sync/atomic"
 	"time"
 )
 
@@ -105,8 +106,10 @@ func searchPostIds(args ...any) (ids PostIds, err error) {
 		ids.Ids = append(ids.Ids, posts.Id)
 	}
 	ids.Length = total
-	if total > TotalRaw {
-		TotalRaw = total
+	totalR := int(atomic.LoadInt64(&TotalRaw))
+	if total > totalR {
+		tt := int64(total)
+		atomic.StoreInt64(&TotalRaw, tt)
 	}
 	return
 }

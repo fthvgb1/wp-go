@@ -24,7 +24,7 @@ var monthPostsCache *cache.MapCache[string, []uint64]
 var postListIdsCache *cache.MapCache[string, PostIds]
 var searchPostIdsCache *cache.MapCache[string, PostIds]
 var maxPostIdCache *cache.SliceCache[uint64]
-var TotalRaw int
+var TotalRaw int64
 var usersCache *cache.MapCache[uint64, wp.Users]
 var usersNameCache *cache.MapCache[string, wp.Users]
 var commentsCache *cache.MapCache[uint64, wp.Comments]

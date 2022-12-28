@@ -15,6 +15,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync/atomic"
 )
 
 type indexHandle struct {
@@ -159,7 +160,8 @@ func (h *indexHandle) parseParams() (err error) {
 			h.page = pa
 		}
 	}
-	if common.TotalRaw > 0 && common.TotalRaw < (h.page-1)*h.pageSize {
+	total := int(atomic.LoadInt64(&common.TotalRaw))
+	if total > 0 && total < (h.page-1)*h.pageSize {
 		h.page = 1
 	}
 	if h.page > 1 && (h.category != "" || h.search != "" || month != "") {
