@@ -46,6 +46,7 @@ func Detail(c *gin.Context) {
 		if err != nil {
 			status = http.StatusInternalServerError
 			c.Error(err)
+			return
 		}
 		if isApproveComment == true {
 			return
