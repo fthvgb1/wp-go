@@ -34,6 +34,13 @@ type Posts struct {
 	Tags           []string `json:"tags"`
 	CategoriesHtml string
 	TagsHtml       string
+	Thumbnail      PostThumbnail
+}
+
+type PostThumbnail struct {
+	Path   string
+	Width  int
+	Height int
 }
 
 func (w Posts) PrimaryKey() string {

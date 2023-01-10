@@ -17,13 +17,19 @@
                 {{end}}
                 {{ range $k,$v:=.posts}}
                     <article id="post-{{$v.Id}}"
-                             class="post-{{$v.Id}} post type-post status-publish format-standard hentry category">
+                             class="post-{{$v.Id}} post {{if $v.Thumbnail.Path}}has-post-thumbnail{{end}} type-post status-publish format-standard hentry category">
+                        {{if $v.Thumbnail.Path}}
+                            <a class="post-thumbnail" href="/p/{{$v.Id}}" aria-hidden="true">
+                                <img width="{{$v.Thumbnail.Width}}" height="{{$v.Thumbnail.Height}}" src="{{"siteurl"| getOption}}/wp-content/uploads/{{$v.Thumbnail.Path}}" class="attachment-post-thumbnail size-post-thumbnail wp-post-image" alt="{{$v.PostTitle}}" decoding="async">
+                            </a>
+                        {{end}}
 
                         <header class="entry-header">
                             <h2 class="entry-title">
                                 <a href="/p/{{$v.Id}}" rel="bookmark">{{$v.PostTitle}}</a>
                             </h2>
-                        </header><!-- .entry-header -->
+                        </header>
+                        <!-- .entry-header -->
 
                         <div class="entry-content">
                             {{$v.PostContent|unescaped}}

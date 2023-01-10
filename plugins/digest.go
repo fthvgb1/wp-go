@@ -123,6 +123,11 @@ func Digest(p *Plugin[wp.Posts], c *gin.Context, post *wp.Posts, scene uint) {
 	if scene == Detail {
 		return
 	}
-	post.PostContent = DigestCache(c, post.Id, post.PostContent)
+	if post.PostExcerpt != "" {
+		post.PostContent = strings.Replace(post.PostExcerpt, "\n", "<br/>", -1)
+	} else {
+		post.PostContent = DigestCache(c, post.Id, post.PostContent)
+
+	}
 	p.Next()
 }

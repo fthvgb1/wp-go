@@ -20,6 +20,9 @@ var recentPostsCaches *cache.SliceCache[wp.Posts]
 var recentCommentsCaches *cache.SliceCache[wp.Comments]
 var postCommentCaches *cache.MapCache[uint64, []uint64]
 var postsCache *cache.MapCache[uint64, wp.Posts]
+
+var postMetaCache *cache.MapCache[uint64, map[string]any]
+
 var monthPostsCache *cache.MapCache[string, []uint64]
 var postListIdsCache *cache.MapCache[string, PostIds]
 var searchPostIdsCache *cache.MapCache[string, PostIds]
@@ -46,6 +49,8 @@ func InitActionsCommonCache() {
 
 	postsCache = cache.NewMapCacheByBatchFn[uint64, wp.Posts](getPostsByIds, c.PostDataCacheTime)
 
+	postMetaCache = cache.NewMapCacheByBatchFn[uint64, map[string]any](getPostMetaByPostIds, c.PostDataCacheTime)
+
 	categoryCaches = cache.NewSliceCache[wp.TermsMy](categories, c.CategoryCacheTime)
 
 	recentPostsCaches = cache.NewSliceCache[wp.Posts](recentPosts, c.RecentPostCacheTime)
@@ -66,7 +71,7 @@ func InitActionsCommonCache() {
 func ClearCache() {
 	searchPostIdsCache.ClearExpired()
 	postsCache.ClearExpired()
-	postsCache.ClearExpired()
+	postMetaCache.ClearExpired()
 	postListIdsCache.ClearExpired()
 	monthPostsCache.ClearExpired()
 	postContextCache.ClearExpired()
@@ -77,7 +82,7 @@ func ClearCache() {
 func FlushCache() {
 	searchPostIdsCache.Flush()
 	postsCache.Flush()
-	postsCache.Flush()
+	postMetaCache.Flush()
 	postListIdsCache.Flush()
 	monthPostsCache.Flush()
 	postContextCache.Flush()

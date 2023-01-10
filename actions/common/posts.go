@@ -62,6 +62,7 @@ func getPostsByIds(ids ...any) (m map[uint64]wp.Posts, err error) {
 		}
 		postsMap[post.Id] = v
 	}
+	meta, _ := getPostMetaByPostIds(ctx, id)
 	for k, pp := range postsMap {
 		if len(pp.Categories) > 0 {
 			t := make([]string, 0, len(pp.Categories))
@@ -69,6 +70,13 @@ func getPostsByIds(ids ...any) (m map[uint64]wp.Posts, err error) {
 				t = append(t, fmt.Sprintf(`<a href="/p/category/%s" rel="category tag">%s</a>`, cat, cat))
 			}
 			pp.CategoriesHtml = strings.Join(t, "、")
+			_, ok := meta[pp.Id]
+			if ok {
+				thumb := ToPostThumbnail(ctx, pp.Id)
+				if thumb.Path != "" {
+					pp.Thumbnail = thumb
+				}
+			}
 		}
 		if len(pp.Tags) > 0 {
 			t := make([]string, 0, len(pp.Tags))
