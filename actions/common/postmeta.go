@@ -8,7 +8,6 @@ import (
 	"github/fthvgb1/wp-go/models"
 	"github/fthvgb1/wp-go/models/wp"
 	"strconv"
-	"strings"
 	"time"
 )
 
@@ -18,29 +17,6 @@ func GetPostMetaByPostIds(ctx context.Context, ids []uint64) (r []map[string]any
 }
 func GetPostMetaByPostId(ctx context.Context, id uint64) (r map[string]any, err error) {
 	r, err = postMetaCache.GetCache(ctx, id, time.Second, ctx, id)
-	return
-}
-
-func getMetaVal(key string, v any) (r any) {
-	vv, ok := v.(map[string]any)
-	if !ok {
-		return
-	}
-	k := strings.Split(key, ".")
-	if len(k) > 1 {
-		val, ok := vv[k[0]]
-		if ok {
-			vx, ok := val.(map[string]any)
-			if ok {
-				r = getMetaVal(strings.Join(k[1:], "."), vx)
-			}
-		}
-	} else {
-		x, ok := vv[k[0]]
-		if ok {
-			r = x
-		}
-	}
 	return
 }
 
@@ -60,23 +36,20 @@ func ToPostThumbnail(c context.Context, postId uint64) (r wp.PostThumbnail) {
 							r.Path = ff
 						}
 					}
-					tt := getMetaVal("_wp_attachment_metadata.sizes.post-thumbnail", mm)
-					if tt != nil {
-						sss, ok := tt.(map[string]any)
+					tt, ok := helper.GetStrMapAnyVal[map[string]any]("_wp_attachment_metadata.sizes.post-thumbnail", mm)
+					if ok && tt != nil {
+						width, ok := tt["width"]
 						if ok {
-							width, ok := sss["width"]
+							w, ok := width.(int)
 							if ok {
-								w, ok := width.(int)
-								if ok {
-									r.Width = w
-								}
+								r.Width = w
 							}
-							height, ok := sss["height"]
+						}
+						height, ok := tt["height"]
+						if ok {
+							h, ok := height.(int)
 							if ok {
-								h, ok := height.(int)
-								if ok {
-									r.Height = h
-								}
+								r.Height = h
 							}
 						}
 					}
