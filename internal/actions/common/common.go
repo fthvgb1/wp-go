@@ -5,21 +5,21 @@ import (
 	"fmt"
 	"github/fthvgb1/wp-go/cache"
 	"github/fthvgb1/wp-go/config"
-	"github/fthvgb1/wp-go/config/wpconfig"
+	wp2 "github/fthvgb1/wp-go/internal/wp"
+	"github/fthvgb1/wp-go/internal/wpconfig"
 	"github/fthvgb1/wp-go/logs"
 	"github/fthvgb1/wp-go/models"
-	"github/fthvgb1/wp-go/models/wp"
 	"sync"
 	"time"
 )
 
 var postContextCache *cache.MapCache[uint64, PostContext]
 var archivesCaches *Arch
-var categoryCaches *cache.SliceCache[wp.TermsMy]
-var recentPostsCaches *cache.SliceCache[wp.Posts]
-var recentCommentsCaches *cache.SliceCache[wp.Comments]
+var categoryCaches *cache.SliceCache[wp2.TermsMy]
+var recentPostsCaches *cache.SliceCache[wp2.Posts]
+var recentCommentsCaches *cache.SliceCache[wp2.Comments]
 var postCommentCaches *cache.MapCache[uint64, []uint64]
-var postsCache *cache.MapCache[uint64, wp.Posts]
+var postsCache *cache.MapCache[uint64, wp2.Posts]
 
 var postMetaCache *cache.MapCache[uint64, map[string]any]
 
@@ -28,9 +28,9 @@ var postListIdsCache *cache.MapCache[string, PostIds]
 var searchPostIdsCache *cache.MapCache[string, PostIds]
 var maxPostIdCache *cache.SliceCache[uint64]
 var TotalRaw int64
-var usersCache *cache.MapCache[uint64, wp.Users]
-var usersNameCache *cache.MapCache[string, wp.Users]
-var commentsCache *cache.MapCache[uint64, wp.Comments]
+var usersCache *cache.MapCache[uint64, wp2.Users]
+var usersNameCache *cache.MapCache[string, wp2.Users]
+var commentsCache *cache.MapCache[uint64, wp2.Comments]
 
 func InitActionsCommonCache() {
 	c := config.Conf.Load()
@@ -47,25 +47,25 @@ func InitActionsCommonCache() {
 
 	postContextCache = cache.NewMapCacheByFn[uint64, PostContext](getPostContext, c.ContextPostCacheTime)
 
-	postsCache = cache.NewMapCacheByBatchFn[uint64, wp.Posts](getPostsByIds, c.PostDataCacheTime)
+	postsCache = cache.NewMapCacheByBatchFn[uint64, wp2.Posts](getPostsByIds, c.PostDataCacheTime)
 
 	postMetaCache = cache.NewMapCacheByBatchFn[uint64, map[string]any](getPostMetaByPostIds, c.PostDataCacheTime)
 
-	categoryCaches = cache.NewSliceCache[wp.TermsMy](categories, c.CategoryCacheTime)
+	categoryCaches = cache.NewSliceCache[wp2.TermsMy](categories, c.CategoryCacheTime)
 
-	recentPostsCaches = cache.NewSliceCache[wp.Posts](recentPosts, c.RecentPostCacheTime)
+	recentPostsCaches = cache.NewSliceCache[wp2.Posts](recentPosts, c.RecentPostCacheTime)
 
-	recentCommentsCaches = cache.NewSliceCache[wp.Comments](recentComments, c.RecentCommentsCacheTime)
+	recentCommentsCaches = cache.NewSliceCache[wp2.Comments](recentComments, c.RecentCommentsCacheTime)
 
 	postCommentCaches = cache.NewMapCacheByFn[uint64, []uint64](postComments, c.PostCommentsCacheTime)
 
 	maxPostIdCache = cache.NewSliceCache[uint64](getMaxPostId, c.MaxPostIdCacheTime)
 
-	usersCache = cache.NewMapCacheByFn[uint64, wp.Users](getUserById, c.UserInfoCacheTime)
+	usersCache = cache.NewMapCacheByFn[uint64, wp2.Users](getUserById, c.UserInfoCacheTime)
 
-	usersNameCache = cache.NewMapCacheByFn[string, wp.Users](getUserByName, c.UserInfoCacheTime)
+	usersNameCache = cache.NewMapCacheByFn[string, wp2.Users](getUserByName, c.UserInfoCacheTime)
 
-	commentsCache = cache.NewMapCacheByBatchFn[uint64, wp.Comments](getCommentByIds, c.CommentsCacheTime)
+	commentsCache = cache.NewMapCacheByBatchFn[uint64, wp2.Comments](getCommentByIds, c.CommentsCacheTime)
 }
 
 func ClearCache() {
@@ -97,13 +97,13 @@ type PostIds struct {
 }
 
 type Arch struct {
-	data         []wp.PostArchive
+	data         []wp2.PostArchive
 	mutex        *sync.Mutex
-	setCacheFunc func(context.Context) ([]wp.PostArchive, error)
+	setCacheFunc func(context.Context) ([]wp2.PostArchive, error)
 	month        time.Month
 }
 
-func (c *Arch) getArchiveCache(ctx context.Context) []wp.PostArchive {
+func (c *Arch) getArchiveCache(ctx context.Context) []wp2.PostArchive {
 	l := len(c.data)
 	m := time.Now().Month()
 	if l > 0 && c.month != m || l < 1 {
@@ -121,30 +121,30 @@ func (c *Arch) getArchiveCache(ctx context.Context) []wp.PostArchive {
 }
 
 type PostContext struct {
-	prev wp.Posts
-	next wp.Posts
+	prev wp2.Posts
+	next wp2.Posts
 }
 
-func archives(ctx context.Context) ([]wp.PostArchive, error) {
-	return models.Find[wp.PostArchive](ctx, models.SqlBuilder{
+func archives(ctx context.Context) ([]wp2.PostArchive, error) {
+	return models.Find[wp2.PostArchive](ctx, models.SqlBuilder{
 		{"post_type", "post"}, {"post_status", "publish"},
 	}, "YEAR(post_date) AS `year`, MONTH(post_date) AS `month`, count(ID) as posts", "year,month", models.SqlBuilder{{"year", "desc"}, {"month", "desc"}}, nil, nil, 0)
 }
 
-func Archives(ctx context.Context) (r []wp.PostArchive) {
+func Archives(ctx context.Context) (r []wp2.PostArchive) {
 	return archivesCaches.getArchiveCache(ctx)
 }
 
-func Categories(ctx context.Context) []wp.TermsMy {
+func Categories(ctx context.Context) []wp2.TermsMy {
 	r, err := categoryCaches.GetCache(ctx, time.Second, ctx)
 	logs.ErrPrintln(err, "get category ")
 	return r
 }
 
-func categories(a ...any) (terms []wp.TermsMy, err error) {
+func categories(a ...any) (terms []wp2.TermsMy, err error) {
 	ctx := a[0].(context.Context)
 	var in = []any{"category"}
-	terms, err = models.Find[wp.TermsMy](ctx, models.SqlBuilder{
+	terms, err = models.Find[wp2.TermsMy](ctx, models.SqlBuilder{
 		{"tt.count", ">", "0", "int"},
 		{"tt.taxonomy", "in", ""},
 	}, "t.term_id", "", models.SqlBuilder{
@@ -163,13 +163,13 @@ func categories(a ...any) (terms []wp.TermsMy, err error) {
 	return
 }
 
-func PasswordProjectTitle(post *wp.Posts) {
+func PasswordProjectTitle(post *wp2.Posts) {
 	if post.PostPassword != "" {
 		post.PostTitle = fmt.Sprintf("密码保护：%s", post.PostTitle)
 	}
 }
 
-func PasswdProjectContent(post *wp.Posts) {
+func PasswdProjectContent(post *wp2.Posts) {
 	if post.PostContent != "" {
 		format := `
 <form action="/login" class="post-password-form" method="post">

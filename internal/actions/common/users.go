@@ -2,9 +2,9 @@ package common
 
 import (
 	"context"
+	"github/fthvgb1/wp-go/internal/wp"
 	"github/fthvgb1/wp-go/logs"
 	"github/fthvgb1/wp-go/models"
-	"github/fthvgb1/wp-go/models/wp"
 	"time"
 )
 

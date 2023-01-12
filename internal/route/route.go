@@ -6,12 +6,12 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
-	"github/fthvgb1/wp-go/actions"
 	"github/fthvgb1/wp-go/config"
-	"github/fthvgb1/wp-go/config/wpconfig"
-	"github/fthvgb1/wp-go/middleware"
-	"github/fthvgb1/wp-go/static"
-	"github/fthvgb1/wp-go/templates"
+	actions2 "github/fthvgb1/wp-go/internal/actions"
+	middleware2 "github/fthvgb1/wp-go/internal/middleware"
+	"github/fthvgb1/wp-go/internal/static"
+	"github/fthvgb1/wp-go/internal/templates"
+	"github/fthvgb1/wp-go/internal/wpconfig"
 	"html/template"
 	"net/http"
 	"time"
@@ -40,14 +40,14 @@ func SetupRouter() (*gin.Engine, func()) {
 			return wpconfig.Options.Value(k)
 		},
 	}).SetTemplate()
-	validServerName, reloadValidServerNameFn := middleware.ValidateServerNames()
-	fl, flReload := middleware.FlowLimit(c.MaxRequestSleepNum, c.MaxRequestNum, c.SleepTime)
+	validServerName, reloadValidServerNameFn := middleware2.ValidateServerNames()
+	fl, flReload := middleware2.FlowLimit(c.MaxRequestSleepNum, c.MaxRequestNum, c.SleepTime)
 	r.Use(
 		gin.Logger(),
 		validServerName,
-		middleware.RecoverAndSendMail(gin.DefaultErrorWriter),
+		middleware2.RecoverAndSendMail(gin.DefaultErrorWriter),
 		fl,
-		middleware.SetStaticFileCache,
+		middleware2.SetStaticFileCache,
 	)
 	//gzip 因为一般会用nginx做反代时自动使用gzip,所以go这边本身可以不用
 	if c.Gzip {
@@ -65,24 +65,24 @@ func SetupRouter() (*gin.Engine, func()) {
 	}))
 	store := cookie.NewStore([]byte("secret"))
 	r.Use(sessions.Sessions("go-wp", store))
-	sl, slRload := middleware.SearchLimit(c.SingleIpSearchNum)
-	r.GET("/", sl, actions.Index)
-	r.GET("/page/:page", actions.Index)
-	r.GET("/p/category/:category", actions.Index)
-	r.GET("/p/category/:category/page/:page", actions.Index)
-	r.GET("/p/tag/:tag", actions.Index)
-	r.GET("/p/tag/:tag/page/:page", actions.Index)
-	r.GET("/p/date/:year/:month", actions.Index)
-	r.GET("/p/date/:year/:month/page/:page", actions.Index)
-	r.GET("/p/author/:author", actions.Index)
-	r.GET("/p/author/:author/page/:page", actions.Index)
-	r.POST("/login", actions.Login)
-	r.GET("/p/:id", actions.Detail)
-	r.GET("/p/:id/feed", actions.PostFeed)
-	r.GET("/feed", actions.Feed)
-	r.GET("/comments/feed", actions.CommentsFeed)
-	cfl, _ := middleware.FlowLimit(c.MaxRequestSleepNum, 5, c.SleepTime)
-	r.POST("/comment", cfl, actions.PostComment)
+	sl, slRload := middleware2.SearchLimit(c.SingleIpSearchNum)
+	r.GET("/", sl, actions2.Index)
+	r.GET("/page/:page", actions2.Index)
+	r.GET("/p/category/:category", actions2.Index)
+	r.GET("/p/category/:category/page/:page", actions2.Index)
+	r.GET("/p/tag/:tag", actions2.Index)
+	r.GET("/p/tag/:tag/page/:page", actions2.Index)
+	r.GET("/p/date/:year/:month", actions2.Index)
+	r.GET("/p/date/:year/:month/page/:page", actions2.Index)
+	r.GET("/p/author/:author", actions2.Index)
+	r.GET("/p/author/:author/page/:page", actions2.Index)
+	r.POST("/login", actions2.Login)
+	r.GET("/p/:id", actions2.Detail)
+	r.GET("/p/:id/feed", actions2.PostFeed)
+	r.GET("/feed", actions2.Feed)
+	r.GET("/comments/feed", actions2.CommentsFeed)
+	cfl, _ := middleware2.FlowLimit(c.MaxRequestSleepNum, 5, c.SleepTime)
+	r.POST("/comment", cfl, actions2.PostComment)
 	if gin.Mode() != gin.ReleaseMode {
 		pprof.Register(r, "dev/pprof")
 	}

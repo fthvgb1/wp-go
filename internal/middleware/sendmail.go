@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github/fthvgb1/wp-go/config"
-	"github/fthvgb1/wp-go/config/wpconfig"
+	"github/fthvgb1/wp-go/internal/wpconfig"
 	"github/fthvgb1/wp-go/logs"
 	"github/fthvgb1/wp-go/mail"
 	"io"

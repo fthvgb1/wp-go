@@ -6,7 +6,7 @@ import (
 	"github/fthvgb1/wp-go/cache"
 	"github/fthvgb1/wp-go/config"
 	"github/fthvgb1/wp-go/helper"
-	"github/fthvgb1/wp-go/models/wp"
+	"github/fthvgb1/wp-go/internal/wp"
 	"regexp"
 	"strings"
 	"time"

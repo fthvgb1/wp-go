@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github/fthvgb1/wp-go/actions/common"
-	"github/fthvgb1/wp-go/config/wpconfig"
 	"github/fthvgb1/wp-go/helper"
+	common2 "github/fthvgb1/wp-go/internal/actions/common"
+	"github/fthvgb1/wp-go/internal/wp"
+	"github/fthvgb1/wp-go/internal/wpconfig"
 	"github/fthvgb1/wp-go/logs"
-	"github/fthvgb1/wp-go/models/wp"
 	"github/fthvgb1/wp-go/plugins"
 	"math/rand"
 	"net/http"
@@ -28,10 +28,10 @@ func Detail(c *gin.Context) {
 	hh := detailHandler{
 		c,
 	}
-	recent := common.RecentPosts(c, 5)
-	archive := common.Archives(c)
-	categoryItems := common.Categories(c)
-	recentComments := common.RecentComments(c, 5)
+	recent := common2.RecentPosts(c, 5)
+	archive := common2.Archives(c)
+	categoryItems := common2.Categories(c)
+	recentComments := common2.RecentComments(c, 5)
 	var h = gin.H{
 		"title":          wpconfig.Options.Value("blogname"),
 		"options":        wpconfig.Options,
@@ -62,12 +62,12 @@ func Detail(c *gin.Context) {
 		}
 	}
 	ID := uint64(Id)
-	maxId, err := common.GetMaxPostId(c)
+	maxId, err := common2.GetMaxPostId(c)
 	logs.ErrPrintln(err, "get max post id")
 	if ID > maxId || err != nil {
 		return
 	}
-	post, err := common.GetPostById(c, ID)
+	post, err := common2.GetPostById(c, ID)
 	if post.Id == 0 || err != nil {
 		return
 	}
@@ -76,10 +76,10 @@ func Detail(c *gin.Context) {
 	if post.CommentCount > 0 || post.CommentStatus == "open" {
 		showComment = true
 	}
-	user := common.GetUserById(c, post.PostAuthor)
-	common.PasswordProjectTitle(&post)
+	user := common2.GetUserById(c, post.PostAuthor)
+	common2.PasswordProjectTitle(&post)
 	if post.PostPassword != "" && pw != post.PostPassword {
-		common.PasswdProjectContent(&post)
+		common2.PasswdProjectContent(&post)
 		showComment = false
 	} else if s, ok := commentCache.Get(c.Request.URL.RawQuery); ok && s != "" && (post.PostPassword == "" || post.PostPassword != "" && pw == post.PostPassword) {
 		c.Writer.WriteHeader(http.StatusOK)
@@ -89,10 +89,10 @@ func Detail(c *gin.Context) {
 		return
 	}
 	plugins.ApplyPlugin(plugins.NewPostPlugin(c, plugins.Detail), &post)
-	comments, err := common.PostComments(c, post.Id)
+	comments, err := common2.PostComments(c, post.Id)
 	logs.ErrPrintln(err, "get post comment", post.Id)
 	commentss := treeComments(comments)
-	prev, next, err := common.GetContextPost(c, post.Id, post.PostDate)
+	prev, next, err := common2.GetContextPost(c, post.Id, post.PostDate)
 	logs.ErrPrintln(err, "get pre and next post", post.Id, post.PostDate)
 	h["title"] = fmt.Sprintf("%s-%s", post.PostTitle, wpconfig.Options.Value("blogname"))
 	h["post"] = post

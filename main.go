@@ -3,16 +3,16 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github/fthvgb1/wp-go/actions"
-	"github/fthvgb1/wp-go/actions/common"
 	"github/fthvgb1/wp-go/config"
-	"github/fthvgb1/wp-go/config/wpconfig"
 	"github/fthvgb1/wp-go/db"
+	"github/fthvgb1/wp-go/internal/actions"
+	"github/fthvgb1/wp-go/internal/actions/common"
+	"github/fthvgb1/wp-go/internal/route"
+	wpconfig2 "github/fthvgb1/wp-go/internal/wpconfig"
 	"github/fthvgb1/wp-go/logs"
 	"github/fthvgb1/wp-go/mail"
 	"github/fthvgb1/wp-go/models"
 	"github/fthvgb1/wp-go/plugins"
-	"github/fthvgb1/wp-go/route"
 	"log"
 	"math/rand"
 	"os"
@@ -60,11 +60,11 @@ func initConf(c string) (err error) {
 		return
 	}
 	models.InitDB(db.NewSqlxDb(db.Db))
-	err = wpconfig.InitOptions()
+	err = wpconfig2.InitOptions()
 	if err != nil {
 		return
 	}
-	err = wpconfig.InitTerms()
+	err = wpconfig2.InitTerms()
 	if err != nil {
 		return
 	}
@@ -104,9 +104,9 @@ func reload() {
 	}()
 	err := config.InitConfig(confPath)
 	logs.ErrPrintln(err, "获取配置文件失败", confPath)
-	err = wpconfig.InitOptions()
+	err = wpconfig2.InitOptions()
 	logs.ErrPrintln(err, "获取网站设置WpOption失败")
-	err = wpconfig.InitTerms()
+	err = wpconfig2.InitTerms()
 	logs.ErrPrintln(err, "获取WpTerms表失败")
 	if middleWareReloadFn != nil {
 		middleWareReloadFn()

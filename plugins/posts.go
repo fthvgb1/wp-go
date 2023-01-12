@@ -2,7 +2,7 @@ package plugins
 
 import (
 	"github.com/gin-gonic/gin"
-	"github/fthvgb1/wp-go/models/wp"
+	"github/fthvgb1/wp-go/internal/wp"
 )
 
 func NewPostPlugin(ctx *gin.Context, scene uint) *Plugin[wp.Posts] {

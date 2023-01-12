@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github/fthvgb1/wp-go/actions/common"
-	"github/fthvgb1/wp-go/config/wpconfig"
 	"github/fthvgb1/wp-go/helper"
+	common2 "github/fthvgb1/wp-go/internal/actions/common"
+	"github/fthvgb1/wp-go/internal/wp"
+	"github/fthvgb1/wp-go/internal/wpconfig"
 	"github/fthvgb1/wp-go/models"
-	"github/fthvgb1/wp-go/models/wp"
 	"github/fthvgb1/wp-go/plugins"
 	"math"
 	"net/http"
@@ -113,7 +113,7 @@ func (h *indexHandle) parseParams() (err error) {
 	h.category = category
 	username := h.c.Param("author")
 	if username != "" {
-		user, er := common.GetUserByName(h.c, username)
+		user, er := common2.GetUserByName(h.c, username)
 		if er != nil {
 			err = er
 			return
@@ -160,7 +160,7 @@ func (h *indexHandle) parseParams() (err error) {
 			h.page = pa
 		}
 	}
-	total := int(atomic.LoadInt64(&common.TotalRaw))
+	total := int(atomic.LoadInt64(&common2.TotalRaw))
 	if total > 0 && total < (h.page-1)*h.pageSize {
 		h.page = 1
 	}
@@ -180,10 +180,10 @@ func Index(c *gin.Context) {
 	var postIds []wp.Posts
 	var totalRaw int
 	var err error
-	archive := common.Archives(c)
-	recent := common.RecentPosts(c, 5)
-	categoryItems := common.Categories(c)
-	recentComments := common.RecentComments(c, 5)
+	archive := common2.Archives(c)
+	recent := common2.RecentPosts(c, 5)
+	categoryItems := common2.Categories(c)
+	recentComments := common2.RecentComments(c, 5)
 	ginH := gin.H{
 		"options":        wpconfig.Options,
 		"recentPosts":    recent,
@@ -208,14 +208,14 @@ func Index(c *gin.Context) {
 	}
 	ginH["title"] = h.getTitle()
 	if c.Param("month") != "" {
-		postIds, totalRaw, err = common.GetMonthPostIds(c, c.Param("year"), c.Param("month"), h.page, h.pageSize, h.order)
+		postIds, totalRaw, err = common2.GetMonthPostIds(c, c.Param("year"), c.Param("month"), h.page, h.pageSize, h.order)
 		if err != nil {
 			return
 		}
 	} else if h.search != "" {
-		postIds, totalRaw, err = common.SearchPost(c, h.getSearchKey(), c, h.where, h.page, h.pageSize, models.SqlBuilder{{h.orderBy, h.order}}, h.join, h.postType, h.status)
+		postIds, totalRaw, err = common2.SearchPost(c, h.getSearchKey(), c, h.where, h.page, h.pageSize, models.SqlBuilder{{h.orderBy, h.order}}, h.join, h.postType, h.status)
 	} else {
-		postIds, totalRaw, err = common.PostLists(c, h.getSearchKey(), c, h.where, h.page, h.pageSize, models.SqlBuilder{{h.orderBy, h.order}}, h.join, h.postType, h.status)
+		postIds, totalRaw, err = common2.PostLists(c, h.getSearchKey(), c, h.where, h.page, h.pageSize, models.SqlBuilder{{h.orderBy, h.order}}, h.join, h.postType, h.status)
 	}
 	if err != nil {
 		return
@@ -227,16 +227,16 @@ func Index(c *gin.Context) {
 	pw := h.session.Get("post_password")
 	plug := plugins.NewPostPlugin(c, h.scene)
 	for i, post := range postIds {
-		common.PasswordProjectTitle(&postIds[i])
+		common2.PasswordProjectTitle(&postIds[i])
 		if post.PostPassword != "" && pw != post.PostPassword {
-			common.PasswdProjectContent(&postIds[i])
+			common2.PasswdProjectContent(&postIds[i])
 		} else {
 			plugins.ApplyPlugin(plug, &postIds[i])
 		}
 	}
 	for i, post := range recent {
 		if post.PostPassword != "" && pw != post.PostPassword {
-			common.PasswdProjectContent(&recent[i])
+			common2.PasswdProjectContent(&recent[i])
 		}
 	}
 	q := c.Request.URL.Query().Encode()
