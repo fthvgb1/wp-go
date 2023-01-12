@@ -1,4 +1,4 @@
-package wp
+package models
 
 type TermTaxonomy struct {
 	TermTaxonomyId uint64 `gorm:"column:term_taxonomy_id" db:"term_taxonomy_id" json:"term_taxonomy_id" form:"term_taxonomy_id"`

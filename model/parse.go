@@ -1,35 +1,11 @@
-package models
+package model
 
 import (
-	"context"
 	"fmt"
 	"github/fthvgb1/wp-go/helper"
 	"strconv"
 	"strings"
 )
-
-var _ ParseWhere = SqlBuilder{}
-var globalBb dbQuery
-
-func InitDB(db dbQuery) {
-	globalBb = db
-}
-
-type Model interface {
-	PrimaryKey() string
-	Table() string
-}
-
-type ParseWhere interface {
-	ParseWhere(*[][]any) (string, []any, error)
-}
-
-type dbQuery interface {
-	Select(context.Context, any, string, ...any) error
-	Get(context.Context, any, string, ...any) error
-}
-
-type SqlBuilder [][]string
 
 func (w SqlBuilder) parseField(ss []string, s *strings.Builder) {
 	if strings.Contains(ss[0], ".") && !strings.Contains(ss[0], "(") {

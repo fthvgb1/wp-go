@@ -1,10 +1,10 @@
-package models
+package model
 
 import (
 	"context"
-	"github/fthvgb1/wp-go/config"
-	"github/fthvgb1/wp-go/db"
-	wp2 "github/fthvgb1/wp-go/internal/wp"
+	"github/fthvgb1/wp-go/internal/config"
+	"github/fthvgb1/wp-go/internal/db"
+	wp2 "github/fthvgb1/wp-go/internal/models"
 	"reflect"
 	"testing"
 )

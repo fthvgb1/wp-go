@@ -5,7 +5,7 @@ import (
 	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
-	"github/fthvgb1/wp-go/config"
+	"github/fthvgb1/wp-go/internal/config"
 	"log"
 	"os"
 	"strconv"

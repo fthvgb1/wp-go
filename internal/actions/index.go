@@ -5,11 +5,12 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github/fthvgb1/wp-go/helper"
-	common2 "github/fthvgb1/wp-go/internal/actions/common"
-	"github/fthvgb1/wp-go/internal/wp"
+	"github/fthvgb1/wp-go/internal/cache"
+	dao "github/fthvgb1/wp-go/internal/dao"
+	"github/fthvgb1/wp-go/internal/models"
+	"github/fthvgb1/wp-go/internal/plugins"
 	"github/fthvgb1/wp-go/internal/wpconfig"
-	"github/fthvgb1/wp-go/models"
-	"github/fthvgb1/wp-go/plugins"
+	"github/fthvgb1/wp-go/model"
 	"math"
 	"net/http"
 	"regexp"
@@ -31,10 +32,10 @@ type indexHandle struct {
 	totalPage      int
 	category       string
 	categoryType   string
-	where          models.SqlBuilder
+	where          model.SqlBuilder
 	orderBy        string
 	order          string
-	join           models.SqlBuilder
+	join           model.SqlBuilder
 	postType       []any
 	status         []any
 	header         string
@@ -53,12 +54,12 @@ func newIndexHandle(ctx *gin.Context) *indexHandle {
 		paginationStep: 1,
 		titleL:         wpconfig.Options.Value("blogname"),
 		titleR:         wpconfig.Options.Value("blogdescription"),
-		where: models.SqlBuilder{
+		where: model.SqlBuilder{
 			{"post_type", "in", ""},
 			{"post_status", "in", ""},
 		},
 		orderBy:  "post_date",
-		join:     models.SqlBuilder{},
+		join:     model.SqlBuilder{},
 		postType: []any{"post"},
 		status:   []any{"publish"},
 		scene:    plugins.Home,
@@ -113,7 +114,7 @@ func (h *indexHandle) parseParams() (err error) {
 	h.category = category
 	username := h.c.Param("author")
 	if username != "" {
-		user, er := common2.GetUserByName(h.c, username)
+		user, er := cache.GetUserByName(h.c, username)
 		if er != nil {
 			err = er
 			return
@@ -160,7 +161,7 @@ func (h *indexHandle) parseParams() (err error) {
 			h.page = pa
 		}
 	}
-	total := int(atomic.LoadInt64(&common2.TotalRaw))
+	total := int(atomic.LoadInt64(&dao.TotalRaw))
 	if total > 0 && total < (h.page-1)*h.pageSize {
 		h.page = 1
 	}
@@ -177,13 +178,13 @@ func (h *indexHandle) getTotalPage(totalRaws int) int {
 
 func Index(c *gin.Context) {
 	h := newIndexHandle(c)
-	var postIds []wp.Posts
+	var postIds []models.Posts
 	var totalRaw int
 	var err error
-	archive := common2.Archives(c)
-	recent := common2.RecentPosts(c, 5)
-	categoryItems := common2.Categories(c)
-	recentComments := common2.RecentComments(c, 5)
+	archive := cache.Archives(c)
+	recent := cache.RecentPosts(c, 5)
+	categoryItems := cache.Categories(c)
+	recentComments := cache.RecentComments(c, 5)
 	ginH := gin.H{
 		"options":        wpconfig.Options,
 		"recentPosts":    recent,
@@ -208,14 +209,14 @@ func Index(c *gin.Context) {
 	}
 	ginH["title"] = h.getTitle()
 	if c.Param("month") != "" {
-		postIds, totalRaw, err = common2.GetMonthPostIds(c, c.Param("year"), c.Param("month"), h.page, h.pageSize, h.order)
+		postIds, totalRaw, err = cache.GetMonthPostIds(c, c.Param("year"), c.Param("month"), h.page, h.pageSize, h.order)
 		if err != nil {
 			return
 		}
 	} else if h.search != "" {
-		postIds, totalRaw, err = common2.SearchPost(c, h.getSearchKey(), c, h.where, h.page, h.pageSize, models.SqlBuilder{{h.orderBy, h.order}}, h.join, h.postType, h.status)
+		postIds, totalRaw, err = cache.SearchPost(c, h.getSearchKey(), c, h.where, h.page, h.pageSize, model.SqlBuilder{{h.orderBy, h.order}}, h.join, h.postType, h.status)
 	} else {
-		postIds, totalRaw, err = common2.PostLists(c, h.getSearchKey(), c, h.where, h.page, h.pageSize, models.SqlBuilder{{h.orderBy, h.order}}, h.join, h.postType, h.status)
+		postIds, totalRaw, err = cache.PostLists(c, h.getSearchKey(), c, h.where, h.page, h.pageSize, model.SqlBuilder{{h.orderBy, h.order}}, h.join, h.postType, h.status)
 	}
 	if err != nil {
 		return
@@ -227,16 +228,16 @@ func Index(c *gin.Context) {
 	pw := h.session.Get("post_password")
 	plug := plugins.NewPostPlugin(c, h.scene)
 	for i, post := range postIds {
-		common2.PasswordProjectTitle(&postIds[i])
+		plugins.PasswordProjectTitle(&postIds[i])
 		if post.PostPassword != "" && pw != post.PostPassword {
-			common2.PasswdProjectContent(&postIds[i])
+			plugins.PasswdProjectContent(&postIds[i])
 		} else {
 			plugins.ApplyPlugin(plug, &postIds[i])
 		}
 	}
 	for i, post := range recent {
 		if post.PostPassword != "" && pw != post.PostPassword {
-			common2.PasswdProjectContent(&recent[i])
+			plugins.PasswdProjectContent(&recent[i])
 		}
 	}
 	q := c.Request.URL.Query().Encode()

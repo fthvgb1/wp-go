@@ -3,16 +3,16 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github/fthvgb1/wp-go/config"
-	"github/fthvgb1/wp-go/db"
 	"github/fthvgb1/wp-go/internal/actions"
-	"github/fthvgb1/wp-go/internal/actions/common"
+	"github/fthvgb1/wp-go/internal/cache"
+	"github/fthvgb1/wp-go/internal/config"
+	"github/fthvgb1/wp-go/internal/db"
+	"github/fthvgb1/wp-go/internal/plugins"
 	"github/fthvgb1/wp-go/internal/route"
-	wpconfig2 "github/fthvgb1/wp-go/internal/wpconfig"
+	"github/fthvgb1/wp-go/internal/wpconfig"
 	"github/fthvgb1/wp-go/logs"
 	"github/fthvgb1/wp-go/mail"
-	"github/fthvgb1/wp-go/models"
-	"github/fthvgb1/wp-go/plugins"
+	"github/fthvgb1/wp-go/model"
 	"log"
 	"math/rand"
 	"os"
@@ -44,7 +44,7 @@ func init() {
 		panic(err)
 	}
 	actions.InitFeed()
-	common.InitActionsCommonCache()
+	cache.InitActionsCommonCache()
 	plugins.InitDigestCache()
 	go cronClearCache()
 }
@@ -59,12 +59,12 @@ func initConf(c string) (err error) {
 	if err != nil {
 		return
 	}
-	models.InitDB(db.NewSqlxDb(db.Db))
-	err = wpconfig2.InitOptions()
+	model.InitDB(db.NewSqlxDb(db.Db))
+	err = wpconfig.InitOptions()
 	if err != nil {
 		return
 	}
-	err = wpconfig2.InitTerms()
+	err = wpconfig.InitTerms()
 	if err != nil {
 		return
 	}
@@ -76,7 +76,7 @@ func cronClearCache() {
 	for {
 		select {
 		case <-t.C:
-			common.ClearCache()
+			cache.ClearCache()
 			plugins.ClearDigestCache()
 			actions.ClearCache()
 		}
@@ -90,7 +90,7 @@ func flushCache() {
 			logs.ErrPrintln(err, "发邮件失败")
 		}
 	}()
-	common.FlushCache()
+	cache.FlushCache()
 	plugins.FlushCache()
 	actions.FlushCache()
 	log.Println("all cache flushed")
@@ -104,9 +104,9 @@ func reload() {
 	}()
 	err := config.InitConfig(confPath)
 	logs.ErrPrintln(err, "获取配置文件失败", confPath)
-	err = wpconfig2.InitOptions()
+	err = wpconfig.InitOptions()
 	logs.ErrPrintln(err, "获取网站设置WpOption失败")
-	err = wpconfig2.InitTerms()
+	err = wpconfig.InitTerms()
 	logs.ErrPrintln(err, "获取WpTerms表失败")
 	if middleWareReloadFn != nil {
 		middleWareReloadFn()

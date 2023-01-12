@@ -6,9 +6,9 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github/fthvgb1/wp-go/cache"
-	"github/fthvgb1/wp-go/config"
 	"github/fthvgb1/wp-go/helper"
-	"github/fthvgb1/wp-go/internal/actions/common"
+	cache2 "github/fthvgb1/wp-go/internal/cache"
+	"github/fthvgb1/wp-go/internal/config"
 	"github/fthvgb1/wp-go/internal/wpconfig"
 	"github/fthvgb1/wp-go/logs"
 	"github/fthvgb1/wp-go/mail"
@@ -99,7 +99,7 @@ func PostComment(c *gin.Context) {
 				logs.ErrPrintln(err, "获取文档id", i)
 				return
 			}
-			post, err := common.GetPostById(cc, id)
+			post, err := cache2.GetPostById(cc, id)
 			if err != nil {
 				logs.ErrPrintln(err, "获取文档", id)
 				return

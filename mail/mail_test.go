@@ -1,7 +1,7 @@
 package mail
 
 import (
-	"github/fthvgb1/wp-go/config"
+	"github/fthvgb1/wp-go/internal/config"
 	"testing"
 )
 

@@ -1,50 +1,17 @@
-package plugins
+package digest
 
 import (
 	"fmt"
-	"github.com/gin-gonic/gin"
-	"github/fthvgb1/wp-go/cache"
-	"github/fthvgb1/wp-go/config"
 	"github/fthvgb1/wp-go/helper"
-	"github/fthvgb1/wp-go/internal/wp"
 	"regexp"
 	"strings"
-	"time"
 	"unicode/utf8"
 )
 
 var removeWpBlock = regexp.MustCompile("<!-- /?wp:.*-->")
 var more = regexp.MustCompile("<!--more(.*?)?-->")
-var digestCache *cache.MapCache[uint64, string]
+
 var quto = regexp.MustCompile(`&quot; *|&amp; *|&lt; *|&gt; ?|&nbsp; *`)
-
-func InitDigestCache() {
-	digestCache = cache.NewMapCacheByFn[uint64](digestRaw, config.Conf.Load().DigestCacheTime)
-}
-
-func ClearDigestCache() {
-	digestCache.ClearExpired()
-}
-func FlushCache() {
-	digestCache.Flush()
-}
-
-func digestRaw(arg ...any) (string, error) {
-	str := arg[0].(string)
-	id := arg[1].(uint64)
-	limit := config.Conf.Load().DigestWordCount
-	if limit < 0 {
-		return str, nil
-	} else if limit == 0 {
-		return "", nil
-	}
-	return DigestRaw(str, limit, fmt.Sprintf("/p/%d", id)), nil
-}
-
-func DigestCache(ctx *gin.Context, id uint64, str string) string {
-	content, _ := digestCache.GetCache(ctx, id, time.Second, str, id)
-	return content
-}
 
 func ClearHtml(str string) string {
 	content := removeWpBlock.ReplaceAllString(str, "")
@@ -54,7 +21,7 @@ func ClearHtml(str string) string {
 	return str
 }
 
-func DigestRaw(str string, limit int, u string) string {
+func Raw(str string, limit int, u string) string {
 	if r := more.FindString(str); r != "" {
 		m := strings.Split(str, r)
 		str = m[0]
@@ -115,19 +82,5 @@ func DigestRaw(str string, limit int, u string) string {
 		}
 		content = fmt.Sprintf(tmp, content, closeTag, u)
 	}
-
 	return content
-}
-
-func Digest(p *Plugin[wp.Posts], c *gin.Context, post *wp.Posts, scene uint) {
-	if scene == Detail {
-		return
-	}
-	if post.PostExcerpt != "" {
-		post.PostContent = strings.Replace(post.PostExcerpt, "\n", "<br/>", -1)
-	} else {
-		post.PostContent = DigestCache(c, post.Id, post.PostContent)
-
-	}
-	p.Next()
 }

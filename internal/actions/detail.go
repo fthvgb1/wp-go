@@ -5,11 +5,11 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github/fthvgb1/wp-go/helper"
-	common2 "github/fthvgb1/wp-go/internal/actions/common"
-	"github/fthvgb1/wp-go/internal/wp"
+	"github/fthvgb1/wp-go/internal/cache"
+	"github/fthvgb1/wp-go/internal/models"
+	"github/fthvgb1/wp-go/internal/plugins"
 	"github/fthvgb1/wp-go/internal/wpconfig"
 	"github/fthvgb1/wp-go/logs"
-	"github/fthvgb1/wp-go/plugins"
 	"math/rand"
 	"net/http"
 	"net/url"
@@ -28,10 +28,10 @@ func Detail(c *gin.Context) {
 	hh := detailHandler{
 		c,
 	}
-	recent := common2.RecentPosts(c, 5)
-	archive := common2.Archives(c)
-	categoryItems := common2.Categories(c)
-	recentComments := common2.RecentComments(c, 5)
+	recent := cache.RecentPosts(c, 5)
+	archive := cache.Archives(c)
+	categoryItems := cache.Categories(c)
+	recentComments := cache.RecentComments(c, 5)
 	var h = gin.H{
 		"title":          wpconfig.Options.Value("blogname"),
 		"options":        wpconfig.Options,
@@ -62,12 +62,12 @@ func Detail(c *gin.Context) {
 		}
 	}
 	ID := uint64(Id)
-	maxId, err := common2.GetMaxPostId(c)
+	maxId, err := cache.GetMaxPostId(c)
 	logs.ErrPrintln(err, "get max post id")
 	if ID > maxId || err != nil {
 		return
 	}
-	post, err := common2.GetPostById(c, ID)
+	post, err := cache.GetPostById(c, ID)
 	if post.Id == 0 || err != nil {
 		return
 	}
@@ -76,10 +76,10 @@ func Detail(c *gin.Context) {
 	if post.CommentCount > 0 || post.CommentStatus == "open" {
 		showComment = true
 	}
-	user := common2.GetUserById(c, post.PostAuthor)
-	common2.PasswordProjectTitle(&post)
+	user := cache.GetUserById(c, post.PostAuthor)
+	plugins.PasswordProjectTitle(&post)
 	if post.PostPassword != "" && pw != post.PostPassword {
-		common2.PasswdProjectContent(&post)
+		plugins.PasswdProjectContent(&post)
 		showComment = false
 	} else if s, ok := commentCache.Get(c.Request.URL.RawQuery); ok && s != "" && (post.PostPassword == "" || post.PostPassword != "" && pw == post.PostPassword) {
 		c.Writer.WriteHeader(http.StatusOK)
@@ -89,10 +89,10 @@ func Detail(c *gin.Context) {
 		return
 	}
 	plugins.ApplyPlugin(plugins.NewPostPlugin(c, plugins.Detail), &post)
-	comments, err := common2.PostComments(c, post.Id)
+	comments, err := cache.PostComments(c, post.Id)
 	logs.ErrPrintln(err, "get post comment", post.Id)
 	commentss := treeComments(comments)
-	prev, next, err := common2.GetContextPost(c, post.Id, post.PostDate)
+	prev, next, err := cache.GetContextPost(c, post.Id, post.PostDate)
 	logs.ErrPrintln(err, "get pre and next post", post.Id, post.PostDate)
 	h["title"] = fmt.Sprintf("%s-%s", post.PostTitle, wpconfig.Options.Value("blogname"))
 	h["post"] = post
@@ -110,7 +110,7 @@ func Detail(c *gin.Context) {
 }
 
 type Comment struct {
-	wp.Comments
+	models.Comments
 	Children []*Comment
 }
 
@@ -177,10 +177,10 @@ func findComments(comments Comments) Comments {
 	return r
 }
 
-func treeComments(comments []wp.Comments) Comments {
+func treeComments(comments []models.Comments) Comments {
 	var r = map[uint64]*Comment{
 		0: {
-			Comments: wp.Comments{},
+			Comments: models.Comments{},
 		},
 	}
 	var top []*Comment
@@ -204,7 +204,7 @@ func treeComments(comments []wp.Comments) Comments {
 	return top
 }
 
-func (d detailHandler) formatLi(comments wp.Comments, depth int, eo, parent string) string {
+func (d detailHandler) formatLi(comments models.Comments, depth int, eo, parent string) string {
 	li := `
 <li id="comment-{{CommentId}}" class="comment {{eo}} thread-even depth-{{Depth}} {{parent}}">
     <article id="div-comment-{{CommentId}}" class="comment-body">

@@ -4,7 +4,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"github.com/soxfmr/gomail"
-	"github/fthvgb1/wp-go/config"
+	"github/fthvgb1/wp-go/internal/config"
 	"mime"
 	"path"
 )

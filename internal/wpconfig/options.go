@@ -2,8 +2,8 @@ package wpconfig
 
 import (
 	"context"
-	"github/fthvgb1/wp-go/internal/wp"
-	"github/fthvgb1/wp-go/models"
+	"github/fthvgb1/wp-go/internal/models"
+	"github/fthvgb1/wp-go/model"
 	"github/fthvgb1/wp-go/safety"
 )
 
@@ -11,12 +11,12 @@ var Options safety.Map[string, string]
 
 func InitOptions() error {
 	ctx := context.Background()
-	ops, err := models.SimpleFind[wp.Options](ctx, models.SqlBuilder{{"autoload", "yes"}}, "option_name, option_value")
+	ops, err := model.SimpleFind[models.Options](ctx, model.SqlBuilder{{"autoload", "yes"}}, "option_name, option_value")
 	if err != nil {
 		return err
 	}
 	if len(ops) == 0 {
-		ops, err = models.SimpleFind[wp.Options](ctx, nil, "option_name, option_value")
+		ops, err = model.SimpleFind[models.Options](ctx, nil, "option_name, option_value")
 		if err != nil {
 			return err
 		}

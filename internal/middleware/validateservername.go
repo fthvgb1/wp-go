@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
-	"github/fthvgb1/wp-go/config"
+	"github/fthvgb1/wp-go/internal/config"
 	"github/fthvgb1/wp-go/safety"
 	"net/http"
 	"strings"

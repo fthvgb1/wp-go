@@ -1,4 +1,4 @@
-package wp
+package models
 
 type Postmeta struct {
 	MetaId    uint64 `db:"meta_id" json:"meta_id" form:"meta_id"`

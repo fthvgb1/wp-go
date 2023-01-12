@@ -12,21 +12,21 @@ const (
 	Detail
 )
 
-type PluginFunc[T any] func(*Plugin[T], *gin.Context, *T, uint)
+type Func[T any] func(*Plugin[T], *gin.Context, *T, uint)
 
 type Plugin[T any] struct {
-	calls []PluginFunc[T]
+	calls []Func[T]
 	index int
 	post  *T
 	scene uint
 	c     *gin.Context
 }
 
-func NewPlugin[T any](calls []PluginFunc[T], index int, post *T, scene uint, c *gin.Context) *Plugin[T] {
+func NewPlugin[T any](calls []Func[T], index int, post *T, scene uint, c *gin.Context) *Plugin[T] {
 	return &Plugin[T]{calls: calls, index: index, post: post, scene: scene, c: c}
 }
 
-func (p *Plugin[T]) Push(call ...PluginFunc[T]) {
+func (p *Plugin[T]) Push(call ...Func[T]) {
 	p.calls = append(p.calls, call...)
 }
 
