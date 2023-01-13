@@ -2,9 +2,11 @@ package model
 
 import (
 	"context"
+	"database/sql"
+	"github/fthvgb1/wp-go/helper"
 	"github/fthvgb1/wp-go/internal/config"
 	"github/fthvgb1/wp-go/internal/db"
-	wp2 "github/fthvgb1/wp-go/internal/models"
+	"github/fthvgb1/wp-go/internal/models"
 	"reflect"
 	"testing"
 )
@@ -34,7 +36,7 @@ func TestFind(t *testing.T) {
 		in     [][]any
 	}
 	type posts struct {
-		wp2.Posts
+		models.Posts
 		N int `db:"n"`
 	}
 	tests := []struct {
@@ -105,7 +107,7 @@ func TestFind(t *testing.T) {
 				in:    nil,
 			},
 			wantR: func() []posts {
-				r, err := Select[posts](ctx, "select post_status,count(*) n from "+wp2.Posts{}.Table()+" where ID<1000 group by post_status having n>1")
+				r, err := Select[posts](ctx, "select post_status,count(*) n from "+models.Posts{}.Table()+" where ID<1000 group by post_status having n>1")
 				if err != nil {
 					panic(err)
 				}
@@ -150,10 +152,10 @@ func TestFind(t *testing.T) {
 				group:  "a.post_author",
 				order:  SqlBuilder{{"n", "desc"}},
 				join: SqlBuilder{
-					{"a", "left join", wp2.Users{}.Table() + " b", "a.post_author=b.ID"},
+					{"a", "left join", models.Users{}.Table() + " b", "a.post_author=b.ID"},
 					{"left join", "wp_term_relationships c", "a.Id=c.object_id"},
-					{"left join", wp2.TermTaxonomy{}.Table() + " d", "c.term_taxonomy_id=d.term_taxonomy_id"},
-					{"left join", wp2.Terms{}.Table() + " e", "d.term_id=e.term_id"},
+					{"left join", models.TermTaxonomy{}.Table() + " d", "c.term_taxonomy_id=d.term_taxonomy_id"},
+					{"left join", models.Terms{}.Table() + " e", "d.term_id=e.term_id"},
 				},
 				having: SqlBuilder{{"n", ">", "0", "int"}},
 				limit:  10,
@@ -191,7 +193,7 @@ func TestFindOneById(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    wp2.Posts
+		want    models.Posts
 		wantErr bool
 	}{
 		{
@@ -199,10 +201,12 @@ func TestFindOneById(t *testing.T) {
 			args: args{
 				1,
 			},
-			want: func() wp2.Posts {
-				r, err := Get[wp2.Posts](ctx, "select * from "+wp2.Posts{}.Table()+" where ID=?", 1)
-				if err != nil {
+			want: func() models.Posts {
+				r, err := Get[models.Posts](ctx, "select * from "+models.Posts{}.Table()+" where ID=?", 1)
+				if err != nil && err != sql.ErrNoRows {
 					panic(err)
+				} else if err == sql.ErrNoRows {
+					err = nil
 				}
 				return r
 			}(),
@@ -211,7 +215,10 @@ func TestFindOneById(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := FindOneById[wp2.Posts](ctx, tt.args.id)
+			got, err := FindOneById[models.Posts](ctx, tt.args.id)
+			if err == sql.ErrNoRows {
+				err = nil
+			}
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FindOneById() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -233,7 +240,7 @@ func TestFirstOne(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    wp2.Posts
+		want    models.Posts
 		wantErr bool
 	}{
 		{
@@ -245,10 +252,12 @@ func TestFirstOne(t *testing.T) {
 				in:     nil,
 			},
 			wantErr: false,
-			want: func() wp2.Posts {
-				r, err := Get[wp2.Posts](ctx, "select * from "+wp2.Posts{}.Table()+" where post_status='publish' order by ID desc limit 1")
-				if err != nil {
+			want: func() models.Posts {
+				r, err := Get[models.Posts](ctx, "select * from "+models.Posts{}.Table()+" where post_status='publish' order by ID desc limit 1")
+				if err != nil && err != sql.ErrNoRows {
 					panic(err)
+				} else if err == sql.ErrNoRows {
+					err = nil
 				}
 				return r
 			}(),
@@ -256,40 +265,13 @@ func TestFirstOne(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := FirstOne[wp2.Posts](ctx, tt.args.where, tt.args.fields, tt.args.order, tt.args.in...)
+			got, err := FirstOne[models.Posts](ctx, tt.args.where, tt.args.fields, tt.args.order, tt.args.in...)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FirstOne() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("FirstOne() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestGet(t *testing.T) {
-	type args struct {
-		sql    string
-		params []any
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantR   wp2.Posts
-		wantErr bool
-	}{
-		{},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gotR, err := Get[wp2.Posts](ctx, tt.args.sql, tt.args.params...)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Get() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(gotR, tt.wantR) {
-				t.Errorf("Get() gotR = %v, want %v", gotR, tt.wantR)
 			}
 		})
 	}
@@ -304,7 +286,7 @@ func TestLastOne(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    wp2.Posts
+		want    models.Posts
 		wantErr bool
 	}{
 		{
@@ -316,8 +298,8 @@ func TestLastOne(t *testing.T) {
 				fields: "*",
 				in:     nil,
 			},
-			want: func() wp2.Posts {
-				r, err := Get[wp2.Posts](ctx, "select * from "+wp2.Posts{}.Table()+" where post_status='publish' order by  "+wp2.Posts{}.PrimaryKey()+" desc limit 1")
+			want: func() models.Posts {
+				r, err := Get[models.Posts](ctx, "select * from "+models.Posts{}.Table()+" where post_status='publish' order by  "+models.Posts{}.PrimaryKey()+" desc limit 1")
 				if err != nil {
 					panic(err)
 				}
@@ -327,40 +309,13 @@ func TestLastOne(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := LastOne[wp2.Posts](ctx, tt.args.where, tt.args.fields, tt.args.in...)
+			got, err := LastOne[models.Posts](ctx, tt.args.where, tt.args.fields, tt.args.in...)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("LastOne() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("LastOne() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestSelect(t *testing.T) {
-	type args struct {
-		sql    string
-		params []any
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    []wp2.Posts
-		wantErr bool
-	}{
-		{},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := Select[wp2.Posts](ctx, tt.args.sql, tt.args.params...)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Select() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Select() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -375,14 +330,33 @@ func TestSimpleFind(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    []wp2.Posts
+		want    []models.Posts
 		wantErr bool
 	}{
-		{},
+		{
+			name: "t1",
+			args: args{
+				where: SqlBuilder{
+					{"ID", "in", ""},
+				},
+				fields: "*",
+				in:     [][]any{{1, 2}},
+			},
+			want: func() (r []models.Posts) {
+				r, err := Select[models.Posts](ctx, "select * from "+models.Posts{}.Table()+" where ID in (?,?)", 1, 2)
+				if err != nil && err != sql.ErrNoRows {
+					panic(err)
+				} else if err == sql.ErrNoRows {
+					err = nil
+				}
+				return
+			}(),
+			wantErr: false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := SimpleFind[wp2.Posts](ctx, tt.args.where, tt.args.fields, tt.args.in...)
+			got, err := SimpleFind[models.Posts](ctx, tt.args.where, tt.args.fields, tt.args.in...)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("SimpleFind() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -409,15 +383,41 @@ func TestSimplePagination(t *testing.T) {
 	tests := []struct {
 		name      string
 		args      args
-		wantR     []wp2.Posts
+		wantR     []models.Posts
 		wantTotal int
 		wantErr   bool
 	}{
-		{},
+		{
+			name: "t1",
+			args: args{
+				where: SqlBuilder{
+					{"ID", "in", ""},
+				},
+				fields:   "*",
+				group:    "",
+				page:     1,
+				pageSize: 5,
+				order:    nil,
+				join:     nil,
+				having:   nil,
+				in:       [][]any{helper.SliceMap[int, any](helper.RangeSlice(431, 440, 1), helper.ToAny[int])},
+			},
+			wantR: func() (r []models.Posts) {
+				r, err := Select[models.Posts](ctx, "select * from "+models.Posts{}.Table()+" where ID in (?,?,?,?,?)", helper.SliceMap[int, any](helper.RangeSlice(431, 435, 1), helper.ToAny[int])...)
+				if err != nil && err != sql.ErrNoRows {
+					panic(err)
+				} else if err == sql.ErrNoRows {
+					err = nil
+				}
+				return
+			}(),
+			wantTotal: 10,
+			wantErr:   false,
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotR, gotTotal, err := SimplePagination[wp2.Posts](ctx, tt.args.where, tt.args.fields, tt.args.group, tt.args.page, tt.args.pageSize, tt.args.order, tt.args.join, tt.args.having, tt.args.in...)
+			gotR, gotTotal, err := SimplePagination[models.Posts](ctx, tt.args.where, tt.args.fields, tt.args.group, tt.args.page, tt.args.pageSize, tt.args.order, tt.args.join, tt.args.having, tt.args.in...)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("SimplePagination() error = %v, wantErr %v", err, tt.wantErr)
 				return

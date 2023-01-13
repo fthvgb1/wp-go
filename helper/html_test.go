@@ -1,6 +1,9 @@
 package helper
 
-import "testing"
+import (
+	"reflect"
+	"testing"
+)
 
 func Test_htmlSpecialChars(t *testing.T) {
 	type args struct {
@@ -86,6 +89,141 @@ func Test_htmlSpecialCharsDecode(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := htmlSpecialCharsDecode(tt.args.text, tt.args.flags); got != tt.want {
 				t.Errorf("htmlSpecialCharsDecode() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestStripTags(t *testing.T) {
+	type args struct {
+		str       string
+		allowable string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "t1",
+			args: args{
+				str:       "<p>ppppp<span>ffff</span></p><img />",
+				allowable: "<p><img>",
+			},
+			want: "<p>pppppffff</p><img />",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := StripTags(tt.args.str, tt.args.allowable); got != tt.want {
+				t.Errorf("StripTags() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestStripTagsX(t *testing.T) {
+	type args struct {
+		str       string
+		allowable string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "t1",
+			args: args{
+				str:       "<p>ppppp<span>ffff</span></p><img />",
+				allowable: "<p><img>",
+			},
+			want: "<p>pppppffff</p><img />",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := StripTagsX(tt.args.str, tt.args.allowable); got != tt.want {
+				t.Errorf("StripTagsX() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func BenchmarkStripTags(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		StripTags(`<p>ppppp<span>ffff</span></p><img />`, "<p><img>")
+	}
+}
+func BenchmarkStripTagsX(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		StripTagsX(`<p>ppppp<span>ffff</span></p><img />`, "<p><img>")
+	}
+}
+
+func TestCloseHtmlTag(t *testing.T) {
+	type args struct {
+		str string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "t1",
+			args: args{str: `<pre class="wp-block-preformatted">GRANT privileges ON databasename.tablename TO 'username'@'h...<p class="read-more"><a href="/p/305">继续阅读</a></p>`},
+			want: "</pre>",
+		},
+		{
+			name: "t2",
+			args: args{str: `<pre><div>`},
+			want: "</div></pre>",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := CloseHtmlTag(tt.args.str); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("CloseHtmlTag() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_clearTag(t *testing.T) {
+	type args struct {
+		s []string
+	}
+	tests := []struct {
+		name string
+		args args
+		want []string
+	}{
+		{
+			name: "t1",
+			args: args{s: []string{"<pre>", "<p>", "<span>", "</span>"}},
+			want: []string{"<pre>", "<p>"},
+		},
+		{
+			name: "t2",
+			args: args{s: []string{"<pre>", "</pre>", "<div>", "<span>", "</span>"}},
+			want: []string{"<div>"},
+		},
+		{
+			name: "t3",
+			args: args{s: []string{"<pre>", "</pre>"}},
+			want: []string{},
+		},
+		{
+			name: "t4",
+			args: args{s: []string{"<pre>", "<p>"}},
+			want: []string{"<pre>", "<p>"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ClearClosedTag(tt.args.s); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ClearClosedTag() = %v, want %v", got, tt.want)
 			}
 		})
 	}
