@@ -5,8 +5,8 @@ import (
 	"github/fthvgb1/wp-go/cache"
 	"github/fthvgb1/wp-go/internal/config"
 	dao "github/fthvgb1/wp-go/internal/dao"
+	"github/fthvgb1/wp-go/internal/logs"
 	"github/fthvgb1/wp-go/internal/models"
-	"github/fthvgb1/wp-go/logs"
 	"sync"
 	"time"
 )

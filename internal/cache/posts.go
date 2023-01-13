@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github/fthvgb1/wp-go/helper"
+	"github/fthvgb1/wp-go/internal/logs"
 	"github/fthvgb1/wp-go/internal/models"
-	"github/fthvgb1/wp-go/logs"
 	"time"
 )
 
