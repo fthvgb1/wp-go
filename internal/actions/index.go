@@ -7,7 +7,7 @@ import (
 	"github/fthvgb1/wp-go/helper"
 	"github/fthvgb1/wp-go/internal/cache"
 	dao "github/fthvgb1/wp-go/internal/dao"
-	"github/fthvgb1/wp-go/internal/models"
+	"github/fthvgb1/wp-go/internal/pkg/models"
 	"github/fthvgb1/wp-go/internal/plugins"
 	"github/fthvgb1/wp-go/internal/wpconfig"
 	"github/fthvgb1/wp-go/model"

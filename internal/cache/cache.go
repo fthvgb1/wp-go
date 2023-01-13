@@ -3,21 +3,21 @@ package cache
 import (
 	"context"
 	"github/fthvgb1/wp-go/cache"
-	"github/fthvgb1/wp-go/internal/config"
 	dao "github/fthvgb1/wp-go/internal/dao"
-	"github/fthvgb1/wp-go/internal/logs"
-	"github/fthvgb1/wp-go/internal/models"
+	"github/fthvgb1/wp-go/internal/pkg/config"
+	"github/fthvgb1/wp-go/internal/pkg/logs"
+	models2 "github/fthvgb1/wp-go/internal/pkg/models"
 	"sync"
 	"time"
 )
 
 var postContextCache *cache.MapCache[uint64, dao.PostContext]
 var archivesCaches *Arch
-var categoryCaches *cache.SliceCache[models.TermsMy]
-var recentPostsCaches *cache.SliceCache[models.Posts]
-var recentCommentsCaches *cache.SliceCache[models.Comments]
+var categoryCaches *cache.SliceCache[models2.TermsMy]
+var recentPostsCaches *cache.SliceCache[models2.Posts]
+var recentCommentsCaches *cache.SliceCache[models2.Comments]
 var postCommentCaches *cache.MapCache[uint64, []uint64]
-var postsCache *cache.MapCache[uint64, models.Posts]
+var postsCache *cache.MapCache[uint64, models2.Posts]
 
 var postMetaCache *cache.MapCache[uint64, map[string]any]
 
@@ -26,9 +26,9 @@ var postListIdsCache *cache.MapCache[string, dao.PostIds]
 var searchPostIdsCache *cache.MapCache[string, dao.PostIds]
 var maxPostIdCache *cache.SliceCache[uint64]
 
-var usersCache *cache.MapCache[uint64, models.Users]
-var usersNameCache *cache.MapCache[string, models.Users]
-var commentsCache *cache.MapCache[uint64, models.Comments]
+var usersCache *cache.MapCache[uint64, models2.Users]
+var usersNameCache *cache.MapCache[string, models2.Users]
+var commentsCache *cache.MapCache[uint64, models2.Comments]
 
 func InitActionsCommonCache() {
 	c := config.Conf.Load()
@@ -45,25 +45,25 @@ func InitActionsCommonCache() {
 
 	postContextCache = cache.NewMapCacheByFn[uint64, dao.PostContext](dao.GetPostContext, c.ContextPostCacheTime)
 
-	postsCache = cache.NewMapCacheByBatchFn[uint64, models.Posts](dao.GetPostsByIds, c.PostDataCacheTime)
+	postsCache = cache.NewMapCacheByBatchFn[uint64, models2.Posts](dao.GetPostsByIds, c.PostDataCacheTime)
 
 	postMetaCache = cache.NewMapCacheByBatchFn[uint64, map[string]any](dao.GetPostMetaByPostIds, c.PostDataCacheTime)
 
-	categoryCaches = cache.NewSliceCache[models.TermsMy](dao.Categories, c.CategoryCacheTime)
+	categoryCaches = cache.NewSliceCache[models2.TermsMy](dao.Categories, c.CategoryCacheTime)
 
-	recentPostsCaches = cache.NewSliceCache[models.Posts](dao.RecentPosts, c.RecentPostCacheTime)
+	recentPostsCaches = cache.NewSliceCache[models2.Posts](dao.RecentPosts, c.RecentPostCacheTime)
 
-	recentCommentsCaches = cache.NewSliceCache[models.Comments](dao.RecentComments, c.RecentCommentsCacheTime)
+	recentCommentsCaches = cache.NewSliceCache[models2.Comments](dao.RecentComments, c.RecentCommentsCacheTime)
 
 	postCommentCaches = cache.NewMapCacheByFn[uint64, []uint64](dao.PostComments, c.PostCommentsCacheTime)
 
 	maxPostIdCache = cache.NewSliceCache[uint64](dao.GetMaxPostId, c.MaxPostIdCacheTime)
 
-	usersCache = cache.NewMapCacheByFn[uint64, models.Users](dao.GetUserById, c.UserInfoCacheTime)
+	usersCache = cache.NewMapCacheByFn[uint64, models2.Users](dao.GetUserById, c.UserInfoCacheTime)
 
-	usersNameCache = cache.NewMapCacheByFn[string, models.Users](dao.GetUserByName, c.UserInfoCacheTime)
+	usersNameCache = cache.NewMapCacheByFn[string, models2.Users](dao.GetUserByName, c.UserInfoCacheTime)
 
-	commentsCache = cache.NewMapCacheByBatchFn[uint64, models.Comments](dao.GetCommentByIds, c.CommentsCacheTime)
+	commentsCache = cache.NewMapCacheByBatchFn[uint64, models2.Comments](dao.GetCommentByIds, c.CommentsCacheTime)
 }
 
 func ClearCache() {
@@ -89,18 +89,18 @@ func FlushCache() {
 	usersCache.Flush()
 }
 
-func Archives(ctx context.Context) (r []models.PostArchive) {
+func Archives(ctx context.Context) (r []models2.PostArchive) {
 	return archivesCaches.getArchiveCache(ctx)
 }
 
 type Arch struct {
-	data         []models.PostArchive
+	data         []models2.PostArchive
 	mutex        *sync.Mutex
-	setCacheFunc func(context.Context) ([]models.PostArchive, error)
+	setCacheFunc func(context.Context) ([]models2.PostArchive, error)
 	month        time.Month
 }
 
-func (c *Arch) getArchiveCache(ctx context.Context) []models.PostArchive {
+func (c *Arch) getArchiveCache(ctx context.Context) []models2.PostArchive {
 	l := len(c.data)
 	m := time.Now().Month()
 	if l > 0 && c.month != m || l < 1 {
@@ -117,7 +117,7 @@ func (c *Arch) getArchiveCache(ctx context.Context) []models.PostArchive {
 	return c.data
 }
 
-func Categories(ctx context.Context) []models.TermsMy {
+func Categories(ctx context.Context) []models2.TermsMy {
 	r, err := categoryCaches.GetCache(ctx, time.Second, ctx)
 	logs.ErrPrintln(err, "get category ")
 	return r

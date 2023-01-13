@@ -2,7 +2,7 @@ package wpconfig
 
 import (
 	"context"
-	"github/fthvgb1/wp-go/internal/models"
+	"github/fthvgb1/wp-go/internal/pkg/models"
 	"github/fthvgb1/wp-go/model"
 	"github/fthvgb1/wp-go/safety"
 )

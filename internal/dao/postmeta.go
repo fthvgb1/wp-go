@@ -4,8 +4,8 @@ import (
 	"context"
 	"github.com/leeqvip/gophp"
 	"github/fthvgb1/wp-go/helper"
-	"github/fthvgb1/wp-go/internal/logs"
-	"github/fthvgb1/wp-go/internal/models"
+	"github/fthvgb1/wp-go/internal/pkg/logs"
+	models2 "github/fthvgb1/wp-go/internal/pkg/models"
 	"github/fthvgb1/wp-go/model"
 	"strconv"
 )
@@ -14,7 +14,7 @@ func GetPostMetaByPostIds(args ...any) (r map[uint64]map[string]any, err error) 
 	r = make(map[uint64]map[string]any)
 	ctx := args[0].(context.Context)
 	ids := args[1].([]uint64)
-	rr, err := model.Find[models.Postmeta](ctx, model.SqlBuilder{
+	rr, err := model.Find[models2.Postmeta](ctx, model.SqlBuilder{
 		{"post_id", "in", ""},
 	}, "*", "", nil, nil, nil, 0, helper.SliceMap(ids, helper.ToAny[uint64]))
 	if err != nil {
@@ -42,7 +42,7 @@ func GetPostMetaByPostIds(args ...any) (r map[uint64]map[string]any, err error) 
 	return
 }
 
-func ToPostThumb(c context.Context, meta map[string]any, postId uint64) (r models.PostThumbnail) {
+func ToPostThumb(c context.Context, meta map[string]any, postId uint64) (r models2.PostThumbnail) {
 	if meta != nil {
 		m, ok := meta["_thumbnail_id"]
 		if ok {

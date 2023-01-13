@@ -3,7 +3,7 @@ package cache
 import (
 	"context"
 	"github/fthvgb1/wp-go/helper"
-	wp2 "github/fthvgb1/wp-go/internal/models"
+	wp2 "github/fthvgb1/wp-go/internal/pkg/models"
 	"strconv"
 	"time"
 )
