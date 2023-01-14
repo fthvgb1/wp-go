@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github/fthvgb1/wp-go/helper"
 	"github/fthvgb1/wp-go/internal/pkg/models"
+	"github/fthvgb1/wp-go/internal/wpconfig"
 	"github/fthvgb1/wp-go/model"
 	"strings"
 	"sync/atomic"
@@ -42,6 +43,7 @@ func GetPostsByIds(ids ...any) (m map[uint64]models.Posts, err error) {
 		}
 		postsMap[post.Id] = v
 	}
+	host, _ := wpconfig.Options.Load("siteurl")
 	meta, _ := GetPostMetaByPostIds(ctx, id)
 	for k, pp := range postsMap {
 		if len(pp.Categories) > 0 {
@@ -52,7 +54,7 @@ func GetPostsByIds(ids ...any) (m map[uint64]models.Posts, err error) {
 			pp.CategoriesHtml = strings.Join(t, "、")
 			mm, ok := meta[pp.Id]
 			if ok {
-				thumb := ToPostThumb(ctx, mm, pp.Id)
+				thumb := ToPostThumb(ctx, mm, host)
 				if thumb.Path != "" {
 					pp.Thumbnail = thumb
 				}

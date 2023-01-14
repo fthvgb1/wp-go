@@ -2,19 +2,20 @@ package common
 
 import (
 	"context"
-	"github.com/leeqvip/gophp"
+	"fmt"
 	"github/fthvgb1/wp-go/helper"
 	"github/fthvgb1/wp-go/internal/pkg/logs"
-	models2 "github/fthvgb1/wp-go/internal/pkg/models"
+	"github/fthvgb1/wp-go/internal/pkg/models"
 	"github/fthvgb1/wp-go/model"
 	"strconv"
+	"strings"
 )
 
 func GetPostMetaByPostIds(args ...any) (r map[uint64]map[string]any, err error) {
 	r = make(map[uint64]map[string]any)
 	ctx := args[0].(context.Context)
 	ids := args[1].([]uint64)
-	rr, err := model.Find[models2.Postmeta](ctx, model.SqlBuilder{
+	rr, err := model.Find[models.Postmeta](ctx, model.SqlBuilder{
 		{"post_id", "in", ""},
 	}, "*", "", nil, nil, nil, 0, helper.SliceMap(ids, helper.ToAny[uint64]))
 	if err != nil {
@@ -25,15 +26,13 @@ func GetPostMetaByPostIds(args ...any) (r map[uint64]map[string]any, err error) 
 			r[postmeta.PostId] = make(map[string]any)
 		}
 		if postmeta.MetaKey == "_wp_attachment_metadata" {
-			meta, err := gophp.Unserialize([]byte(postmeta.MetaValue))
+			metadata, err := models.AttachmentMetadata(postmeta.MetaValue)
 			if err != nil {
-				logs.ErrPrintln(err, "反序列化postmeta失败", postmeta.MetaValue)
+				logs.ErrPrintln(err, "解析postmeta失败", postmeta.MetaId, postmeta.MetaValue)
 				continue
 			}
-			metaVal, ok := meta.(map[string]any)
-			if ok {
-				r[postmeta.PostId][postmeta.MetaKey] = metaVal
-			}
+			r[postmeta.PostId][postmeta.MetaKey] = metadata
+
 		} else {
 			r[postmeta.PostId][postmeta.MetaKey] = postmeta.MetaValue
 		}
@@ -42,7 +41,7 @@ func GetPostMetaByPostIds(args ...any) (r map[uint64]map[string]any, err error) 
 	return
 }
 
-func ToPostThumb(c context.Context, meta map[string]any, postId uint64) (r models2.PostThumbnail) {
+func ToPostThumb(c context.Context, meta map[string]any, host string) (r models.PostThumbnail) {
 	if meta != nil {
 		m, ok := meta["_thumbnail_id"]
 		if ok {
@@ -59,20 +58,29 @@ func ToPostThumb(c context.Context, meta map[string]any, postId uint64) (r model
 								r.Path = ff
 							}
 						}
-						tt, ok := helper.GetStrMapAnyVal[map[string]any]("_wp_attachment_metadata.sizes.post-thumbnail", mm)
-						if ok && tt != nil {
-							width, ok := tt["width"]
+						x, ok := mm["_wp_attachment_metadata"]
+						if ok {
+							metadata, ok := x.(models.WpAttachmentMetadata)
 							if ok {
-								w, ok := width.(int)
-								if ok {
-									r.Width = w
-								}
-							}
-							height, ok := tt["height"]
-							if ok {
-								h, ok := height.(int)
-								if ok {
-									r.Height = h
+								if _, ok := metadata.Sizes["post-thumbnail"]; ok {
+									r.Width = metadata.Sizes["post-thumbnail"].Width
+									r.Height = metadata.Sizes["post-thumbnail"].Height
+									up := strings.Split(metadata.File, "/")
+									r.Srcset = strings.Join(helper.MapToSlice[string](metadata.Sizes, func(s string, size models.MetaDataFileSize) (r string, ok bool) {
+										up[2] = size.File
+										if s == "post-thumbnail" {
+											return
+										}
+										r = fmt.Sprintf("%s/wp-content/uploads/%s %dw", host, strings.Join(up, "/"), size.Width)
+										ok = true
+										return
+									}), ", ")
+									r.Sizes = fmt.Sprintf("(max-width: %dpx) 100vw, %dpx", r.Width, r.Width)
+									if r.Width >= 740 && r.Width < 767 {
+										r.Sizes = "(max-width: 706px) 89vw, (max-width: 767px) 82vw, 740px"
+									} else if r.Width >= 767 {
+										r.Sizes = "(max-width: 767px) 89vw, (max-width: 1000px) 54vw, (max-width: 1071px) 543px, 580px"
+									}
 								}
 							}
 						}

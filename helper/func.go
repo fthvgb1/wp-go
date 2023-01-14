@@ -66,6 +66,19 @@ func SimpleSort[T any](arr []T, fn func(i, j T) bool) {
 	return
 }
 
+func SimpleSortR[T any](arr []T, fn func(i, j T) bool) (r []T) {
+	r = make([]T, 0, len(arr))
+	for _, t := range arr {
+		r = append(r, t)
+	}
+	slice := anyArr[T]{
+		data: r,
+		fn:   fn,
+	}
+	sort.Sort(slice)
+	return
+}
+
 func Min[T IntNumber | ~float64 | ~float32](a ...T) T {
 	min := a[0]
 	for _, t := range a {

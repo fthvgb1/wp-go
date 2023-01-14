@@ -28,19 +28,22 @@ type Posts struct {
 	CommentCount        int64     `gorm:"column:comment_count" db:"comment_count" json:"comment_count" form:"comment_count"`
 
 	//扩展字段
-	Taxonomy       string   `db:"taxonomy" json:"taxonomy"`
-	CategoryName   string   `db:"category_name" json:"category_name"`
-	Categories     []string `json:"categories"`
-	Tags           []string `json:"tags"`
-	CategoriesHtml string
-	TagsHtml       string
-	Thumbnail      PostThumbnail
+	Taxonomy           string   `db:"taxonomy" json:"taxonomy"`
+	CategoryName       string   `db:"category_name" json:"category_name"`
+	Categories         []string `json:"categories"`
+	Tags               []string `json:"tags"`
+	CategoriesHtml     string
+	TagsHtml           string
+	Thumbnail          PostThumbnail
+	AttachmentMetadata WpAttachmentMetadata
 }
 
 type PostThumbnail struct {
 	Path   string
 	Width  int
 	Height int
+	Srcset string
+	Sizes  string
 }
 
 func (w Posts) PrimaryKey() string {
