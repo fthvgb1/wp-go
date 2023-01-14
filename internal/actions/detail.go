@@ -5,10 +5,11 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github/fthvgb1/wp-go/helper"
-	"github/fthvgb1/wp-go/internal/cache"
+	cache2 "github/fthvgb1/wp-go/internal/pkg/cache"
 	"github/fthvgb1/wp-go/internal/pkg/logs"
 	"github/fthvgb1/wp-go/internal/pkg/models"
 	"github/fthvgb1/wp-go/internal/plugins"
+	"github/fthvgb1/wp-go/internal/templates"
 	"github/fthvgb1/wp-go/internal/wpconfig"
 	"math/rand"
 	"net/http"
@@ -28,10 +29,10 @@ func Detail(c *gin.Context) {
 	hh := detailHandler{
 		c,
 	}
-	recent := cache.RecentPosts(c, 5)
-	archive := cache.Archives(c)
-	categoryItems := cache.Categories(c)
-	recentComments := cache.RecentComments(c, 5)
+	recent := cache2.RecentPosts(c, 5)
+	archive := cache2.Archives(c)
+	categoryItems := cache2.Categories(c)
+	recentComments := cache2.RecentComments(c, 5)
 	var h = gin.H{
 		"title":          wpconfig.Options.Value("blogname"),
 		"options":        wpconfig.Options,
@@ -51,7 +52,11 @@ func Detail(c *gin.Context) {
 		if isApproveComment == true {
 			return
 		}
-		c.HTML(status, helper.StrJoin(wpconfig.Options.Value("template"), "/posts/detail.gohtml"), h)
+		tmlp := wpconfig.Options.Value("template")
+		if i, err := templates.IsTemplateIsExist(tmlp); err != nil || !i {
+			tmlp = "twentyfifteen"
+		}
+		c.HTML(status, helper.StrJoin(tmlp, "/posts/detail.gohtml"), h)
 	}()
 	id := c.Param("id")
 	Id := 0
@@ -62,12 +67,12 @@ func Detail(c *gin.Context) {
 		}
 	}
 	ID := uint64(Id)
-	maxId, err := cache.GetMaxPostId(c)
+	maxId, err := cache2.GetMaxPostId(c)
 	logs.ErrPrintln(err, "get max post id")
 	if ID > maxId || err != nil {
 		return
 	}
-	post, err := cache.GetPostById(c, ID)
+	post, err := cache2.GetPostById(c, ID)
 	if post.Id == 0 || err != nil {
 		return
 	}
@@ -76,7 +81,7 @@ func Detail(c *gin.Context) {
 	if post.CommentCount > 0 || post.CommentStatus == "open" {
 		showComment = true
 	}
-	user := cache.GetUserById(c, post.PostAuthor)
+	user := cache2.GetUserById(c, post.PostAuthor)
 	plugins.PasswordProjectTitle(&post)
 	if post.PostPassword != "" && pw != post.PostPassword {
 		plugins.PasswdProjectContent(&post)
@@ -89,10 +94,10 @@ func Detail(c *gin.Context) {
 		return
 	}
 	plugins.ApplyPlugin(plugins.NewPostPlugin(c, plugins.Detail), &post)
-	comments, err := cache.PostComments(c, post.Id)
+	comments, err := cache2.PostComments(c, post.Id)
 	logs.ErrPrintln(err, "get post comment", post.Id)
 	commentss := treeComments(comments)
-	prev, next, err := cache.GetContextPost(c, post.Id, post.PostDate)
+	prev, next, err := cache2.GetContextPost(c, post.Id, post.PostDate)
 	logs.ErrPrintln(err, "get pre and next post", post.Id, post.PostDate)
 	h["title"] = fmt.Sprintf("%s-%s", post.PostTitle, wpconfig.Options.Value("blogname"))
 	h["post"] = post

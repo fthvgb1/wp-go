@@ -42,3 +42,14 @@ func (t FsTemplate) Instance(name string, data any) render.Render {
 		Data:     data,
 	}
 }
+
+func IsTemplateIsExist(tml string) (r bool, err error) {
+	arr, err := TemplateFs.ReadDir(tml)
+	if err != nil {
+		return
+	}
+	if len(arr) > 0 {
+		r = true
+	}
+	return
+}

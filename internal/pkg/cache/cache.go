@@ -3,15 +3,15 @@ package cache
 import (
 	"context"
 	"github/fthvgb1/wp-go/cache"
-	dao "github/fthvgb1/wp-go/internal/dao"
 	"github/fthvgb1/wp-go/internal/pkg/config"
+	"github/fthvgb1/wp-go/internal/pkg/dao"
 	"github/fthvgb1/wp-go/internal/pkg/logs"
 	models2 "github/fthvgb1/wp-go/internal/pkg/models"
 	"sync"
 	"time"
 )
 
-var postContextCache *cache.MapCache[uint64, dao.PostContext]
+var postContextCache *cache.MapCache[uint64, common.PostContext]
 var archivesCaches *Arch
 var categoryCaches *cache.SliceCache[models2.TermsMy]
 var recentPostsCaches *cache.SliceCache[models2.Posts]
@@ -22,8 +22,8 @@ var postsCache *cache.MapCache[uint64, models2.Posts]
 var postMetaCache *cache.MapCache[uint64, map[string]any]
 
 var monthPostsCache *cache.MapCache[string, []uint64]
-var postListIdsCache *cache.MapCache[string, dao.PostIds]
-var searchPostIdsCache *cache.MapCache[string, dao.PostIds]
+var postListIdsCache *cache.MapCache[string, common.PostIds]
+var searchPostIdsCache *cache.MapCache[string, common.PostIds]
 var maxPostIdCache *cache.SliceCache[uint64]
 
 var usersCache *cache.MapCache[uint64, models2.Users]
@@ -34,36 +34,36 @@ func InitActionsCommonCache() {
 	c := config.Conf.Load()
 	archivesCaches = &Arch{
 		mutex:        &sync.Mutex{},
-		setCacheFunc: dao.Archives,
+		setCacheFunc: common.Archives,
 	}
 
-	searchPostIdsCache = cache.NewMapCacheByFn[string, dao.PostIds](dao.SearchPostIds, c.SearchPostCacheTime)
+	searchPostIdsCache = cache.NewMapCacheByFn[string, common.PostIds](common.SearchPostIds, c.SearchPostCacheTime)
 
-	postListIdsCache = cache.NewMapCacheByFn[string, dao.PostIds](dao.SearchPostIds, c.PostListCacheTime)
+	postListIdsCache = cache.NewMapCacheByFn[string, common.PostIds](common.SearchPostIds, c.PostListCacheTime)
 
-	monthPostsCache = cache.NewMapCacheByFn[string, []uint64](dao.MonthPost, c.MonthPostCacheTime)
+	monthPostsCache = cache.NewMapCacheByFn[string, []uint64](common.MonthPost, c.MonthPostCacheTime)
 
-	postContextCache = cache.NewMapCacheByFn[uint64, dao.PostContext](dao.GetPostContext, c.ContextPostCacheTime)
+	postContextCache = cache.NewMapCacheByFn[uint64, common.PostContext](common.GetPostContext, c.ContextPostCacheTime)
 
-	postsCache = cache.NewMapCacheByBatchFn[uint64, models2.Posts](dao.GetPostsByIds, c.PostDataCacheTime)
+	postsCache = cache.NewMapCacheByBatchFn[uint64, models2.Posts](common.GetPostsByIds, c.PostDataCacheTime)
 
-	postMetaCache = cache.NewMapCacheByBatchFn[uint64, map[string]any](dao.GetPostMetaByPostIds, c.PostDataCacheTime)
+	postMetaCache = cache.NewMapCacheByBatchFn[uint64, map[string]any](common.GetPostMetaByPostIds, c.PostDataCacheTime)
 
-	categoryCaches = cache.NewSliceCache[models2.TermsMy](dao.Categories, c.CategoryCacheTime)
+	categoryCaches = cache.NewSliceCache[models2.TermsMy](common.Categories, c.CategoryCacheTime)
 
-	recentPostsCaches = cache.NewSliceCache[models2.Posts](dao.RecentPosts, c.RecentPostCacheTime)
+	recentPostsCaches = cache.NewSliceCache[models2.Posts](common.RecentPosts, c.RecentPostCacheTime)
 
-	recentCommentsCaches = cache.NewSliceCache[models2.Comments](dao.RecentComments, c.RecentCommentsCacheTime)
+	recentCommentsCaches = cache.NewSliceCache[models2.Comments](common.RecentComments, c.RecentCommentsCacheTime)
 
-	postCommentCaches = cache.NewMapCacheByFn[uint64, []uint64](dao.PostComments, c.PostCommentsCacheTime)
+	postCommentCaches = cache.NewMapCacheByFn[uint64, []uint64](common.PostComments, c.PostCommentsCacheTime)
 
-	maxPostIdCache = cache.NewSliceCache[uint64](dao.GetMaxPostId, c.MaxPostIdCacheTime)
+	maxPostIdCache = cache.NewSliceCache[uint64](common.GetMaxPostId, c.MaxPostIdCacheTime)
 
-	usersCache = cache.NewMapCacheByFn[uint64, models2.Users](dao.GetUserById, c.UserInfoCacheTime)
+	usersCache = cache.NewMapCacheByFn[uint64, models2.Users](common.GetUserById, c.UserInfoCacheTime)
 
-	usersNameCache = cache.NewMapCacheByFn[string, models2.Users](dao.GetUserByName, c.UserInfoCacheTime)
+	usersNameCache = cache.NewMapCacheByFn[string, models2.Users](common.GetUserByName, c.UserInfoCacheTime)
 
-	commentsCache = cache.NewMapCacheByBatchFn[uint64, models2.Comments](dao.GetCommentByIds, c.CommentsCacheTime)
+	commentsCache = cache.NewMapCacheByBatchFn[uint64, models2.Comments](common.GetCommentByIds, c.CommentsCacheTime)
 }
 
 func ClearCache() {
