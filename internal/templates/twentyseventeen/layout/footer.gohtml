@@ -1,0 +1,16 @@
+{{define "layout/footer"}}
+    <script id="twentyseventeen-skip-link-focus-fix-js-extra">
+        var twentyseventeenScreenReaderText = {"quote":"<svg class=\"icon icon-quote-right\" aria-hidden=\"true\" role=\"img\"> <use href=\"#icon-quote-right\" xlink:href=\"#icon-quote-right\"><\/use> <\/svg>"};
+    </script>
+
+    <script src="/wp-content/themes/twentyseventeen/assets/js/skip-link-focus-fix.js?ver=20161114" id="twentyseventeen-skip-link-focus-fix-js"></script>
+    <script src="/wp-content/themes/twentyseventeen/assets/js/global.js?ver=20211130" id="twentyseventeen-global-js"></script>
+    <script src="/wp-content/themes/twentyseventeen/assets/js/jquery.scrollTo.js?ver=2.1.3" id="jquery-scrollto-js"></script>
+
+    <script src='/wp-content/plugins/enlighter/cache/enlighterjs.min.js?ver=0A0B0C' id='enlighterjs-js'></script>
+    <script id='enlighterjs-js-after'>
+        !function(e,n){if("undefined"!=typeof EnlighterJS){var o={"selectors":{"block":"pre.EnlighterJSRAW","inline":"code.EnlighterJSRAW"},"options":{"indent":4,"ampersandCleanup":true,"linehover":true,"rawcodeDbclick":false,"textOverflow":"break","linenumbers":true,"theme":"enlighter","language":"generic","retainCssClasses":false,"collapse":false,"toolbarOuter":"","toolbarTop":"{BTN_RAW}{BTN_COPY}{BTN_WINDOW}{BTN_WEBSITE}","toolbarBottom":""}};(e.EnlighterJSINIT=function(){EnlighterJS.init(o.selectors.block,o.selectors.inline,o.options)})()}else{(n&&(n.error||n.log)||function(){})("Error: EnlighterJS resources not loaded yet!")}}(window,console);
+    </script>
+        {{ block "footer" .}}
+        {{end}}
+{{end}}

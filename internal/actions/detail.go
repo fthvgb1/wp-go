@@ -9,7 +9,6 @@ import (
 	"github/fthvgb1/wp-go/internal/pkg/logs"
 	"github/fthvgb1/wp-go/internal/pkg/models"
 	"github/fthvgb1/wp-go/internal/plugins"
-	"github/fthvgb1/wp-go/internal/templates"
 	"github/fthvgb1/wp-go/internal/wpconfig"
 	"math/rand"
 	"net/http"
@@ -52,11 +51,7 @@ func Detail(c *gin.Context) {
 		if isApproveComment == true {
 			return
 		}
-		tmlp := wpconfig.Options.Value("template")
-		if i, err := templates.IsTemplateIsExist(tmlp); err != nil || !i {
-			tmlp = "twentyfifteen"
-		}
-		c.HTML(status, helper.StrJoin(tmlp, "/posts/detail.gohtml"), h)
+		c.HTML(status, helper.StrJoin(getTemplateName(), "/posts/detail.gohtml"), h)
 	}()
 	id := c.Param("id")
 	Id := 0

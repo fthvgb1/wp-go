@@ -202,11 +202,7 @@ func Index(c *gin.Context) {
 			stat = http.StatusInternalServerError
 			return
 		}
-		tmlp := wpconfig.Options.Value("template")
-		if i, err := templates.IsTemplateIsExist(tmlp); err != nil || !i {
-			tmlp = "twentyfifteen"
-		}
-		c.HTML(stat, helper.StrJoin(tmlp, "/posts/index.gohtml"), ginH)
+		c.HTML(stat, helper.StrJoin(getTemplateName(), "/posts/index.gohtml"), ginH)
 	}()
 	err = h.parseParams()
 	if err != nil {
@@ -257,6 +253,36 @@ func Index(c *gin.Context) {
 
 var complie = regexp.MustCompile(`(/page)/(\d+)`)
 
+type PaginationElements struct {
+	Prev string
+	Next string
+}
+
+func getTemplateName() string {
+	tmlp := wpconfig.Options.Value("template")
+	if i, err := templates.IsTemplateIsExist(tmlp); err != nil || !i {
+		tmlp = "twentyfifteen"
+	}
+	return tmlp
+}
+
+var page = map[string]PaginationElements{
+	"twentyfifteen": {
+		Prev: "上一页",
+		Next: "下一页",
+	},
+	"twentyseventeen": {
+		Prev: `
+<svg class="icon icon-arrow-left" aria-hidden="true" role="img"> <use href="#icon-arrow-left" xlink:href="#icon-arrow-left"></use> </svg>
+<span class="screen-reader-text">上一页</span>
+`,
+		Next: `
+<span class="screen-reader-text">下一页</span>
+<svg class="icon icon-arrow-right" aria-hidden="true" role="img"> <use href="#icon-arrow-right" xlink:href="#icon-arrow-right"></use> 
+</svg>`,
+	},
+}
+
 func pagination(currentPage, totalPage, step int, path, query string) (html string) {
 	if totalPage < 2 {
 		return
@@ -280,7 +306,7 @@ func pagination(currentPage, totalPage, step int, path, query string) (html stri
 		if currentPage >= 2 {
 			pp = replacePage(r, pathx, currentPage-1)
 		}
-		s.WriteString(fmt.Sprintf(`<a class="prev page-numbers" href="%s%s">上一页</a>`, pp, query))
+		s.WriteString(fmt.Sprintf(`<a class="prev page-numbers" href="%s%s">%s</a>`, pp, query, page[getTemplateName()].Prev))
 	}
 	if currentPage >= step+2 {
 		d := ""
@@ -325,7 +351,7 @@ func pagination(currentPage, totalPage, step int, path, query string) (html stri
 	}
 	if currentPage < totalPage {
 		dd := replacePage(r, pathx, currentPage+1)
-		s.WriteString(fmt.Sprintf(`<a class="next page-numbers" href="%s%s">下一页</a>`, dd, query))
+		s.WriteString(fmt.Sprintf(`<a class="next page-numbers" href="%s%s">%s</a>`, dd, query, page[getTemplateName()].Next))
 	}
 	html = s.String()
 	return

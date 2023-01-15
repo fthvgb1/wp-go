@@ -1,0 +1,82 @@
+{{template "layout/base" .}}
+
+{{define "content" }}
+    {{if .posts}}
+
+        <div class="wrap">
+            <header class="page-header">
+                <h2 class="page-title">文章</h2>
+            </header>
+
+            <div id="primary" class="content-area">
+                <main id="main" class="site-main">
+                    {{if .header}}
+                        <header class="page-header">
+                            <h1 class="page-title">
+                                {{if .search}}
+                                    {{.header}}
+                                {{else}}
+                                    {{.header |unescaped}}
+                                {{end}}
+                            </h1>
+                        </header>
+                    {{end}}
+                    {{ range $k,$v:=.posts}}
+                        <article id="post-{{$v.Id}}"
+                                 class="post-{{$v.Id}} post {{if $v.Thumbnail.Path}}has-post-thumbnail{{end}} type-post status-publish format-standard hentry category">
+
+                            <header class="entry-header">
+                                <div class="entry-meta">
+                                    <span class="screen-reader-text">发布于 </span>
+                                    <a href="/p/{{$v.Id}}" rel="bookmark">
+                                        <time class="entry-date published" datetime="{{$v.PostDateGmt}}">{{$v.PostDate|dateCh}}
+                                        </time><time class="updated" datetime="{{$v.PostModifiedGmt}}">{{$v.PostModified|dateCh}}
+                                        </time>
+                                    </a>
+                                </div>
+                            </header>
+
+                            <h3 class="entry-title">
+                                <a href="/p/{{$v.Id}}" rel="bookmark">{{$v.PostTitle}}</a>
+                            </h3>
+
+
+                            {{if $v.Thumbnail.Path}}
+                                <div class="post-thumbnail">
+                                    <a href="/p/{{$v.Id}}" >
+                                        <img width="{{$v.Thumbnail.Width}}" height="{{$v.Thumbnail.Height}}" src="{{"siteurl"| getOption}}/wp-content/uploads/{{$v.Thumbnail.Path}}" class="attachment-twentyseventeen-featured-image size-twentyseventeen-featured-image wp-post-image" alt="{{$v.PostTitle}}" decoding="async" loading="lazy" srcset="{{$v.Thumbnail.Srcset}}" sizes="{{$v.Thumbnail.Sizes}}">
+                                    </a>
+                                </div>
+                            {{end}}
+
+
+                            <!-- .entry-header -->
+
+                            <div class="entry-content">
+                                {{$v.PostContent|unescaped}}
+                            </div>
+
+                            <!-- .entry-content -->
+
+
+                        </article>
+
+                        <!-- #post-{{$v.Id}} -->
+                    {{end}}
+
+                    {{template "layout/page" .}}
+                </main>
+                <!-- .site-main -->
+
+            </div>
+
+            <aside id="secondary" class="widget-area" aria-label="博客边栏">
+                {{template "layout/sidebar" .}}
+            </aside>
+        </div>
+
+    {{else }}
+        {{template "layout/empty" .}}
+    {{end}}
+
+{{end}}

@@ -1,0 +1,59 @@
+{{ define "layout/base"}}
+    <!DOCTYPE html>
+    <html lang="{{"WPLANG"| getOption}}" class="no-js no-svg">
+    <head>
+        {{template "layout/head" .}}
+        {{block "head" .}}
+        {{end}}
+    </head>
+    <body class="home blog wp-embed-responsive hfeed has-header-image has-sidebar colors-light">
+    {{template "svg"}}
+    <div id="page" class="site">
+        <a class="skip-link screen-reader-text" href="#content">跳至内容</a>
+
+        <header id="masthead" class="site-header">
+
+            <div class="custom-header" style="margin-bottom: 0px;">
+                <div class="custom-header-media">
+                    <div id="wp-custom-header" class="wp-custom-header"><img src="/wp-content/themes/twentyseventeen/assets/images/header.jpg" width="2000" height="1200" alt=""></div>		</div>
+
+                <div class="site-branding" style="margin-bottom: 0px;">
+                    <div class="wrap">
+                        <div class="site-branding-text">
+                            <h1 class="site-title"><a href="/" rel="home">{{ "blogname"| getOption }}</a></h1>
+
+                            <p class="site-description">{{"blogdescription"| getOption}}</p>
+                        </div><!-- .site-branding-text -->
+
+                        <a href="#content" class="menu-scroll-down"><svg class="icon icon-arrow-right" aria-hidden="true" role="img"> <use href="#icon-arrow-right" xlink:href="#icon-arrow-right"></use> </svg><span class="screen-reader-text">向下滚动到内容</span></a>
+
+                    </div><!-- .wrap -->
+                </div><!-- .site-branding -->
+
+            </div><!-- .custom-header -->
+
+
+        </header>
+
+
+        <div class="site-content-contain">
+            <div id="content" class="site-content">
+                {{block "content" .}}
+
+                {{end}}
+            </div>
+
+            <footer id="colophon" class="site-footer">
+                <div class="site-info">
+                    <a href="https://cn.wordpress.org/" class="imprint">自豪地采用WordPress</a>
+                </div>
+            </footer>
+        </div>
+
+
+
+    </div>
+    {{template "layout/footer" .}}
+    </body>
+    </html>
+{{ end }}

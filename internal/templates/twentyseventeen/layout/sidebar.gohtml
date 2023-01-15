@@ -1,0 +1,73 @@
+{{define "layout/sidebar" }}
+    <section id="search-2" class="widget widget_search">
+        <form role="search" method="get" class="search-form" action="/">
+            <label for="search-form-1">
+                <span class="screen-reader-text">搜索：</span>
+            </label>
+            <input type="search" id="search-form-1" class="search-field" placeholder="搜索…" value="" name="s">
+            <button type="submit" class="search-submit">
+                <svg class="icon icon-search" aria-hidden="true" role="img">
+                    <use href="#icon-search" xlink:href="#icon-search"></use>
+                </svg>
+                <span class="screen-reader-text">搜索</span>
+            </button>
+        </form>
+    </section>
+    <section id="recent-posts-2" class="widget widget_recent_entries">
+        <h2 class="widget-title">近期文章</h2>
+        <nav aria-label="近期文章">
+            <ul>
+                {{range $k,$v:=.recentPosts}}
+                    <li>
+                        <a href="/p/{{$v.Id}}">{{$v.PostTitle}}</a>
+                    </li>
+                {{end}}
+            </ul>
+
+        </nav>
+    </section>
+    <section id="recent-comments-2" class="widget widget_recent_comments"><h2 class="widget-title">近期评论</h2>
+        <nav aria-label="近期评论">
+            <ul id="recentcomments">
+                {{ range $i,$v := .recentComments}}
+                    <li class="recentcomments">
+                        <span class="comment-author-link">{{$v.CommentAuthor}}</span>发表在《<a class="wp-block-latest-comments__comment-link" href="/p/{{$v.CommentPostId}}#comment-{{$v.CommentId}}">{{$v.PostTitle}}</a>》
+                    </li>
+                {{end}}
+            </ul>
+        </nav>
+    </section>
+    <section id="archives-2" class="widget widget_archive">
+        <h2 class="widget-title">归档</h2>
+        <nav aria-label="归档">
+            <ul>
+                {{range $k,$v := .archives}}
+                    <li><a href="/p/date/{{$v.Year}}/{{$v.Month|printf "%02s"}}">{{$v.Year}}年{{$v.Month}}月</a>
+                    </li>
+                {{end}}
+            </ul>
+
+        </nav>
+    </section>
+    <section id="categories-2" class="widget widget_categories">
+        <h2 class="widget-title">分类</h2>
+        <nav aria-label="分类">
+            <ul>
+                {{range $k,$v := .categories}}
+                <li class="cat-item cat-item-{{$v.Terms.TermId}}"><a
+                            href="/p/category/{{$v.Name}}">{{$v.Name}}</a>
+                    {{end}}
+            </ul>
+
+        </nav>
+    </section>
+    <section id="meta-2" class="widget widget_meta">
+        <h2 class="widget-title">其他操作</h2>
+        <nav aria-label="其他操作">
+            <ul>
+                <li><a href="/feed">条目feed</a></li>
+                <li><a href="/comments/feed">评论feed</a></li>
+            </ul>
+        </nav>
+    </section>
+{{end}}
