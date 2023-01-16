@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github/fthvgb1/wp-go/helper"
 	"reflect"
+	"strconv"
 	"testing"
 )
 
@@ -278,7 +279,7 @@ func TestSimpleSliceStream_ParallelMap(t *testing.T) {
 			if got := tt.r.ParallelMap(tt.args.fn, tt.args.c).Sort(func(i, j int) bool {
 				return i < j
 			}); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ParallelMap() = %v, want %v", got, tt.want)
+				t.Errorf("SimpleParallelMap() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -333,6 +334,150 @@ func TestSimpleSliceStream_Reverse(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.r.Reverse(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Reverse() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+var x = helper.RangeSlice(1, 100000, 1)
+
+func TestSimpleStreamMap(t *testing.T) {
+	type args[T int, R string] struct {
+		a  SimpleSliceStream[T]
+		fn func(T) R
+	}
+	type testCase[T int, R string] struct {
+		name string
+		args args[T, R]
+		want SimpleSliceStream[R]
+	}
+	tests := []testCase[int, string]{
+		{
+			name: "t1",
+			args: args[int, string]{
+				a:  NewSimpleSliceStream(x),
+				fn: strconv.Itoa,
+			},
+			want: SimpleSliceStream[string]{
+				helper.SliceMap(x, strconv.Itoa),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := SimpleStreamMap(tt.args.a, tt.args.fn); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("SimpleStreamMap() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSimpleParallelMap(t *testing.T) {
+	type args[T string, R int] struct {
+		a  SimpleSliceStream[string]
+		fn func(T) R
+		c  int
+	}
+	type testCase[T string, R int] struct {
+		name string
+		args args[T, R]
+		want SimpleSliceStream[R]
+	}
+
+	tests := []testCase[string, int]{
+		{
+			name: "t1",
+			args: args[string, int]{
+				a: NewSimpleSliceStream(helper.SliceMap(x, strconv.Itoa)),
+				fn: func(s string) int {
+					i, _ := strconv.Atoi(s)
+					return i
+				},
+				c: 6,
+			},
+			want: NewSimpleSliceStream(x),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := SimpleParallelMap(tt.args.a, tt.args.fn, tt.args.c).Sort(func(i, j int) bool {
+				return i < j
+			}); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("SimpleParallelMap() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSimpleParallelFilterAndMap(t *testing.T) {
+	type args[T string, R int] struct {
+		a  SimpleSliceStream[string]
+		fn func(T) (R, bool)
+		c  int
+	}
+	type testCase[T string, R int] struct {
+		name string
+		args args[T, R]
+		want SimpleSliceStream[R]
+	}
+	tests := []testCase[string, int]{
+		{
+			name: "t1",
+			args: args[string, int]{
+				a: NewSimpleSliceStream(helper.SliceMap(x, strconv.Itoa)),
+				fn: func(s string) (int, bool) {
+					i, _ := strconv.Atoi(s)
+					if i > 50000 {
+						return i, true
+					}
+					return 0, false
+				},
+				c: 6,
+			},
+			want: NewSimpleSliceStream(x[50000:]),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := SimpleParallelFilterAndMap(tt.args.a, tt.args.fn, tt.args.c).Sort(func(i, j int) bool {
+				return i < j
+			}); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("SimpleParallelFilterAndMap() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestSimpleStreamFilterAndMap(t *testing.T) {
+	type args[T string, R int] struct {
+		a  SimpleSliceStream[T]
+		fn func(T) (R, bool)
+	}
+	type testCase[T any, R any] struct {
+		name string
+		args args[string, int]
+		want SimpleSliceStream[R]
+	}
+	tests := []testCase[string, int]{
+		{
+			name: "t1",
+			args: args[string, int]{
+				a: NewSimpleSliceStream(helper.SliceMap(x, strconv.Itoa)),
+				fn: func(s string) (int, bool) {
+					i, _ := strconv.Atoi(s)
+					if i > 50000 {
+						return i, true
+					}
+					return 0, false
+				},
+			},
+			want: NewSimpleSliceStream(x[50000:]),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := SimpleStreamFilterAndMap(tt.args.a, tt.args.fn); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("SimpleStreamFilterAndMap() = %v, want %v", got, tt.want)
 			}
 		})
 	}
