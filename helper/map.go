@@ -2,7 +2,7 @@ package helper
 
 import "encoding/json"
 
-func MapToStruct[T any](m map[string]any) (r T, err error) {
+func MapToStruct[T any, M any](m M) (r T, err error) {
 	str, err := json.Marshal(m)
 	if err != nil {
 		return
@@ -27,6 +27,25 @@ func MapToSlice[T any, K comparable, V any](m map[K]V, fn func(K, V) (T, bool)) 
 		if ok {
 			r = append(r, vv)
 		}
+	}
+	return
+}
+
+func MapAnyToString(m map[any]any) (r map[string]any) {
+	r = make(map[string]any)
+	for k, v := range m {
+		kk, ok := k.(string)
+		if ok {
+			vv, ok := v.(map[any]any)
+			if ok {
+				x := make(map[string]any)
+				MapAnyToString(vv)
+				r[kk] = x
+			} else {
+				r[kk] = v
+			}
+		}
+
 	}
 	return
 }

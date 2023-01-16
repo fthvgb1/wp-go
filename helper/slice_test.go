@@ -477,3 +477,45 @@ func TestSliceSelfReverse(t *testing.T) {
 		})
 	}
 }
+
+func TestSliceFilterAndMap(t *testing.T) {
+	type a struct {
+		x int
+		y string
+	}
+
+	type args[T any, N any] struct {
+		arr []T
+		fn  func(T) (N, bool)
+	}
+	type testCase[T any, N any] struct {
+		name  string
+		args  args[T, N]
+		wantR []N
+	}
+	tests := []testCase[a, string]{
+		{
+			name: "t1",
+			args: args[a, string]{
+				arr: []a{
+					{1, "1"}, {2, "2"}, {3, "3"},
+				},
+				fn: func(t a) (r string, ok bool) {
+					if t.x > 2 {
+						r = t.y
+						ok = true
+					}
+					return
+				},
+			},
+			wantR: []string{"3"},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotR := SliceFilterAndMap[string](tt.args.arr, tt.args.fn); !reflect.DeepEqual(gotR, tt.wantR) {
+				t.Errorf("SliceFilterAndMap() = %v, want %v", gotR, tt.wantR)
+			}
+		})
+	}
+}

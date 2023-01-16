@@ -8,6 +8,16 @@ func SliceMap[T, R any](arr []T, fn func(T) R) []R {
 	return r
 }
 
+func SliceFilterAndMap[N any, T any](arr []T, fn func(T) (N, bool)) (r []N) {
+	for _, t := range arr {
+		x, ok := fn(t)
+		if ok {
+			r = append(r, x)
+		}
+	}
+	return
+}
+
 func SliceFilter[T any](arr []T, fn func(T) bool) []T {
 	var r []T
 	for _, t := range arr {
@@ -18,7 +28,7 @@ func SliceFilter[T any](arr []T, fn func(T) bool) []T {
 	return r
 }
 
-func SliceReduce[T, R any](arr []T, fn func(T, R) R, r R) R {
+func SliceReduce[R, T any](arr []T, fn func(T, R) R, r R) R {
 	for _, t := range arr {
 		r = fn(t, r)
 	}
