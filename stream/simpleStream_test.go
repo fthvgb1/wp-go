@@ -286,8 +286,9 @@ func TestSimpleSliceStream_ParallelMap(t *testing.T) {
 
 func TestReduce(t *testing.T) {
 	type args[S, T int] struct {
-		s  SimpleSliceStream[S]
-		fn func(S, T) T
+		s    SimpleSliceStream[S]
+		fn   func(S, T) T
+		init T
 	}
 	type testCase[S, T int] struct {
 		name  string
@@ -301,13 +302,14 @@ func TestReduce(t *testing.T) {
 				s, func(i, r int) int {
 					return i + r
 				},
+				0,
 			},
 			wantR: helper.Sum(s.Result()...),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if gotR := Reduce(tt.args.s, tt.args.fn); !reflect.DeepEqual(gotR, tt.wantR) {
+			if gotR := Reduce(tt.args.s, tt.args.fn, tt.args.init); !reflect.DeepEqual(gotR, tt.wantR) {
 				t.Errorf("Reduce() = %v, want %v", gotR, tt.wantR)
 			}
 		})

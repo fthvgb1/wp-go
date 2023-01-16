@@ -6,8 +6,8 @@ import (
 	"github/fthvgb1/wp-go/taskPools"
 )
 
-func Reduce[T any, S any](s SimpleSliceStream[S], fn func(S, T) T) (r T) {
-	return helper.SliceReduce(s.arr, fn, r)
+func Reduce[T any, S any](s SimpleSliceStream[S], fn func(S, T) T, init T) (r T) {
+	return helper.SliceReduce(s.arr, fn, init)
 }
 
 type SimpleSliceStream[T any] struct {
