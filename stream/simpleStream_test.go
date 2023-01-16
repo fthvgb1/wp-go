@@ -92,6 +92,24 @@ func TestSimpleSliceStream_Limit(t *testing.T) {
 			},
 			want: SimpleSliceStream[int]{helper.RangeSlice(6, 8, 1)},
 		},
+		{
+			name: "t2",
+			r:    s,
+			args: args{
+				limit:  3,
+				offset: 9,
+			},
+			want: SimpleSliceStream[int]{helper.RangeSlice(10, 10, 1)},
+		},
+		{
+			name: "t3",
+			r:    s,
+			args: args{
+				limit:  3,
+				offset: 11,
+			},
+			want: SimpleSliceStream[int]{},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
