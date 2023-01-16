@@ -482,3 +482,25 @@ func TestSimpleStreamFilterAndMap(t *testing.T) {
 		})
 	}
 }
+
+func TestSimpleSliceStream_Len(t *testing.T) {
+	type testCase[T int] struct {
+		name string
+		r    SimpleSliceStream[T]
+		want int
+	}
+	tests := []testCase[int]{
+		{
+			name: "t1",
+			r:    s,
+			want: 10,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.r.Len(); got != tt.want {
+				t.Errorf("Len() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
