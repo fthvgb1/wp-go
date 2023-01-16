@@ -7,20 +7,28 @@ import (
 )
 
 func SimpleParallelFilterAndMap[R, T any](a SimpleSliceStream[T], fn func(T) (R, bool), c int) SimpleSliceStream[R] {
-	p := taskPools.NewPools(c)
 	var x []R
 	rr := safety.NewSlice(x)
-	for _, t := range a.arr {
-		t := t
-		p.Execute(func() {
-			y, ok := fn(t)
-			if ok {
-				rr.Append(y)
-			}
-		})
-	}
-	p.Wait()
+	a.ParallelForEach(func(t T) {
+		y, ok := fn(t)
+		if ok {
+			rr.Append(y)
+		}
+	}, c)
 	return SimpleSliceStream[R]{rr.Load()}
+}
+
+func SimpleParallelFilterAndMapToMap[K comparable, V any, T any](a SimpleSliceStream[T], fn func(t T) (K, V, bool), c int) (r SimpleMapStream[K, V]) {
+	m := newMapX[K, V]()
+	a.ParallelForEach(func(t T) {
+		k, v, ok := fn(t)
+		if ok {
+			m.set(k, v)
+		}
+	}, c)
+	var mm = map[K]V{}
+	r = NewSimpleMapStream(mm)
+	return
 }
 
 func SimpleStreamFilterAndMap[R, T any](a SimpleSliceStream[T], fn func(T) (R, bool)) SimpleSliceStream[R] {
@@ -28,16 +36,11 @@ func SimpleStreamFilterAndMap[R, T any](a SimpleSliceStream[T], fn func(T) (R, b
 }
 
 func SimpleParallelMap[R, T any](a SimpleSliceStream[T], fn func(T) R, c int) SimpleSliceStream[R] {
-	p := taskPools.NewPools(c)
 	var x []R
 	rr := safety.NewSlice(x)
-	for _, t := range a.arr {
-		t := t
-		p.Execute(func() {
-			rr.Append(fn(t))
-		})
-	}
-	p.Wait()
+	a.ParallelForEach(func(t T) {
+		rr.Append(fn(t))
+	}, c)
 	return SimpleSliceStream[R]{rr.Load()}
 }
 func SimpleStreamMap[R, T any](a SimpleSliceStream[T], fn func(T) R) SimpleSliceStream[R] {
@@ -74,18 +77,12 @@ func (r SimpleSliceStream[T]) ParallelForEach(fn func(T), c int) {
 }
 
 func (r SimpleSliceStream[T]) ParallelFilter(fn func(T) bool, c int) SimpleSliceStream[T] {
-	p := taskPools.NewPools(c)
-	var x []T
-	rr := safety.NewSlice(x)
-	for _, t := range r.arr {
-		t := t
-		p.Execute(func() {
-			if fn(t) {
-				rr.Append(t)
-			}
-		})
-	}
-	p.Wait()
+	rr := safety.NewSlice([]T{})
+	r.ParallelForEach(func(t T) {
+		if fn(t) {
+			rr.Append(t)
+		}
+	}, c)
 	return SimpleSliceStream[T]{rr.Load()}
 }
 func (r SimpleSliceStream[T]) Filter(fn func(T) bool) SimpleSliceStream[T] {
@@ -94,16 +91,10 @@ func (r SimpleSliceStream[T]) Filter(fn func(T) bool) SimpleSliceStream[T] {
 }
 
 func (r SimpleSliceStream[T]) ParallelMap(fn func(T) T, c int) SimpleSliceStream[T] {
-	p := taskPools.NewPools(c)
-	var x []T
-	rr := safety.NewSlice(x)
-	for _, t := range r.arr {
-		t := t
-		p.Execute(func() {
-			rr.Append(fn(t))
-		})
-	}
-	p.Wait()
+	rr := safety.NewSlice([]T{})
+	r.ParallelForEach(func(t T) {
+		rr.Append(fn(t))
+	}, c)
 	return SimpleSliceStream[T]{rr.Load()}
 }
 

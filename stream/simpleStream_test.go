@@ -522,3 +522,41 @@ func TestSimpleSliceStream_Len(t *testing.T) {
 		})
 	}
 }
+
+func TestSimpleParallelFilterAndMapToMap(t *testing.T) {
+	type args[T int, K int, V int] struct {
+		a  SimpleSliceStream[V]
+		fn func(t T) (K, V, bool)
+		c  int
+	}
+	type testCase[T int, K int, V int] struct {
+		name  string
+		args  args[T, K, V]
+		wantR SimpleMapStream[K, V]
+	}
+	tests := []testCase[int, int, int]{
+		{
+			name: "t1",
+			args: args[int, int, int]{
+				a: NewSimpleSliceStream(x),
+				fn: func(v int) (int, int, bool) {
+					if v >= 50000 {
+						return v, v, true
+					}
+					return 0, 0, false
+				},
+				c: 6,
+			},
+			wantR: NewSimpleMapStream(helper.SliceToMap(x[50000:], func(t int) (int, int) {
+				return t, t
+			}, true)),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotR := SimpleParallelFilterAndMapToMap(tt.args.a, tt.args.fn, tt.args.c); !reflect.DeepEqual(gotR, tt.wantR) {
+				t.Errorf("SimpleParallelFilterAndMapToMap() = %v, want %v", gotR, tt.wantR)
+			}
+		})
+	}
+}
