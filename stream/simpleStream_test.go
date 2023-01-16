@@ -326,7 +326,7 @@ func TestSimpleSliceStream_Reverse(t *testing.T) {
 	tests := []testCase[int]{
 		{
 			name: "t1",
-			r:    s,
+			r:    NewSimpleSliceStream(helper.RangeSlice(1, 10, 1)),
 			want: SimpleSliceStream[int]{helper.RangeSlice(10, 1, -1)},
 		},
 	}
