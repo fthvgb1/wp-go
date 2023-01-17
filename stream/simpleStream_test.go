@@ -560,3 +560,40 @@ func TestSimpleParallelFilterAndMapToMap(t *testing.T) {
 		})
 	}
 }
+
+func TestSimpleSliceFilterAndMapToMap(t *testing.T) {
+	type args[T int, K int, V int] struct {
+		a           SimpleSliceStream[T]
+		fn          func(t T) (K, V, bool)
+		isCoverPrev bool
+	}
+	type testCase[T int, K int, V int] struct {
+		name  string
+		args  args[T, K, V]
+		wantR SimpleMapStream[K, V]
+	}
+	tests := []testCase[int, int, int]{
+		{
+			name: "t1",
+			args: args[int, int, int]{
+				a: NewSimpleSliceStream(helper.RangeSlice(1, 10, 1)),
+				fn: func(i int) (int, int, bool) {
+					if i > 6 {
+						return i, i, true
+					}
+					return 0, 0, false
+				},
+			},
+			wantR: NewSimpleMapStream(helper.SliceToMap(helper.RangeSlice(7, 10, 1), func(t int) (int, int) {
+				return t, t
+			}, true)),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotR := SimpleSliceFilterAndMapToMap(tt.args.a, tt.args.fn, tt.args.isCoverPrev); !reflect.DeepEqual(gotR, tt.wantR) {
+				t.Errorf("SimpleSliceFilterAndMapToMap() = %v, want %v", gotR, tt.wantR)
+			}
+		})
+	}
+}

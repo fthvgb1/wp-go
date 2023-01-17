@@ -31,6 +31,21 @@ func SimpleParallelFilterAndMapToMap[K comparable, V any, T any](a SimpleSliceSt
 	return
 }
 
+func SimpleSliceFilterAndMapToMap[K comparable, V any, T any](a SimpleSliceStream[T], fn func(t T) (K, V, bool), isCoverPrev bool) (r SimpleMapStream[K, V]) {
+	m := make(map[K]V)
+	a.ForEach(func(t T) {
+		k, v, ok := fn(t)
+		if ok {
+			_, ok = m[k]
+			if isCoverPrev || !ok {
+				m[k] = v
+			}
+		}
+	})
+	r.m = m
+	return
+}
+
 func SimpleStreamFilterAndMap[R, T any](a SimpleSliceStream[T], fn func(T) (R, bool)) SimpleSliceStream[R] {
 	return NewSimpleSliceStream(helper.SliceFilterAndMap(a.arr, fn))
 }
