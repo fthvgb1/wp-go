@@ -10,7 +10,20 @@ const (
 	Category
 	Search
 	Detail
+	Empty404
 )
+
+var IndexSceneMap = map[int]struct{}{
+	Home:     {},
+	Archive:  {},
+	Category: {},
+	Search:   {},
+}
+
+var DetailSceneMap = map[int]struct{}{
+	Detail:   {},
+	Empty404: {},
+}
 
 type Func[T any] func(*Plugin[T], *gin.Context, *T, uint)
 

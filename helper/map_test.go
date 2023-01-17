@@ -18,7 +18,7 @@ type Me struct {
 	Null    any
 }
 
-func TestMapToStruct(t *testing.T) {
+func TestStrAnyMapToStruct(t *testing.T) {
 	type args struct {
 		m map[string]any
 	}
@@ -60,19 +60,19 @@ func TestMapToStruct(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotR, err := MapToStruct[Me](tt.args.m)
+			gotR, err := StrAnyMapToStruct[Me](tt.args.m)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("MapToStruct() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("StrAnyMapToStruct() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(gotR, tt.wantR) {
-				t.Errorf("MapToStruct() gotR = %v, want %v", gotR, tt.wantR)
+				t.Errorf("StrAnyMapToStruct() gotR = %v, want %v", gotR, tt.wantR)
 			}
 		})
 	}
 }
 
-func TestStructToMap(t *testing.T) {
+func TestStructToAnyMap(t *testing.T) {
 	type args[T any] struct {
 		s T
 	}
@@ -113,13 +113,13 @@ func TestStructToMap(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotR, err := StructToMap[Me](tt.args.s)
+			gotR, err := StructToAnyMap[string, Me](tt.args.s)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("StructToMap() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("StructToAnyMap() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(gotR, tt.wantR) {
-				t.Errorf("StructToMap() gotR = %v, want %v", gotR, tt.wantR)
+				t.Errorf("StructToAnyMap() gotR = %v, want %v", gotR, tt.wantR)
 			}
 		})
 	}

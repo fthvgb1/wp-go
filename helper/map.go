@@ -2,7 +2,7 @@ package helper
 
 import "encoding/json"
 
-func MapToStruct[T any, M any](m M) (r T, err error) {
+func StrAnyMapToStruct[T any, M any](m M) (r T, err error) {
 	str, err := json.Marshal(m)
 	if err != nil {
 		return
@@ -11,12 +11,12 @@ func MapToStruct[T any, M any](m M) (r T, err error) {
 	return
 }
 
-func StructToMap[T any](s T) (r map[string]any, err error) {
+func StructToAnyMap[K comparable, T any](s T) (r map[K]any, err error) {
 	marshal, err := json.Marshal(s)
 	if err != nil {
 		return
 	}
-	r = make(map[string]any)
+	r = make(map[K]any)
 	err = json.Unmarshal(marshal, &r)
 	return
 }
@@ -31,16 +31,15 @@ func MapToSlice[T any, K comparable, V any](m map[K]V, fn func(K, V) (T, bool)) 
 	return
 }
 
-func MapAnyToString(m map[any]any) (r map[string]any) {
+// MapAnyAnyToStrAny map[any]any => map[string]any 方便json转换
+func MapAnyAnyToStrAny(m map[any]any) (r map[string]any) {
 	r = make(map[string]any)
 	for k, v := range m {
 		kk, ok := k.(string)
 		if ok {
 			vv, ok := v.(map[any]any)
 			if ok {
-				x := make(map[string]any)
-				MapAnyToString(vv)
-				r[kk] = x
+				r[kk] = MapAnyAnyToStrAny(vv)
 			} else {
 				r[kk] = v
 			}

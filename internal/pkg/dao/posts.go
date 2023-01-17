@@ -52,13 +52,28 @@ func GetPostsByIds(ids ...any) (m map[uint64]models.Posts, err error) {
 				t = append(t, fmt.Sprintf(`<a href="/p/category/%s" rel="category tag">%s</a>`, cat, cat))
 			}
 			pp.CategoriesHtml = strings.Join(t, "、")
-			mm, ok := meta[pp.Id]
+		}
+		mm, ok := meta[pp.Id]
+		if ok {
+			attMeta, ok := mm["_wp_attachment_metadata"]
 			if ok {
+				att, ok := attMeta.(models.WpAttachmentMetadata)
+				if ok {
+					pp.AttachmentMetadata = att
+				}
+			}
+			if pp.PostType != "attachment" {
 				thumb := ToPostThumb(ctx, mm, host)
 				if thumb.Path != "" {
 					pp.Thumbnail = thumb
 				}
+			} else if pp.PostType == "attachment" && pp.AttachmentMetadata.File != "" {
+				thumb := thumbnail(pp.AttachmentMetadata, "thumbnail", host)
+				if thumb.Path != "" {
+					pp.Thumbnail = thumb
+				}
 			}
+
 		}
 		if len(pp.Tags) > 0 {
 			t := make([]string, 0, len(pp.Tags))

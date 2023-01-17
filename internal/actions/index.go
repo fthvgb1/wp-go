@@ -5,6 +5,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"github/fthvgb1/wp-go/helper"
+	"github/fthvgb1/wp-go/internal/actions/theme"
 	cache2 "github/fthvgb1/wp-go/internal/pkg/cache"
 	dao "github/fthvgb1/wp-go/internal/pkg/dao"
 	"github/fthvgb1/wp-go/internal/pkg/models"
@@ -202,7 +203,9 @@ func Index(c *gin.Context) {
 			stat = http.StatusInternalServerError
 			return
 		}
-		c.HTML(stat, helper.StrJoin(getTemplateName(), "/posts/index.gohtml"), ginH)
+		t := getTemplateName()
+		tmlp := theme.Hook(t, c, ginH, int(h.scene))
+		c.HTML(stat, tmlp, ginH)
 	}()
 	err = h.parseParams()
 	if err != nil {
@@ -224,6 +227,7 @@ func Index(c *gin.Context) {
 	}
 	if len(postIds) < 1 && h.category != "" {
 		h.titleL = "未找到页面"
+		h.scene = plugins.Empty404
 	}
 
 	pw := h.session.Get("post_password")
@@ -247,6 +251,7 @@ func Index(c *gin.Context) {
 	}
 	ginH["posts"] = postIds
 	ginH["totalPage"] = h.getTotalPage(totalRaw)
+	ginH["currentPage"] = h.getTotalPage(h.page)
 	ginH["pagination"] = pagination(h.page, h.totalPage, h.paginationStep, c.Request.URL.Path, q)
 	ginH["title"] = h.getTitle()
 }

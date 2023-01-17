@@ -29,7 +29,7 @@ func (p Postmeta) AttachmentMetadata() (r WpAttachmentMetadata, err error) {
 		}
 		info, ok := unSerialize.(map[string]any)
 		if ok {
-			r, err = helper.MapToStruct[WpAttachmentMetadata](info)
+			r, err = helper.StrAnyMapToStruct[WpAttachmentMetadata](info)
 		}
 	}
 	return
@@ -42,7 +42,7 @@ func AttachmentMetadata(s string) (r WpAttachmentMetadata, err error) {
 	}
 	info, ok := unSerialize.(map[string]any)
 	if ok {
-		r, err = helper.MapToStruct[WpAttachmentMetadata](info)
+		r, err = helper.StrAnyMapToStruct[WpAttachmentMetadata](info)
 	}
 	return
 }

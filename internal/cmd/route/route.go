@@ -11,10 +11,7 @@ import (
 	"github/fthvgb1/wp-go/internal/pkg/config"
 	"github/fthvgb1/wp-go/internal/static"
 	"github/fthvgb1/wp-go/internal/templates"
-	"github/fthvgb1/wp-go/internal/wpconfig"
-	"html/template"
 	"net/http"
-	"time"
 )
 
 func SetupRouter() (*gin.Engine, func()) {
@@ -29,17 +26,7 @@ func SetupRouter() (*gin.Engine, func()) {
 		}
 	}
 
-	r.HTMLRender = templates.NewFsTemplate(template.FuncMap{
-		"unescaped": func(s string) any {
-			return template.HTML(s)
-		},
-		"dateCh": func(t time.Time) any {
-			return t.Format("2006年 01月 02日")
-		},
-		"getOption": func(k string) string {
-			return wpconfig.Options.Value(k)
-		},
-	}).SetTemplate()
+	r.HTMLRender = templates.NewFsTemplate(templates.FuncMap()).SetTemplate()
 	validServerName, reloadValidServerNameFn := middleware.ValidateServerNames()
 	fl, flReload := middleware.FlowLimit(c.MaxRequestSleepNum, c.MaxRequestNum, c.SleepTime)
 	r.Use(
