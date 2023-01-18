@@ -3,18 +3,17 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github/fthvgb1/wp-go/internal/actions"
-	"github/fthvgb1/wp-go/internal/actions/theme"
-	"github/fthvgb1/wp-go/internal/cmd/route"
-	"github/fthvgb1/wp-go/internal/mail"
-	"github/fthvgb1/wp-go/internal/pkg/cache"
-	"github/fthvgb1/wp-go/internal/pkg/config"
-	"github/fthvgb1/wp-go/internal/pkg/db"
-	"github/fthvgb1/wp-go/internal/pkg/logs"
-	"github/fthvgb1/wp-go/internal/plugins"
-	"github/fthvgb1/wp-go/internal/templates"
-	"github/fthvgb1/wp-go/internal/wpconfig"
-	"github/fthvgb1/wp-go/model"
+	"github.com/fthvgb1/wp-go/internal/actions"
+	"github.com/fthvgb1/wp-go/internal/cmd/route"
+	"github.com/fthvgb1/wp-go/internal/mail"
+	"github.com/fthvgb1/wp-go/internal/pkg/cache"
+	"github.com/fthvgb1/wp-go/internal/pkg/config"
+	"github.com/fthvgb1/wp-go/internal/pkg/db"
+	"github.com/fthvgb1/wp-go/internal/pkg/logs"
+	"github.com/fthvgb1/wp-go/internal/plugins"
+	"github.com/fthvgb1/wp-go/internal/theme"
+	"github.com/fthvgb1/wp-go/internal/wpconfig"
+	"github.com/fthvgb1/wp-go/model"
 	"log"
 	"math/rand"
 	"os"
@@ -48,8 +47,7 @@ func init() {
 	actions.InitFeed()
 	cache.InitActionsCommonCache()
 	plugins.InitDigestCache()
-	templates.InitTemplateFunc()
-	theme.InitTheme()
+	theme.InitThemeAndTemplateFuncMap()
 	go cronClearCache()
 }
 

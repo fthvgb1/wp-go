@@ -2,20 +2,19 @@ package actions
 
 import (
 	"fmt"
+	"github.com/fthvgb1/wp-go/helper"
+	cache2 "github.com/fthvgb1/wp-go/internal/pkg/cache"
+	dao "github.com/fthvgb1/wp-go/internal/pkg/dao"
+	"github.com/fthvgb1/wp-go/internal/pkg/models"
+	"github.com/fthvgb1/wp-go/internal/plugins"
+	"github.com/fthvgb1/wp-go/internal/theme"
+	"github.com/fthvgb1/wp-go/internal/wpconfig"
+	"github.com/fthvgb1/wp-go/model"
+	"github.com/fthvgb1/wp-go/plugin/pagination"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github/fthvgb1/wp-go/helper"
-	"github/fthvgb1/wp-go/internal/actions/theme"
-	cache2 "github/fthvgb1/wp-go/internal/pkg/cache"
-	dao "github/fthvgb1/wp-go/internal/pkg/dao"
-	"github/fthvgb1/wp-go/internal/pkg/models"
-	"github/fthvgb1/wp-go/internal/plugins"
-	"github/fthvgb1/wp-go/internal/templates"
-	"github/fthvgb1/wp-go/internal/wpconfig"
-	"github/fthvgb1/wp-go/model"
 	"math"
 	"net/http"
-	"regexp"
 	"strconv"
 	"strings"
 	"sync/atomic"
@@ -204,8 +203,7 @@ func Index(c *gin.Context) {
 			return
 		}
 		t := getTemplateName()
-		tmlp := theme.Hook(t, c, ginH, int(h.scene))
-		c.HTML(stat, tmlp, ginH)
+		theme.Hook(t, stat, c, ginH, int(h.scene))
 	}()
 	err = h.parseParams()
 	if err != nil {
@@ -251,12 +249,10 @@ func Index(c *gin.Context) {
 	}
 	ginH["posts"] = postIds
 	ginH["totalPage"] = h.getTotalPage(totalRaw)
-	ginH["currentPage"] = h.getTotalPage(h.page)
-	ginH["pagination"] = pagination(h.page, h.totalPage, h.paginationStep, c.Request.URL.Path, q)
+	ginH["currentPage"] = h.page
 	ginH["title"] = h.getTitle()
+	ginH["pagination"] = pagination.NewParsePagination(totalRaw, h.pageSize, h.page, q, c.Request.URL.Path, h.paginationStep)
 }
-
-var complie = regexp.MustCompile(`(/page)/(\d+)`)
 
 type PaginationElements struct {
 	Prev string
@@ -265,113 +261,8 @@ type PaginationElements struct {
 
 func getTemplateName() string {
 	tmlp := wpconfig.Options.Value("template")
-	if i, err := templates.IsTemplateIsExist(tmlp); err != nil || !i {
+	if i, err := theme.IsTemplateIsExist(tmlp); err != nil || !i {
 		tmlp = "twentyfifteen"
 	}
 	return tmlp
-}
-
-var page = map[string]PaginationElements{
-	"twentyfifteen": {
-		Prev: "上一页",
-		Next: "下一页",
-	},
-	"twentyseventeen": {
-		Prev: `
-<svg class="icon icon-arrow-left" aria-hidden="true" role="img"> <use href="#icon-arrow-left" xlink:href="#icon-arrow-left"></use> </svg>
-<span class="screen-reader-text">上一页</span>
-`,
-		Next: `
-<span class="screen-reader-text">下一页</span>
-<svg class="icon icon-arrow-right" aria-hidden="true" role="img"> <use href="#icon-arrow-right" xlink:href="#icon-arrow-right"></use> 
-</svg>`,
-	},
-}
-
-func pagination(currentPage, totalPage, step int, path, query string) (html string) {
-	if totalPage < 2 {
-		return
-	}
-	pathx := path
-	if !strings.Contains(path, "/page/") {
-		pathx = fmt.Sprintf("%s%s", path, "/page/1")
-	}
-	s := strings.Builder{}
-	if currentPage > totalPage {
-		currentPage = totalPage
-	}
-	r := complie
-	start := currentPage - step
-	end := currentPage + step
-	if start < 1 {
-		start = 1
-	}
-	if currentPage > 1 {
-		pp := ""
-		if currentPage >= 2 {
-			pp = replacePage(r, pathx, currentPage-1)
-		}
-		s.WriteString(fmt.Sprintf(`<a class="prev page-numbers" href="%s%s">%s</a>`, pp, query, page[getTemplateName()].Prev))
-	}
-	if currentPage >= step+2 {
-		d := ""
-		if currentPage > step+2 {
-			d = `<span class="page-numbers dots">…</span>`
-		}
-		e := replacePage(r, path, 1)
-		s.WriteString(fmt.Sprintf(`
-<a class="page-numbers" href="%s%s"><span class="meta-nav screen-reader-text">页 </span>1</a>
-%s
-`, e, query, d))
-	}
-	if totalPage < end {
-		end = totalPage
-	}
-
-	for page := start; page <= end; page++ {
-		h := ""
-		if currentPage == page {
-			h = fmt.Sprintf(`
-<span aria-current="page" class="page-numbers current">
-            <span class="meta-nav screen-reader-text">页 </span>%d</span>
-`, page)
-
-		} else {
-			d := replacePage(r, pathx, page)
-			h = fmt.Sprintf(`
-<a class="page-numbers" href="%s%s">
-<span class="meta-nav screen-reader-text">页 </span>%d</a>
-`, d, query, page)
-		}
-		s.WriteString(h)
-
-	}
-	if totalPage >= currentPage+step+1 {
-		if totalPage > currentPage+step+1 {
-			s.WriteString(`<span class="page-numbers dots">…</span>`)
-		}
-		dd := replacePage(r, pathx, totalPage)
-		s.WriteString(fmt.Sprintf(`
-<a class="page-numbers" href="%s%s"><span class="meta-nav screen-reader-text">页 </span>%d</a>`, dd, query, totalPage))
-	}
-	if currentPage < totalPage {
-		dd := replacePage(r, pathx, currentPage+1)
-		s.WriteString(fmt.Sprintf(`<a class="next page-numbers" href="%s%s">%s</a>`, dd, query, page[getTemplateName()].Next))
-	}
-	html = s.String()
-	return
-}
-
-func replacePage(r *regexp.Regexp, path string, page int) (src string) {
-	if page == 1 {
-		src = r.ReplaceAllString(path, "")
-	} else {
-		s := fmt.Sprintf("$1/%d", page)
-		src = r.ReplaceAllString(path, s)
-	}
-	src = strings.Replace(src, "//", "/", -1)
-	if src == "" {
-		src = "/"
-	}
-	return
 }
