@@ -1,4 +1,4 @@
-package templates
+package theme
 
 import (
 	"embed"
@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-//go:embed *[^templatefs.go]
+//go:embed *[^.go]
 var TemplateFs embed.FS
 
 type FsTemplate struct {

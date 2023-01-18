@@ -2,7 +2,7 @@ package safety
 
 import (
 	"fmt"
-	"github/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/helper"
 	"testing"
 	"time"
 )

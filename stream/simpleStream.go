@@ -1,9 +1,9 @@
 package stream
 
 import (
-	"github/fthvgb1/wp-go/helper"
-	"github/fthvgb1/wp-go/safety"
-	"github/fthvgb1/wp-go/taskPools"
+	"github.com/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/safety"
+	"github.com/fthvgb1/wp-go/taskPools"
 )
 
 func SimpleParallelFilterAndMap[R, T any](a SimpleSliceStream[T], fn func(T) (R, bool), c int) SimpleSliceStream[R] {

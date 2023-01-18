@@ -2,7 +2,7 @@ package stream
 
 import (
 	"fmt"
-	"github/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/helper"
 	"reflect"
 	"strconv"
 	"testing"

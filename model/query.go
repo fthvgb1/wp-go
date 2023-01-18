@@ -3,7 +3,7 @@ package model
 import (
 	"context"
 	"fmt"
-	"github/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/helper"
 	"math/rand"
 	"strings"
 	"time"

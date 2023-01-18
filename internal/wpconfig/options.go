@@ -2,9 +2,9 @@ package wpconfig
 
 import (
 	"context"
-	"github/fthvgb1/wp-go/internal/pkg/models"
-	"github/fthvgb1/wp-go/model"
-	"github/fthvgb1/wp-go/safety"
+	"github.com/fthvgb1/wp-go/internal/pkg/models"
+	"github.com/fthvgb1/wp-go/model"
+	"github.com/fthvgb1/wp-go/safety"
 )
 
 var Options safety.Map[string, string]

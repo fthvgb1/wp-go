@@ -3,7 +3,7 @@ package phpass
 import (
 	"crypto/md5"
 	"fmt"
-	"github/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/helper"
 	"golang.org/x/crypto/bcrypt"
 	"io"
 	"os"

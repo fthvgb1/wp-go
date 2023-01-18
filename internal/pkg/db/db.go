@@ -3,9 +3,9 @@ package db
 import (
 	"context"
 	"fmt"
+	"github.com/fthvgb1/wp-go/internal/pkg/config"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
-	"github/fthvgb1/wp-go/internal/pkg/config"
 	"log"
 	"os"
 	"strconv"

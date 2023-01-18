@@ -2,8 +2,8 @@ package cache
 
 import (
 	"context"
-	"github/fthvgb1/wp-go/internal/pkg/logs"
-	"github/fthvgb1/wp-go/internal/pkg/models"
+	"github.com/fthvgb1/wp-go/internal/pkg/logs"
+	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"time"
 )
 

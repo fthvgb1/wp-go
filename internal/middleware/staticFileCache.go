@@ -1,8 +1,8 @@
 package middleware
 
 import (
+	"github.com/fthvgb1/wp-go/helper"
 	"github.com/gin-gonic/gin"
-	"github/fthvgb1/wp-go/helper"
 	"strings"
 )
 

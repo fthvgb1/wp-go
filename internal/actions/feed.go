@@ -2,16 +2,16 @@ package actions
 
 import (
 	"fmt"
+	"github.com/fthvgb1/wp-go/cache"
+	"github.com/fthvgb1/wp-go/helper"
+	cache2 "github.com/fthvgb1/wp-go/internal/pkg/cache"
+	"github.com/fthvgb1/wp-go/internal/pkg/logs"
+	"github.com/fthvgb1/wp-go/internal/pkg/models"
+	"github.com/fthvgb1/wp-go/internal/plugins"
+	"github.com/fthvgb1/wp-go/internal/wpconfig"
+	"github.com/fthvgb1/wp-go/plugin/digest"
+	"github.com/fthvgb1/wp-go/rss2"
 	"github.com/gin-gonic/gin"
-	"github/fthvgb1/wp-go/cache"
-	"github/fthvgb1/wp-go/helper"
-	cache3 "github/fthvgb1/wp-go/internal/pkg/cache"
-	"github/fthvgb1/wp-go/internal/pkg/logs"
-	models2 "github/fthvgb1/wp-go/internal/pkg/models"
-	"github/fthvgb1/wp-go/internal/plugins"
-	"github/fthvgb1/wp-go/internal/wpconfig"
-	"github/fthvgb1/wp-go/plugin/digest"
-	"github/fthvgb1/wp-go/rss2"
 	"net/http"
 	"strconv"
 	"strings"
@@ -78,17 +78,17 @@ func Feed(c *gin.Context) {
 
 func feed(arg ...any) (xml []string, err error) {
 	c := arg[0].(*gin.Context)
-	r := cache3.RecentPosts(c, 10)
-	ids := helper.SliceMap(r, func(t models2.Posts) uint64 {
+	r := cache2.RecentPosts(c, 10)
+	ids := helper.SliceMap(r, func(t models.Posts) uint64 {
 		return t.Id
 	})
-	posts, err := cache3.GetPostsByIds(c, ids)
+	posts, err := cache2.GetPostsByIds(c, ids)
 	if err != nil {
 		return
 	}
 	rs := templateRss
 	rs.LastBuildDate = time.Now().Format(timeFormat)
-	rs.Items = helper.SliceMap(posts, func(t models2.Posts) rss2.Item {
+	rs.Items = helper.SliceMap(posts, func(t models.Posts) rss2.Item {
 		desc := "无法提供摘要。这是一篇受保护的文章。"
 		plugins.PasswordProjectTitle(&t)
 		if t.PostPassword != "" {
@@ -102,7 +102,7 @@ func feed(arg ...any) (xml []string, err error) {
 		} else if t.CommentStatus == "open" && t.CommentCount == 0 {
 			l = fmt.Sprintf("%s/p/%d#respond", wpconfig.Options.Value("siteurl"), t.Id)
 		}
-		user := cache3.GetUserById(c, t.PostAuthor)
+		user := cache2.GetUserById(c, t.PostAuthor)
 
 		return rss2.Item{
 			Title:         t.PostTitle,
@@ -158,17 +158,17 @@ func postFeed(arg ...any) (x string, err error) {
 		}
 	}
 	ID := uint64(Id)
-	maxId, err := cache3.GetMaxPostId(c)
+	maxId, err := cache2.GetMaxPostId(c)
 	logs.ErrPrintln(err, "get max post id")
 	if ID > maxId || err != nil {
 		return
 	}
-	post, err := cache3.GetPostById(c, ID)
+	post, err := cache2.GetPostById(c, ID)
 	if post.Id == 0 || err != nil {
 		return
 	}
 	plugins.PasswordProjectTitle(&post)
-	comments, err := cache3.PostComments(c, post.Id)
+	comments, err := cache2.PostComments(c, post.Id)
 	if err != nil {
 		return
 	}
@@ -195,7 +195,7 @@ func postFeed(arg ...any) (x string, err error) {
 			}
 		}
 	} else {
-		rs.Items = helper.SliceMap(comments, func(t models2.Comments) rss2.Item {
+		rs.Items = helper.SliceMap(comments, func(t models.Comments) rss2.Item {
 			return rss2.Item{
 				Title:   fmt.Sprintf("评价者：%s", t.CommentAuthor),
 				Link:    fmt.Sprintf("%s/p/%d#comment-%d", wpconfig.Options.Value("siteurl"), post.Id, t.CommentId),
@@ -228,19 +228,19 @@ func CommentsFeed(c *gin.Context) {
 
 func commentsFeed(args ...any) (r []string, err error) {
 	c := args[0].(*gin.Context)
-	commens := cache3.RecentComments(c, 10)
+	commens := cache2.RecentComments(c, 10)
 	rs := templateRss
 	rs.Title = fmt.Sprintf("\"%s\"的评论", wpconfig.Options.Value("blogname"))
 	rs.LastBuildDate = time.Now().Format(timeFormat)
 	rs.AtomLink = fmt.Sprintf("%s/comments/feed", wpconfig.Options.Value("siteurl"))
-	com, err := cache3.GetCommentByIds(c, helper.SliceMap(commens, func(t models2.Comments) uint64 {
+	com, err := cache2.GetCommentByIds(c, helper.SliceMap(commens, func(t models.Comments) uint64 {
 		return t.CommentId
 	}))
 	if nil != err {
 		return []string{}, err
 	}
-	rs.Items = helper.SliceMap(com, func(t models2.Comments) rss2.Item {
-		post, _ := cache3.GetPostById(c, t.CommentPostId)
+	rs.Items = helper.SliceMap(com, func(t models.Comments) rss2.Item {
+		post, _ := cache2.GetPostById(c, t.CommentPostId)
 		plugins.PasswordProjectTitle(&post)
 		desc := "评论受保护：要查看请输入密码。"
 		content := t.CommentContent

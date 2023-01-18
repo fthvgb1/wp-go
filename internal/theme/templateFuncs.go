@@ -1,8 +1,7 @@
-package templates
+package theme
 
 import (
-	"errors"
-	"github/fthvgb1/wp-go/internal/wpconfig"
+	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"html/template"
 	"time"
 )
@@ -23,14 +22,9 @@ func FuncMap() template.FuncMap {
 	return funcs
 }
 
-func InitTemplateFunc() {
-
-}
-
-func AddTemplateFunc(fnName string, fn any) error {
+func AddTemplateFunc(fnName string, fn any) {
 	if _, ok := funcs[fnName]; ok {
-		return errors.New("a same name func exists")
+		panic("exists same name func")
 	}
 	funcs[fnName] = fn
-	return nil
 }

@@ -2,11 +2,11 @@ package cache
 
 import (
 	"context"
-	"github/fthvgb1/wp-go/cache"
-	"github/fthvgb1/wp-go/internal/pkg/config"
-	"github/fthvgb1/wp-go/internal/pkg/dao"
-	"github/fthvgb1/wp-go/internal/pkg/logs"
-	"github/fthvgb1/wp-go/internal/pkg/models"
+	"github.com/fthvgb1/wp-go/cache"
+	"github.com/fthvgb1/wp-go/internal/pkg/config"
+	"github.com/fthvgb1/wp-go/internal/pkg/dao"
+	"github.com/fthvgb1/wp-go/internal/pkg/logs"
+	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"sync"
 	"time"
 )

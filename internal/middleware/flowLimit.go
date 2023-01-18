@@ -1,9 +1,9 @@
 package middleware
 
 import (
+	"github.com/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/safety"
 	"github.com/gin-gonic/gin"
-	"github/fthvgb1/wp-go/helper"
-	"github/fthvgb1/wp-go/safety"
 	"net/http"
 	"strings"
 	"sync/atomic"

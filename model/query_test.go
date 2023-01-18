@@ -3,26 +3,123 @@ package model
 import (
 	"context"
 	"database/sql"
-	"github/fthvgb1/wp-go/helper"
-	"github/fthvgb1/wp-go/internal/pkg/config"
-	"github/fthvgb1/wp-go/internal/pkg/db"
-	models2 "github/fthvgb1/wp-go/internal/pkg/models"
+	"github.com/fthvgb1/wp-go/helper"
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/jmoiron/sqlx"
 	"reflect"
 	"testing"
+	"time"
 )
+
+type post struct {
+	Id                  uint64    `gorm:"column:ID" db:"ID" json:"ID" form:"ID"`
+	PostAuthor          uint64    `gorm:"column:post_author" db:"post_author" json:"post_author" form:"post_author"`
+	PostDate            time.Time `gorm:"column:post_date" db:"post_date" json:"post_date" form:"post_date"`
+	PostDateGmt         time.Time `gorm:"column:post_date_gmt" db:"post_date_gmt" json:"post_date_gmt" form:"post_date_gmt"`
+	PostContent         string    `gorm:"column:post_content" db:"post_content" json:"post_content" form:"post_content"`
+	PostTitle           string    `gorm:"column:post_title" db:"post_title" json:"post_title" form:"post_title"`
+	PostExcerpt         string    `gorm:"column:post_excerpt" db:"post_excerpt" json:"post_excerpt" form:"post_excerpt"`
+	PostStatus          string    `gorm:"column:post_status" db:"post_status" json:"post_status" form:"post_status"`
+	CommentStatus       string    `gorm:"column:comment_status" db:"comment_status" json:"comment_status" form:"comment_status"`
+	PingStatus          string    `gorm:"column:ping_status" db:"ping_status" json:"ping_status" form:"ping_status"`
+	PostPassword        string    `gorm:"column:post_password" db:"post_password" json:"post_password" form:"post_password"`
+	PostName            string    `gorm:"column:post_name" db:"post_name" json:"post_name" form:"post_name"`
+	ToPing              string    `gorm:"column:to_ping" db:"to_ping" json:"to_ping" form:"to_ping"`
+	Pinged              string    `gorm:"column:pinged" db:"pinged" json:"pinged" form:"pinged"`
+	PostModified        time.Time `gorm:"column:post_modified" db:"post_modified" json:"post_modified" form:"post_modified"`
+	PostModifiedGmt     time.Time `gorm:"column:post_modified_gmt" db:"post_modified_gmt" json:"post_modified_gmt" form:"post_modified_gmt"`
+	PostContentFiltered string    `gorm:"column:post_content_filtered" db:"post_content_filtered" json:"post_content_filtered" form:"post_content_filtered"`
+	PostParent          uint64    `gorm:"column:post_parent" db:"post_parent" json:"post_parent" form:"post_parent"`
+	Guid                string    `gorm:"column:guid" db:"guid" json:"guid" form:"guid"`
+	MenuOrder           int       `gorm:"column:menu_order" db:"menu_order" json:"menu_order" form:"menu_order"`
+	PostType            string    `gorm:"column:post_type" db:"post_type" json:"post_type" form:"post_type"`
+	PostMimeType        string    `gorm:"column:post_mime_type" db:"post_mime_type" json:"post_mime_type" form:"post_mime_type"`
+	CommentCount        int64     `gorm:"column:comment_count" db:"comment_count" json:"comment_count" form:"comment_count"`
+}
+
+type user struct {
+	Id                uint64    `gorm:"column:ID" db:"ID" json:"ID"`
+	UserLogin         string    `gorm:"column:user_login" db:"user_login" json:"user_login"`
+	UserPass          string    `gorm:"column:user_pass" db:"user_pass" json:"user_pass"`
+	UserNicename      string    `gorm:"column:user_nicename" db:"user_nicename" json:"user_nicename"`
+	UserEmail         string    `gorm:"column:user_email" db:"user_email" json:"user_email"`
+	UserUrl           string    `gorm:"column:user_url" db:"user_url" json:"user_url"`
+	UserRegistered    time.Time `gorm:"column:user_registered" db:"user_registered" json:"user_registered"`
+	UserActivationKey string    `gorm:"column:user_activation_key" db:"user_activation_key" json:"user_activation_key"`
+	UserStatus        int       `gorm:"column:user_status" db:"user_status" json:"user_status"`
+	DisplayName       string    `gorm:"column:display_name" db:"display_name" json:"display_name"`
+}
+
+type termTaxonomy struct {
+	TermTaxonomyId uint64 `gorm:"column:term_taxonomy_id" db:"term_taxonomy_id" json:"term_taxonomy_id" form:"term_taxonomy_id"`
+	TermId         uint64 `gorm:"column:term_id" db:"term_id" json:"term_id" form:"term_id"`
+	Taxonomy       string `gorm:"column:taxonomy" db:"taxonomy" json:"taxonomy" form:"taxonomy"`
+	Description    string `gorm:"column:description" db:"description" json:"description" form:"description"`
+	Parent         uint64 `gorm:"column:parent" db:"parent" json:"parent" form:"parent"`
+	Count          int64  `gorm:"column:count" db:"count" json:"count" form:"count"`
+}
+
+type terms struct {
+	TermId    uint64 `gorm:"column:term_id" db:"term_id" json:"term_id" form:"term_id"`
+	Name      string `gorm:"column:name" db:"name" json:"name" form:"name"`
+	Slug      string `gorm:"column:slug" db:"slug" json:"slug" form:"slug"`
+	TermGroup int64  `gorm:"column:term_group" db:"term_group" json:"term_group" form:"term_group"`
+}
+
+func (t terms) PrimaryKey() string {
+	return "term_id"
+}
+func (t terms) Table() string {
+	return "wp_terms"
+}
+
+func (w termTaxonomy) PrimaryKey() string {
+	return "term_taxonomy_id"
+}
+
+func (w termTaxonomy) Table() string {
+	return "wp_term_taxonomy"
+}
+
+func (u user) Table() string {
+	return "wp_users"
+}
+
+func (u user) PrimaryKey() string {
+	return "ID"
+}
+
+func (p post) PrimaryKey() string {
+	return "ID"
+}
+
+func (p post) Table() string {
+	return "wp_posts"
+}
+
+type SqlxDb struct {
+	sqlx *sqlx.DB
+}
+
+var Db *SqlxDb
+
+func (r SqlxDb) Select(ctx context.Context, dest any, sql string, params ...any) error {
+	return r.sqlx.Select(dest, sql, params...)
+}
+
+func (r SqlxDb) Get(ctx context.Context, dest any, sql string, params ...any) error {
+	return r.sqlx.Get(dest, sql, params...)
+}
 
 var ctx = context.Background()
 
 func init() {
-	err := config.InitConfig("../config.yaml")
+	db, err := sqlx.Open("mysql", "root:root@tcp(192.168.66.47:3306)/wordpress?charset=utf8mb4&parseTime=True&loc=Local")
 	if err != nil {
 		panic(err)
 	}
-	err = db.InitDb()
-	if err != nil {
-		panic(err)
-	}
-	InitDB(db.NewSqlxDb(db.Db))
+	Db = &SqlxDb{db}
+	InitDB(Db)
 }
 func TestFind(t *testing.T) {
 	type args struct {
@@ -36,7 +133,7 @@ func TestFind(t *testing.T) {
 		in     [][]any
 	}
 	type posts struct {
-		models2.Posts
+		post
 		N int `db:"n"`
 	}
 	tests := []struct {
@@ -107,7 +204,7 @@ func TestFind(t *testing.T) {
 				in:    nil,
 			},
 			wantR: func() []posts {
-				r, err := Select[posts](ctx, "select post_status,count(*) n from "+models2.Posts{}.Table()+" where ID<1000 group by post_status having n>1")
+				r, err := Select[posts](ctx, "select post_status,count(*) n from "+post{}.Table()+" where ID<1000 group by post_status having n>1")
 				if err != nil {
 					panic(err)
 				}
@@ -152,10 +249,10 @@ func TestFind(t *testing.T) {
 				group:  "a.post_author",
 				order:  SqlBuilder{{"n", "desc"}},
 				join: SqlBuilder{
-					{"a", "left join", models2.Users{}.Table() + " b", "a.post_author=b.ID"},
+					{"a", "left join", user{}.Table() + " b", "a.post_author=b.ID"},
 					{"left join", "wp_term_relationships c", "a.Id=c.object_id"},
-					{"left join", models2.TermTaxonomy{}.Table() + " d", "c.term_taxonomy_id=d.term_taxonomy_id"},
-					{"left join", models2.Terms{}.Table() + " e", "d.term_id=e.term_id"},
+					{"left join", termTaxonomy{}.Table() + " d", "c.term_taxonomy_id=d.term_taxonomy_id"},
+					{"left join", terms{}.Table() + " e", "d.term_id=e.term_id"},
 				},
 				having: SqlBuilder{{"n", ">", "0", "int"}},
 				limit:  10,
@@ -193,7 +290,7 @@ func TestFindOneById(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    models2.Posts
+		want    post
 		wantErr bool
 	}{
 		{
@@ -201,8 +298,8 @@ func TestFindOneById(t *testing.T) {
 			args: args{
 				1,
 			},
-			want: func() models2.Posts {
-				r, err := Get[models2.Posts](ctx, "select * from "+models2.Posts{}.Table()+" where ID=?", 1)
+			want: func() post {
+				r, err := Get[post](ctx, "select * from "+post{}.Table()+" where ID=?", 1)
 				if err != nil && err != sql.ErrNoRows {
 					panic(err)
 				} else if err == sql.ErrNoRows {
@@ -215,7 +312,7 @@ func TestFindOneById(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := FindOneById[models2.Posts](ctx, tt.args.id)
+			got, err := FindOneById[post](ctx, tt.args.id)
 			if err == sql.ErrNoRows {
 				err = nil
 			}
@@ -240,7 +337,7 @@ func TestFirstOne(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    models2.Posts
+		want    post
 		wantErr bool
 	}{
 		{
@@ -252,8 +349,8 @@ func TestFirstOne(t *testing.T) {
 				in:     nil,
 			},
 			wantErr: false,
-			want: func() models2.Posts {
-				r, err := Get[models2.Posts](ctx, "select * from "+models2.Posts{}.Table()+" where post_status='publish' order by ID desc limit 1")
+			want: func() post {
+				r, err := Get[post](ctx, "select * from "+post{}.Table()+" where post_status='publish' order by ID desc limit 1")
 				if err != nil && err != sql.ErrNoRows {
 					panic(err)
 				} else if err == sql.ErrNoRows {
@@ -265,7 +362,7 @@ func TestFirstOne(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := FirstOne[models2.Posts](ctx, tt.args.where, tt.args.fields, tt.args.order, tt.args.in...)
+			got, err := FirstOne[post](ctx, tt.args.where, tt.args.fields, tt.args.order, tt.args.in...)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FirstOne() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -286,7 +383,7 @@ func TestLastOne(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    models2.Posts
+		want    post
 		wantErr bool
 	}{
 		{
@@ -298,8 +395,8 @@ func TestLastOne(t *testing.T) {
 				fields: "*",
 				in:     nil,
 			},
-			want: func() models2.Posts {
-				r, err := Get[models2.Posts](ctx, "select * from "+models2.Posts{}.Table()+" where post_status='publish' order by  "+models2.Posts{}.PrimaryKey()+" desc limit 1")
+			want: func() post {
+				r, err := Get[post](ctx, "select * from "+post{}.Table()+" where post_status='publish' order by  "+post{}.PrimaryKey()+" desc limit 1")
 				if err != nil {
 					panic(err)
 				}
@@ -309,7 +406,7 @@ func TestLastOne(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := LastOne[models2.Posts](ctx, tt.args.where, tt.args.fields, tt.args.in...)
+			got, err := LastOne[post](ctx, tt.args.where, tt.args.fields, tt.args.in...)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("LastOne() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -330,7 +427,7 @@ func TestSimpleFind(t *testing.T) {
 	tests := []struct {
 		name    string
 		args    args
-		want    []models2.Posts
+		want    []post
 		wantErr bool
 	}{
 		{
@@ -342,8 +439,8 @@ func TestSimpleFind(t *testing.T) {
 				fields: "*",
 				in:     [][]any{{1, 2}},
 			},
-			want: func() (r []models2.Posts) {
-				r, err := Select[models2.Posts](ctx, "select * from "+models2.Posts{}.Table()+" where ID in (?,?)", 1, 2)
+			want: func() (r []post) {
+				r, err := Select[post](ctx, "select * from "+post{}.Table()+" where ID in (?,?)", 1, 2)
 				if err != nil && err != sql.ErrNoRows {
 					panic(err)
 				} else if err == sql.ErrNoRows {
@@ -356,7 +453,7 @@ func TestSimpleFind(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := SimpleFind[models2.Posts](ctx, tt.args.where, tt.args.fields, tt.args.in...)
+			got, err := SimpleFind[post](ctx, tt.args.where, tt.args.fields, tt.args.in...)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("SimpleFind() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -383,7 +480,7 @@ func TestSimplePagination(t *testing.T) {
 	tests := []struct {
 		name      string
 		args      args
-		wantR     []models2.Posts
+		wantR     []post
 		wantTotal int
 		wantErr   bool
 	}{
@@ -402,8 +499,8 @@ func TestSimplePagination(t *testing.T) {
 				having:   nil,
 				in:       [][]any{helper.SliceMap[int, any](helper.RangeSlice(431, 440, 1), helper.ToAny[int])},
 			},
-			wantR: func() (r []models2.Posts) {
-				r, err := Select[models2.Posts](ctx, "select * from "+models2.Posts{}.Table()+" where ID in (?,?,?,?,?)", helper.SliceMap[int, any](helper.RangeSlice(431, 435, 1), helper.ToAny[int])...)
+			wantR: func() (r []post) {
+				r, err := Select[post](ctx, "select * from "+post{}.Table()+" where ID in (?,?,?,?,?)", helper.SliceMap[int, any](helper.RangeSlice(431, 435, 1), helper.ToAny[int])...)
 				if err != nil && err != sql.ErrNoRows {
 					panic(err)
 				} else if err == sql.ErrNoRows {
@@ -417,7 +514,7 @@ func TestSimplePagination(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotR, gotTotal, err := SimplePagination[models2.Posts](ctx, tt.args.where, tt.args.fields, tt.args.group, tt.args.page, tt.args.pageSize, tt.args.order, tt.args.join, tt.args.having, tt.args.in...)
+			gotR, gotTotal, err := SimplePagination[post](ctx, tt.args.where, tt.args.fields, tt.args.group, tt.args.page, tt.args.pageSize, tt.args.order, tt.args.join, tt.args.having, tt.args.in...)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("SimplePagination() error = %v, wantErr %v", err, tt.wantErr)
 				return

@@ -1,8 +1,8 @@
 package models
 
 import (
+	"github.com/fthvgb1/wp-go/helper"
 	"github.com/leeqvip/gophp"
-	"github/fthvgb1/wp-go/helper"
 )
 
 type Postmeta struct {

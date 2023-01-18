@@ -1,9 +1,9 @@
 package middleware
 
 import (
+	"github.com/fthvgb1/wp-go/internal/pkg/config"
+	"github.com/fthvgb1/wp-go/safety"
 	"github.com/gin-gonic/gin"
-	"github/fthvgb1/wp-go/internal/pkg/config"
-	"github/fthvgb1/wp-go/safety"
 	"net/http"
 	"strings"
 )

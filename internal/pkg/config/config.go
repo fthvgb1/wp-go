@@ -2,7 +2,7 @@ package config
 
 import (
 	"fmt"
-	"github/fthvgb1/wp-go/safety"
+	"github.com/fthvgb1/wp-go/safety"
 	"gopkg.in/yaml.v2"
 	"os"
 	"time"

@@ -1,8 +1,8 @@
 package stream
 
 import (
-	"github/fthvgb1/wp-go/safety"
-	"github/fthvgb1/wp-go/taskPools"
+	"github.com/fthvgb1/wp-go/safety"
+	"github.com/fthvgb1/wp-go/taskPools"
 	"sync"
 )
 

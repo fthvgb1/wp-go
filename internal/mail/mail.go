@@ -3,8 +3,8 @@ package mail
 import (
 	"crypto/tls"
 	"fmt"
+	"github.com/fthvgb1/wp-go/internal/pkg/config"
 	"github.com/soxfmr/gomail"
-	"github/fthvgb1/wp-go/internal/pkg/config"
 	"mime"
 	"path"
 )

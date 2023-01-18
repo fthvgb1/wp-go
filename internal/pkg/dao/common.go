@@ -3,9 +3,9 @@ package common
 import (
 	"context"
 	"fmt"
-	models2 "github/fthvgb1/wp-go/internal/pkg/models"
-	"github/fthvgb1/wp-go/internal/wpconfig"
-	"github/fthvgb1/wp-go/model"
+	models2 "github.com/fthvgb1/wp-go/internal/pkg/models"
+	"github.com/fthvgb1/wp-go/internal/wpconfig"
+	"github.com/fthvgb1/wp-go/model"
 )
 
 var TotalRaw int64

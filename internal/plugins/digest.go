@@ -2,11 +2,11 @@ package plugins
 
 import (
 	"fmt"
+	"github.com/fthvgb1/wp-go/cache"
+	"github.com/fthvgb1/wp-go/internal/pkg/config"
+	"github.com/fthvgb1/wp-go/internal/pkg/models"
+	"github.com/fthvgb1/wp-go/plugin/digest"
 	"github.com/gin-gonic/gin"
-	"github/fthvgb1/wp-go/cache"
-	"github/fthvgb1/wp-go/internal/pkg/config"
-	"github/fthvgb1/wp-go/internal/pkg/models"
-	"github/fthvgb1/wp-go/plugin/digest"
 	"strings"
 	"time"
 )

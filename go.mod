@@ -1,22 +1,23 @@
-module github/fthvgb1/wp-go
+module github.com/fthvgb1/wp-go
 
 go 1.18
 
 require (
 	github.com/dlclark/regexp2 v1.7.0
+	github.com/elliotchance/phpserialize v1.3.3
 	github.com/gin-contrib/gzip v0.0.6
 	github.com/gin-contrib/pprof v1.4.0
 	github.com/gin-contrib/sessions v0.0.5
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/jmoiron/sqlx v1.3.5
+	github.com/leeqvip/gophp v1.0.0
 	github.com/soxfmr/gomail v0.0.0-20200806033254-80bf84e583f0
 	golang.org/x/crypto v0.0.0-20220924013350-4ba4fb4dd9e7
 	gopkg.in/yaml.v2 v2.4.0
 )
 
 require (
-	github.com/elliotchance/phpserialize v1.3.3 // indirect
 	github.com/gin-contrib/sse v0.1.0 // indirect
 	github.com/go-playground/locales v0.14.0 // indirect
 	github.com/go-playground/universal-translator v0.18.0 // indirect
@@ -26,7 +27,6 @@ require (
 	github.com/gorilla/securecookie v1.1.1 // indirect
 	github.com/gorilla/sessions v1.2.1 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/leeqvip/gophp v1.0.0 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect

@@ -2,13 +2,15 @@ package twentyseventeen
 
 import (
 	"github.com/elliotchance/phpserialize"
+	"github.com/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/internal/pkg/cache"
+	"github.com/fthvgb1/wp-go/internal/pkg/logs"
+	"github.com/fthvgb1/wp-go/internal/pkg/models"
+	"github.com/fthvgb1/wp-go/internal/plugins"
+	"github.com/fthvgb1/wp-go/internal/wpconfig"
+	"github.com/fthvgb1/wp-go/plugin/pagination"
 	"github.com/gin-gonic/gin"
-	"github/fthvgb1/wp-go/helper"
-	"github/fthvgb1/wp-go/internal/pkg/cache"
-	"github/fthvgb1/wp-go/internal/pkg/logs"
-	"github/fthvgb1/wp-go/internal/pkg/models"
-	"github/fthvgb1/wp-go/internal/plugins"
-	"github/fthvgb1/wp-go/internal/wpconfig"
+	"strings"
 )
 
 const ThemeName = "twentyseventeen"
@@ -28,13 +30,27 @@ type ImageData struct {
 	Width        int64  `json:"width,omitempty"`
 }
 
-func Hook(c *gin.Context, h gin.H, scene int) (r string) {
+func Hook(status int, c *gin.Context, h gin.H, scene int) {
+	templ := "twentyseventeen/posts/index.gohtml"
 	if _, ok := plugins.IndexSceneMap[scene]; ok {
-		r = "twentyseventeen/posts/index.gohtml"
 		h["HeaderImage"] = getHeaderImage(c)
+		p, ok := h["pagination"]
+		if ok {
+			pp, ok := p.(pagination.ParsePagination)
+			if ok {
+				f := plugins.TwentyFifteenPagination()
+				f.PrevEle = `<a class="prev page-numbers" href="%s"><svg class="icon icon-arrow-left" aria-hidden="true" role="img"> <use href="#icon-arrow-left" xlink:href="#icon-arrow-left"></use> </svg>
+<span class="screen-reader-text">上一页</span></a>`
+				f.NextEle = strings.Replace(f.NextEle, "下一页", `<span class="screen-reader-text">下一页</span>
+<svg class="icon icon-arrow-right" aria-hidden="true" role="img"> <use href="#icon-arrow-right" xlink:href="#icon-arrow-right"></use> 
+</svg>`, 1)
+				h["pagination"] = pagination.Paginate(f, pp)
+			}
+		}
 	} else if _, ok := plugins.DetailSceneMap[scene]; ok {
-		r = "twentyseventeen/posts/detail.gohtml"
+		templ = "twentyseventeen/posts/detail.gohtml"
 	}
+	c.HTML(status, templ, h)
 	return
 }
 

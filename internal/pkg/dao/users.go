@@ -2,8 +2,8 @@ package common
 
 import (
 	"context"
-	"github/fthvgb1/wp-go/internal/pkg/models"
-	"github/fthvgb1/wp-go/model"
+	"github.com/fthvgb1/wp-go/internal/pkg/models"
+	"github.com/fthvgb1/wp-go/model"
 )
 
 func GetUserById(a ...any) (r models.Users, err error) {

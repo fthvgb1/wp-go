@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github/fthvgb1/wp-go/safety"
+	"github.com/fthvgb1/wp-go/safety"
 	"sync"
 	"time"
 )

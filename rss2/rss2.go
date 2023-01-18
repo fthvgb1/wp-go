@@ -2,7 +2,7 @@ package rss2
 
 import (
 	"fmt"
-	"github/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/helper"
 	"strconv"
 	"strings"
 )

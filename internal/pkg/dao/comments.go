@@ -2,9 +2,9 @@ package common
 
 import (
 	"context"
-	"github/fthvgb1/wp-go/helper"
-	"github/fthvgb1/wp-go/internal/pkg/models"
-	"github/fthvgb1/wp-go/model"
+	"github.com/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/internal/pkg/models"
+	"github.com/fthvgb1/wp-go/model"
 	"strconv"
 )
 

@@ -2,7 +2,7 @@ package digest
 
 import (
 	"fmt"
-	"github/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/helper"
 	"regexp"
 	"strings"
 	"unicode/utf8"

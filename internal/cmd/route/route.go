@@ -1,16 +1,16 @@
 package route
 
 import (
+	"github.com/fthvgb1/wp-go/internal/actions"
+	"github.com/fthvgb1/wp-go/internal/middleware"
+	"github.com/fthvgb1/wp-go/internal/pkg/config"
+	"github.com/fthvgb1/wp-go/internal/static"
+	"github.com/fthvgb1/wp-go/internal/theme"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
-	"github/fthvgb1/wp-go/internal/actions"
-	"github/fthvgb1/wp-go/internal/middleware"
-	"github/fthvgb1/wp-go/internal/pkg/config"
-	"github/fthvgb1/wp-go/internal/static"
-	"github/fthvgb1/wp-go/internal/templates"
 	"net/http"
 )
 
@@ -26,7 +26,7 @@ func SetupRouter() (*gin.Engine, func()) {
 		}
 	}
 
-	r.HTMLRender = templates.NewFsTemplate(templates.FuncMap()).SetTemplate()
+	r.HTMLRender = theme.NewFsTemplate(theme.FuncMap()).SetTemplate()
 	validServerName, reloadValidServerNameFn := middleware.ValidateServerNames()
 	fl, flReload := middleware.FlowLimit(c.MaxRequestSleepNum, c.MaxRequestNum, c.SleepTime)
 	r.Use(

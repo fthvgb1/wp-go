@@ -2,11 +2,11 @@ package actions
 
 import (
 	"fmt"
+	"github.com/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/internal/wpconfig"
+	"github.com/fthvgb1/wp-go/phpass"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github/fthvgb1/wp-go/helper"
-	"github/fthvgb1/wp-go/internal/wpconfig"
-	"github/fthvgb1/wp-go/phpass"
 	"net/http"
 	"strings"
 )
