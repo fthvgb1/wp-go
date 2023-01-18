@@ -5,6 +5,7 @@ import (
 	"github.com/fthvgb1/wp-go/helper"
 	cache2 "github.com/fthvgb1/wp-go/internal/pkg/cache"
 	dao "github.com/fthvgb1/wp-go/internal/pkg/dao"
+	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
 	"github.com/fthvgb1/wp-go/internal/theme"
@@ -221,8 +222,10 @@ func Index(c *gin.Context) {
 		postIds, totalRaw, err = cache2.PostLists(c, h.getSearchKey(), c, h.where, h.page, h.pageSize, model.SqlBuilder{{h.orderBy, h.order}}, h.join, h.postType, h.status)
 	}
 	if err != nil {
+		logs.ErrPrintln(err, "获取数据错误")
 		return
 	}
+
 	if len(postIds) < 1 && h.category != "" {
 		h.titleL = "未找到页面"
 		h.scene = plugins.Empty404
@@ -252,11 +255,6 @@ func Index(c *gin.Context) {
 	ginH["currentPage"] = h.page
 	ginH["title"] = h.getTitle()
 	ginH["pagination"] = pagination.NewParsePagination(totalRaw, h.pageSize, h.page, q, c.Request.URL.Path, h.paginationStep)
-}
-
-type PaginationElements struct {
-	Prev string
-	Next string
 }
 
 func getTemplateName() string {
