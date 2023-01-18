@@ -30,6 +30,16 @@ type ImageData struct {
 	Width        int64  `json:"width,omitempty"`
 }
 
+var paginate = func() plugins.PageEle {
+	p := plugins.TwentyFifteenPagination()
+	p.PrevEle = `<a class="prev page-numbers" href="%s"><svg class="icon icon-arrow-left" aria-hidden="true" role="img"> <use href="#icon-arrow-left" xlink:href="#icon-arrow-left"></use> </svg>
+<span class="screen-reader-text">上一页</span></a>`
+	p.NextEle = strings.Replace(p.NextEle, "下一页", `<span class="screen-reader-text">下一页</span>
+<svg class="icon icon-arrow-right" aria-hidden="true" role="img"> <use href="#icon-arrow-right" xlink:href="#icon-arrow-right"></use> 
+</svg>`, 1)
+	return p
+}()
+
 func Hook(status int, c *gin.Context, h gin.H, scene int) {
 	templ := "twentyseventeen/posts/index.gohtml"
 	if _, ok := plugins.IndexSceneMap[scene]; ok {
@@ -38,13 +48,7 @@ func Hook(status int, c *gin.Context, h gin.H, scene int) {
 		if ok {
 			pp, ok := p.(pagination.ParsePagination)
 			if ok {
-				f := plugins.TwentyFifteenPagination()
-				f.PrevEle = `<a class="prev page-numbers" href="%s"><svg class="icon icon-arrow-left" aria-hidden="true" role="img"> <use href="#icon-arrow-left" xlink:href="#icon-arrow-left"></use> </svg>
-<span class="screen-reader-text">上一页</span></a>`
-				f.NextEle = strings.Replace(f.NextEle, "下一页", `<span class="screen-reader-text">下一页</span>
-<svg class="icon icon-arrow-right" aria-hidden="true" role="img"> <use href="#icon-arrow-right" xlink:href="#icon-arrow-right"></use> 
-</svg>`, 1)
-				h["pagination"] = pagination.Paginate(f, pp)
+				h["pagination"] = pagination.Paginate(paginate, pp)
 			}
 		}
 	} else if _, ok := plugins.DetailSceneMap[scene]; ok {
