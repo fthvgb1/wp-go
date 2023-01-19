@@ -1,10 +1,7 @@
 package pagination
 
 import (
-	"fmt"
-	"github.com/fthvgb1/wp-go/helper"
 	"math"
-	"regexp"
 	"strings"
 )
 
@@ -14,6 +11,7 @@ type Elements interface {
 	Next(url string) string
 	Dots() string
 	Middle(page int, url string) string
+	Url(path, query string, page int) string
 }
 
 type ParsePagination struct {
@@ -27,7 +25,7 @@ type ParsePagination struct {
 	Step        int
 }
 
-func NewParsePagination(totalRaw int, pageSize int, currentPage int, query string, path string, step int) ParsePagination {
+func NewParsePagination(totalRaw int, pageSize int, currentPage, step int, query string, path string) ParsePagination {
 	allPage := int(math.Ceil(float64(totalRaw) / float64(pageSize)))
 	return ParsePagination{TotalPage: allPage, TotalRaw: totalRaw, PageSize: pageSize, CurrentPage: currentPage, Query: query, Path: path, Step: step}
 }
@@ -37,40 +35,28 @@ func Paginate(e Elements, p ParsePagination) string {
 	return p.ToHtml()
 }
 
-var complie = regexp.MustCompile(`(/page)/(\d+)`)
-
 func (p ParsePagination) ToHtml() (html string) {
 	if p.TotalRaw < 2 {
 		return
-	}
-	pathx := p.Path
-	if !strings.Contains(p.Path, "/page/") {
-		pathx = fmt.Sprintf("%s%s", p.Path, "/page/1")
 	}
 	s := strings.Builder{}
 	if p.CurrentPage > p.TotalPage {
 		p.CurrentPage = p.TotalPage
 	}
-	r := complie
 	start := p.CurrentPage - p.Step
 	end := p.CurrentPage + p.Step
 	if start < 1 {
 		start = 1
 	}
 	if p.CurrentPage > 1 {
-		pp := ""
-		if p.CurrentPage >= 2 {
-			pp = replacePage(r, pathx, p.CurrentPage-1)
-		}
-		s.WriteString(p.Prev(helper.StrJoin(pp, p.Query)))
+		s.WriteString(p.Prev(p.Url(p.Path, p.Query, p.CurrentPage-1)))
 	}
 	if p.CurrentPage >= p.Step+2 {
 		d := false
 		if p.CurrentPage > p.Step+2 {
 			d = true
 		}
-		e := replacePage(r, p.Path, 1)
-		s.WriteString(p.Middle(1, helper.StrJoin(e, p.Query)))
+		s.WriteString(p.Middle(1, p.Url(p.Path, p.Query, 1)))
 		if d {
 			s.WriteString(p.Dots())
 		}
@@ -84,8 +70,7 @@ func (p ParsePagination) ToHtml() (html string) {
 		if p.CurrentPage == page {
 			h = p.Current(page)
 		} else {
-			d := replacePage(r, pathx, page)
-			h = p.Middle(page, helper.StrJoin(d, p.Query))
+			h = p.Middle(page, p.Url(p.Path, p.Query, page))
 		}
 		s.WriteString(h)
 
@@ -95,30 +80,14 @@ func (p ParsePagination) ToHtml() (html string) {
 		if p.TotalPage > p.CurrentPage+p.Step+1 {
 			d = true
 		}
-		dd := replacePage(r, pathx, p.TotalPage)
 		if d {
 			s.WriteString(p.Dots())
 		}
-		s.WriteString(p.Middle(p.TotalPage, helper.StrJoin(dd, p.Query)))
+		s.WriteString(p.Middle(p.TotalPage, p.Url(p.Path, p.Query, p.TotalPage)))
 	}
 	if p.CurrentPage < p.TotalPage {
-		dd := replacePage(r, pathx, p.CurrentPage+1)
-		s.WriteString(p.Next(helper.StrJoin(dd, p.Query)))
+		s.WriteString(p.Next(p.Url(p.Path, p.Query, p.CurrentPage+1)))
 	}
 	html = s.String()
-	return
-}
-
-func replacePage(r *regexp.Regexp, path string, page int) (src string) {
-	if page == 1 {
-		src = r.ReplaceAllString(path, "")
-	} else {
-		s := fmt.Sprintf("$1/%d", page)
-		src = r.ReplaceAllString(path, s)
-	}
-	src = strings.Replace(src, "//", "/", -1)
-	if src == "" {
-		src = "/"
-	}
 	return
 }

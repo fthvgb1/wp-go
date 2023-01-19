@@ -1,6 +1,11 @@
 package plugins
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/fthvgb1/wp-go/helper"
+	"regexp"
+	"strings"
+)
 
 type PageEle struct {
 	PrevEle    string
@@ -42,4 +47,23 @@ func (p PageEle) Dots() string {
 
 func (p PageEle) Middle(page int, url string) string {
 	return fmt.Sprintf(p.MiddleEle, url, page)
+}
+
+var reg = regexp.MustCompile(`(/page)/(\d+)`)
+
+func (p PageEle) Url(path, query string, page int) string {
+	if !strings.Contains(path, "/page/") {
+		path = fmt.Sprintf("%s%s", path, "/page/1")
+	}
+	if page == 1 {
+		path = reg.ReplaceAllString(path, "")
+	} else {
+		s := fmt.Sprintf("$1/%d", page)
+		path = reg.ReplaceAllString(path, s)
+	}
+	path = strings.Replace(path, "//", "/", -1)
+	if path == "" {
+		path = "/"
+	}
+	return helper.StrJoin(path, query)
 }

@@ -254,7 +254,7 @@ func Index(c *gin.Context) {
 	ginH["totalPage"] = h.getTotalPage(totalRaw)
 	ginH["currentPage"] = h.page
 	ginH["title"] = h.getTitle()
-	ginH["pagination"] = pagination.NewParsePagination(totalRaw, h.pageSize, h.page, q, c.Request.URL.Path, h.paginationStep)
+	ginH["pagination"] = pagination.NewParsePagination(totalRaw, h.pageSize, h.page, h.paginationStep, q, c.Request.URL.Path)
 }
 
 func getTemplateName() string {
