@@ -3,8 +3,8 @@ package actions
 import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/internal/phpass"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
-	"github.com/fthvgb1/wp-go/phpass"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"net/http"

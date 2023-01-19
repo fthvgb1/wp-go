@@ -1,6 +1,6 @@
 {{ define "layout/base"}}
     <!DOCTYPE html>
-    <html lang="{{"WPLANG"| getOption}}" class="no-js">
+    <html lang="{{getLang}}" class="no-js">
     <head>
         {{template "layout/head" .}}
         {{block "head" .}}

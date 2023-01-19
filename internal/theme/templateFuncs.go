@@ -16,6 +16,7 @@ var funcs = template.FuncMap{
 	"getOption": func(k string) string {
 		return wpconfig.Options.Value(k)
 	},
+	"getLang": wpconfig.GetLang,
 }
 
 func FuncMap() template.FuncMap {

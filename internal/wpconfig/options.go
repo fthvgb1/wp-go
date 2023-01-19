@@ -5,6 +5,7 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/model"
 	"github.com/fthvgb1/wp-go/safety"
+	"strings"
 )
 
 var Options safety.Map[string, string]
@@ -25,4 +26,12 @@ func InitOptions() error {
 		Options.Store(options.OptionName, options.OptionValue)
 	}
 	return nil
+}
+
+func GetLang() string {
+	s, ok := Options.Load("WPLANG")
+	if !ok {
+		s = "zh-CN"
+	}
+	return strings.Replace(s, "_", "-", 1)
 }
