@@ -3,7 +3,7 @@ package actions
 import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper"
-	cache2 "github.com/fthvgb1/wp-go/internal/pkg/cache"
+	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	dao "github.com/fthvgb1/wp-go/internal/pkg/dao"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
@@ -116,7 +116,7 @@ func (h *indexHandle) parseParams() (err error) {
 	h.category = category
 	username := h.c.Param("author")
 	if username != "" {
-		user, er := cache2.GetUserByName(h.c, username)
+		user, er := cache.GetUserByName(h.c, username)
 		if er != nil {
 			err = er
 			return
@@ -183,10 +183,10 @@ func Index(c *gin.Context) {
 	var postIds []models.Posts
 	var totalRaw int
 	var err error
-	archive := cache2.Archives(c)
-	recent := cache2.RecentPosts(c, 5)
-	categoryItems := cache2.Categories(c)
-	recentComments := cache2.RecentComments(c, 5)
+	archive := cache.Archives(c)
+	recent := cache.RecentPosts(c, 5)
+	categoryItems := cache.Categories(c)
+	recentComments := cache.RecentComments(c, 5)
 	ginH := gin.H{
 		"options":        wpconfig.Options,
 		"recentPosts":    recent,
@@ -212,14 +212,14 @@ func Index(c *gin.Context) {
 	}
 	ginH["title"] = h.getTitle()
 	if c.Param("month") != "" {
-		postIds, totalRaw, err = cache2.GetMonthPostIds(c, c.Param("year"), c.Param("month"), h.page, h.pageSize, h.order)
+		postIds, totalRaw, err = cache.GetMonthPostIds(c, c.Param("year"), c.Param("month"), h.page, h.pageSize, h.order)
 		if err != nil {
 			return
 		}
 	} else if h.search != "" {
-		postIds, totalRaw, err = cache2.SearchPost(c, h.getSearchKey(), c, h.where, h.page, h.pageSize, model.SqlBuilder{{h.orderBy, h.order}}, h.join, h.postType, h.status)
+		postIds, totalRaw, err = cache.SearchPost(c, h.getSearchKey(), c, h.where, h.page, h.pageSize, model.SqlBuilder{{h.orderBy, h.order}}, h.join, h.postType, h.status)
 	} else {
-		postIds, totalRaw, err = cache2.PostLists(c, h.getSearchKey(), c, h.where, h.page, h.pageSize, model.SqlBuilder{{h.orderBy, h.order}}, h.join, h.postType, h.status)
+		postIds, totalRaw, err = cache.PostLists(c, h.getSearchKey(), c, h.where, h.page, h.pageSize, model.SqlBuilder{{h.orderBy, h.order}}, h.join, h.postType, h.status)
 	}
 	if err != nil {
 		logs.ErrPrintln(err, "获取数据错误")

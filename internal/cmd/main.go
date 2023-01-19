@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/fthvgb1/wp-go/internal/actions"
 	"github.com/fthvgb1/wp-go/internal/cmd/route"
 	"github.com/fthvgb1/wp-go/internal/mail"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
@@ -44,7 +43,6 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	actions.InitFeed()
 	cache.InitActionsCommonCache()
 	plugins.InitDigestCache()
 	theme.InitThemeAndTemplateFuncMap()
@@ -80,7 +78,6 @@ func cronClearCache() {
 		case <-t.C:
 			cache.ClearCache()
 			plugins.ClearDigestCache()
-			actions.ClearCache()
 		}
 	}
 }
@@ -94,7 +91,6 @@ func flushCache() {
 	}()
 	cache.FlushCache()
 	plugins.FlushCache()
-	actions.FlushCache()
 	log.Println("all cache flushed")
 }
 

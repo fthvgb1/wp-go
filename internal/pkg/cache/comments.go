@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"github.com/fthvgb1/wp-go/cache"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"time"
@@ -30,4 +31,8 @@ func GetCommentById(ctx context.Context, id uint64) (models.Comments, error) {
 
 func GetCommentByIds(ctx context.Context, ids []uint64) ([]models.Comments, error) {
 	return commentsCache.GetCacheBatch(ctx, ids, time.Second, ctx, ids)
+}
+
+func NewCommentCache() *cache.MapCache[string, string] {
+	return newCommentCache
 }

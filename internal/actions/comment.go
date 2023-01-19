@@ -4,10 +4,9 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/fthvgb1/wp-go/cache"
 	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/internal/mail"
-	cache2 "github.com/fthvgb1/wp-go/internal/pkg/cache"
+	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	"github.com/fthvgb1/wp-go/internal/pkg/config"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
@@ -19,8 +18,6 @@ import (
 	"strings"
 	"time"
 )
-
-var commentCache = cache.NewMapCacheByFn[string, string](nil, 15*time.Minute)
 
 func PostComment(c *gin.Context) {
 	cli := &http.Client{
@@ -99,7 +96,7 @@ func PostComment(c *gin.Context) {
 				logs.ErrPrintln(err, "获取文档id", i)
 				return
 			}
-			post, err := cache2.GetPostById(cc, id)
+			post, err := cache.GetPostById(cc, id)
 			if err != nil {
 				logs.ErrPrintln(err, "获取文档", id)
 				return
@@ -114,7 +111,7 @@ func PostComment(c *gin.Context) {
 			err = er
 			return
 		}
-		commentCache.Set(up.RawQuery, string(s))
+		cache.NewCommentCache().Set(up.RawQuery, string(s))
 		c.Redirect(http.StatusFound, res.Header.Get("Location"))
 		return
 	}

@@ -30,6 +30,14 @@ var usersCache *cache.MapCache[uint64, models.Users]
 var usersNameCache *cache.MapCache[string, models.Users]
 var commentsCache *cache.MapCache[uint64, models.Comments]
 
+var feedCache *cache.SliceCache[string]
+
+var postFeedCache *cache.MapCache[string, string]
+
+var commentsFeedCache *cache.SliceCache[string]
+
+var newCommentCache *cache.MapCache[string, string]
+
 func InitActionsCommonCache() {
 	c := config.Conf.Load()
 	archivesCaches = &Arch{
@@ -64,6 +72,16 @@ func InitActionsCommonCache() {
 	usersNameCache = cache.NewMapCacheByFn[string, models.Users](common.GetUserByName, c.UserInfoCacheTime)
 
 	commentsCache = cache.NewMapCacheByBatchFn[uint64, models.Comments](common.GetCommentByIds, c.CommentsCacheTime)
+
+	feedCache = cache.NewSliceCache(feed, time.Hour)
+
+	postFeedCache = cache.NewMapCacheByFn[string, string](postFeed, time.Hour)
+
+	commentsFeedCache = cache.NewSliceCache(commentsFeed, time.Hour)
+
+	newCommentCache = cache.NewMapCacheByFn[string, string](nil, 15*time.Minute)
+
+	InitFeed()
 }
 
 func ClearCache() {
@@ -76,6 +94,8 @@ func ClearCache() {
 	usersCache.ClearExpired()
 	commentsCache.ClearExpired()
 	usersNameCache.ClearExpired()
+	postFeedCache.ClearExpired()
+	newCommentCache.ClearExpired()
 }
 func FlushCache() {
 	searchPostIdsCache.Flush()
@@ -87,6 +107,8 @@ func FlushCache() {
 	usersCache.Flush()
 	commentsCache.Flush()
 	usersCache.Flush()
+	postFeedCache.Flush()
+	newCommentCache.Flush()
 }
 
 func Archives(ctx context.Context) (r []models.PostArchive) {
