@@ -20,7 +20,7 @@
                              class="post-{{$v.Id}} post {{if $v.Thumbnail.Path}}has-post-thumbnail{{end}} type-post status-publish format-standard hentry category">
                         {{if $v.Thumbnail.Path}}
                             <a class="post-thumbnail" href="/p/{{$v.Id}}" aria-hidden="true">
-                                <img width="{{$v.Thumbnail.Width}}" height="{{$v.Thumbnail.Height}}" src="{{"siteurl"| getOption}}/wp-content/uploads/{{$v.Thumbnail.Path}}" class="attachment-post-thumbnail size-post-thumbnail wp-post-image" alt="{{$v.PostTitle}}" decoding="async">
+                                <img width="{{$v.Thumbnail.Width}}" height="{{$v.Thumbnail.Height}}" src="{{$v.Thumbnail.Path}}" class="attachment-post-thumbnail size-post-thumbnail wp-post-image" alt="{{$v.PostTitle}}" decoding="async">
                             </a>
                         {{end}}
 

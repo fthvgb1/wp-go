@@ -34,17 +34,16 @@
                                         </time>
                                     </a>
                                 </div>
+                                <h3 class="entry-title">
+                                    <a href="/p/{{$v.Id}}" rel="bookmark">{{$v.PostTitle}}</a>
+                                </h3>
                             </header>
-
-                            <h3 class="entry-title">
-                                <a href="/p/{{$v.Id}}" rel="bookmark">{{$v.PostTitle}}</a>
-                            </h3>
 
 
                             {{if $v.Thumbnail.Path}}
                                 <div class="post-thumbnail">
                                     <a href="/p/{{$v.Id}}" >
-                                        <img width="{{$v.Thumbnail.Width}}" height="{{$v.Thumbnail.Height}}" src="{{"siteurl"| getOption}}/wp-content/uploads/{{$v.Thumbnail.Path}}" class="attachment-twentyseventeen-featured-image size-twentyseventeen-featured-image wp-post-image" alt="{{$v.PostTitle}}" decoding="async" loading="lazy" srcset="{{$v.Thumbnail.Srcset}}" sizes="{{$v.Thumbnail.Sizes}}">
+                                        <img width="{{$v.Thumbnail.Width}}" height="{{$v.Thumbnail.Height}}" src="{{$v.Thumbnail.Path}}" class="attachment-twentyseventeen-featured-image size-twentyseventeen-featured-image wp-post-image" alt="{{$v.PostTitle}}" decoding="async" loading="lazy" srcset="{{$v.Thumbnail.Srcset}}" sizes="{{$v.Thumbnail.Sizes}}">
                                     </a>
                                 </div>
                             {{end}}
