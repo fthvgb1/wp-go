@@ -42,10 +42,13 @@ func (c *VarCache[T]) IsExpired() bool {
 }
 
 func (c *VarCache[T]) Flush() {
-	mu := c.v.Load().mutex
+	v := c.v.Load()
+	mu := v.mutex
 	mu.Lock()
 	defer mu.Unlock()
-	c.v.Delete()
+	var vv T
+	v.data = vv
+	c.v.Store(v)
 }
 
 func (c *VarCache[T]) GetCache(ctx context.Context, timeout time.Duration, params ...any) (T, error) {
