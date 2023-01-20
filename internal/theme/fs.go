@@ -12,13 +12,16 @@ import (
 //go:embed *[^.go]
 var TemplateFs embed.FS
 
+var templates map[string]*template.Template
+
 type FsTemplate struct {
 	Templates map[string]*template.Template
 	FuncMap   template.FuncMap
 }
 
 func NewFsTemplate(funcMap template.FuncMap) *FsTemplate {
-	return &FsTemplate{FuncMap: funcMap, Templates: make(map[string]*template.Template)}
+	templates = make(map[string]*template.Template)
+	return &FsTemplate{FuncMap: funcMap, Templates: templates}
 }
 
 func (t FsTemplate) SetTemplate() *FsTemplate {
@@ -43,13 +46,22 @@ func (t FsTemplate) Instance(name string, data any) render.Render {
 	}
 }
 
-func IsTemplateIsExist(tml string) (r bool, err error) {
+func IsTemplateDirExists(tml string) bool {
 	arr, err := TemplateFs.ReadDir(tml)
 	if err != nil {
-		return
+		return false
 	}
 	if len(arr) > 0 {
-		r = true
+		return true
 	}
-	return
+	return false
+}
+
+func IsTemplateExists(tml string) bool {
+	t, ok := templates[tml]
+	return ok && t != nil
+}
+
+func GetTemplate(tml string) *template.Template {
+	return templates[tml]
 }

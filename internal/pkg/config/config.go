@@ -37,6 +37,7 @@ type Config struct {
 	PostCommentUrl          string          `yaml:"postCommentUrl"`
 	TrustIps                []string        `yaml:"trustIps"`
 	TrustServerNames        []string        `yaml:"trustServerNames"`
+	Theme                   string          `yaml:"theme"`
 }
 
 type Mail struct {

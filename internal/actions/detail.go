@@ -7,6 +7,7 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
+	"github.com/fthvgb1/wp-go/internal/theme"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -48,7 +49,7 @@ func Detail(c *gin.Context) {
 		if isApproveComment == true {
 			return
 		}
-		c.HTML(status, helper.StrJoin(getTemplateName(), "/posts/detail.gohtml"), h)
+		c.HTML(status, helper.StrJoin(theme.GetTemplateName(), "/posts/detail.gohtml"), h)
 	}()
 	id := c.Param("id")
 	Id := 0

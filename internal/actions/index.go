@@ -203,7 +203,7 @@ func Index(c *gin.Context) {
 			stat = http.StatusInternalServerError
 			return
 		}
-		t := getTemplateName()
+		t := theme.GetTemplateName()
 		theme.Hook(t, stat, c, ginH, int(h.scene))
 	}()
 	err = h.parseParams()
@@ -255,12 +255,4 @@ func Index(c *gin.Context) {
 	ginH["currentPage"] = h.page
 	ginH["title"] = h.getTitle()
 	ginH["pagination"] = pagination.NewParsePagination(totalRaw, h.pageSize, h.page, h.paginationStep, q, c.Request.URL.Path)
-}
-
-func getTemplateName() string {
-	tmlp := wpconfig.Options.Value("template")
-	if i, err := theme.IsTemplateIsExist(tmlp); err != nil || !i {
-		tmlp = "twentyfifteen"
-	}
-	return tmlp
 }
