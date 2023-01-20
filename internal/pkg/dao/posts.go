@@ -109,14 +109,14 @@ func SearchPostIds(args ...any) (ids PostIds, err error) {
 	return
 }
 
-func GetMaxPostId(a ...any) ([]uint64, error) {
+func GetMaxPostId(a ...any) (uint64, error) {
 	ctx := a[0].(context.Context)
 	r, err := model.SimpleFind[models.Posts](ctx, model.SqlBuilder{{"post_type", "post"}, {"post_status", "publish"}}, "max(ID) ID")
 	var id uint64
 	if len(r) > 0 {
 		id = r[0].Id
 	}
-	return []uint64{id}, err
+	return id, err
 }
 
 func RecentPosts(a ...any) (r []models.Posts, err error) {

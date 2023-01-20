@@ -32,11 +32,11 @@ func InitFeed() {
 	}
 }
 
-func CommentsFeedCache() *cache.SliceCache[string] {
+func CommentsFeedCache() *cache.VarCache[[]string] {
 	return commentsFeedCache
 }
 
-func FeedCache() *cache.SliceCache[string] {
+func FeedCache() *cache.VarCache[[]string] {
 	return feedCache
 }
 

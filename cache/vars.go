@@ -9,26 +9,26 @@ import (
 	"time"
 )
 
-type SliceCache[T any] struct {
-	v safety.Var[slice[T]]
+type VarCache[T any] struct {
+	v safety.Var[vars[T]]
 }
 
-type slice[T any] struct {
-	data         []T
+type vars[T any] struct {
+	data         T
 	mutex        *sync.Mutex
-	setCacheFunc func(...any) ([]T, error)
+	setCacheFunc func(...any) (T, error)
 	expireTime   time.Duration
 	setTime      time.Time
 	incr         int
 }
 
-func (c *SliceCache[T]) GetLastSetTime() time.Time {
+func (c *VarCache[T]) GetLastSetTime() time.Time {
 	return c.v.Load().setTime
 }
 
-func NewSliceCache[T any](fun func(...any) ([]T, error), duration time.Duration) *SliceCache[T] {
-	return &SliceCache[T]{
-		v: safety.NewVar(slice[T]{
+func NewVarCache[T any](fun func(...any) (T, error), duration time.Duration) *VarCache[T] {
+	return &VarCache[T]{
+		v: safety.NewVar(vars[T]{
 			mutex:        &sync.Mutex{},
 			setCacheFunc: fun,
 			expireTime:   duration,
@@ -36,20 +36,23 @@ func NewSliceCache[T any](fun func(...any) ([]T, error), duration time.Duration)
 	}
 }
 
-func (c *SliceCache[T]) FlushCache() {
+func (c *VarCache[T]) IsExpired() bool {
+	v := c.v.Load()
+	return time.Duration(v.setTime.UnixNano())+v.expireTime < time.Duration(time.Now().UnixNano())
+}
+
+func (c *VarCache[T]) Flush() {
 	mu := c.v.Load().mutex
 	mu.Lock()
 	defer mu.Unlock()
 	c.v.Delete()
 }
 
-func (c *SliceCache[T]) GetCache(ctx context.Context, timeout time.Duration, params ...any) ([]T, error) {
+func (c *VarCache[T]) GetCache(ctx context.Context, timeout time.Duration, params ...any) (T, error) {
 	v := c.v.Load()
-	l := len(v.data)
 	data := v.data
 	var err error
-	expired := time.Duration(v.setTime.UnixNano())+v.expireTime < time.Duration(time.Now().UnixNano())
-	if l < 1 || (l > 0 && v.expireTime >= 0 && expired) {
+	if v.expireTime <= 0 || ((time.Duration(v.setTime.UnixNano()) + v.expireTime) < time.Duration(time.Now().UnixNano())) {
 		t := v.incr
 		call := func() {
 			v.mutex.Lock()

@@ -13,9 +13,9 @@ import (
 
 var postContextCache *cache.MapCache[uint64, common.PostContext]
 var archivesCaches *Arch
-var categoryCaches *cache.SliceCache[models.TermsMy]
-var recentPostsCaches *cache.SliceCache[models.Posts]
-var recentCommentsCaches *cache.SliceCache[models.Comments]
+var categoryCaches *cache.VarCache[[]models.TermsMy]
+var recentPostsCaches *cache.VarCache[[]models.Posts]
+var recentCommentsCaches *cache.VarCache[[]models.Comments]
 var postCommentCaches *cache.MapCache[uint64, []uint64]
 var postsCache *cache.MapCache[uint64, models.Posts]
 
@@ -24,17 +24,17 @@ var postMetaCache *cache.MapCache[uint64, map[string]any]
 var monthPostsCache *cache.MapCache[string, []uint64]
 var postListIdsCache *cache.MapCache[string, common.PostIds]
 var searchPostIdsCache *cache.MapCache[string, common.PostIds]
-var maxPostIdCache *cache.SliceCache[uint64]
+var maxPostIdCache *cache.VarCache[uint64]
 
 var usersCache *cache.MapCache[uint64, models.Users]
 var usersNameCache *cache.MapCache[string, models.Users]
 var commentsCache *cache.MapCache[uint64, models.Comments]
 
-var feedCache *cache.SliceCache[string]
+var feedCache *cache.VarCache[[]string]
 
 var postFeedCache *cache.MapCache[string, string]
 
-var commentsFeedCache *cache.SliceCache[string]
+var commentsFeedCache *cache.VarCache[[]string]
 
 var newCommentCache *cache.MapCache[string, string]
 
@@ -45,39 +45,39 @@ func InitActionsCommonCache() {
 		setCacheFunc: common.Archives,
 	}
 
-	searchPostIdsCache = cache.NewMapCacheByFn[string, common.PostIds](common.SearchPostIds, c.SearchPostCacheTime)
+	searchPostIdsCache = cache.NewMapCacheByFn[string](common.SearchPostIds, c.SearchPostCacheTime)
 
-	postListIdsCache = cache.NewMapCacheByFn[string, common.PostIds](common.SearchPostIds, c.PostListCacheTime)
+	postListIdsCache = cache.NewMapCacheByFn[string](common.SearchPostIds, c.PostListCacheTime)
 
-	monthPostsCache = cache.NewMapCacheByFn[string, []uint64](common.MonthPost, c.MonthPostCacheTime)
+	monthPostsCache = cache.NewMapCacheByFn[string](common.MonthPost, c.MonthPostCacheTime)
 
-	postContextCache = cache.NewMapCacheByFn[uint64, common.PostContext](common.GetPostContext, c.ContextPostCacheTime)
+	postContextCache = cache.NewMapCacheByFn[uint64](common.GetPostContext, c.ContextPostCacheTime)
 
-	postsCache = cache.NewMapCacheByBatchFn[uint64, models.Posts](common.GetPostsByIds, c.PostDataCacheTime)
+	postsCache = cache.NewMapCacheByBatchFn(common.GetPostsByIds, c.PostDataCacheTime)
 
-	postMetaCache = cache.NewMapCacheByBatchFn[uint64, map[string]any](common.GetPostMetaByPostIds, c.PostDataCacheTime)
+	postMetaCache = cache.NewMapCacheByBatchFn(common.GetPostMetaByPostIds, c.PostDataCacheTime)
 
-	categoryCaches = cache.NewSliceCache[models.TermsMy](common.Categories, c.CategoryCacheTime)
+	categoryCaches = cache.NewVarCache(common.Categories, c.CategoryCacheTime)
 
-	recentPostsCaches = cache.NewSliceCache[models.Posts](common.RecentPosts, c.RecentPostCacheTime)
+	recentPostsCaches = cache.NewVarCache(common.RecentPosts, c.RecentPostCacheTime)
 
-	recentCommentsCaches = cache.NewSliceCache[models.Comments](common.RecentComments, c.RecentCommentsCacheTime)
+	recentCommentsCaches = cache.NewVarCache(common.RecentComments, c.RecentCommentsCacheTime)
 
-	postCommentCaches = cache.NewMapCacheByFn[uint64, []uint64](common.PostComments, c.PostCommentsCacheTime)
+	postCommentCaches = cache.NewMapCacheByFn[uint64](common.PostComments, c.PostCommentsCacheTime)
 
-	maxPostIdCache = cache.NewSliceCache[uint64](common.GetMaxPostId, c.MaxPostIdCacheTime)
+	maxPostIdCache = cache.NewVarCache(common.GetMaxPostId, c.MaxPostIdCacheTime)
 
-	usersCache = cache.NewMapCacheByFn[uint64, models.Users](common.GetUserById, c.UserInfoCacheTime)
+	usersCache = cache.NewMapCacheByFn[uint64](common.GetUserById, c.UserInfoCacheTime)
 
-	usersNameCache = cache.NewMapCacheByFn[string, models.Users](common.GetUserByName, c.UserInfoCacheTime)
+	usersNameCache = cache.NewMapCacheByFn[string](common.GetUserByName, c.UserInfoCacheTime)
 
-	commentsCache = cache.NewMapCacheByBatchFn[uint64, models.Comments](common.GetCommentByIds, c.CommentsCacheTime)
+	commentsCache = cache.NewMapCacheByBatchFn(common.GetCommentByIds, c.CommentsCacheTime)
 
-	feedCache = cache.NewSliceCache(feed, time.Hour)
+	feedCache = cache.NewVarCache(feed, time.Hour)
 
-	postFeedCache = cache.NewMapCacheByFn[string, string](postFeed, time.Hour)
+	postFeedCache = cache.NewMapCacheByFn[string](postFeed, time.Hour)
 
-	commentsFeedCache = cache.NewSliceCache(commentsFeed, time.Hour)
+	commentsFeedCache = cache.NewVarCache(commentsFeed, time.Hour)
 
 	newCommentCache = cache.NewMapCacheByFn[string, string](nil, 15*time.Minute)
 

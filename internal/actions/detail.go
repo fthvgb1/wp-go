@@ -10,13 +10,10 @@ import (
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"math/rand"
 	"net/http"
-	"net/url"
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 )
 
 type detailHandler struct {
@@ -68,7 +65,7 @@ func Detail(c *gin.Context) {
 		return
 	}
 	post, err := cache.GetPostById(c, ID)
-	if post.Id == 0 || err != nil {
+	if post.Id == 0 || err != nil || post.PostStatus != "publish" {
 		return
 	}
 	pw := sessions.Default(c).Get("post_password")
@@ -244,7 +241,7 @@ func (d detailHandler) formatLi(comments models.Comments, depth int, eo, parent 
 	for k, v := range map[string]string{
 		"{{CommentId}}":        strconv.FormatUint(comments.CommentId, 10),
 		"{{Depth}}":            strconv.Itoa(depth),
-		"{{Gravatar}}":         gravatar(d.Context, comments.CommentAuthorEmail),
+		"{{Gravatar}}":         plugins.Gravatar(comments.CommentAuthorEmail, d.Context.Request.TLS != nil),
 		"{{CommentAuthorUrl}}": comments.CommentAuthorUrl,
 		"{{CommentAuthor}}":    comments.CommentAuthor,
 		"{{PostId}}":           strconv.FormatUint(comments.CommentPostId, 10),
@@ -257,26 +254,4 @@ func (d detailHandler) formatLi(comments models.Comments, depth int, eo, parent 
 		li = strings.Replace(li, k, v, -1)
 	}
 	return li
-}
-
-func gravatar(c *gin.Context, email string) (u string) {
-	email = strings.Trim(email, " \t\n\r\000\x0B")
-	rand.Seed(time.Now().UnixNano())
-	num := rand.Intn(3)
-	h := ""
-	if email != "" {
-		h = helper.StringMd5(strings.ToLower(email))
-		num = int(h[0] % 3)
-	}
-	if c.Request.TLS != nil {
-		u = fmt.Sprintf("%s%s", "https://secure.gravatar.com/avatar/", h)
-	} else {
-		u = fmt.Sprintf("http://%d.gravatar.com/avatar/%s", num, h)
-	}
-	q := url.Values{}
-	q.Add("s", "112")
-	q.Add("d", "mm")
-	q.Add("r", strings.ToLower(wpconfig.Options.Value("avatar_rating")))
-	u = fmt.Sprintf("%s?%s", u, q.Encode())
-	return
 }

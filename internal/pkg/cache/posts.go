@@ -39,8 +39,7 @@ func PostLists(ctx context.Context, key string, args ...any) (r []models.Posts, 
 }
 
 func GetMaxPostId(ctx *gin.Context) (uint64, error) {
-	Id, err := maxPostIdCache.GetCache(ctx, time.Second, ctx)
-	return Id[0], err
+	return maxPostIdCache.GetCache(ctx, time.Second, ctx)
 }
 
 func RecentPosts(ctx context.Context, n int) (r []models.Posts) {
