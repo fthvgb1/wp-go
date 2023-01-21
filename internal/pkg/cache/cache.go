@@ -14,7 +14,7 @@ import (
 
 var postContextCache *cache.MapCache[uint64, dao.PostContext]
 var archivesCaches *Arch
-var categoryCaches *cache.VarCache[[]models.TermsMy]
+var categoryAndTagsCaches *cache.VarCache[[]models.TermsMy]
 var recentPostsCaches *cache.VarCache[[]models.Posts]
 var recentCommentsCaches *cache.VarCache[[]models.Comments]
 var postCommentCaches *cache.MapCache[uint64, []uint64]
@@ -62,7 +62,7 @@ func InitActionsCommonCache() {
 
 	postMetaCache = cache.NewMapCacheByBatchFn(dao.GetPostMetaByPostIds, c.PostDataCacheTime)
 
-	categoryCaches = cache.NewVarCache(dao.Categories, c.CategoryCacheTime)
+	categoryAndTagsCaches = cache.NewVarCache(dao.CategoriesAndTags, c.CategoryCacheTime)
 
 	recentPostsCaches = cache.NewVarCache(dao.RecentPosts, c.RecentPostCacheTime)
 
@@ -87,13 +87,6 @@ func InitActionsCommonCache() {
 	newCommentCache = cache.NewMapCacheByFn[string, string](nil, 15*time.Minute)
 
 	allUsernameCache = cache.NewVarCache(dao.AllUsername, c.UserInfoCacheTime)
-
-	allCategories = cache.NewVarCache(func(a ...any) (map[string]struct{}, error) {
-		ctx := a[0].(context.Context)
-		return slice.ToMap(Categories(ctx), func(v models.TermsMy) (string, struct{}) {
-			return v.Name, struct{}{}
-		}, true), nil
-	}, c.CategoryCacheTime)
 
 	InitFeed()
 }
@@ -154,12 +147,40 @@ func (c *Arch) getArchiveCache(ctx context.Context) []models.PostArchive {
 }
 
 func Categories(ctx context.Context) []models.TermsMy {
-	r, err := categoryCaches.GetCache(ctx, time.Second, ctx)
+	r, err := categoryAndTagsCaches.GetCache(ctx, time.Second, ctx)
 	logs.ErrPrintln(err, "get category err")
+	r = slice.Filter(r, func(my models.TermsMy) bool {
+		return my.Taxonomy == "category"
+	})
 	return r
 }
 
-func AllCategoryNames(ctx context.Context) map[string]struct{} {
-	r, _ := allCategories.GetCache(ctx, time.Second, ctx)
+func Tags(ctx context.Context) []models.TermsMy {
+	r, err := categoryAndTagsCaches.GetCache(ctx, time.Second, ctx)
+	logs.ErrPrintln(err, "get category err")
+	r = slice.Filter(r, func(my models.TermsMy) bool {
+		return my.Taxonomy == "post_tag"
+	})
 	return r
+}
+func AllTagsNames(ctx context.Context) map[string]struct{} {
+	r, err := categoryAndTagsCaches.GetCache(ctx, time.Second, ctx)
+	logs.ErrPrintln(err, "get category err")
+	return slice.FilterAndToMap(r, func(t models.TermsMy) (string, struct{}, bool) {
+		if t.Taxonomy == "post_tag" {
+			return t.Name, struct{}{}, true
+		}
+		return "", struct{}{}, false
+	})
+}
+
+func AllCategoryNames(ctx context.Context) map[string]struct{} {
+	r, err := categoryAndTagsCaches.GetCache(ctx, time.Second, ctx)
+	logs.ErrPrintln(err, "get category err")
+	return slice.FilterAndToMap(r, func(t models.TermsMy) (string, struct{}, bool) {
+		if t.Taxonomy == "category" {
+			return t.Name, struct{}{}, true
+		}
+		return "", struct{}{}, false
+	})
 }
