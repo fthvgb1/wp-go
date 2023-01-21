@@ -1,8 +1,9 @@
-package helper
+package html
 
 import (
 	"fmt"
 	"github.com/dlclark/regexp2"
+	"github.com/fthvgb1/wp-go/helper/slice"
 	"regexp"
 	"strings"
 )
@@ -119,7 +120,7 @@ func StripTagsX(str, allowable string) string {
 var tagx = regexp.MustCompile(`(</?[a-z0-9]+?)( |>)`)
 var selfCloseTags = map[string]string{"area": "", "base": "", "basefont": "", "br": "", "col": "", "command": "", "embed": "", "frame": "", "hr": "", "img": "", "input": "", "isindex": "", "link": "", "meta": "", "param": "", "source": "", "track": "", "wbr": ""}
 
-func CloseHtmlTag(str string) string {
+func CloseTag(str string) string {
 	tags := tag.FindAllString(str, -1)
 	if len(tags) < 1 {
 		return str
@@ -135,13 +136,13 @@ func CloseHtmlTag(str string) string {
 		}
 		tagss = append(tagss, ss)
 	}
-	r := SliceMap(SliceReverse(ClearClosedTag(tagss)), func(s string) string {
+	r := slice.Map(slice.Reverse(UnClosedTag(tagss)), func(s string) string {
 		return fmt.Sprintf("</%s>", strings.Trim(s, "<>"))
 	})
 	return strings.Join(r, "")
 }
 
-func ClearClosedTag(s []string) []string {
+func UnClosedTag(s []string) []string {
 	i := 0
 	for {
 		if len(s[i:]) < 2 {

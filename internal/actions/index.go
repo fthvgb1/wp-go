@@ -2,7 +2,8 @@ package actions
 
 import (
 	"fmt"
-	"github.com/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/helper/slice"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	dao "github.com/fthvgb1/wp-go/internal/pkg/dao"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
@@ -83,7 +84,7 @@ func (h *indexHandle) getSearchKey() string {
 
 func (h *indexHandle) parseParams() (err error) {
 	h.order = h.c.Query("order")
-	if !helper.IsContainInArr(h.order, []string{"asc", "desc"}) {
+	if !slice.IsContained(h.order, []string{"asc", "desc"}) {
 		h.order = "asc"
 	}
 	year := h.c.Param("year")
@@ -142,7 +143,7 @@ func (h *indexHandle) parseParams() (err error) {
 	}
 	s := h.c.Query("s")
 	if s != "" && strings.Replace(s, " ", "", -1) != "" {
-		q := helper.StrJoin("%", s, "%")
+		q := str.Join("%", s, "%")
 		h.where = append(h.where, []string{
 			"and", "post_title", "like", q, "",
 			"or", "post_content", "like", q, "",
@@ -150,7 +151,7 @@ func (h *indexHandle) parseParams() (err error) {
 		}, []string{"post_password", ""})
 		h.postType = append(h.postType, "page", "attachment")
 		h.header = fmt.Sprintf("%s的搜索结果", s)
-		h.setTitleLR(helper.StrJoin(`"`, s, `"`, "的搜索结果"), wpconfig.Options.Value("blogname"))
+		h.setTitleLR(str.Join(`"`, s, `"`, "的搜索结果"), wpconfig.Options.Value("blogname"))
 		h.search = s
 		h.scene = plugins.Search
 	}

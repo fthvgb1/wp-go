@@ -2,13 +2,14 @@ package stream
 
 import (
 	"fmt"
-	"github.com/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/helper/number"
+	"github.com/fthvgb1/wp-go/helper/slice"
 	"reflect"
 	"strconv"
 	"testing"
 )
 
-var s = NewSimpleSliceStream(helper.RangeSlice(1, 10, 1))
+var s = NewSimpleSliceStream(number.Range(1, 10, 1))
 
 func TestSimpleSliceStream_Filter(t *testing.T) {
 	type args[T int] struct {
@@ -32,7 +33,7 @@ func TestSimpleSliceStream_Filter(t *testing.T) {
 					return
 				},
 			},
-			want: SimpleSliceStream[int]{helper.RangeSlice(6, 10, 1)},
+			want: SimpleSliceStream[int]{number.Range(6, 10, 1)},
 		},
 	}
 	for _, tt := range tests {
@@ -90,7 +91,7 @@ func TestSimpleSliceStream_Limit(t *testing.T) {
 				limit:  3,
 				offset: 5,
 			},
-			want: SimpleSliceStream[int]{helper.RangeSlice(6, 8, 1)},
+			want: SimpleSliceStream[int]{number.Range(6, 8, 1)},
 		},
 		{
 			name: "t2",
@@ -99,7 +100,7 @@ func TestSimpleSliceStream_Limit(t *testing.T) {
 				limit:  3,
 				offset: 9,
 			},
-			want: SimpleSliceStream[int]{helper.RangeSlice(10, 10, 1)},
+			want: SimpleSliceStream[int]{number.Range(10, 10, 1)},
 		},
 		{
 			name: "t3",
@@ -139,7 +140,7 @@ func TestSimpleSliceStream_Map(t *testing.T) {
 					return t * 2
 				},
 			},
-			want: SimpleSliceStream[int]{helper.RangeSlice(2, 20, 2)},
+			want: SimpleSliceStream[int]{number.Range(2, 20, 2)},
 		},
 	}
 	for _, tt := range tests {
@@ -161,7 +162,7 @@ func TestSimpleSliceStream_Result(t *testing.T) {
 		{
 			name: "t1",
 			r:    s,
-			want: helper.RangeSlice(1, 10, 1),
+			want: number.Range(1, 10, 1),
 		},
 	}
 	for _, tt := range tests {
@@ -192,7 +193,7 @@ func TestSimpleSliceStream_Sort(t *testing.T) {
 					return i > j
 				},
 			},
-			want: SimpleSliceStream[int]{helper.RangeSlice(10, 1, -1)},
+			want: SimpleSliceStream[int]{number.Range(10, 1, -1)},
 		},
 	}
 	for _, tt := range tests {
@@ -254,7 +255,7 @@ func TestSimpleSliceStream_ParallelFilter(t *testing.T) {
 				},
 				c: 6,
 			},
-			want: SimpleSliceStream[int]{helper.RangeSlice(4, 10, 1)},
+			want: SimpleSliceStream[int]{number.Range(4, 10, 1)},
 		},
 	}
 	for _, tt := range tests {
@@ -289,7 +290,7 @@ func TestSimpleSliceStream_ParallelMap(t *testing.T) {
 				},
 				c: 6,
 			},
-			want: SimpleSliceStream[int]{helper.RangeSlice(2, 20, 2)},
+			want: SimpleSliceStream[int]{number.Range(2, 20, 2)},
 		},
 	}
 	for _, tt := range tests {
@@ -323,7 +324,7 @@ func TestReduce(t *testing.T) {
 				},
 				0,
 			},
-			wantR: helper.Sum(s.Result()...),
+			wantR: number.Sum(s.Result()...),
 		},
 	}
 	for _, tt := range tests {
@@ -344,8 +345,8 @@ func TestSimpleSliceStream_Reverse(t *testing.T) {
 	tests := []testCase[int]{
 		{
 			name: "t1",
-			r:    NewSimpleSliceStream(helper.RangeSlice(1, 10, 1)),
-			want: SimpleSliceStream[int]{helper.RangeSlice(10, 1, -1)},
+			r:    NewSimpleSliceStream(number.Range(1, 10, 1)),
+			want: SimpleSliceStream[int]{number.Range(10, 1, -1)},
 		},
 	}
 	for _, tt := range tests {
@@ -357,7 +358,7 @@ func TestSimpleSliceStream_Reverse(t *testing.T) {
 	}
 }
 
-var x = helper.RangeSlice(1, 100000, 1)
+var x = number.Range(1, 100000, 1)
 
 func TestSimpleStreamMap(t *testing.T) {
 	type args[T int, R string] struct {
@@ -377,7 +378,7 @@ func TestSimpleStreamMap(t *testing.T) {
 				fn: strconv.Itoa,
 			},
 			want: SimpleSliceStream[string]{
-				helper.SliceMap(x, strconv.Itoa),
+				slice.Map(x, strconv.Itoa),
 			},
 		},
 	}
@@ -406,7 +407,7 @@ func TestSimpleParallelMap(t *testing.T) {
 		{
 			name: "t1",
 			args: args[string, int]{
-				a: NewSimpleSliceStream(helper.SliceMap(x, strconv.Itoa)),
+				a: NewSimpleSliceStream(slice.Map(x, strconv.Itoa)),
 				fn: func(s string) int {
 					i, _ := strconv.Atoi(s)
 					return i
@@ -442,7 +443,7 @@ func TestSimpleParallelFilterAndMap(t *testing.T) {
 		{
 			name: "t1",
 			args: args[string, int]{
-				a: NewSimpleSliceStream(helper.SliceMap(x, strconv.Itoa)),
+				a: NewSimpleSliceStream(slice.Map(x, strconv.Itoa)),
 				fn: func(s string) (int, bool) {
 					i, _ := strconv.Atoi(s)
 					if i > 50000 {
@@ -480,7 +481,7 @@ func TestSimpleStreamFilterAndMap(t *testing.T) {
 		{
 			name: "t1",
 			args: args[string, int]{
-				a: NewSimpleSliceStream(helper.SliceMap(x, strconv.Itoa)),
+				a: NewSimpleSliceStream(slice.Map(x, strconv.Itoa)),
 				fn: func(s string) (int, bool) {
 					i, _ := strconv.Atoi(s)
 					if i > 50000 {
@@ -547,7 +548,7 @@ func TestSimpleParallelFilterAndMapToMap(t *testing.T) {
 				},
 				c: 6,
 			},
-			wantR: NewSimpleMapStream(helper.SliceToMap(x[50000:], func(t int) (int, int) {
+			wantR: NewSimpleMapStream(slice.ToMap(x[50000:], func(t int) (int, int) {
 				return t, t
 			}, true)),
 		},
@@ -576,7 +577,7 @@ func TestSimpleSliceFilterAndMapToMap(t *testing.T) {
 		{
 			name: "t1",
 			args: args[int, int, int]{
-				a: NewSimpleSliceStream(helper.RangeSlice(1, 10, 1)),
+				a: NewSimpleSliceStream(number.Range(1, 10, 1)),
 				fn: func(i int) (int, int, bool) {
 					if i > 6 {
 						return i, i, true
@@ -584,7 +585,7 @@ func TestSimpleSliceFilterAndMapToMap(t *testing.T) {
 					return 0, 0, false
 				},
 			},
-			wantR: NewSimpleMapStream(helper.SliceToMap(helper.RangeSlice(7, 10, 1), func(t int) (int, int) {
+			wantR: NewSimpleMapStream(slice.ToMap(number.Range(7, 10, 1), func(t int) (int, int) {
 				return t, t
 			}, true)),
 		},

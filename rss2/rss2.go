@@ -2,7 +2,7 @@ package rss2
 
 import (
 	"fmt"
-	"github.com/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/helper/slice"
 	"strconv"
 	"strings"
 )
@@ -101,7 +101,7 @@ func (r Rss2) GetXML() (xml string) {
 		"{$updatePeriod}":    r.UpdatePeriod,
 		"{$updateFrequency}": fmt.Sprintf("%d", r.UpdateFrequency),
 		"{$generator}":       r.Generator,
-		"{$items}": strings.Join(helper.SliceMap(r.Items, func(t Item) string {
+		"{$items}": strings.Join(slice.Map(r.Items, func(t Item) string {
 			return t.GetXml()
 		}), ""),
 	} {

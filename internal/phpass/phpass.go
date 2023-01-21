@@ -3,7 +3,7 @@ package phpass
 import (
 	"crypto/md5"
 	"fmt"
-	"github.com/fthvgb1/wp-go/helper"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"golang.org/x/crypto/bcrypt"
 	"io"
 	"os"
@@ -49,7 +49,7 @@ func (p *PasswordHash) getRandomBytes(count int) (r string, err error) {
 	if len(buf) < count {
 		r = ""
 		for i := 0; i < count; i = i + 16 {
-			p.randomState = helper.StringMd5(fmt.Sprintf("%d%s", time.Now().UnixMilli(), p.randomState))
+			p.randomState = str.Md5(fmt.Sprintf("%d%s", time.Now().UnixMilli(), p.randomState))
 
 			n, err := md5Raw(p.randomState)
 			if err != nil {

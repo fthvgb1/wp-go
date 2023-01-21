@@ -1,4 +1,4 @@
-package helper
+package strings
 
 import (
 	"crypto/md5"
@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func StrJoin(s ...string) (str string) {
+func Join(s ...string) (str string) {
 	if len(s) == 1 {
 		return s[0]
 	} else if len(s) > 1 {
@@ -20,7 +20,7 @@ func StrJoin(s ...string) (str string) {
 	return
 }
 
-func StringMd5(str string) string {
+func Md5(str string) string {
 	h := md5.New()
 	_, err := io.WriteString(h, str)
 	if err != nil {

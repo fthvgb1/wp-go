@@ -2,7 +2,7 @@ package actions
 
 import (
 	"fmt"
-	"github.com/fthvgb1/wp-go/helper"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/phpass"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/gin-contrib/sessions"
@@ -33,7 +33,7 @@ func Login(c *gin.Context) {
 		c.Error(err)
 		return
 	}
-	cohash := fmt.Sprintf("wp-postpass_%s", helper.StringMd5(wpconfig.Options.Value("siteurl")))
+	cohash := fmt.Sprintf("wp-postpass_%s", str.Md5(wpconfig.Options.Value("siteurl")))
 	c.SetCookie(cohash, pass, 24*3600, "/", "", false, false)
 
 	c.Redirect(http.StatusFound, ref)

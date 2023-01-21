@@ -2,7 +2,7 @@ package twentyseventeen
 
 import (
 	"github.com/elliotchance/phpserialize"
-	"github.com/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
@@ -86,8 +86,8 @@ func getHeaderMarkup() (r HeaderImageMeta, err error) {
 	if ok {
 		err = phpserialize.Unmarshal([]byte(mods), &rr)
 		if err == nil {
-			rx := helper.MapAnyAnyToStrAny(rr)
-			r, err = helper.StrAnyMapToStruct[HeaderImageMeta](rx)
+			rx := maps.AnyAnyToStrAny(rr)
+			r, err = maps.StrAnyMapToStruct[HeaderImageMeta](rx)
 		}
 	}
 	return

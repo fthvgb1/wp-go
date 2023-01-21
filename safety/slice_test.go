@@ -2,7 +2,7 @@ package safety
 
 import (
 	"fmt"
-	"github.com/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/helper/number"
 	"testing"
 	"time"
 )
@@ -20,7 +20,7 @@ func TestSlice_Append(t *testing.T) {
 		{
 			name: "t1",
 			r:    *NewSlice([]int{}),
-			args: args[int]{helper.RangeSlice(1, 10, 1)},
+			args: args[int]{number.Range(1, 10, 1)},
 		},
 	}
 	for _, tt := range tests {

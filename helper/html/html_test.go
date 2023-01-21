@@ -1,4 +1,4 @@
-package helper
+package html
 
 import (
 	"reflect"
@@ -183,8 +183,8 @@ func TestCloseHtmlTag(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := CloseHtmlTag(tt.args.str); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("CloseHtmlTag() = %v, want %v", got, tt.want)
+			if got := CloseTag(tt.args.str); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("CloseTag() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -222,8 +222,8 @@ func Test_clearTag(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := ClearClosedTag(tt.args.s); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ClearClosedTag() = %v, want %v", got, tt.want)
+			if got := UnClosedTag(tt.args.s); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("UnClosedTag() = %v, want %v", got, tt.want)
 			}
 		})
 	}

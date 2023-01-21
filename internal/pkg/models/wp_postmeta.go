@@ -1,7 +1,7 @@
 package models
 
 import (
-	"github.com/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/leeqvip/gophp"
 )
 
@@ -29,7 +29,7 @@ func (p Postmeta) AttachmentMetadata() (r WpAttachmentMetadata, err error) {
 		}
 		info, ok := unSerialize.(map[string]any)
 		if ok {
-			r, err = helper.StrAnyMapToStruct[WpAttachmentMetadata](info)
+			r, err = maps.StrAnyMapToStruct[WpAttachmentMetadata](info)
 		}
 	}
 	return
@@ -42,7 +42,7 @@ func AttachmentMetadata(s string) (r WpAttachmentMetadata, err error) {
 	}
 	info, ok := unSerialize.(map[string]any)
 	if ok {
-		r, err = helper.StrAnyMapToStruct[WpAttachmentMetadata](info)
+		r, err = maps.StrAnyMapToStruct[WpAttachmentMetadata](info)
 	}
 	return
 }

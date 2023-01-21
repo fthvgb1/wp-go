@@ -1,7 +1,7 @@
 package stream
 
 import (
-	"github.com/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/safety"
 	"github.com/fthvgb1/wp-go/taskPools"
 )
@@ -47,7 +47,7 @@ func SimpleSliceFilterAndMapToMap[K comparable, V any, T any](a SimpleSliceStrea
 }
 
 func SimpleStreamFilterAndMap[R, T any](a SimpleSliceStream[T], fn func(T) (R, bool)) SimpleSliceStream[R] {
-	return NewSimpleSliceStream(helper.SliceFilterAndMap(a.arr, fn))
+	return NewSimpleSliceStream(slice.FilterAndMap(a.arr, fn))
 }
 
 func SimpleParallelMap[R, T any](a SimpleSliceStream[T], fn func(T) R, c int) SimpleSliceStream[R] {
@@ -59,11 +59,11 @@ func SimpleParallelMap[R, T any](a SimpleSliceStream[T], fn func(T) R, c int) Si
 	return SimpleSliceStream[R]{rr.Load()}
 }
 func SimpleStreamMap[R, T any](a SimpleSliceStream[T], fn func(T) R) SimpleSliceStream[R] {
-	return NewSimpleSliceStream(helper.SliceMap(a.arr, fn))
+	return NewSimpleSliceStream(slice.Map(a.arr, fn))
 }
 
 func Reduce[T any, S any](s SimpleSliceStream[S], fn func(S, T) T, init T) (r T) {
-	return helper.SliceReduce(s.arr, fn, init)
+	return slice.Reduce(s.arr, fn, init)
 }
 
 func NewSimpleSliceStream[T any](arr []T) SimpleSliceStream[T] {
@@ -101,7 +101,7 @@ func (r SimpleSliceStream[T]) ParallelFilter(fn func(T) bool, c int) SimpleSlice
 	return SimpleSliceStream[T]{rr.Load()}
 }
 func (r SimpleSliceStream[T]) Filter(fn func(T) bool) SimpleSliceStream[T] {
-	r.arr = helper.SliceFilter(r.arr, fn)
+	r.arr = slice.Filter(r.arr, fn)
 	return r
 }
 
@@ -114,12 +114,12 @@ func (r SimpleSliceStream[T]) ParallelMap(fn func(T) T, c int) SimpleSliceStream
 }
 
 func (r SimpleSliceStream[T]) Map(fn func(T) T) SimpleSliceStream[T] {
-	r.arr = helper.SliceMap(r.arr, fn)
+	r.arr = slice.Map(r.arr, fn)
 	return r
 }
 
 func (r SimpleSliceStream[T]) Sort(fn func(i, j T) bool) SimpleSliceStream[T] {
-	helper.SimpleSort(r.arr, fn)
+	slice.SortSelf(r.arr, fn)
 	return r
 }
 
@@ -140,7 +140,7 @@ func (r SimpleSliceStream[T]) Limit(limit, offset int) SimpleSliceStream[T] {
 }
 
 func (r SimpleSliceStream[T]) Reverse() SimpleSliceStream[T] {
-	helper.SliceSelfReverse(r.arr)
+	slice.ReverseSelf(r.arr)
 	return r
 }
 

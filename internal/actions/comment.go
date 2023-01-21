@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
-	"github.com/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/internal/mail"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	"github.com/fthvgb1/wp-go/internal/pkg/config"
@@ -81,7 +81,7 @@ func PostComment(c *gin.Context) {
 			return
 		}
 		newReq.Host = home.Host
-		newReq.Header.Set("Cookie", strings.Join(helper.SliceMap(c.Request.Cookies(), func(t *http.Cookie) string {
+		newReq.Header.Set("Cookie", strings.Join(slice.Map(c.Request.Cookies(), func(t *http.Cookie) string {
 			return fmt.Sprintf("%s=%s", t.Name, t.Value)
 		}), "; "))
 		ress, er := http.DefaultClient.Do(newReq)

@@ -3,7 +3,7 @@ package cache
 import (
 	"context"
 	"fmt"
-	"github.com/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/gin-gonic/gin"
@@ -67,10 +67,10 @@ func GetMonthPostIds(ctx context.Context, year, month string, page, limit int, o
 		return
 	}
 	if order == "desc" {
-		res = helper.SliceReverse(res)
+		res = slice.Reverse(res)
 	}
 	total = len(res)
-	rr := helper.SlicePagination(res, page, limit)
+	rr := slice.Pagination(res, page, limit)
 	r, err = GetPostsByIds(ctx, rr)
 	return
 }

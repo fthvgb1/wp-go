@@ -2,7 +2,7 @@ package model
 
 import (
 	"fmt"
-	"github.com/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/helper/slice"
 	"strconv"
 	"strings"
 )
@@ -25,7 +25,7 @@ func (w SqlBuilder) parseField(ss []string, s *strings.Builder) {
 }
 
 func (w SqlBuilder) parseIn(ss []string, s *strings.Builder, c *int, args *[]any, in *[][]any) (t bool) {
-	if helper.IsContainInArr(ss[1], []string{"in", "not in"}) && len(*in) > 0 {
+	if slice.IsContained(ss[1], []string{"in", "not in"}) && len(*in) > 0 {
 		s.WriteString(" (")
 		for _, p := range (*in)[*c] {
 			s.WriteString("?,")
@@ -148,7 +148,7 @@ func (w SqlBuilder) ParseWhere(in *[][]any) (string, []any, error) {
 func (w SqlBuilder) parseOrderBy() string {
 	s := strings.Builder{}
 	for _, ss := range w {
-		if len(ss) == 2 && ss[0] != "" && helper.IsContainInArr(ss[1], []string{"asc", "desc"}) {
+		if len(ss) == 2 && ss[0] != "" && slice.IsContained(ss[1], []string{"asc", "desc"}) {
 			s.WriteString(" ")
 			s.WriteString(ss[0])
 			s.WriteString(" ")

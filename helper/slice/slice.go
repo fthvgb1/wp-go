@@ -1,6 +1,6 @@
-package helper
+package slice
 
-func SliceMap[T, R any](arr []T, fn func(T) R) []R {
+func Map[T, R any](arr []T, fn func(T) R) []R {
 	r := make([]R, 0, len(arr))
 	for _, t := range arr {
 		r = append(r, fn(t))
@@ -8,7 +8,7 @@ func SliceMap[T, R any](arr []T, fn func(T) R) []R {
 	return r
 }
 
-func SliceFilterAndMap[N any, T any](arr []T, fn func(T) (N, bool)) (r []N) {
+func FilterAndMap[N any, T any](arr []T, fn func(T) (N, bool)) (r []N) {
 	for _, t := range arr {
 		x, ok := fn(t)
 		if ok {
@@ -18,7 +18,7 @@ func SliceFilterAndMap[N any, T any](arr []T, fn func(T) (N, bool)) (r []N) {
 	return
 }
 
-func SliceFilter[T any](arr []T, fn func(T) bool) []T {
+func Filter[T any](arr []T, fn func(T) bool) []T {
 	var r []T
 	for _, t := range arr {
 		if fn(t) {
@@ -28,14 +28,14 @@ func SliceFilter[T any](arr []T, fn func(T) bool) []T {
 	return r
 }
 
-func SliceReduce[R, T any](arr []T, fn func(T, R) R, r R) R {
+func Reduce[R, T any](arr []T, fn func(T, R) R, r R) R {
 	for _, t := range arr {
 		r = fn(t, r)
 	}
 	return r
 }
 
-func SliceReverse[T any](arr []T) []T {
+func Reverse[T any](arr []T) []T {
 	var r = make([]T, 0, len(arr))
 	for i := len(arr); i > 0; i-- {
 		r = append(r, arr[i-1])
@@ -43,7 +43,7 @@ func SliceReverse[T any](arr []T) []T {
 	return r
 }
 
-func SliceSelfReverse[T any](arr []T) []T {
+func ReverseSelf[T any](arr []T) []T {
 	l := len(arr)
 	half := l / 2
 	for i := 0; i < half; i++ {
@@ -52,13 +52,13 @@ func SliceSelfReverse[T any](arr []T) []T {
 	return arr
 }
 
-func SimpleSliceToMap[K comparable, V any](arr []V, fn func(V) K) map[K]V {
-	return SliceToMap(arr, func(v V) (K, V) {
+func SimpleToMap[K comparable, V any](arr []V, fn func(V) K) map[K]V {
+	return ToMap(arr, func(v V) (K, V) {
 		return fn(v), v
 	}, true)
 }
 
-func SliceToMap[K comparable, V, T any](arr []V, fn func(V) (K, T), isCoverPrev bool) map[K]T {
+func ToMap[K comparable, V, T any](arr []V, fn func(V) (K, T), isCoverPrev bool) map[K]T {
 	m := make(map[K]T)
 	for _, v := range arr {
 		k, r := fn(v)
@@ -72,26 +72,7 @@ func SliceToMap[K comparable, V, T any](arr []V, fn func(V) (K, T), isCoverPrev 
 	return m
 }
 
-func RangeSlice[T IntNumber](start, end, step T) []T {
-	if step == 0 {
-		panic("step can't be 0")
-	}
-	l := int((end-start+1)/step + 1)
-	if l < 0 {
-		l = 0 - l
-	}
-	r := make([]T, 0, l)
-	for i := start; ; {
-		r = append(r, i)
-		i = i + step
-		if (step > 0 && i > end) || (step < 0 && i < end) {
-			break
-		}
-	}
-	return r
-}
-
-func SlicePagination[T any](arr []T, page, pageSize int) []T {
+func Pagination[T any](arr []T, page, pageSize int) []T {
 	start := (page - 1) * pageSize
 	l := len(arr)
 	if start > l {
@@ -104,7 +85,7 @@ func SlicePagination[T any](arr []T, page, pageSize int) []T {
 	return arr[start:end]
 }
 
-func SliceChunk[T any](arr []T, size int) [][]T {
+func Chunk[T any](arr []T, size int) [][]T {
 	var r [][]T
 	i := 0
 	for {
@@ -152,4 +133,14 @@ func Comb[T any](arr []T, m int) (r [][]T) {
 		}
 	}
 	return r
+}
+
+
+func IsContained[T comparable](a T, arr []T) bool {
+	for _, v := range arr {
+		if a == v {
+			return true
+		}
+	}
+	return false
 }

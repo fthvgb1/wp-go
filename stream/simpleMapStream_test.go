@@ -2,7 +2,8 @@ package stream
 
 import (
 	"fmt"
-	"github.com/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/helper/number"
+	"github.com/fthvgb1/wp-go/helper/slice"
 	"reflect"
 	"strconv"
 	"testing"
@@ -33,8 +34,8 @@ func TestNewSimpleMapStream(t *testing.T) {
 	}
 }
 
-var y = helper.RangeSlice(1, 1000, 1)
-var w = helper.SliceToMap(y, func(v int) (int, int) {
+var y = number.Range(1, 1000, 1)
+var w = slice.ToMap(y, func(v int) (int, int) {
 	return v, v
 }, true)
 
@@ -101,7 +102,7 @@ func TestSimpleMapParallelFilterAndMapToMap(t *testing.T) {
 				},
 				c: 6,
 			},
-			want: NewSimpleMapStream(helper.SliceToMap(y[500:], func(v int) (K, T string) {
+			want: NewSimpleMapStream(slice.ToMap(y[500:], func(v int) (K, T string) {
 				t := strconv.Itoa(v)
 				return t, t
 			}, true)),
@@ -139,7 +140,7 @@ func TestSimpleMapStreamFilterAndMapToMap(t *testing.T) {
 					return "", "", false
 				},
 			},
-			wantR: NewSimpleMapStream(helper.SliceToMap(y[500:], func(v int) (K, T string) {
+			wantR: NewSimpleMapStream(slice.ToMap(y[500:], func(v int) (K, T string) {
 				t := strconv.Itoa(v)
 				return t, t
 			}, true)),
@@ -166,7 +167,7 @@ func TestSimpleMapStream_ForEach(t *testing.T) {
 	tests := []testCase[int, int]{
 		{
 			name: "t1",
-			r: NewSimpleMapStream(helper.SliceToMap(y[0:10], func(v int) (int, int) {
+			r: NewSimpleMapStream(slice.ToMap(y[0:10], func(v int) (int, int) {
 				return v, v
 			}, true)),
 			args: args[int, int]{
@@ -243,10 +244,10 @@ func TestSimpleMapStream_Result(t *testing.T) {
 	tests := []testCase[int, int]{
 		{
 			name: "t1",
-			r: NewSimpleMapStream(helper.SliceToMap(y, func(v int) (int, int) {
+			r: NewSimpleMapStream(slice.ToMap(y, func(v int) (int, int) {
 				return v, v
 			}, true)),
-			want: helper.SliceToMap(y, func(v int) (int, int) {
+			want: slice.ToMap(y, func(v int) (int, int) {
 				return v, v
 			}, true),
 		},

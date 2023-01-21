@@ -1,4 +1,4 @@
-package helper
+package maps
 
 import (
 	"reflect"
@@ -118,7 +118,15 @@ func TestStructToAnyMap(t *testing.T) {
 				t.Errorf("StructToAnyMap() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(gotR, tt.wantR) {
+			gr, err := StrAnyMapToStruct[Me](gotR)
+			if err != nil {
+				panic(err)
+			}
+			wr, err := StrAnyMapToStruct[Me](tt.wantR)
+			if err != nil {
+				panic(err)
+			}
+			if !reflect.DeepEqual(gr, wr) {
 				t.Errorf("StructToAnyMap() gotR = %v, want %v", gotR, tt.wantR)
 			}
 		})
@@ -157,8 +165,8 @@ func TestMapToSlice(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if gotR := MapToSlice(tt.args.m, tt.args.fn); !reflect.DeepEqual(gotR, tt.wantR) {
-				t.Errorf("MapToSlice() = %v, want %v", gotR, tt.wantR)
+			if gotR := FilterToSlice(tt.args.m, tt.args.fn); !reflect.DeepEqual(gotR, tt.wantR) {
+				t.Errorf("FilterToSlice() = %v, want %v", gotR, tt.wantR)
 			}
 		})
 	}

@@ -4,6 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"github.com/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/helper/number"
+	"github.com/fthvgb1/wp-go/helper/slice"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"reflect"
@@ -497,10 +499,10 @@ func TestSimplePagination(t *testing.T) {
 				order:    nil,
 				join:     nil,
 				having:   nil,
-				in:       [][]any{helper.SliceMap[int, any](helper.RangeSlice(431, 440, 1), helper.ToAny[int])},
+				in:       [][]any{slice.Map[int, any](number.Range(431, 440, 1), helper.ToAny[int])},
 			},
 			wantR: func() (r []post) {
-				r, err := Select[post](ctx, "select * from "+post{}.Table()+" where ID in (?,?,?,?,?)", helper.SliceMap[int, any](helper.RangeSlice(431, 435, 1), helper.ToAny[int])...)
+				r, err := Select[post](ctx, "select * from "+post{}.Table()+" where ID in (?,?,?,?,?)", slice.Map[int, any](number.Range(431, 435, 1), helper.ToAny[int])...)
 				if err != nil && err != sql.ErrNoRows {
 					panic(err)
 				} else if err == sql.ErrNoRows {

@@ -2,7 +2,7 @@ package actions
 
 import (
 	"fmt"
-	"github.com/fthvgb1/wp-go/helper"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
@@ -49,7 +49,7 @@ func Detail(c *gin.Context) {
 		if isApproveComment == true {
 			return
 		}
-		c.HTML(status, helper.StrJoin(theme.GetTemplateName(), "/posts/detail.gohtml"), h)
+		c.HTML(status, str.Join(theme.GetTemplateName(), "/posts/detail.gohtml"), h)
 	}()
 	id := c.Param("id")
 	Id := 0

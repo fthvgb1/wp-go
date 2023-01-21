@@ -2,7 +2,8 @@ package digest
 
 import (
 	"fmt"
-	"github.com/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/helper/html"
+	"github.com/fthvgb1/wp-go/helper/slice"
 	"regexp"
 	"strings"
 	"unicode/utf8"
@@ -17,7 +18,7 @@ func ClearHtml(str string) string {
 	content := removeWpBlock.ReplaceAllString(str, "")
 	content = strings.Trim(content, " \t\n\r\000\x0B")
 	content = strings.Replace(content, "]]>", "]]&gt;", -1)
-	content = helper.StripTagsX(content, "<a><b><blockquote><br><cite><code><dd><del><div><dl><dt><em><h1><h2><h3><h4><h5><h6><i><img><li><ol><p><pre><span><strong><ul>")
+	content = html.StripTagsX(content, "<a><b><blockquote><br><cite><code><dd><del><div><dl><dt><em><h1><h2><h3><h4><h5><h6><i><img><li><ol><p><pre><span><strong><ul>")
 	return str
 }
 
@@ -30,7 +31,7 @@ func Raw(str string, limit int, u string) string {
 	content := removeWpBlock.ReplaceAllString(str, "")
 	content = strings.Trim(content, " \t\n\r\000\x0B")
 	content = strings.Replace(content, "]]>", "]]&gt;", -1)
-	content = helper.StripTagsX(content, "<a><b><blockquote><br><cite><code><dd><del><div><dl><dt><em><h1><h2><h3><h4><h5><h6><i><img><li><ol><p><pre><span><strong><ul>")
+	content = html.StripTagsX(content, "<a><b><blockquote><br><cite><code><dd><del><div><dl><dt><em><h1><h2><h3><h4><h5><h6><i><img><li><ol><p><pre><span><strong><ul>")
 	length := utf8.RuneCountInString(content) + 1
 	if length > limit {
 		index := quto.FindAllStringIndex(content, -1)
@@ -43,7 +44,7 @@ func Raw(str string, limit int, u string) string {
 		for {
 			i++
 			for len(index) > 0 {
-				ints := helper.SliceMap(index[0], func(t int) int {
+				ints := slice.Map(index[0], func(t int) int {
 					return utf8.RuneCountInString(content[:t])
 				})
 				if ints[0] <= i {
@@ -75,7 +76,7 @@ func Raw(str string, limit int, u string) string {
 		}
 
 		content = string(ru[:i])
-		closeTag := helper.CloseHtmlTag(content)
+		closeTag := html.CloseTag(content)
 		tmp := `%s......%s<p class="read-more"><a href="%s">继续阅读</a></p>`
 		if strings.Contains(closeTag, "pre") || strings.Contains(closeTag, "code") {
 			tmp = `%s%s......<p class="read-more"><a href="%s">继续阅读</a></p>`

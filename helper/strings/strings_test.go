@@ -1,4 +1,4 @@
-package helper
+package strings
 
 import "testing"
 
@@ -15,8 +15,8 @@ func TestStrJoin(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if gotStr := StrJoin(tt.args.s...); gotStr != tt.wantStr {
-				t.Errorf("StrJoin() = %v, want %v", gotStr, tt.wantStr)
+			if gotStr := Join(tt.args.s...); gotStr != tt.wantStr {
+				t.Errorf("Join() = %v, want %v", gotStr, tt.wantStr)
 			}
 		})
 	}

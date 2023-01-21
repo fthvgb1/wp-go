@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/fthvgb1/wp-go/model"
@@ -17,7 +18,7 @@ func GetPostsByIds(ids ...any) (m map[uint64]models.Posts, err error) {
 	ctx := ids[0].(context.Context)
 	m = make(map[uint64]models.Posts)
 	id := ids[1].([]uint64)
-	arg := helper.SliceMap(id, helper.ToAny[uint64])
+	arg := slice.Map(id, helper.ToAny[uint64])
 	rawPosts, err := model.Find[models.Posts](ctx, model.SqlBuilder{{
 		"Id", "in", "",
 	}}, "a.*,ifnull(d.name,'') category_name,ifnull(taxonomy,'') `taxonomy`", "", nil, model.SqlBuilder{{

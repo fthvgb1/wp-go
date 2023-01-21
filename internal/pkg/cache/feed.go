@@ -3,7 +3,7 @@ package cache
 import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/cache"
-	"github.com/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
@@ -47,7 +47,7 @@ func PostFeedCache() *cache.MapCache[string, string] {
 func feed(arg ...any) (xml []string, err error) {
 	c := arg[0].(*gin.Context)
 	r := RecentPosts(c, 10)
-	ids := helper.SliceMap(r, func(t models.Posts) uint64 {
+	ids := slice.Map(r, func(t models.Posts) uint64 {
 		return t.Id
 	})
 	posts, err := GetPostsByIds(c, ids)
@@ -56,7 +56,7 @@ func feed(arg ...any) (xml []string, err error) {
 	}
 	rs := templateRss
 	rs.LastBuildDate = time.Now().Format(timeFormat)
-	rs.Items = helper.SliceMap(posts, func(t models.Posts) rss2.Item {
+	rs.Items = slice.Map(posts, func(t models.Posts) rss2.Item {
 		desc := "无法提供摘要。这是一篇受保护的文章。"
 		plugins.PasswordProjectTitle(&t)
 		if t.PostPassword != "" {
@@ -138,7 +138,7 @@ func postFeed(arg ...any) (x string, err error) {
 			}
 		}
 	} else {
-		rs.Items = helper.SliceMap(comments, func(t models.Comments) rss2.Item {
+		rs.Items = slice.Map(comments, func(t models.Comments) rss2.Item {
 			return rss2.Item{
 				Title:   fmt.Sprintf("评价者：%s", t.CommentAuthor),
 				Link:    fmt.Sprintf("%s/p/%d#comment-%d", wpconfig.Options.Value("siteurl"), post.Id, t.CommentId),
@@ -161,13 +161,13 @@ func commentsFeed(args ...any) (r []string, err error) {
 	rs.Title = fmt.Sprintf("\"%s\"的评论", wpconfig.Options.Value("blogname"))
 	rs.LastBuildDate = time.Now().Format(timeFormat)
 	rs.AtomLink = fmt.Sprintf("%s/comments/feed", wpconfig.Options.Value("siteurl"))
-	com, err := GetCommentByIds(c, helper.SliceMap(commens, func(t models.Comments) uint64 {
+	com, err := GetCommentByIds(c, slice.Map(commens, func(t models.Comments) uint64 {
 		return t.CommentId
 	}))
 	if nil != err {
 		return []string{}, err
 	}
-	rs.Items = helper.SliceMap(com, func(t models.Comments) rss2.Item {
+	rs.Items = slice.Map(com, func(t models.Comments) rss2.Item {
 		post, _ := GetPostById(c, t.CommentPostId)
 		plugins.PasswordProjectTitle(&post)
 		desc := "评论受保护：要查看请输入密码。"

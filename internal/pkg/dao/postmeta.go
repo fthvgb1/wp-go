@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/helper/maps"
+	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/model"
@@ -17,7 +19,7 @@ func GetPostMetaByPostIds(args ...any) (r map[uint64]map[string]any, err error) 
 	ids := args[1].([]uint64)
 	rr, err := model.Find[models.Postmeta](ctx, model.SqlBuilder{
 		{"post_id", "in", ""},
-	}, "*", "", nil, nil, nil, 0, helper.SliceMap(ids, helper.ToAny[uint64]))
+	}, "*", "", nil, nil, nil, 0, slice.Map(ids, helper.ToAny[uint64]))
 	if err != nil {
 		return
 	}
@@ -76,7 +78,7 @@ func thumbnail(metadata models.WpAttachmentMetadata, thumbType, host string) (r 
 		r.Width = metadata.Sizes[thumbType].Width
 		r.Height = metadata.Sizes[thumbType].Height
 		up := strings.Split(metadata.File, "/")
-		r.Srcset = strings.Join(helper.MapToSlice[string](metadata.Sizes, func(s string, size models.MetaDataFileSize) (r string, ok bool) {
+		r.Srcset = strings.Join(maps.FilterToSlice[string](metadata.Sizes, func(s string, size models.MetaDataFileSize) (r string, ok bool) {
 			up[2] = size.File
 			if s == "post-thumbnail" {
 				return

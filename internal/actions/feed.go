@@ -1,7 +1,7 @@
 package actions
 
 import (
-	"github.com/fthvgb1/wp-go/helper"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	"github.com/gin-gonic/gin"
 	"net/http"
@@ -11,7 +11,7 @@ import (
 var tmp = "Mon, 02 Jan 2006 15:04:05 GMT"
 
 func isCacheExpired(c *gin.Context, lastTime time.Time) bool {
-	eTag := helper.StringMd5(lastTime.Format(tmp))
+	eTag := str.Md5(lastTime.Format(tmp))
 	since := c.Request.Header.Get("If-Modified-Since")
 	cTag := c.Request.Header.Get("If-None-Match")
 	if since != "" && cTag != "" {
@@ -41,7 +41,7 @@ func Feed(c *gin.Context) {
 
 func setFeed(s string, c *gin.Context, t time.Time) {
 	lastTimeGMT := t.Format(tmp)
-	eTag := helper.StringMd5(lastTimeGMT)
+	eTag := str.Md5(lastTimeGMT)
 	c.Header("Content-Type", "application/rss+xml; charset=UTF-8")
 	c.Header("Last-Modified", lastTimeGMT)
 	c.Header("ETag", eTag)

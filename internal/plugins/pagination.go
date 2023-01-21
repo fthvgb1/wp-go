@@ -2,7 +2,7 @@ package plugins
 
 import (
 	"fmt"
-	"github.com/fthvgb1/wp-go/helper"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"regexp"
 	"strings"
 )
@@ -65,5 +65,5 @@ func (p PageEle) Url(path, query string, page int) string {
 	if path == "" {
 		path = "/"
 	}
-	return helper.StrJoin(path, query)
+	return str.Join(path, query)
 }

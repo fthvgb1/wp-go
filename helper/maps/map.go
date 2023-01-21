@@ -1,4 +1,4 @@
-package helper
+package maps
 
 import "encoding/json"
 
@@ -21,7 +21,7 @@ func StructToAnyMap[K comparable, T any](s T) (r map[K]any, err error) {
 	return
 }
 
-func MapToSlice[T any, K comparable, V any](m map[K]V, fn func(K, V) (T, bool)) (r []T) {
+func FilterToSlice[T any, K comparable, V any](m map[K]V, fn func(K, V) (T, bool)) (r []T) {
 	for k, v := range m {
 		vv, ok := fn(k, v)
 		if ok {
@@ -31,15 +31,15 @@ func MapToSlice[T any, K comparable, V any](m map[K]V, fn func(K, V) (T, bool)) 
 	return
 }
 
-// MapAnyAnyToStrAny map[any]any => map[string]any 方便json转换
-func MapAnyAnyToStrAny(m map[any]any) (r map[string]any) {
+// AnyAnyToStrAny map[any]any => map[string]any 方便json转换
+func AnyAnyToStrAny(m map[any]any) (r map[string]any) {
 	r = make(map[string]any)
 	for k, v := range m {
 		kk, ok := k.(string)
 		if ok {
 			vv, ok := v.(map[any]any)
 			if ok {
-				r[kk] = MapAnyAnyToStrAny(vv)
+				r[kk] = AnyAnyToStrAny(vv)
 			} else {
 				r[kk] = v
 			}

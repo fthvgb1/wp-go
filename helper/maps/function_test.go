@@ -1,4 +1,4 @@
-package helper
+package maps
 
 import (
 	"reflect"
@@ -65,7 +65,7 @@ func TestGetStrMapAnyVal(t *testing.T) {
 	}
 }
 
-func TestGetStrMapAnyValToAny(t *testing.T) {
+func TestGetStrMapAnyValWithAny(t *testing.T) {
 	type args struct {
 		key string
 		v   map[string]any
@@ -113,12 +113,12 @@ func TestGetStrMapAnyValToAny(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotR, gotO := GetStrMapAnyValToAny(tt.args.key, tt.args.v)
+			gotR, gotO := GetStrMapAnyValWithAny(tt.args.key, tt.args.v)
 			if !reflect.DeepEqual(gotR, tt.wantR) {
-				t.Errorf("GetStrMapAnyValToAny() gotR = %v, want %v", gotR, tt.wantR)
+				t.Errorf("GetStrMapAnyValWithAny() gotR = %v, want %v", gotR, tt.wantR)
 			}
 			if gotO != tt.wantO {
-				t.Errorf("GetStrMapAnyValToAny() gotO = %v, want %v", gotO, tt.wantO)
+				t.Errorf("GetStrMapAnyValWithAny() gotO = %v, want %v", gotO, tt.wantO)
 			}
 		})
 	}

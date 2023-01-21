@@ -2,7 +2,7 @@ package plugins
 
 import (
 	"fmt"
-	"github.com/fthvgb1/wp-go/helper"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"math/rand"
 	"net/url"
@@ -16,7 +16,7 @@ func Gravatar(email string, isTls bool) (u string) {
 	num := rand.Intn(3)
 	h := ""
 	if email != "" {
-		h = helper.StringMd5(strings.ToLower(email))
+		h = str.Md5(strings.ToLower(email))
 		num = int(h[0] % 3)
 	}
 	if isTls {
