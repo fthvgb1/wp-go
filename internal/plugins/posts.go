@@ -6,7 +6,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func NewPostPlugin(ctx *gin.Context, scene uint) *Plugin[models.Posts] {
+func NewPostPlugin(ctx *gin.Context, scene int) *Plugin[models.Posts] {
 	p := NewPlugin[models.Posts](nil, -1, nil, scene, ctx)
 	p.Push(Digest)
 	return p

@@ -3,6 +3,7 @@ package cache
 import (
 	"context"
 	"github.com/fthvgb1/wp-go/cache"
+	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/internal/pkg/config"
 	"github.com/fthvgb1/wp-go/internal/pkg/dao"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
@@ -11,7 +12,7 @@ import (
 	"time"
 )
 
-var postContextCache *cache.MapCache[uint64, common.PostContext]
+var postContextCache *cache.MapCache[uint64, dao.PostContext]
 var archivesCaches *Arch
 var categoryCaches *cache.VarCache[[]models.TermsMy]
 var recentPostsCaches *cache.VarCache[[]models.Posts]
@@ -22,8 +23,8 @@ var postsCache *cache.MapCache[uint64, models.Posts]
 var postMetaCache *cache.MapCache[uint64, map[string]any]
 
 var monthPostsCache *cache.MapCache[string, []uint64]
-var postListIdsCache *cache.MapCache[string, common.PostIds]
-var searchPostIdsCache *cache.MapCache[string, common.PostIds]
+var postListIdsCache *cache.MapCache[string, dao.PostIds]
+var searchPostIdsCache *cache.MapCache[string, dao.PostIds]
 var maxPostIdCache *cache.VarCache[uint64]
 
 var usersCache *cache.MapCache[uint64, models.Users]
@@ -38,40 +39,44 @@ var commentsFeedCache *cache.VarCache[[]string]
 
 var newCommentCache *cache.MapCache[string, string]
 
+var allUsernameCache *cache.VarCache[map[string]struct{}]
+
+var allCategories *cache.VarCache[map[string]struct{}]
+
 func InitActionsCommonCache() {
 	c := config.Conf.Load()
 	archivesCaches = &Arch{
 		mutex:        &sync.Mutex{},
-		setCacheFunc: common.Archives,
+		setCacheFunc: dao.Archives,
 	}
 
-	searchPostIdsCache = cache.NewMapCacheByFn[string](common.SearchPostIds, c.SearchPostCacheTime)
+	searchPostIdsCache = cache.NewMapCacheByFn[string](dao.SearchPostIds, c.SearchPostCacheTime)
 
-	postListIdsCache = cache.NewMapCacheByFn[string](common.SearchPostIds, c.PostListCacheTime)
+	postListIdsCache = cache.NewMapCacheByFn[string](dao.SearchPostIds, c.PostListCacheTime)
 
-	monthPostsCache = cache.NewMapCacheByFn[string](common.MonthPost, c.MonthPostCacheTime)
+	monthPostsCache = cache.NewMapCacheByFn[string](dao.MonthPost, c.MonthPostCacheTime)
 
-	postContextCache = cache.NewMapCacheByFn[uint64](common.GetPostContext, c.ContextPostCacheTime)
+	postContextCache = cache.NewMapCacheByFn[uint64](dao.GetPostContext, c.ContextPostCacheTime)
 
-	postsCache = cache.NewMapCacheByBatchFn(common.GetPostsByIds, c.PostDataCacheTime)
+	postsCache = cache.NewMapCacheByBatchFn(dao.GetPostsByIds, c.PostDataCacheTime)
 
-	postMetaCache = cache.NewMapCacheByBatchFn(common.GetPostMetaByPostIds, c.PostDataCacheTime)
+	postMetaCache = cache.NewMapCacheByBatchFn(dao.GetPostMetaByPostIds, c.PostDataCacheTime)
 
-	categoryCaches = cache.NewVarCache(common.Categories, c.CategoryCacheTime)
+	categoryCaches = cache.NewVarCache(dao.Categories, c.CategoryCacheTime)
 
-	recentPostsCaches = cache.NewVarCache(common.RecentPosts, c.RecentPostCacheTime)
+	recentPostsCaches = cache.NewVarCache(dao.RecentPosts, c.RecentPostCacheTime)
 
-	recentCommentsCaches = cache.NewVarCache(common.RecentComments, c.RecentCommentsCacheTime)
+	recentCommentsCaches = cache.NewVarCache(dao.RecentComments, c.RecentCommentsCacheTime)
 
-	postCommentCaches = cache.NewMapCacheByFn[uint64](common.PostComments, c.PostCommentsCacheTime)
+	postCommentCaches = cache.NewMapCacheByFn[uint64](dao.PostComments, c.PostCommentsCacheTime)
 
-	maxPostIdCache = cache.NewVarCache(common.GetMaxPostId, c.MaxPostIdCacheTime)
+	maxPostIdCache = cache.NewVarCache(dao.GetMaxPostId, c.MaxPostIdCacheTime)
 
-	usersCache = cache.NewMapCacheByFn[uint64](common.GetUserById, c.UserInfoCacheTime)
+	usersCache = cache.NewMapCacheByFn[uint64](dao.GetUserById, c.UserInfoCacheTime)
 
-	usersNameCache = cache.NewMapCacheByFn[string](common.GetUserByName, c.UserInfoCacheTime)
+	usersNameCache = cache.NewMapCacheByFn[string](dao.GetUserByName, c.UserInfoCacheTime)
 
-	commentsCache = cache.NewMapCacheByBatchFn(common.GetCommentByIds, c.CommentsCacheTime)
+	commentsCache = cache.NewMapCacheByBatchFn(dao.GetCommentByIds, c.CommentsCacheTime)
 
 	feedCache = cache.NewVarCache(feed, time.Hour)
 
@@ -80,6 +85,15 @@ func InitActionsCommonCache() {
 	commentsFeedCache = cache.NewVarCache(commentsFeed, time.Hour)
 
 	newCommentCache = cache.NewMapCacheByFn[string, string](nil, 15*time.Minute)
+
+	allUsernameCache = cache.NewVarCache(dao.AllUsername, c.UserInfoCacheTime)
+
+	allCategories = cache.NewVarCache(func(a ...any) (map[string]struct{}, error) {
+		ctx := a[0].(context.Context)
+		return slice.ToMap(Categories(ctx), func(v models.TermsMy) (string, struct{}) {
+			return v.Name, struct{}{}
+		}, true), nil
+	}, c.CategoryCacheTime)
 
 	InitFeed()
 }
@@ -141,6 +155,11 @@ func (c *Arch) getArchiveCache(ctx context.Context) []models.PostArchive {
 
 func Categories(ctx context.Context) []models.TermsMy {
 	r, err := categoryCaches.GetCache(ctx, time.Second, ctx)
-	logs.ErrPrintln(err, "get category ")
+	logs.ErrPrintln(err, "get category err")
+	return r
+}
+
+func AllCategoryNames(ctx context.Context) map[string]struct{} {
+	r, _ := allCategories.GetCache(ctx, time.Second, ctx)
 	return r
 }

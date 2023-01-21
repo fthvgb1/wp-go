@@ -10,7 +10,11 @@ const (
 	Category
 	Search
 	Detail
+
+	Ok
 	Empty404
+	Error
+	InternalErr
 )
 
 var IndexSceneMap = map[int]struct{}{
@@ -20,22 +24,17 @@ var IndexSceneMap = map[int]struct{}{
 	Search:   {},
 }
 
-var DetailSceneMap = map[int]struct{}{
-	Detail:   {},
-	Empty404: {},
-}
-
-type Func[T any] func(*Plugin[T], *gin.Context, *T, uint)
+type Func[T any] func(*Plugin[T], *gin.Context, *T, int)
 
 type Plugin[T any] struct {
 	calls []Func[T]
 	index int
 	post  *T
-	scene uint
+	scene int
 	c     *gin.Context
 }
 
-func NewPlugin[T any](calls []Func[T], index int, post *T, scene uint, c *gin.Context) *Plugin[T] {
+func NewPlugin[T any](calls []Func[T], index int, post *T, scene int, c *gin.Context) *Plugin[T] {
 	return &Plugin[T]{calls: calls, index: index, post: post, scene: scene, c: c}
 }
 

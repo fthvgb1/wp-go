@@ -1,11 +1,13 @@
 package actions
 
 import (
+	"errors"
 	"fmt"
+	"github.com/fthvgb1/wp-go/helper/number"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
-	dao "github.com/fthvgb1/wp-go/internal/pkg/dao"
+	"github.com/fthvgb1/wp-go/internal/pkg/dao"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
@@ -20,6 +22,7 @@ import (
 	"strconv"
 	"strings"
 	"sync/atomic"
+	"time"
 )
 
 type indexHandle struct {
@@ -40,10 +43,11 @@ type indexHandle struct {
 	order          string
 	join           model.SqlBuilder
 	postType       []any
-	status         []any
+	postStatus     []any
 	header         string
 	paginationStep int
-	scene          uint
+	scene          int
+	status         int
 }
 
 func newIndexHandle(ctx *gin.Context) *indexHandle {
@@ -61,13 +65,19 @@ func newIndexHandle(ctx *gin.Context) *indexHandle {
 			{"post_type", "in", ""},
 			{"post_status", "in", ""},
 		},
-		orderBy:  "post_date",
-		join:     model.SqlBuilder{},
-		postType: []any{"post"},
-		status:   []any{"publish"},
-		scene:    plugins.Home,
+		orderBy:    "post_date",
+		join:       model.SqlBuilder{},
+		postType:   []any{"post"},
+		postStatus: []any{"publish"},
+		scene:      plugins.Home,
+		status:     plugins.Ok,
 	}
 }
+
+var months = slice.SimpleToMap(number.Range(1, 12, 1), func(v int) int {
+	return v
+})
+
 func (h *indexHandle) setTitleLR(l, r string) {
 	h.titleL = l
 	h.titleR = r
@@ -89,12 +99,27 @@ func (h *indexHandle) parseParams() (err error) {
 	}
 	year := h.c.Param("year")
 	if year != "" {
+		y, er := strconv.Atoi(year)
+		if er != nil {
+			return err
+		}
+		if y > time.Now().Year() || y <= 1970 {
+			return errors.New(str.Join("year err : ", year))
+		}
 		h.where = append(h.where, []string{
 			"year(post_date)", year,
 		})
 	}
 	month := h.c.Param("month")
 	if month != "" {
+		m, err := strconv.Atoi(month)
+		if err != nil {
+			return err
+		}
+		if _, ok := months[m]; !ok {
+			return errors.New(str.Join("months err ", month))
+		}
+
 		h.where = append(h.where, []string{
 			"month(post_date)", month,
 		})
@@ -111,12 +136,25 @@ func (h *indexHandle) parseParams() (err error) {
 			h.header = fmt.Sprintf("标签： <span>%s</span>", category)
 		}
 	} else {
+		allNames := cache.AllCategoryNames(h.c)
+		if _, ok := allNames[category]; !ok {
+			return errors.New(str.Join("not exists category ", category))
+		}
 		h.categoryType = "category"
 		h.header = fmt.Sprintf("分类： <span>%s</span>", category)
 	}
 	h.category = category
 	username := h.c.Param("author")
 	if username != "" {
+		allUsername, er := cache.GetAllUsername(h.c)
+		if er != nil {
+			err = er
+			return
+		}
+		if _, ok := allUsername[username]; !ok {
+			err = errors.New(str.Join("user ", username, " is not exists"))
+			return
+		}
 		user, er := cache.GetUserByName(h.c, username)
 		if er != nil {
 			err = er
@@ -181,7 +219,7 @@ func (h *indexHandle) getTotalPage(totalRaws int) int {
 
 func Index(c *gin.Context) {
 	h := newIndexHandle(c)
-	var postIds []models.Posts
+	var posts []models.Posts
 	var totalRaw int
 	var err error
 	archive := cache.Archives(c)
@@ -189,6 +227,7 @@ func Index(c *gin.Context) {
 	categoryItems := cache.Categories(c)
 	recentComments := cache.RecentComments(c, 5)
 	ginH := gin.H{
+		"err":            err,
 		"options":        wpconfig.Options,
 		"recentPosts":    recent,
 		"archives":       archive,
@@ -198,14 +237,19 @@ func Index(c *gin.Context) {
 		"recentComments": recentComments,
 	}
 	defer func() {
-		stat := http.StatusOK
+		code := http.StatusOK
 		if err != nil {
+			code = http.StatusNotFound
+			if h.status == plugins.InternalErr {
+				code = http.StatusInternalServerError
+				c.Error(err)
+				return
+			}
 			c.Error(err)
-			stat = http.StatusInternalServerError
-			return
+			h.status = plugins.Error
 		}
 		t := theme.GetTemplateName()
-		theme.Hook(t, stat, c, ginH, int(h.scene))
+		theme.Hook(t, code, c, ginH, h.scene, h.status)
 	}()
 	err = h.parseParams()
 	if err != nil {
@@ -213,33 +257,34 @@ func Index(c *gin.Context) {
 	}
 	ginH["title"] = h.getTitle()
 	if c.Param("month") != "" {
-		postIds, totalRaw, err = cache.GetMonthPostIds(c, c.Param("year"), c.Param("month"), h.page, h.pageSize, h.order)
+		posts, totalRaw, err = cache.GetMonthPostIds(c, c.Param("year"), c.Param("month"), h.page, h.pageSize, h.order)
 		if err != nil {
 			return
 		}
 	} else if h.search != "" {
-		postIds, totalRaw, err = cache.SearchPost(c, h.getSearchKey(), c, h.where, h.page, h.pageSize, model.SqlBuilder{{h.orderBy, h.order}}, h.join, h.postType, h.status)
+		posts, totalRaw, err = cache.SearchPost(c, h.getSearchKey(), c, h.where, h.page, h.pageSize, model.SqlBuilder{{h.orderBy, h.order}}, h.join, h.postType, h.postStatus)
 	} else {
-		postIds, totalRaw, err = cache.PostLists(c, h.getSearchKey(), c, h.where, h.page, h.pageSize, model.SqlBuilder{{h.orderBy, h.order}}, h.join, h.postType, h.status)
+		posts, totalRaw, err = cache.PostLists(c, h.getSearchKey(), c, h.where, h.page, h.pageSize, model.SqlBuilder{{h.orderBy, h.order}}, h.join, h.postType, h.postStatus)
 	}
 	if err != nil {
+		h.status = plugins.Error
 		logs.ErrPrintln(err, "获取数据错误")
 		return
 	}
 
-	if len(postIds) < 1 && h.category != "" {
+	if len(posts) < 1 && h.category != "" {
 		h.titleL = "未找到页面"
-		h.scene = plugins.Empty404
+		h.status = plugins.Empty404
 	}
 
 	pw := h.session.Get("post_password")
 	plug := plugins.NewPostPlugin(c, h.scene)
-	for i, post := range postIds {
-		plugins.PasswordProjectTitle(&postIds[i])
+	for i, post := range posts {
+		plugins.PasswordProjectTitle(&posts[i])
 		if post.PostPassword != "" && pw != post.PostPassword {
-			plugins.PasswdProjectContent(&postIds[i])
+			plugins.PasswdProjectContent(&posts[i])
 		} else {
-			plugins.ApplyPlugin(plug, &postIds[i])
+			plugins.ApplyPlugin(plug, &posts[i])
 		}
 	}
 	for i, post := range recent {
@@ -251,7 +296,7 @@ func Index(c *gin.Context) {
 	if q != "" {
 		q = fmt.Sprintf("?%s", q)
 	}
-	ginH["posts"] = postIds
+	ginH["posts"] = posts
 	ginH["totalPage"] = h.getTotalPage(totalRaw)
 	ginH["currentPage"] = h.page
 	ginH["title"] = h.getTitle()

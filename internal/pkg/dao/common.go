@@ -1,9 +1,9 @@
-package common
+package dao
 
 import (
 	"context"
 	"fmt"
-	models2 "github.com/fthvgb1/wp-go/internal/pkg/models"
+	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/fthvgb1/wp-go/model"
 )
@@ -16,20 +16,20 @@ type PostIds struct {
 }
 
 type PostContext struct {
-	Prev models2.Posts
-	Next models2.Posts
+	Prev models.Posts
+	Next models.Posts
 }
 
-func PasswordProjectTitle(post *models2.Posts) {
+func PasswordProjectTitle(post *models.Posts) {
 	if post.PostPassword != "" {
 		post.PostTitle = fmt.Sprintf("密码保护：%s", post.PostTitle)
 	}
 }
 
-func Categories(a ...any) (terms []models2.TermsMy, err error) {
+func Categories(a ...any) (terms []models.TermsMy, err error) {
 	ctx := a[0].(context.Context)
 	var in = []any{"category"}
-	terms, err = model.Find[models2.TermsMy](ctx, model.SqlBuilder{
+	terms, err = model.Find[models.TermsMy](ctx, model.SqlBuilder{
 		{"tt.count", ">", "0", "int"},
 		{"tt.taxonomy", "in", ""},
 	}, "t.term_id", "", model.SqlBuilder{
@@ -48,8 +48,8 @@ func Categories(a ...any) (terms []models2.TermsMy, err error) {
 	return
 }
 
-func Archives(ctx context.Context) ([]models2.PostArchive, error) {
-	return model.Find[models2.PostArchive](ctx, model.SqlBuilder{
+func Archives(ctx context.Context) ([]models.PostArchive, error) {
+	return model.Find[models.PostArchive](ctx, model.SqlBuilder{
 		{"post_type", "post"}, {"post_status", "publish"},
 	}, "YEAR(post_date) AS `year`, MONTH(post_date) AS `month`, count(ID) as posts", "year,month", model.SqlBuilder{{"year", "desc"}, {"month", "desc"}}, nil, nil, 0)
 }

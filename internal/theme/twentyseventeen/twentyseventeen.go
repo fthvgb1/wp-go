@@ -40,7 +40,7 @@ var paginate = func() plugins.PageEle {
 	return p
 }()
 
-func Hook(status int, c *gin.Context, h gin.H, scene int) {
+func Hook(status int, c *gin.Context, h gin.H, scene, stats int) {
 	templ := "twentyseventeen/posts/index.gohtml"
 	if _, ok := plugins.IndexSceneMap[scene]; ok {
 		h["HeaderImage"] = getHeaderImage(c)
@@ -51,7 +51,7 @@ func Hook(status int, c *gin.Context, h gin.H, scene int) {
 				h["pagination"] = pagination.Paginate(paginate, pp)
 			}
 		}
-	} else if _, ok := plugins.DetailSceneMap[scene]; ok {
+	} else if scene == plugins.Detail {
 		templ = "twentyseventeen/posts/detail.gohtml"
 	}
 	c.HTML(status, templ, h)

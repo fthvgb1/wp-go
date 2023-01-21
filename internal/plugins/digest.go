@@ -36,7 +36,7 @@ func digestRaw(arg ...any) (string, error) {
 	return digest.Raw(str, limit, fmt.Sprintf("/p/%d", id)), nil
 }
 
-func Digest(p *Plugin[models.Posts], c *gin.Context, post *models.Posts, scene uint) {
+func Digest(p *Plugin[models.Posts], c *gin.Context, post *models.Posts, scene int) {
 	if scene == Detail {
 		return
 	}

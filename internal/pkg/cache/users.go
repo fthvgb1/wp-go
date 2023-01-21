@@ -19,6 +19,10 @@ func GetUserByName(ctx context.Context, username string) (models.Users, error) {
 	return usersNameCache.GetCache(ctx, username, time.Second, ctx, username)
 }
 
+func GetAllUsername(ctx context.Context) (map[string]struct{}, error) {
+	return allUsernameCache.GetCache(ctx, time.Second, ctx)
+}
+
 func GetUserById(ctx context.Context, uid uint64) models.Users {
 	r, err := usersCache.GetCache(ctx, uid, time.Second, ctx, uid)
 	logs.ErrPrintln(err, "get user", uid)
