@@ -26,9 +26,9 @@ func PasswordProjectTitle(post *models.Posts) {
 	}
 }
 
-func Categories(a ...any) (terms []models.TermsMy, err error) {
+func CategoriesAndTags(a ...any) (terms []models.TermsMy, err error) {
 	ctx := a[0].(context.Context)
-	var in = []any{"category"}
+	var in = []any{"category", "post_tag"}
 	terms, err = model.Find[models.TermsMy](ctx, model.SqlBuilder{
 		{"tt.count", ">", "0", "int"},
 		{"tt.taxonomy", "in", ""},

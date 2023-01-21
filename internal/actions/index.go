@@ -132,6 +132,10 @@ func (h *indexHandle) parseParams() (err error) {
 	if category == "" {
 		category = h.c.Param("tag")
 		if category != "" {
+			allNames := cache.AllTagsNames(h.c)
+			if _, ok := allNames[category]; !ok {
+				return errors.New(str.Join("not exists tag ", category))
+			}
 			h.categoryType = "post_tag"
 			h.header = fmt.Sprintf("标签： <span>%s</span>", category)
 		}

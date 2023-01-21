@@ -116,6 +116,17 @@ func Slice[T any](arr []T, offset, length int) (r []T) {
 	return
 }
 
+func FilterAndToMap[K comparable, V, T any](arr []T, fn func(T) (K, V, bool)) map[K]V {
+	r := make(map[K]V)
+	for _, t := range arr {
+		k, v, ok := fn(t)
+		if ok {
+			r[k] = v
+		}
+	}
+	return r
+}
+
 func Comb[T any](arr []T, m int) (r [][]T) {
 	if m == 1 {
 		for _, t := range arr {
@@ -134,7 +145,6 @@ func Comb[T any](arr []T, m int) (r [][]T) {
 	}
 	return r
 }
-
 
 func IsContained[T comparable](a T, arr []T) bool {
 	for _, v := range arr {
