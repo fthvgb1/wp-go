@@ -26,7 +26,8 @@ func SetupRouter() (*gin.Engine, func()) {
 		}
 	}
 
-	r.HTMLRender = theme.NewFsTemplate(theme.FuncMap()).SetTemplate()
+	r.HTMLRender = theme.GetTemplate()
+
 	validServerName, reloadValidServerNameFn := middleware.ValidateServerNames()
 	fl, flReload := middleware.FlowLimit(c.MaxRequestSleepNum, c.MaxRequestNum, c.SleepTime)
 	r.Use(

@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-var funcs = template.FuncMap{
+var comFn = template.FuncMap{
 	"unescaped": func(s string) any {
 		return template.HTML(s)
 	},
@@ -20,12 +20,12 @@ var funcs = template.FuncMap{
 }
 
 func FuncMap() template.FuncMap {
-	return funcs
+	return comFn
 }
 
 func AddTemplateFunc(fnName string, fn any) {
-	if _, ok := funcs[fnName]; ok {
+	if _, ok := comFn[fnName]; ok {
 		panic("exists same name func")
 	}
-	funcs[fnName] = fn
+	comFn[fnName] = fn
 }

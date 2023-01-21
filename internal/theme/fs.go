@@ -2,7 +2,7 @@ package theme
 
 import (
 	"embed"
-	"github.com/gin-gonic/gin/render"
+	"github.com/fthvgb1/wp-go/multipTemplate"
 	"html/template"
 	"io/fs"
 	"path/filepath"
@@ -12,37 +12,29 @@ import (
 //go:embed *[^.go]
 var TemplateFs embed.FS
 
-var templates map[string]*template.Template
+var templates map[string]*template.Template //方便外部获取模板render后的字符串，不然在gin中获取不了
 
-type FsTemplate struct {
-	Templates map[string]*template.Template
-	FuncMap   template.FuncMap
+func GetTemplate() *multipTemplate.MultipleFsTemplate {
+	t := multipTemplate.NewFsTemplate(TemplateFs)
+	templates = t.Template
+	t.FuncMap = FuncMap()
+	commonTemplate(t)
+	/*t.AddTemplate("twentyfifteen/*[^layout]/*.gohtml", FuncMap(), "twentyfifteen/layout/*.gohtml"). //单个主题设置
+	AddTemplate("twentyseventeen/*[^layout]/*.gohtml", FuncMap(), "twentyseventeen/layout/*.gohtml")*/
+	return t
 }
 
-func NewFsTemplate(funcMap template.FuncMap) *FsTemplate {
-	templates = make(map[string]*template.Template)
-	return &FsTemplate{FuncMap: funcMap, Templates: templates}
-}
-
-func (t FsTemplate) SetTemplate() *FsTemplate {
-	mainTemplates, err := fs.Glob(TemplateFs, `*/*[^layout]/*.gohtml`)
+// 所有主题模板通用设置
+func commonTemplate(t *multipTemplate.MultipleFsTemplate) {
+	m, err := fs.Glob(t.Fs, "*/*[^layout]/*.gohtml")
 	if err != nil {
 		panic(err)
 	}
-	for _, include := range mainTemplates {
-		name := filepath.Base(include)
-		c := strings.Split(include, "/")
-		base := c[0]
-		t.Templates[include] = template.Must(template.New(name).Funcs(t.FuncMap).ParseFS(TemplateFs, include, filepath.Join(base, "layout/*.gohtml")))
-	}
-	return &t
-}
-
-func (t FsTemplate) Instance(name string, data any) render.Render {
-	r := t.Templates[name]
-	return render.HTML{
-		Template: r,
-		Data:     data,
+	for _, main := range m {
+		file := filepath.Base(main)
+		dir := strings.Split(main, "/")[0]
+		templ := template.Must(template.New(file).Funcs(t.FuncMap).ParseFS(t.Fs, main, filepath.Join(dir, "layout/*.gohtml")))
+		t.SetTemplate(main, templ)
 	}
 }
 
@@ -60,8 +52,4 @@ func IsTemplateDirExists(tml string) bool {
 func IsTemplateExists(tml string) bool {
 	t, ok := templates[tml]
 	return ok && t != nil
-}
-
-func GetTemplate(tml string) *template.Template {
-	return templates[tml]
 }
