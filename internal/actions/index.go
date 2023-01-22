@@ -7,6 +7,7 @@ import (
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
+	"github.com/fthvgb1/wp-go/internal/pkg/config"
 	"github.com/fthvgb1/wp-go/internal/pkg/dao"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
@@ -92,10 +93,17 @@ func (h *indexHandle) getSearchKey() string {
 	return fmt.Sprintf("action:%s|%s|%s|%s|%s|%s|%d|%d", h.author, h.search, h.orderBy, h.order, h.category, h.categoryType, h.page, h.pageSize)
 }
 
+var orders = []string{"asc", "desc"}
+
 func (h *indexHandle) parseParams() (err error) {
 	h.order = h.c.Query("order")
-	if !slice.IsContained(h.order, []string{"asc", "desc"}) {
+
+	if !slice.IsContained(h.order, orders) {
+		order := config.Conf.Load().PostOrder
 		h.order = "asc"
+		if order != "" && slice.IsContained(order, orders) {
+			h.order = order
+		}
 	}
 	year := h.c.Param("year")
 	if year != "" {

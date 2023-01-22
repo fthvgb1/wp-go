@@ -71,3 +71,7 @@ trustIps: []
 trustServerNames: ["xy.test","blog.xy.test"]
 # port
 port: 8082
+# 主题 为空值为option template，没有就默认为twentyfifteen
+theme: "twentyfifteen"
+# 文档排序默认升序还是降序
+postOrder: "desc"
