@@ -169,6 +169,15 @@ func TestUnique(t *testing.T) {
 			},
 			wantR: number.Range(1, 15, 1),
 		},
+		{
+			name: "t2",
+			args: args[int]{
+				a: [][]int{
+					{1, 1, 1, 2, 2, 2, 3, 3, 4, 5},
+				},
+			},
+			wantR: number.Range(1, 5, 1),
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
