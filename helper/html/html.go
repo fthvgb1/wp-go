@@ -1,9 +1,11 @@
 package html
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/dlclark/regexp2"
 	"github.com/fthvgb1/wp-go/helper/slice"
+	"html/template"
 	"regexp"
 	"strings"
 )
@@ -163,4 +165,14 @@ func UnClosedTag(s []string) []string {
 		}
 		i++
 	}
+}
+
+func RenderedHtml(t *template.Template, data map[string]any) (r string, err error) {
+	var buf bytes.Buffer
+	err = t.Execute(&buf, data)
+	if err != nil {
+		return
+	}
+	r = buf.String()
+	return
 }

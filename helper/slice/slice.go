@@ -1,5 +1,7 @@
 package slice
 
+import "github.com/fthvgb1/wp-go/helper"
+
 func Map[T, R any](arr []T, fn func(T) R) []R {
 	r := make([]R, 0, len(arr))
 	for _, t := range arr {
@@ -146,11 +148,19 @@ func Comb[T any](arr []T, m int) (r [][]T) {
 	return r
 }
 
-func IsContained[T comparable](a T, arr []T) bool {
-	for _, v := range arr {
-		if a == v {
-			return true
+func GroupBy[K comparable, T, V any](a []T, fn func(T) (K, V)) map[K][]V {
+	r := make(map[K][]V)
+	for _, t := range a {
+		k, v := fn(t)
+		if _, ok := r[k]; !ok {
+			r[k] = []V{v}
+		} else {
+			r[k] = append(r[k], v)
 		}
 	}
-	return false
+	return r
+}
+
+func ToAnySlice[T any](a []T) []any {
+	return Map(a, helper.ToAny[T])
 }

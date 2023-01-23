@@ -17,6 +17,22 @@ type MultipleFsTemplate struct {
 	Fs embed.FS
 }
 
+func (t *MultipleFileTemplate) AppendTemplate(name string, templates ...string) *MultipleFileTemplate {
+	tmpl, ok := t.Template[name]
+	if ok {
+		t.Template[name] = template.Must(tmpl.ParseFiles(templates...))
+	}
+	return t
+}
+
+func (t *MultipleFsTemplate) AppendTemplate(name string, templates ...string) *MultipleFsTemplate {
+	tmpl, ok := t.Template[name]
+	if ok {
+		t.Template[name] = template.Must(tmpl.ParseFS(t.Fs, templates...))
+	}
+	return t
+}
+
 func NewFileTemplate() *MultipleFileTemplate {
 	return &MultipleFileTemplate{
 		Template: make(map[string]*template.Template),
@@ -47,9 +63,6 @@ func (t *MultipleFileTemplate) AddTemplate(mainTemplatePattern string, fnMap tem
 		panic(err)
 	}
 	for _, mainTemplate := range mainTemplates {
-		if _, ok := t.Template[mainTemplate]; ok {
-			panic("exists same Template " + mainTemplate)
-		}
 		file := filepath.Base(mainTemplate)
 		pattern := append([]string{mainTemplate}, layoutTemplatePattern...)
 		t.Template[mainTemplate] = template.Must(template.New(file).Funcs(fnMap).ParseFiles(pattern...))

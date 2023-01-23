@@ -38,6 +38,7 @@ type Config struct {
 	TrustIps                []string        `yaml:"trustIps"`
 	TrustServerNames        []string        `yaml:"trustServerNames"`
 	Theme                   string          `yaml:"theme"`
+	PostOrder               string          `yaml:"postOrder"`
 }
 
 type Mail struct {

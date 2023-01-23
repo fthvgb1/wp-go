@@ -3,7 +3,6 @@ package dao
 import (
 	"context"
 	"fmt"
-	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
@@ -19,7 +18,7 @@ func GetPostMetaByPostIds(args ...any) (r map[uint64]map[string]any, err error) 
 	ids := args[1].([]uint64)
 	rr, err := model.Find[models.Postmeta](ctx, model.SqlBuilder{
 		{"post_id", "in", ""},
-	}, "*", "", nil, nil, nil, 0, slice.Map(ids, helper.ToAny[uint64]))
+	}, "*", "", nil, nil, nil, 0, slice.ToAnySlice(ids))
 	if err != nil {
 		return
 	}
@@ -93,6 +92,7 @@ func thumbnail(metadata models.WpAttachmentMetadata, thumbType, host string) (r 
 		} else if r.Width >= 767 {
 			r.Sizes = "(max-width: 767px) 89vw, (max-width: 1000px) 54vw, (max-width: 1071px) 543px, 580px"
 		}
+		r.OriginAttachmentData = metadata
 	}
 	return
 }

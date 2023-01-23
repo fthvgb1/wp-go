@@ -2,7 +2,6 @@ package actions
 
 import (
 	"fmt"
-	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
@@ -30,7 +29,7 @@ func Detail(c *gin.Context) {
 	archive := cache.Archives(c)
 	categoryItems := cache.Categories(c)
 	recentComments := cache.RecentComments(c, 5)
-	var h = gin.H{
+	var ginH = gin.H{
 		"title":          wpconfig.Options.Value("blogname"),
 		"options":        wpconfig.Options,
 		"recentPosts":    recent,
@@ -39,17 +38,21 @@ func Detail(c *gin.Context) {
 		"recentComments": recentComments,
 	}
 	isApproveComment := false
+	status := plugins.Ok
 	defer func() {
-		status := http.StatusOK
+		code := http.StatusOK
 		if err != nil {
-			status = http.StatusInternalServerError
+			code = http.StatusNotFound
 			c.Error(err)
+			status = plugins.Error
 			return
 		}
 		if isApproveComment == true {
 			return
 		}
-		c.HTML(status, str.Join(theme.GetTemplateName(), "/posts/detail.gohtml"), h)
+
+		t := theme.GetTemplateName()
+		theme.Hook(t, code, c, ginH, plugins.Detail, status)
 	}()
 	id := c.Param("id")
 	Id := 0
@@ -92,19 +95,19 @@ func Detail(c *gin.Context) {
 	commentss := treeComments(comments)
 	prev, next, err := cache.GetContextPost(c, post.Id, post.PostDate)
 	logs.ErrPrintln(err, "get pre and next post", post.Id, post.PostDate)
-	h["title"] = fmt.Sprintf("%s-%s", post.PostTitle, wpconfig.Options.Value("blogname"))
-	h["post"] = post
-	h["showComment"] = showComment
-	h["prev"] = prev
+	ginH["title"] = fmt.Sprintf("%s-%s", post.PostTitle, wpconfig.Options.Value("blogname"))
+	ginH["post"] = post
+	ginH["showComment"] = showComment
+	ginH["prev"] = prev
 	depth := wpconfig.Options.Value("thread_comments_depth")
 	d, err := strconv.Atoi(depth)
 	if err != nil {
-		logs.ErrPrintln(err, "get comment depth")
+		logs.ErrPrintln(err, "get comment depth ", depth)
 		d = 5
 	}
-	h["comments"] = hh.formatComment(commentss, 1, d)
-	h["next"] = next
-	h["user"] = user
+	ginH["comments"] = hh.formatComment(commentss, 1, d)
+	ginH["next"] = next
+	ginH["user"] = user
 }
 
 type Comment struct {

@@ -2,7 +2,6 @@ package dao
 
 import (
 	"context"
-	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/model"
@@ -48,7 +47,7 @@ func GetCommentByIds(args ...any) (map[uint64]models.Comments, error) {
 	m := make(map[uint64]models.Comments)
 	r, err := model.SimpleFind[models.Comments](ctx, model.SqlBuilder{
 		{"comment_ID", "in", ""}, {"comment_approved", "1"},
-	}, "*", slice.Map(ids, helper.ToAny[uint64]))
+	}, "*", slice.ToAnySlice(ids))
 	if err != nil {
 		return m, err
 	}

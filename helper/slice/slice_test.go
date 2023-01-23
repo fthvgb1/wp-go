@@ -463,3 +463,67 @@ func TestFilterAndMap(t *testing.T) {
 		})
 	}
 }
+
+func TestGroupBy(t *testing.T) {
+	type args[T x, K int, V string] struct {
+		a  []T
+		fn func(T) (K, V)
+	}
+	type testCase[T x, K int, V string] struct {
+		name string
+		args args[T, K, V]
+		want map[K][]V
+	}
+	tests := []testCase[x, int, string]{
+		{
+			name: "t1",
+			args: args[x, int, string]{
+				a: Map([]int{1, 1, 2, 2, 3, 3, 4, 4, 5, 5}, func(t int) x {
+					return x{t, number.ToString(t)}
+				}),
+				fn: func(v x) (int, string) {
+					return v.int, v.y
+				},
+			},
+			want: map[int][]string{
+				1: {"1", "1"},
+				2: {"2", "2"},
+				3: {"3", "3"},
+				4: {"4", "4"},
+				5: {"5", "5"},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := GroupBy(tt.args.a, tt.args.fn); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GroupBy() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestToAnySlice(t *testing.T) {
+	type args[T int] struct {
+		a []T
+	}
+	type testCase[T int] struct {
+		name string
+		args args[T]
+		want []any
+	}
+	tests := []testCase[int]{
+		{
+			name: "t1",
+			args: args[int]{number.Range(1, 5, 1)},
+			want: []any{1, 2, 3, 4, 5},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ToAnySlice(tt.args.a); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ToAnySlice() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
