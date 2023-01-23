@@ -218,3 +218,38 @@ func TestUniqueByFn(t *testing.T) {
 		})
 	}
 }
+
+func TestUniqueNewByFn(t *testing.T) {
+	type args[T x, V int] struct {
+		fn    func(T, T) bool
+		fnVal func(T) V
+		a     [][]T
+	}
+	type testCase[T x, V int] struct {
+		name  string
+		args  args[T, V]
+		wantR []V
+	}
+	tests := []testCase[x, int]{
+		{
+			name: "t1",
+			args: args[x, int]{
+				fn: func(i, j x) bool {
+					return i.int == j.int
+				},
+				fnVal: func(i x) int {
+					return i.int
+				},
+				a: [][]x{y([]int{1, 1, 2, 2, 3, 3}), y([]int{2, 2, 4, 4})},
+			},
+			wantR: []int{1, 2, 3, 4},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotR := UniqueNewByFn(tt.args.fn, tt.args.fnVal, tt.args.a...); !reflect.DeepEqual(gotR, tt.wantR) {
+				t.Errorf("UniqueNewByFn() = %v, want %v", gotR, tt.wantR)
+			}
+		})
+	}
+}

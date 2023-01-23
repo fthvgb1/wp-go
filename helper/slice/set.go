@@ -112,3 +112,15 @@ func UniqueByFn[T any](fn func(T, T) bool, a ...[]T) (r []T) {
 	}
 	return r
 }
+func UniqueNewByFn[T, V any](fn func(T, T) bool, fnVal func(T) V, a ...[]T) (r []V) {
+	var rr []T
+	for _, ts := range a {
+		for _, t := range ts {
+			if !IsContainedByFn(rr, t, fn) {
+				rr = append(rr, t)
+				r = append(r, fnVal(t))
+			}
+		}
+	}
+	return r
+}
