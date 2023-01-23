@@ -1,6 +1,7 @@
 package html
 
 import (
+	"html/template"
 	"reflect"
 	"testing"
 )
@@ -224,6 +225,49 @@ func Test_clearTag(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := UnClosedTag(tt.args.s); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("UnClosedTag() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestRenderedHtml(t *testing.T) {
+	type args struct {
+		t    *template.Template
+		data map[string]any
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantR   string
+		wantErr bool
+	}{
+		{
+			name: "t1",
+			args: args{
+				t: func() *template.Template {
+					tt, err := template.ParseFiles("./a.gohtml")
+					if err != nil {
+						panic(err)
+					}
+					return tt
+				}(),
+				data: map[string]any{
+					"xx": "oo",
+				},
+			},
+			wantR:   "oo",
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotR, err := RenderedHtml(tt.args.t, tt.args.data)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("RenderedHtml() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if gotR != tt.wantR {
+				t.Errorf("RenderedHtml() gotR = %v, want %v", gotR, tt.wantR)
 			}
 		})
 	}

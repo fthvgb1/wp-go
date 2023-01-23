@@ -52,6 +52,7 @@ func Hook(status int, c *gin.Context, h gin.H, scene, stats int) {
 			}
 		}
 	} else if scene == plugins.Detail {
+		h["HeaderImage"] = getHeaderImage(c)
 		templ = "twentyseventeen/posts/detail.gohtml"
 	}
 	c.HTML(status, templ, h)

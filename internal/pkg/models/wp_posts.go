@@ -38,12 +38,16 @@ type Posts struct {
 	AttachmentMetadata WpAttachmentMetadata
 }
 
+type Image struct {
+}
+
 type PostThumbnail struct {
-	Path   string
-	Width  int
-	Height int
-	Srcset string
-	Sizes  string
+	Path                 string
+	Width                int
+	Height               int
+	Srcset               string
+	Sizes                string
+	OriginAttachmentData WpAttachmentMetadata
 }
 
 func (w Posts) PrimaryKey() string {

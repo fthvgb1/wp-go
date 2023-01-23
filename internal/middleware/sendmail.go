@@ -21,34 +21,37 @@ func RecoverAndSendMail(w io.Writer) func(ctx *gin.Context) {
 	return gin.CustomRecoveryWithWriter(w, func(ctx *gin.Context, err any) {
 		c := ctx.Copy()
 		stack := stack(4)
-		go func() {
-			httpRequest, _ := httputil.DumpRequest(c.Request, true)
-			headers := strings.Split(string(httpRequest), "\r\n")
-			for idx, header := range headers {
-				current := strings.Split(header, ":")
-				if current[0] == "Authorization" {
-					headers[idx] = current[0] + ": *"
+		if gin.Mode() == gin.ReleaseMode {
+			go func() {
+				httpRequest, _ := httputil.DumpRequest(c.Request, true)
+				headers := strings.Split(string(httpRequest), "\r\n")
+				for idx, header := range headers {
+					current := strings.Split(header, ":")
+					if current[0] == "Authorization" {
+						headers[idx] = current[0] + ": *"
+					}
 				}
-			}
-			headersToStr := strings.Join(headers, "<br/>")
-			content := `<dl><dt>err:</dt><dd>%v</dd><hr/>
+				headersToStr := strings.Join(headers, "<br/>")
+				content := `<dl><dt>err:</dt><dd>%v</dd><hr/>
 <dt>stack: </dt><dd>%v</dd><hr/>
 <dt>headers:  </dt><dd>%s</dd></dl>
 `
-			content = fmt.Sprintf(content,
-				err,
-				formatStack(string(stack)),
-				headersToStr,
-			)
+				content = fmt.Sprintf(content,
+					err,
+					formatStack(string(stack)),
+					headersToStr,
+				)
 
-			er := mail.SendMail(
-				[]string{config.Conf.Load().Mail.User},
-				fmt.Sprintf("%s%s %s 发生错误", fmt.Sprintf(wpconfig.Options.Value("siteurl")), c.FullPath(), time.Now().Format(time.RFC1123Z)), content)
+				er := mail.SendMail(
+					[]string{config.Conf.Load().Mail.User},
+					fmt.Sprintf("%s%s %s 发生错误", fmt.Sprintf(wpconfig.Options.Value("siteurl")), c.FullPath(), time.Now().Format(time.RFC1123Z)), content)
 
-			if er != nil {
-				logs.ErrPrintln(er, "recover send mail fail", fmt.Sprintf("%v", err))
-			}
-		}()
+				if er != nil {
+					logs.ErrPrintln(er, "recover send mail fail", fmt.Sprintf("%v", err))
+				}
+			}()
+		}
+
 		ctx.AbortWithStatus(http.StatusInternalServerError)
 	})
 }
