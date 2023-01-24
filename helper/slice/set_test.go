@@ -83,6 +83,46 @@ func TestDiffByFn(t *testing.T) {
 	}
 }
 
+func TestDiffNewByFn(t *testing.T) {
+	type args[T x, V int] struct {
+		a   []T
+		fn  func(i, j T) bool
+		fnV func(T) V
+		b   [][]T
+	}
+	type testCase[T x, V int] struct {
+		name  string
+		args  args[T, V]
+		wantR []V
+	}
+	tests := []testCase[x, int]{
+		{
+			name: "t1",
+			args: args[x, int]{
+				a: y(number.Range(1, 10, 1)),
+				fn: func(i, j x) bool {
+					return i.int == j.int
+				},
+				fnV: func(v x) int {
+					return v.int
+				},
+				b: [][]x{
+					y(number.Range(3, 7, 1)),
+					y(number.Range(6, 9, 1)),
+				},
+			},
+			wantR: []int{1, 2, 10},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotR := DiffNewByFn(tt.args.a, tt.args.fn, tt.args.fnV, tt.args.b...); !reflect.DeepEqual(gotR, tt.wantR) {
+				t.Errorf("DiffNewByFn() = %v, want %v", gotR, tt.wantR)
+			}
+		})
+	}
+}
+
 func TestIntersect(t *testing.T) {
 	type args[T int] struct {
 		a []T
@@ -143,6 +183,46 @@ func TestIntersectByFn(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if gotR := IntersectByFn(tt.args.a, tt.args.fn, tt.args.b...); !reflect.DeepEqual(gotR, tt.wantR) {
 				t.Errorf("IntersectByFn() = %v, want %v", gotR, tt.wantR)
+			}
+		})
+	}
+}
+
+func TestIntersectNewByFn(t *testing.T) {
+	type args[T x, V int] struct {
+		a   []T
+		fn  func(i, j T) bool
+		fnV func(T) V
+		b   [][]T
+	}
+	type testCase[T x, V int] struct {
+		name  string
+		args  args[T, V]
+		wantR []V
+	}
+	tests := []testCase[x, int]{
+		{
+			name: "t1",
+			args: args[x, int]{
+				a: y(number.Range(1, 10, 1)),
+				fn: func(i, j x) bool {
+					return i.int == j.int
+				},
+				fnV: func(v x) int {
+					return v.int
+				},
+				b: [][]x{
+					y(number.Range(3, 7, 1)),
+					y(number.Range(6, 9, 1)),
+				},
+			},
+			wantR: []int{6, 7},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if gotR := IntersectNewByFn(tt.args.a, tt.args.fn, tt.args.fnV, tt.args.b...); !reflect.DeepEqual(gotR, tt.wantR) {
+				t.Errorf("IntersectNewByFn() = %v, want %v", gotR, tt.wantR)
 			}
 		})
 	}

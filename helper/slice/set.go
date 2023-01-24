@@ -53,6 +53,23 @@ func DiffByFn[T any](a []T, fn func(i, j T) bool, b ...[]T) (r []T) {
 	return
 }
 
+func DiffNewByFn[T, V any](a []T, fn func(i, j T) bool, fnV func(T) V, b ...[]T) (r []V) {
+	for _, t := range a {
+		f := false
+		for _, ts := range b {
+			if IsContainedByFn(ts, t, fn) {
+				f = true
+				break
+			}
+		}
+		if f {
+			continue
+		}
+		r = append(r, fnV(t))
+	}
+	return
+}
+
 func Intersect[T comparable](a []T, b ...[]T) (r []T) {
 	for _, t := range a {
 		f := false
@@ -83,6 +100,23 @@ func IntersectByFn[T any](a []T, fn func(i, j T) bool, b ...[]T) (r []T) {
 			continue
 		}
 		r = append(r, t)
+	}
+	return
+}
+
+func IntersectNewByFn[T, V any](a []T, fn func(i, j T) bool, fnV func(T) V, b ...[]T) (r []V) {
+	for _, t := range a {
+		f := false
+		for _, ts := range b {
+			if !IsContainedByFn(ts, t, fn) {
+				f = true
+				break
+			}
+		}
+		if f {
+			continue
+		}
+		r = append(r, fnV(t))
 	}
 	return
 }
