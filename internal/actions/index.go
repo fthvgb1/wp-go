@@ -312,5 +312,6 @@ func Index(c *gin.Context) {
 	ginH["totalPage"] = h.getTotalPage(totalRaw)
 	ginH["currentPage"] = h.page
 	ginH["title"] = h.getTitle()
+	ginH["scene"] = h.scene
 	ginH["pagination"] = pagination.NewParsePagination(totalRaw, h.pageSize, h.page, h.paginationStep, q, c.Request.URL.Path)
 }

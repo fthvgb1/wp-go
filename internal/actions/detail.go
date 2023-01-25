@@ -108,6 +108,7 @@ func Detail(c *gin.Context) {
 	ginH["comments"] = hh.formatComment(commentss, 1, d)
 	ginH["next"] = next
 	ginH["user"] = user
+	ginH["scene"] = plugins.Detail
 }
 
 type Comment struct {

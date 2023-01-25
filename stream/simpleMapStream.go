@@ -1,7 +1,7 @@
 package stream
 
 import (
-	"github.com/fthvgb1/wp-go/safety"
+	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/taskPools"
 	"sync"
 )
@@ -24,15 +24,8 @@ func newMapX[K comparable, V any]() mapX[K, V] {
 	}
 }
 
-func SimpleMapFilterAndMapToSlice[R any, K comparable, V any](mm SimpleMapStream[K, V], fn func(K, V) (R, bool), c int) SimpleSliceStream[R] {
-	rr := safety.NewSlice([]R{})
-	mm.ParallelForEach(func(k K, v V) {
-		vv, ok := fn(k, v)
-		if ok {
-			rr.Append(vv)
-		}
-	}, c)
-	return NewSimpleSliceStream(rr.Load())
+func SimpleMapFilterAndMapToSlice[R any, K comparable, V any](mm SimpleMapStream[K, V], fn func(K, V) (R, bool)) SimpleSliceStream[R] {
+	return NewSimpleSliceStream(maps.FilterToSlice(mm.m, fn))
 }
 
 func SimpleMapParallelFilterAndMapToMap[K comparable, V any, KK comparable, VV any](mm SimpleMapStream[KK, VV], fn func(KK, VV) (K, V, bool), c int) SimpleMapStream[K, V] {

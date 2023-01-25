@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
+	"github.com/fthvgb1/wp-go/internal/plugins"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/fthvgb1/wp-go/model"
 	"strings"
@@ -68,7 +69,7 @@ func GetPostsByIds(ids ...any) (m map[uint64]models.Posts, err error) {
 					pp.Thumbnail = thumb
 				}
 			} else if pp.PostType == "attachment" && pp.AttachmentMetadata.File != "" {
-				thumb := thumbnail(pp.AttachmentMetadata, "thumbnail", host)
+				thumb := plugins.Thumbnail(pp.AttachmentMetadata, "thumbnail", host, "thumbnail", "post-thumbnail")
 				if thumb.Path != "" {
 					pp.Thumbnail = thumb
 				}

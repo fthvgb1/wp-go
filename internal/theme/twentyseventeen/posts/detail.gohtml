@@ -2,134 +2,160 @@
 
 {{define "content"}}
     {{ if .post.PostContent}}
-        <div id="primary" class="content-area">
-            <main id="main" class="site-main">
-                <article id="post-{{.post.Id}}"
-                         class="post-{{.post.Id}} post type-post status-publish format-standard hentry category-uncategorized">
+        {{if .post.Thumbnail.Path}}
+            <div class="single-featured-image-header">
+                <img width="{{.post.Thumbnail.OriginAttachmentData.Width}}" height="{{.post.Thumbnail.OriginAttachmentData.Height}}" src="{{.post.Thumbnail.Path}}" class="attachment-twentyseventeen-featured-image size-twentyseventeen-featured-image wp-post-image" alt="{{.post.PostTitle}}" decoding="async" loading="lazy" srcset="{{.post.Thumbnail.Srcset}}" sizes="{{.post.Thumbnail.Sizes}}">
+            </div>
+        {{end}}
+        <div class="site-content-contain">
+            <div id="content" class="site-content">
+                <div class="wrap">
+                    <div id="primary" class="content-area">
+                        <main id="main" class="site-main">
+                            <article id="post-{{.post.Id}}" class="post-{{.post.Id}} post type-post status-publish format-standard hentry {{if .post.Thumbnail.Path}}has-post-thumbnail{{end}} category-uncategorized">
 
-                    <header class="entry-header">
-                        <h1 class="entry-title">{{.post.PostTitle}}</h1></header><!-- .entry-header -->
+                                <header class="entry-header">
+                                    <div class="entry-meta">
+                                        <span class="posted-on">
+                                            <span class="screen-reader-text">发布于</span>
+                                            <a href="/p/{{.post.Id}}" rel="bookmark">
+                                                <time class="entry-date published" datetime="{{.post.PostDateGmt}}">{{.post.PostDate|dateCh}}
+                                                </time>
+                                                <time class="updated" datetime="{{.post.PostModifiedGmt}}">{{.post.PostModified|dateCh}}
+                                                </time>
+                                            </a>
+                                        </span>
+                                        <span class="byline">
+                                            由
+                                            <span class="author vcard">
+                                                <a class="url fn n" href="/p/author/{{.user.UserLogin}}">{{.user.UserLogin}}</a>
+                                            </span>
+                                        </span>
+                                    </div>
+                                    <h1 class="entry-title">{{.post.PostTitle}}</h1>
+                                </header><!-- .entry-header -->
 
-                    <div class="entry-content">
-                        {{.post.PostContent|unescaped}}
-                    </div><!-- .entry-content -->
+                                <div class="entry-content">
+                                    {{.post.PostContent|unescaped}}
+                                </div><!-- .entry-content -->
 
-                    <footer class="entry-footer">
-                <span class="posted-on">
-                    <span class="screen-reader-text">发布于 </span>
-                    <a href="/p/{{.post.Id}}" rel="bookmark">
-                        <time class="entry-date published updated"
-                              datetime="{{.post.PostDateGmt}}">{{.post.PostDate|dateCh}}
-                        </time>
-                    </a>
-                </span>
-                <span class="byline">
-                    <span class="author vcard">
-                        <span class="screen-reader-text">作者 </span>
-                        <a class="url fn n" href="/p/author/{{.user.UserLogin}}">{{.user.UserLogin}}</a>
-                    </span>
-                </span>
-                        {{if .post.CategoriesHtml}}
-                            <span class="cat-links">
-                    <span class="screen-reader-text">分类 </span>
-                    {{.post.CategoriesHtml|unescaped}}
-                </span>
-                        {{end}}
+                                <footer class="entry-footer">
+                                    <span class="cat-tags-links">
+                                        {{if .post.CategoriesHtml}}
+                                             <span class="cat-links">
+                                                 <svg class="icon icon-folder-open" aria-hidden="true" role="img"> <use href="#icon-folder-open" xlink:href="#icon-folder-open"></use> </svg>
+                                                <span class="screen-reader-text">分类 </span>
+                                                {{.post.CategoriesHtml|unescaped}}
+                                            </span>
+                                         {{end}}
 
-                        {{if .post.TagsHtml}}
-                            <span class="tags-links">
-                    <span class="screen-reader-text">标签 </span>
-                    {{.post.TagsHtml|unescaped}}
-                </span>
-                        {{end}}
-                    </footer>
-                    <!-- .entry-footer -->
+                                        {{if .post.TagsHtml}}
+                                            <span class="tags-links">
+                                                <svg class="icon icon-hashtag" aria-hidden="true" role="img"> <use href="#icon-hashtag" xlink:href="#icon-hashtag"></use> </svg>
+                                                <span class="screen-reader-text">标签 </span>
+                                                {{.post.TagsHtml|unescaped}}
+                                            </span>
+                                        {{end}}
+                                    </span>
+                                </footer>
+                                <!-- .entry-footer -->
 
-                </article><!-- #post-1 -->
+                            </article><!-- #post-1 -->
 
-                {{ if .showComment}}
-                    <div id="comments" class="comments-area">
-                        {{ if gt .post.CommentCount 0}}
-                            <h2 class="comments-title">《{{.post.PostTitle}}》上有{{.post.CommentCount}}条评论 </h2>
-                        <ol class="comment-list">
-                            {{.comments|unescaped}}
-                        </ol>
+                            {{ if .showComment}}
+                                <div id="comments" class="comments-area">
+                                    {{ if gt .post.CommentCount 0}}
+                                        <h2 class="comments-title">《{{.post.PostTitle}}》上有{{.post.CommentCount}}条评论 </h2>
+                                        <ol class="comment-list">
+                                            {{.comments|unescaped}}
+                                        </ol>
 
-                        {{end}}
-                        {{if eq .post.CommentStatus "open"}}
-                            <div id="respond" class="comment-respond">
-                                <h3 id="reply-title" class="comment-reply-title">发表回复
-                                    <small>
-                                        <a rel="nofollow" id="cancel-comment-reply-link" href="/p/{{.post.Id}}#respond" style="display:none;">取消回复</a>
-                                    </small>
-                                </h3>
-                                <form action="/comment" method="post" id="commentform" class="comment-form"
-                                      novalidate="">
-                                    <p class="comment-notes">
-                                        <span id="email-notes">您的电子邮箱地址不会被公开。</span>
-                                        <span class="required-field-message" aria-hidden="true">必填项已用<span class="required" aria-hidden="true">*</span>标注</span>
-                                    </p>
-                                    <p class="comment-form-comment">
-                                        <label for="comment">评论 <span class="required" aria-hidden="true">*</span></label>
-                                        <textarea id="comment" name="comment" cols="45" rows="8" maxlength="65525" required=""></textarea></p>
-                                    <p class="comment-form-author">
-                                        <label for="author">显示名称 <span class="required" aria-hidden="true">*</span></label>
-                                        <input id="author" name="author" type="text" value="" size="30" maxlength="245"
-                                               required=""></p>
-                                    <p class="comment-form-email">
-                                        <label for="email">电子邮箱地址 <span class="required" aria-hidden="true">*</span></label>
-                                        <input id="email" name="email" type="email" value="" size="30" maxlength="100"
-                                               aria-describedby="email-notes" required="">
-                                    </p>
-                                    <p class="comment-form-url"><label for="url">网站地址</label>
-                                        <input id="url" name="url" type="url" value="" size="30" maxlength="200"></p>
-                                    <p class="comment-form-cookies-consent">
-                                        <input id="wp-comment-cookies-consent" name="wp-comment-cookies-consent" type="checkbox" value="yes">
-                                        <label for="wp-comment-cookies-consent">在此浏览器中保存我的显示名称、邮箱地址和网站地址，以便下次评论时使用。</label>
-                                    </p>
-                                    <p class="form-submit">
-                                        <input name="submit" type="submit" id="submit" class="submit" value="发表评论">
-                                        <input type="hidden" name="comment_post_ID" value="{{.post.Id}}" id="comment_post_ID">
-                                        <input type="hidden" name="comment_parent" id="comment_parent" value="0">
-                                    </p>
-                                </form>
-                            </div><!-- #respond -->
-                                {{else}}
-                            <p class="no-comments">评论已关闭。</p>
-                        {{end}}
-                    </div><!-- .comments-area -->
-                {{end}}
+                                    {{end}}
+                                    {{if eq .post.CommentStatus "open"}}
+                                        <div id="respond" class="comment-respond">
+                                            <h3 id="reply-title" class="comment-reply-title">发表回复
+                                                <small>
+                                                    <a rel="nofollow" id="cancel-comment-reply-link" href="/p/{{.post.Id}}#respond" style="display:none;">取消回复</a>
+                                                </small>
+                                            </h3>
+                                            <form action="/comment" method="post" id="commentform" class="comment-form"
+                                                  novalidate="">
+                                                <p class="comment-notes">
+                                                    <span id="email-notes">您的电子邮箱地址不会被公开。</span>
+                                                    <span class="required-field-message" aria-hidden="true">必填项已用<span class="required" aria-hidden="true">*</span>标注</span>
+                                                </p>
+                                                <p class="comment-form-comment">
+                                                    <label for="comment">评论 <span class="required" aria-hidden="true">*</span></label>
+                                                    <textarea id="comment" name="comment" cols="45" rows="8" maxlength="65525" required=""></textarea></p>
+                                                <p class="comment-form-author">
+                                                    <label for="author">显示名称 <span class="required" aria-hidden="true">*</span></label>
+                                                    <input id="author" name="author" type="text" value="" size="30" maxlength="245"
+                                                           required=""></p>
+                                                <p class="comment-form-email">
+                                                    <label for="email">电子邮箱地址 <span class="required" aria-hidden="true">*</span></label>
+                                                    <input id="email" name="email" type="email" value="" size="30" maxlength="100"
+                                                           aria-describedby="email-notes" required="">
+                                                </p>
+                                                <p class="comment-form-url"><label for="url">网站地址</label>
+                                                    <input id="url" name="url" type="url" value="" size="30" maxlength="200"></p>
+                                                <p class="comment-form-cookies-consent">
+                                                    <input id="wp-comment-cookies-consent" name="wp-comment-cookies-consent" type="checkbox" value="yes">
+                                                    <label for="wp-comment-cookies-consent">在此浏览器中保存我的显示名称、邮箱地址和网站地址，以便下次评论时使用。</label>
+                                                </p>
+                                                <p class="form-submit">
+                                                    <input name="submit" type="submit" id="submit" class="submit" value="发表评论">
+                                                    <input type="hidden" name="comment_post_ID" value="{{.post.Id}}" id="comment_post_ID">
+                                                    <input type="hidden" name="comment_parent" id="comment_parent" value="0">
+                                                </p>
+                                            </form>
+                                        </div><!-- #respond -->
+                                    {{else}}
+                                        <p class="no-comments">评论已关闭。</p>
+                                    {{end}}
+                                </div><!-- .comments-area -->
+                            {{end}}
 
 
-                <nav class="navigation post-navigation" aria-label="文章">
-                    <h2 class="screen-reader-text">文章导航</h2>
+                            <nav class="navigation post-navigation" aria-label="文章">
+                                <h2 class="screen-reader-text">文章导航</h2>
 
-                    <div class="nav-links">
-                        {{if gt .prev.Id 0}}
-                            <div class="nav-previous">
-                                <a href="/p/{{.prev.Id}}" rel="prev">
-                                    <span class="meta-nav" aria-hidden="true">上一篇</span>
-                                    <span class="screen-reader-text">上篇文章：</span>
-                                    <span class="post-title">{{.prev.PostTitle}}</span></a>
-                            </div>
-                        {{end}}
-                        {{if gt .next.Id 0}}
-                            <div class="nav-next">
-                                <a href="/p/{{.next.Id}}" rel="next">
-                                    <span class="meta-nav" aria-hidden="true">下一篇</span>
-                                    <span class="screen-reader-text">下篇文章：</span>
-                                    <span class="post-title">{{.next.PostTitle}}</span></a>
-                            </div>
-                        {{end}}
+                                <div class="nav-links">
+                                    {{if gt .prev.Id 0}}
+                                        <div class="nav-previous">
+                                            <a href="/p/{{.prev.Id}}" rel="prev">
+                                                <span class="meta-nav" aria-hidden="true">上一篇</span>
+                                                <span class="screen-reader-text">上篇文章：</span>
+                                                <span class="post-title">{{.prev.PostTitle}}</span></a>
+                                        </div>
+                                    {{end}}
+                                    {{if gt .next.Id 0}}
+                                        <div class="nav-next">
+                                            <a href="/p/{{.next.Id}}" rel="next">
+                                                <span class="meta-nav" aria-hidden="true">下一篇</span>
+                                                <span class="screen-reader-text">下篇文章：</span>
+                                                <span class="post-title">{{.next.PostTitle}}</span></a>
+                                        </div>
+                                    {{end}}
 
+                                </div>
+                            </nav>
+                        </main><!-- .site-main -->
                     </div>
-                </nav>
-            </main><!-- .site-main -->
+
+                    <aside id="secondary" class="widget-area" aria-label="博客边栏">
+                        {{template "layout/sidebar" .}}
+                    </aside>
+                </div>
+            </div>
         </div>
+
     {{else}}
         {{template "layout/empty"}}
     {{end }}
 {{end}}
-{{ define "footer"}}
+
+
+{{ define "footerx"}}
     <script src='/wp-includes/js/comment-reply.min.js?ver=6.0.2' id='comment-reply-js'></script>
 {{end}}
+

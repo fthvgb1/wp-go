@@ -48,3 +48,10 @@ func AnyAnyToStrAny(m map[any]any) (r map[string]any) {
 	}
 	return
 }
+
+func Reduce[T, V any, K comparable](m map[K]V, fn func(K, V, T) T, r T) T {
+	for k, v := range m {
+		r = fn(k, v, r)
+	}
+	return r
+}
