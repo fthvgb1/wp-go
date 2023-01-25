@@ -6,7 +6,7 @@
         {{block "head" .}}
         {{end}}
     </head>
-    <body class="home blog wp-embed-responsive hfeed has-header-image has-sidebar colors-light">
+    <body class="{{.bodyClass}} wp-embed-responsive hfeed has-header-image has-sidebar colors-light">
     {{template "svg"}}
     <div id="page" class="site">
         <a class="skip-link screen-reader-text" href="#content">跳至内容</a>
@@ -16,7 +16,7 @@
             <div class="custom-header" style="margin-bottom: 0px;">
                 <div class="custom-header-media">
                     <div id="wp-custom-header" class="wp-custom-header">
-                        <img src="{{.HeaderImage.Path}}" width="{{.HeaderImage.Width}}" height="{{.HeaderImage.Height}}" alt="" {{if .HeaderImage.Srcset}}srcset="{{.HeaderImage.Srcset}}" {{end}} {{if .HeaderImage.Sizes}}sizes="{{.HeaderImage.Srcset}}" {{end}}>
+                        <img src="{{.HeaderImage.Path}}" width="{{.HeaderImage.Width}}" height="{{.HeaderImage.Height}}" alt="" {{if .HeaderImage.Srcset}}srcset="{{.HeaderImage.Srcset}}" {{end}} {{if .HeaderImage.Sizes}}sizes="{{.HeaderImage.Sizes}}" {{end}}>
                     </div>
                 </div>
 
@@ -44,21 +44,17 @@
         </header>
 
 
-        <div class="site-content-contain">
-            <div id="content" class="site-content">
-                {{block "content" .}}
+        {{block "content" .}}
 
-                {{end}}
-            </div>
+        {{end}}
 
-            <footer id="colophon" class="site-footer">
-                <div class="wrap">
-                    <div class="site-info">
-                        <a href="https://cn.wordpress.org/" class="imprint">自豪地采用WordPress</a>
-                    </div>
+        <footer id="colophon" class="site-footer">
+            <div class="wrap">
+                <div class="site-info">
+                    <a href="https://cn.wordpress.org/" class="imprint">自豪地采用WordPress</a>
                 </div>
-            </footer>
-        </div>
+            </div>
+        </footer>
 
 
     </div>

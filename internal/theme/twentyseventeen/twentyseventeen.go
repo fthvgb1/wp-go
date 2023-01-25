@@ -1,8 +1,11 @@
 package twentyseventeen
 
 import (
+	"fmt"
 	"github.com/elliotchance/phpserialize"
 	"github.com/fthvgb1/wp-go/helper/maps"
+	"github.com/fthvgb1/wp-go/helper/slice"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
@@ -44,6 +47,7 @@ func Hook(status int, c *gin.Context, h gin.H, scene, stats int) {
 	templ := "twentyseventeen/posts/index.gohtml"
 	if _, ok := plugins.IndexSceneMap[scene]; ok {
 		h["HeaderImage"] = getHeaderImage(c)
+		posts := h["posts"].([]models.Posts)
 		p, ok := h["pagination"]
 		if ok {
 			pp, ok := p.(pagination.ParsePagination)
@@ -51,18 +55,58 @@ func Hook(status int, c *gin.Context, h gin.H, scene, stats int) {
 				h["pagination"] = pagination.Paginate(paginate, pp)
 			}
 		}
+		d := 0
+		s := ""
+		if scene == plugins.Search {
+			if len(posts) > 0 {
+				d = 1
+			} else {
+				d = 0
+			}
+		} else if scene == plugins.Category {
+			cate := slice.Filter(cache.Categories(c), func(my models.TermsMy) bool {
+				return my.Name == c.Param("category")
+			})[0]
+			d = int(cate.Terms.TermId)
+			if cate.Slug[0] != '%' {
+				s = cate.Slug
+			}
+		}
+		h["bodyClass"] = bodyClass(scene, d, s)
+		h["posts"] = postThumbnail(posts, scene)
 	} else if scene == plugins.Detail {
 		h["HeaderImage"] = getHeaderImage(c)
+		post := h["post"].(models.Posts)
+		h["bodyClass"] = bodyClass(scene, int(post.Id))
+		host, _ := wpconfig.Options.Load("siteurl")
+		img := plugins.Thumbnail(post.Thumbnail.OriginAttachmentData, "thumbnail", host, "thumbnail", "post-thumbnail")
+		img.Width = img.OriginAttachmentData.Width
+		img.Height = img.OriginAttachmentData.Height
+		img.Sizes = "100vw"
+		img.Srcset = fmt.Sprintf("%s %dw, %s", img.Path, img.Width, img.Srcset)
+		post.Thumbnail = img
+		h["post"] = post
 		templ = "twentyseventeen/posts/detail.gohtml"
 	}
 	c.HTML(status, templ, h)
 	return
 }
 
+func postThumbnail(posts []models.Posts, scene int) []models.Posts {
+	return slice.Map(posts, func(t models.Posts) models.Posts {
+		if t.Thumbnail.Path != "" {
+			if slice.IsContained(scene, []int{plugins.Home, plugins.Archive, plugins.Search}) {
+				t.Thumbnail.Sizes = "(max-width: 767px) 89vw, (max-width: 1000px) 54vw, (max-width: 1071px) 543px, 580px"
+			} else {
+				t.Thumbnail.Sizes = "100vw"
+			}
+		}
+		return t
+	})
+}
+
 func getHeaderImage(c *gin.Context) (r models.PostThumbnail) {
 	r.Path = "/wp-content/themes/twentyseventeen/assets/images/header.jpg"
-	r.Width = 2000
-	r.Height = 1200
 	meta, err := getHeaderMarkup()
 	if err != nil {
 		logs.ErrPrintln(err, "解析主题背景图设置错误")
@@ -74,10 +118,18 @@ func getHeaderImage(c *gin.Context) (r models.PostThumbnail) {
 			logs.ErrPrintln(err, "获取主题背景图信息错误")
 			return
 		}
+		host, _ := wpconfig.Options.Load("siteurl")
+		m.Thumbnail = plugins.Thumbnail(m.AttachmentMetadata, "thumbnail", host, "thumbnail", "post-thumbnail", "twentyseventeen-thumbnail-avatar")
 		if m.Thumbnail.Path != "" {
 			r = m.Thumbnail
+			if len(m.AttachmentMetadata.Sizes) > 0 {
+				r.Srcset = str.Join(r.Path, " 2000vw, ", r.Srcset)
+			}
 		}
 	}
+	r.Width = 2000
+	r.Height = 1200
+	r.Sizes = "100vw"
 	return
 }
 
@@ -92,4 +144,26 @@ func getHeaderMarkup() (r HeaderImageMeta, err error) {
 		}
 	}
 	return
+}
+
+func bodyClass(scene, d int, a ...any) string {
+	s := ""
+	if scene == plugins.Search {
+		if d > 0 {
+			s = "search-results"
+		} else {
+			s = "search-no-results"
+		}
+	} else if scene == plugins.Category {
+		s = fmt.Sprintf("category-%d %v", d, a[0])
+	} else if scene == plugins.Detail {
+		s = fmt.Sprintf("postid-%d", d)
+	}
+	return map[int]string{
+		plugins.Home:     "home blog ",
+		plugins.Archive:  "archive date page-two-column",
+		plugins.Category: str.Join("archive category page-two-column ", s),
+		plugins.Search:   str.Join("search ", s),
+		plugins.Detail:   str.Join("post-template-default single single-post single-format-standard ", s),
+	}[scene]
 }
