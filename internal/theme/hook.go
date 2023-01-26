@@ -3,6 +3,7 @@ package theme
 import (
 	"errors"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
+	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
 	"github.com/fthvgb1/wp-go/plugin/pagination"
 	"github.com/gin-gonic/gin"
@@ -34,6 +35,7 @@ func Hook(themeName string, code int, c *gin.Context, h gin.H, scene, status int
 		c.HTML(code, "twentyfifteen/posts/index.gohtml", h)
 		return
 	} else if scene == plugins.Detail {
+		h["comments"] = plugins.FormatComments(c, plugins.CommentRender(), h["comments"].([]models.Comments), h["maxDep"].(int))
 		c.HTML(code, "twentyfifteen/posts/detail.gohtml", h)
 		return
 	}
