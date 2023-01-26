@@ -64,9 +64,19 @@ func Hook(status int, c *gin.Context, h gin.H, scene, stats int) {
 				d = 0
 			}
 		} else if scene == plugins.Category {
-			cate := slice.Filter(cache.Categories(c), func(my models.TermsMy) bool {
-				return my.Name == c.Param("category")
-			})[0]
+			cat := c.Param("category")
+			_, cate := slice.First(cache.Categories(c), func(my models.TermsMy) bool {
+				return my.Name == cat
+			})
+			d = int(cate.Terms.TermId)
+			if cate.Slug[0] != '%' {
+				s = cate.Slug
+			}
+		} else if scene == plugins.Tag {
+			cat := c.Param("tag")
+			_, cate := slice.First(cache.Tags(c), func(my models.TermsMy) bool {
+				return my.Name == cat
+			})
 			d = int(cate.Terms.TermId)
 			if cate.Slug[0] != '%' {
 				s = cate.Slug
@@ -175,7 +185,7 @@ func bodyClass(scene, d int, a ...any) string {
 		} else {
 			s = "search-no-results"
 		}
-	} else if scene == plugins.Category {
+	} else if scene == plugins.Category || scene == plugins.Tag {
 		s = fmt.Sprintf("category-%d %v", d, a[0])
 	} else if scene == plugins.Detail {
 		s = fmt.Sprintf("postid-%d", d)
@@ -184,6 +194,7 @@ func bodyClass(scene, d int, a ...any) string {
 		plugins.Home:     "home blog ",
 		plugins.Archive:  "archive date page-two-column",
 		plugins.Category: str.Join("archive category page-two-column ", s),
+		plugins.Tag:      str.Join("archive category page-two-column ", s),
 		plugins.Search:   str.Join("search ", s),
 		plugins.Detail:   str.Join("post-template-default single single-post single-format-standard ", s),
 	}[scene]

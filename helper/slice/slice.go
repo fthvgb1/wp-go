@@ -20,6 +20,32 @@ func FilterAndMap[N any, T any](arr []T, fn func(T) (N, bool)) (r []N) {
 	return
 }
 
+func Walk[T any](arr []T, fn func(*T)) {
+	for i := 0; i < len(arr); i++ {
+		fn(&arr[i])
+	}
+}
+
+func First[T any](arr []T, fn func(T) bool) (int, T) {
+	for i, t := range arr {
+		if fn(t) {
+			return i, t
+		}
+	}
+	var r T
+	return -1, r
+}
+
+func Last[T any](arr []T, fn func(T) bool) (int, T) {
+	for i := len(arr) - 1; i > 0; i-- {
+		if fn(arr[i]) {
+			return i, arr[i]
+		}
+	}
+	var r T
+	return -1, r
+}
+
 func Filter[T any](arr []T, fn func(T) bool) []T {
 	var r []T
 	for _, t := range arr {

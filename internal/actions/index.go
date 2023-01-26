@@ -140,6 +140,7 @@ func (h *indexHandle) parseParams() (err error) {
 	if category == "" {
 		category = h.c.Param("tag")
 		if category != "" {
+			h.scene = plugins.Tag
 			allNames := cache.AllTagsNames(h.c)
 			if _, ok := allNames[category]; !ok {
 				return errors.New(str.Join("not exists tag ", category))
@@ -148,6 +149,7 @@ func (h *indexHandle) parseParams() (err error) {
 			h.header = fmt.Sprintf("标签： <span>%s</span>", category)
 		}
 	} else {
+		h.scene = plugins.Category
 		allNames := cache.AllCategoryNames(h.c)
 		if _, ok := allNames[category]; !ok {
 			return errors.New(str.Join("not exists category ", category))
@@ -189,7 +191,6 @@ func (h *indexHandle) parseParams() (err error) {
 			"left join", "wp_terms d", "c.term_id=d.term_id",
 		})
 		h.setTitleLR(category, wpconfig.Options.Value("blogname"))
-		h.scene = plugins.Category
 	}
 	s := h.c.Query("s")
 	if s != "" && strings.Replace(s, " ", "", -1) != "" {

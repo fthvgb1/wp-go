@@ -8,6 +8,7 @@ const (
 	Home = iota + 1
 	Archive
 	Category
+	Tag
 	Search
 	Detail
 
@@ -21,6 +22,7 @@ var IndexSceneMap = map[int]struct{}{
 	Home:     {},
 	Archive:  {},
 	Category: {},
+	Tag:      {},
 	Search:   {},
 }
 

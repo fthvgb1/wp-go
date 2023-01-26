@@ -1,6 +1,7 @@
 package slice
 
 import (
+	"fmt"
 	"github.com/fthvgb1/wp-go/helper/number"
 	"reflect"
 	"testing"
@@ -524,6 +525,129 @@ func TestToAnySlice(t *testing.T) {
 			if got := ToAnySlice(tt.args.a); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("ToAnySlice() = %v, want %v", got, tt.want)
 			}
+		})
+	}
+}
+
+func TestFirst(t *testing.T) {
+	type args[T int] struct {
+		arr []T
+		fn  func(T) bool
+	}
+	type testCase[T int] struct {
+		name  string
+		args  args[T]
+		want  int
+		want1 T
+	}
+	tests := []testCase[int]{
+		{
+			name: "t1",
+			args: args[int]{
+				arr: number.Range(1, 10, 1),
+				fn: func(t int) bool {
+					return t == 5
+				},
+			},
+			want:  4,
+			want1: 5,
+		}, {
+			name: "t2",
+			args: args[int]{
+				arr: number.Range(1, 10, 1),
+				fn: func(t int) bool {
+					return t == 11
+				},
+			},
+			want:  -1,
+			want1: 0,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, got1 := First(tt.args.arr, tt.args.fn)
+			if got != tt.want {
+				t.Errorf("First() got = %v, want %v", got, tt.want)
+			}
+			if !reflect.DeepEqual(got1, tt.want1) {
+				t.Errorf("First() got1 = %v, want %v", got1, tt.want1)
+			}
+		})
+	}
+}
+
+func TestLast(t *testing.T) {
+	type args[T int] struct {
+		arr []T
+		fn  func(T) bool
+	}
+	type testCase[T int] struct {
+		name  string
+		args  args[T]
+		want  int
+		want1 T
+	}
+	tests := []testCase[int]{
+		{
+			name: "t1",
+			args: args[int]{
+				arr: []int{1, 55, 5, 5, 5, 5, 22},
+				fn: func(t int) bool {
+					return t == 5
+				},
+			},
+			want:  5,
+			want1: 5,
+		}, {
+			name: "t2",
+			args: args[int]{
+				arr: number.Range(1, 10, 1),
+				fn: func(t int) bool {
+					return t == 11
+				},
+			},
+			want:  -1,
+			want1: 0,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, got1 := Last(tt.args.arr, tt.args.fn)
+			if got != tt.want {
+				t.Errorf("Last() got = %v, want %v", got, tt.want)
+			}
+			if !reflect.DeepEqual(got1, tt.want1) {
+				t.Errorf("Last() got1 = %v, want %v", got1, tt.want1)
+			}
+		})
+	}
+}
+
+func TestWalk(t *testing.T) {
+	type args[T int] struct {
+		arr []T
+		fn  func(*T)
+	}
+	type testCase[T int] struct {
+		name string
+		args args[T]
+	}
+	tests := []testCase[int]{
+		{
+			name: "t1",
+			args: args[int]{
+				arr: number.Range(1, 10, 1),
+				fn: func(i *int) {
+					*i = *i * 2
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			fmt.Println(tt.args.arr)
+			Walk(tt.args.arr, tt.args.fn)
+			fmt.Println(tt.args.arr)
 		})
 	}
 }
