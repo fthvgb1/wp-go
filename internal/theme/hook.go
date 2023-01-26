@@ -11,7 +11,7 @@ import (
 
 var themeMap = map[string]func(int, *gin.Context, gin.H, int, int){}
 
-func AddThemeHookFunc(name string, fn func(int, *gin.Context, gin.H, int, int)) {
+func addThemeHookFunc(name string, fn func(int, *gin.Context, gin.H, int, int)) {
 	if _, ok := themeMap[name]; ok {
 		panic("exists same name theme")
 	}

@@ -7,7 +7,7 @@ import (
 )
 
 func InitThemeAndTemplateFuncMap() {
-	AddThemeHookFunc(twentyseventeen.ThemeName, twentyseventeen.Hook)
+	addThemeHookFunc(twentyseventeen.ThemeName, twentyseventeen.Hook)
 }
 
 func GetTemplateName() string {
