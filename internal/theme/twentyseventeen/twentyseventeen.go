@@ -86,10 +86,31 @@ func Hook(status int, c *gin.Context, h gin.H, scene, stats int) {
 		img.Srcset = fmt.Sprintf("%s %dw, %s", img.Path, img.Width, img.Srcset)
 		post.Thumbnail = img
 		h["post"] = post
+		comments := h["comments"].([]models.Comments)
+		dep := h["maxDep"].(int)
+		h["comments"] = plugins.FormatComments(c, comment{}, comments, dep)
 		templ = "twentyseventeen/posts/detail.gohtml"
 	}
 	c.HTML(status, templ, h)
 	return
+}
+
+type comment struct {
+	plugins.CommonCommentFormat
+}
+
+func (c comment) FormatLi(ctx *gin.Context, m models.Comments, depth int, eo, parent string) string {
+	templ := plugins.CommonLi()
+	templ = strings.ReplaceAll(templ, `<a rel="nofollow" class="comment-reply-link"
+               href="/p/{{PostId}}?replytocom={{CommentId}}#respond" data-commentid="{{CommentId}}" data-postid="{{PostId}}"
+               data-belowelement="div-comment-{{CommentId}}" data-respondelement="respond"
+               data-replyto="回复给{{CommentAuthor}}"
+               aria-label="回复给{{CommentAuthor}}">回复</a>`, `<a rel="nofollow" class="comment-reply-link"
+               href="/p/{{PostId}}?replytocom={{CommentId}}#respond" data-commentid="{{CommentId}}" data-postid="{{PostId}}"
+               data-belowelement="div-comment-{{CommentId}}" data-respondelement="respond"
+               data-replyto="回复给{{CommentAuthor}}"
+               aria-label="回复给{{CommentAuthor}}"><svg class="icon icon-mail-reply" aria-hidden="true" role="img"> <use href="#icon-mail-reply" xlink:href="#icon-mail-reply"></use> </svg>回复</a>`)
+	return plugins.FormatLi(templ, ctx, m, depth, eo, parent)
 }
 
 func postThumbnail(posts []models.Posts, scene int) []models.Posts {

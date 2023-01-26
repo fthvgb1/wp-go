@@ -1,0 +1,38 @@
+{{define "respond"}}
+    <div id="respond" class="comment-respond">
+        <h3 id="reply-title" class="comment-reply-title">发表回复
+            <small>
+                <a rel="nofollow" id="cancel-comment-reply-link" href="/p/{{.post.Id}}#respond" style="display:none;">取消回复</a>
+            </small>
+        </h3>
+        <form action="/comment" method="post" id="commentform" class="comment-form"
+              novalidate="">
+            <p class="comment-notes">
+                <span id="email-notes">您的电子邮箱地址不会被公开。</span>
+                <span class="required-field-message" aria-hidden="true">必填项已用<span class="required" aria-hidden="true">*</span>标注</span>
+            </p>
+            <p class="comment-form-comment">
+                <label for="comment">评论 <span class="required" aria-hidden="true">*</span></label>
+                <textarea id="comment" name="comment" cols="45" rows="8" maxlength="65525" required=""></textarea></p>
+            <p class="comment-form-author">
+                <label for="author">显示名称 <span class="required" aria-hidden="true">*</span></label>
+                <input id="author" name="author" type="text" value="" size="30" maxlength="245"
+                       required=""></p>
+            <p class="comment-form-email">
+                <label for="email">电子邮箱地址 <span class="required" aria-hidden="true">*</span></label>
+                <input id="email" name="email" type="email" value="" size="30" maxlength="100"
+                       aria-describedby="email-notes" required="">
+            </p>
+            <p class="comment-form-url">
+                <label for="url">网站地址</label>
+                <input id="url" name="url" type="url" value="" size="30" maxlength="200">
+            </p>
+
+            <p class="form-submit">
+                <input name="submit" type="submit" id="submit" class="submit" value="发表评论">
+                <input type="hidden" name="comment_post_ID" value="{{.post.Id}}" id="comment_post_ID">
+                <input type="hidden" name="comment_parent" id="comment_parent" value="0">
+            </p>
+        </form>
+    </div>
+{{end}}

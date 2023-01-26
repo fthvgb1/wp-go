@@ -26,7 +26,7 @@ func GetTemplate() *multipTemplate.MultipleFsTemplate {
 
 // 所有主题模板通用设置
 func commonTemplate(t *multipTemplate.MultipleFsTemplate) {
-	m, err := fs.Glob(t.Fs, "*/*[^layout]/*.gohtml")
+	m, err := fs.Glob(t.Fs, "*/posts/*.gohtml")
 	if err != nil {
 		panic(err)
 	}
