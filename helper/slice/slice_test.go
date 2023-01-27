@@ -651,3 +651,192 @@ func TestWalk(t *testing.T) {
 		})
 	}
 }
+
+func TestFill(t *testing.T) {
+	type args[T int] struct {
+		start int
+		len   int
+		v     T
+	}
+	type testCase[T int] struct {
+		name string
+		args args[T]
+		want []T
+	}
+	tests := []testCase[int]{
+		{
+			name: "t1",
+			args: args[int]{
+				start: 2,
+				len:   3,
+				v:     1,
+			},
+			want: []int{0, 0, 1, 1, 1},
+		}, {
+			name: "t2",
+			args: args[int]{
+				start: 0,
+				len:   3,
+				v:     2,
+			},
+			want: []int{2, 2, 2},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Fill(tt.args.start, tt.args.len, tt.args.v); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Fill() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPad(t *testing.T) {
+	type args[T int] struct {
+		a      []T
+		length int
+		v      T
+	}
+	type testCase[T int] struct {
+		name string
+		args args[T]
+		want []T
+	}
+	tests := []testCase[int]{
+		{
+			name: "length >0",
+			args: args[int]{
+				a:      []int{1, 2},
+				length: 5,
+				v:      10,
+			},
+			want: []int{1, 2, 10, 10, 10},
+		},
+		{
+			name: "length <0",
+			args: args[int]{
+				a:      []int{1, 2},
+				length: -5,
+				v:      10,
+			},
+			want: []int{10, 10, 10, 1, 2},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Pad(tt.args.a, tt.args.length, tt.args.v); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Pad() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestPop(t *testing.T) {
+	type args[T int] struct {
+		a *[]T
+	}
+	type testCase[T int] struct {
+		name string
+		args args[T]
+		want T
+	}
+	a := number.Range(1, 10, 1)
+	tests := []testCase[int]{
+		{
+			name: "t1",
+			args: args[int]{
+				a: &a,
+			},
+			want: 10,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Pop(tt.args.a); !reflect.DeepEqual(got, tt.want) && !reflect.DeepEqual(a, number.Range(1, 9, 1)) {
+				t.Errorf("Pop() = %v, want %v", got, tt.want)
+			}
+			fmt.Println(a)
+		})
+	}
+}
+
+func TestRand(t *testing.T) {
+	type args[T int] struct {
+		a []T
+	}
+	type testCase[T int] struct {
+		name string
+		args args[T]
+	}
+	tests := []testCase[int]{
+		{
+			name: "t1",
+			args: args[int]{
+				number.Range(1, 5, 1),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			for i := 0; i < 50; i++ {
+				got, got1 := Rand(tt.args.a)
+				fmt.Println(got, got1)
+			}
+		})
+	}
+}
+
+func TestRandPop(t *testing.T) {
+	type args[T int] struct {
+		a *[]T
+	}
+	type testCase[T int] struct {
+		name string
+		args args[T]
+		want T
+	}
+	a := number.Range(1, 10, 1)
+	tests := []testCase[int]{
+		{
+			name: "t1",
+			args: args[int]{
+				a: &a,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			for i := 0; i < 11; i++ {
+				got, l := RandPop(tt.args.a)
+				fmt.Println(got, l, a)
+			}
+		})
+	}
+}
+
+func TestShift(t *testing.T) {
+	type args[T int] struct {
+		a *[]T
+	}
+	type testCase[T int] struct {
+		name  string
+		args  args[T]
+		want  T
+		want1 int
+	}
+	a := number.Range(1, 10, 1)
+	tests := []testCase[int]{
+		{
+			name: "t1",
+			args: args[int]{&a},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			for i := 0; i < 11; i++ {
+				got, got1 := Shift(tt.args.a)
+				fmt.Println(got, got1)
+			}
+		})
+	}
+}

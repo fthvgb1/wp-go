@@ -55,3 +55,15 @@ func Reduce[T, V any, K comparable](m map[K]V, fn func(K, V, T) T, r T) T {
 	}
 	return r
 }
+
+func Replace[K comparable, V any](m map[K]V, mm ...map[K]V) map[K]V {
+	for _, n := range mm {
+		for k, v := range n {
+			_, ok := m[k]
+			if ok {
+				m[k] = v
+			}
+		}
+	}
+	return m
+}
