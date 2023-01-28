@@ -16,13 +16,13 @@ func TestNewSimpleMapStream(t *testing.T) {
 	type testCase[K int, V int] struct {
 		name string
 		args args[K, V]
-		want SimpleMapStream[K, V]
+		want MapStream[K, V]
 	}
 	tests := []testCase[int, int]{
 		{
 			name: "t1",
 			args: args[int, int]{make(map[int]int)},
-			want: SimpleMapStream[int, int]{make(map[int]int)},
+			want: MapStream[int, int]{make(map[int]int)},
 		},
 	}
 	for _, tt := range tests {
@@ -41,14 +41,14 @@ var w = slice.ToMap(y, func(v int) (int, int) {
 
 func TestSimpleMapFilterAndMapToSlice(t *testing.T) {
 	type args[K int, V int, R int] struct {
-		mm SimpleMapStream[K, V]
+		mm MapStream[K, V]
 		fn func(K, V) (R, bool)
 		c  int
 	}
 	type testCase[K int, V int, R int] struct {
 		name string
 		args args[K, V, R]
-		want SimpleSliceStream[R]
+		want Stream[R]
 	}
 	tests := []testCase[int, int, int]{
 		{
@@ -63,7 +63,7 @@ func TestSimpleMapFilterAndMapToSlice(t *testing.T) {
 				},
 				c: 6,
 			},
-			want: NewSimpleSliceStream(y[500:]),
+			want: NewStream(y[500:]),
 		},
 	}
 	for _, tt := range tests {
@@ -79,14 +79,14 @@ func TestSimpleMapFilterAndMapToSlice(t *testing.T) {
 
 func TestSimpleMapParallelFilterAndMapToMap(t *testing.T) {
 	type args[KK string, VV string, K int, V int] struct {
-		mm SimpleMapStream[K, V]
+		mm MapStream[K, V]
 		fn func(K, V) (KK, VV, bool)
 		c  int
 	}
 	type testCase[KK string, VV string, K int, V int] struct {
 		name string
 		args args[KK, VV, K, V]
-		want SimpleMapStream[KK, VV]
+		want MapStream[KK, VV]
 	}
 	tests := []testCase[string, string, int, int]{
 		{
@@ -119,13 +119,13 @@ func TestSimpleMapParallelFilterAndMapToMap(t *testing.T) {
 
 func TestSimpleMapStreamFilterAndMapToMap(t *testing.T) {
 	type args[KK string, VV string, K int, V int] struct {
-		a  SimpleMapStream[K, V]
+		a  MapStream[K, V]
 		fn func(K, V) (KK, VV, bool)
 	}
 	type testCase[KK string, VV string, K int, V int] struct {
 		name  string
 		args  args[KK, VV, K, V]
-		wantR SimpleMapStream[KK, VV]
+		wantR MapStream[KK, VV]
 	}
 	tests := []testCase[string, string, int, int]{
 		{
@@ -161,7 +161,7 @@ func TestSimpleMapStream_ForEach(t *testing.T) {
 	}
 	type testCase[K int, V int] struct {
 		name string
-		r    SimpleMapStream[K, V]
+		r    MapStream[K, V]
 		args args[K, V]
 	}
 	tests := []testCase[int, int]{
@@ -187,7 +187,7 @@ func TestSimpleMapStream_ForEach(t *testing.T) {
 func TestSimpleMapStream_Len(t *testing.T) {
 	type testCase[K int, V int] struct {
 		name string
-		r    SimpleMapStream[K, V]
+		r    MapStream[K, V]
 		want int
 	}
 	tests := []testCase[int, int]{
@@ -213,7 +213,7 @@ func TestSimpleMapStream_ParallelForEach(t *testing.T) {
 	}
 	type testCase[K int, V int] struct {
 		name string
-		r    SimpleMapStream[K, V]
+		r    MapStream[K, V]
 		args args[K, V]
 	}
 	tests := []testCase[int, int]{
@@ -238,7 +238,7 @@ func TestSimpleMapStream_ParallelForEach(t *testing.T) {
 func TestSimpleMapStream_Result(t *testing.T) {
 	type testCase[K int, V int] struct {
 		name string
-		r    SimpleMapStream[K, V]
+		r    MapStream[K, V]
 		want map[K]V
 	}
 	tests := []testCase[int, int]{
