@@ -23,6 +23,10 @@ Mail:
   Port: 465
   Ssl: true
 
+ssl:
+  cert: ""
+  key: ""
+
 # 最近文章缓存时间
 recentPostCacheTime: 5m
 # 分类缓存时间

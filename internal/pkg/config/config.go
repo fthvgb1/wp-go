@@ -11,6 +11,7 @@ import (
 var Conf safety.Var[Config]
 
 type Config struct {
+	Ssl                     Ssl             `yaml:"ssl"`
 	Mysql                   Mysql           `yaml:"mysql"`
 	Mail                    Mail            `yaml:"mail"`
 	RecentPostCacheTime     time.Duration   `yaml:"recentPostCacheTime"`
@@ -39,6 +40,11 @@ type Config struct {
 	TrustServerNames        []string        `yaml:"trustServerNames"`
 	Theme                   string          `yaml:"theme"`
 	PostOrder               string          `yaml:"postOrder"`
+}
+
+type Ssl struct {
+	Cert string `yaml:"cert"`
+	Key  string `yaml:"key"`
 }
 
 type Mail struct {

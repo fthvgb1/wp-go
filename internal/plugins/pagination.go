@@ -29,7 +29,7 @@ var twentyFifteen = PageEle{
             <span class="meta-nav screen-reader-text">页 </span>%d</span>`,
 }
 
-func (p PageEle) Current(page int) string {
+func (p PageEle) Current(page, totalPage int) string {
 	return fmt.Sprintf(p.CurrentEle, page)
 }
 
