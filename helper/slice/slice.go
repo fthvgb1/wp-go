@@ -1,6 +1,9 @@
 package slice
 
-import "github.com/fthvgb1/wp-go/helper"
+import (
+	"github.com/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/helper/number"
+)
 
 func Map[T, R any](arr []T, fn func(T) R) []R {
 	r := make([]R, 0, len(arr))
@@ -18,6 +21,32 @@ func FilterAndMap[N any, T any](arr []T, fn func(T) (N, bool)) (r []N) {
 		}
 	}
 	return
+}
+
+func Walk[T any](arr []T, fn func(*T)) {
+	for i := 0; i < len(arr); i++ {
+		fn(&arr[i])
+	}
+}
+
+func SearchFirst[T any](arr []T, fn func(T) bool) (int, T) {
+	for i, t := range arr {
+		if fn(t) {
+			return i, t
+		}
+	}
+	var r T
+	return -1, r
+}
+
+func SearchLast[T any](arr []T, fn func(T) bool) (int, T) {
+	for i := len(arr) - 1; i > 0; i-- {
+		if fn(arr[i]) {
+			return i, arr[i]
+		}
+	}
+	var r T
+	return -1, r
 }
 
 func Filter[T any](arr []T, fn func(T) bool) []T {
@@ -163,4 +192,69 @@ func GroupBy[K comparable, T, V any](a []T, fn func(T) (K, V)) map[K][]V {
 
 func ToAnySlice[T any](a []T) []any {
 	return Map(a, helper.ToAny[T])
+}
+
+// Fill 用指定值填充一个切片
+func Fill[T any](start, len int, v T) []T {
+	r := make([]T, start+len)
+	for i := 0; i < len; i++ {
+		r[start+i] = v
+	}
+	return r
+}
+
+// Pad 以指定长度将一个值填充进切片 returns a copy of the array padded to size specified by length with value. If length is positive then the array is padded on the right, if it's negative then on the left. If the absolute value of length is less than or equal to the length of the array then no padding takes place.
+func Pad[T any](a []T, length int, v T) []T {
+	l := len(a)
+	if length > l {
+		return append(a, Fill(0, length-l, v)...)
+	} else if length < 0 && -length > l-1 {
+		return append(Fill(0, -length-2, v), a...)
+	}
+	return a
+}
+
+// Pop 弹出最后一个元素
+func Pop[T any](a *[]T) T {
+	arr := *a
+	v := arr[len(arr)-1]
+
+	*a = append(arr[:len(arr)-1])
+	return v
+}
+
+// Rand 随机取一个元素
+func Rand[T any](a []T) (int, T) {
+	i := number.Rand(0, len(a)-1)
+	return i, a[i]
+}
+
+// RandPop 随机弹出一个元素并返回那个剩余长度
+func RandPop[T any](a *[]T) (T, int) {
+	arr := *a
+	if len(arr) == 0 {
+		var r T
+		return r, 0
+	}
+	i := number.Rand(0, len(arr)-1)
+	v := arr[i]
+	if len(arr)-1 == i {
+		*a = append(arr[:i])
+	} else {
+		*a = append(arr[:i], arr[i+1:]...)
+	}
+	return v, len(arr) - 1
+}
+
+// Shift 将切片的第一个单元移出并作为结果返回
+func Shift[T any](a *[]T) (T, int) {
+	arr := *a
+	l := len(arr)
+	if l > 0 {
+		v := arr[0]
+		*a = arr[1:]
+		return v, l - 1
+	}
+	var r T
+	return r, 0
 }

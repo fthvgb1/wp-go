@@ -9,7 +9,7 @@ import (
 	"testing"
 )
 
-var s = NewSimpleSliceStream(number.Range(1, 10, 1))
+var s = NewStream(number.Range(1, 10, 1))
 
 func TestSimpleSliceStream_Filter(t *testing.T) {
 	type args[T int] struct {
@@ -17,9 +17,9 @@ func TestSimpleSliceStream_Filter(t *testing.T) {
 	}
 	type testCase[T int] struct {
 		name string
-		r    SimpleSliceStream[T]
+		r    Stream[T]
 		args args[T]
-		want SimpleSliceStream[T]
+		want Stream[T]
 	}
 	tests := []testCase[int]{
 		{
@@ -33,7 +33,7 @@ func TestSimpleSliceStream_Filter(t *testing.T) {
 					return
 				},
 			},
-			want: SimpleSliceStream[int]{number.Range(6, 10, 1)},
+			want: Stream[int]{number.Range(6, 10, 1)},
 		},
 	}
 	for _, tt := range tests {
@@ -51,7 +51,7 @@ func TestSimpleSliceStream_ForEach(t *testing.T) {
 	}
 	type testCase[T int] struct {
 		name string
-		r    SimpleSliceStream[T]
+		r    Stream[T]
 		args args[T]
 	}
 	tests := []testCase[int]{
@@ -79,9 +79,9 @@ func TestSimpleSliceStream_Limit(t *testing.T) {
 	}
 	type testCase[T int] struct {
 		name string
-		r    SimpleSliceStream[T]
+		r    Stream[T]
 		args args
-		want SimpleSliceStream[T]
+		want Stream[T]
 	}
 	tests := []testCase[int]{
 		{
@@ -91,7 +91,7 @@ func TestSimpleSliceStream_Limit(t *testing.T) {
 				limit:  3,
 				offset: 5,
 			},
-			want: SimpleSliceStream[int]{number.Range(6, 8, 1)},
+			want: Stream[int]{number.Range(6, 8, 1)},
 		},
 		{
 			name: "t2",
@@ -100,7 +100,7 @@ func TestSimpleSliceStream_Limit(t *testing.T) {
 				limit:  3,
 				offset: 9,
 			},
-			want: SimpleSliceStream[int]{number.Range(10, 10, 1)},
+			want: Stream[int]{number.Range(10, 10, 1)},
 		},
 		{
 			name: "t3",
@@ -109,7 +109,7 @@ func TestSimpleSliceStream_Limit(t *testing.T) {
 				limit:  3,
 				offset: 11,
 			},
-			want: SimpleSliceStream[int]{},
+			want: Stream[int]{},
 		},
 	}
 	for _, tt := range tests {
@@ -127,9 +127,9 @@ func TestSimpleSliceStream_Map(t *testing.T) {
 	}
 	type testCase[T int] struct {
 		name string
-		r    SimpleSliceStream[T]
+		r    Stream[T]
 		args args[T]
-		want SimpleSliceStream[T]
+		want Stream[T]
 	}
 	tests := []testCase[int]{
 		{
@@ -140,13 +140,13 @@ func TestSimpleSliceStream_Map(t *testing.T) {
 					return t * 2
 				},
 			},
-			want: SimpleSliceStream[int]{number.Range(2, 20, 2)},
+			want: Stream[int]{number.Range(2, 20, 2)},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.r.Map(tt.args.fn); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Map() = %v, want %v", got, tt.want)
+				t.Errorf("MapNewStream() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -155,7 +155,7 @@ func TestSimpleSliceStream_Map(t *testing.T) {
 func TestSimpleSliceStream_Result(t *testing.T) {
 	type testCase[T int] struct {
 		name string
-		r    SimpleSliceStream[T]
+		r    Stream[T]
 		want []T
 	}
 	tests := []testCase[int]{
@@ -180,9 +180,9 @@ func TestSimpleSliceStream_Sort(t *testing.T) {
 	}
 	type testCase[T int] struct {
 		name string
-		r    SimpleSliceStream[T]
+		r    Stream[T]
 		args args[T]
-		want SimpleSliceStream[T]
+		want Stream[T]
 	}
 	tests := []testCase[int]{
 		{
@@ -193,7 +193,7 @@ func TestSimpleSliceStream_Sort(t *testing.T) {
 					return i > j
 				},
 			},
-			want: SimpleSliceStream[int]{number.Range(10, 1, -1)},
+			want: Stream[int]{number.Range(10, 1, -1)},
 		},
 	}
 	for _, tt := range tests {
@@ -212,7 +212,7 @@ func TestSimpleSliceStream_parallelForEach(t *testing.T) {
 	}
 	type testCase[T int] struct {
 		name string
-		r    SimpleSliceStream[T]
+		r    Stream[T]
 		args args[T]
 	}
 	tests := []testCase[int]{
@@ -241,9 +241,9 @@ func TestSimpleSliceStream_ParallelFilter(t *testing.T) {
 	}
 	type testCase[T int] struct {
 		name string
-		r    SimpleSliceStream[T]
+		r    Stream[T]
 		args args[T]
-		want SimpleSliceStream[T]
+		want Stream[T]
 	}
 	tests := []testCase[int]{
 		{
@@ -255,7 +255,7 @@ func TestSimpleSliceStream_ParallelFilter(t *testing.T) {
 				},
 				c: 6,
 			},
-			want: SimpleSliceStream[int]{number.Range(4, 10, 1)},
+			want: Stream[int]{number.Range(4, 10, 1)},
 		},
 	}
 	for _, tt := range tests {
@@ -276,9 +276,9 @@ func TestSimpleSliceStream_ParallelMap(t *testing.T) {
 	}
 	type testCase[T int] struct {
 		name string
-		r    SimpleSliceStream[T]
+		r    Stream[T]
 		args args[T]
-		want SimpleSliceStream[T]
+		want Stream[T]
 	}
 	tests := []testCase[int]{
 		{
@@ -290,7 +290,7 @@ func TestSimpleSliceStream_ParallelMap(t *testing.T) {
 				},
 				c: 6,
 			},
-			want: SimpleSliceStream[int]{number.Range(2, 20, 2)},
+			want: Stream[int]{number.Range(2, 20, 2)},
 		},
 	}
 	for _, tt := range tests {
@@ -298,7 +298,7 @@ func TestSimpleSliceStream_ParallelMap(t *testing.T) {
 			if got := tt.r.ParallelMap(tt.args.fn, tt.args.c).Sort(func(i, j int) bool {
 				return i < j
 			}); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("SimpleParallelMap() = %v, want %v", got, tt.want)
+				t.Errorf("ParallelMap() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -306,7 +306,7 @@ func TestSimpleSliceStream_ParallelMap(t *testing.T) {
 
 func TestReduce(t *testing.T) {
 	type args[S, T int] struct {
-		s    SimpleSliceStream[S]
+		s    Stream[S]
 		fn   func(S, T) T
 		init T
 	}
@@ -339,14 +339,14 @@ func TestReduce(t *testing.T) {
 func TestSimpleSliceStream_Reverse(t *testing.T) {
 	type testCase[T int] struct {
 		name string
-		r    SimpleSliceStream[T]
-		want SimpleSliceStream[T]
+		r    Stream[T]
+		want Stream[T]
 	}
 	tests := []testCase[int]{
 		{
 			name: "t1",
-			r:    NewSimpleSliceStream(number.Range(1, 10, 1)),
-			want: SimpleSliceStream[int]{number.Range(10, 1, -1)},
+			r:    NewStream(number.Range(1, 10, 1)),
+			want: Stream[int]{number.Range(10, 1, -1)},
 		},
 	}
 	for _, tt := range tests {
@@ -362,30 +362,30 @@ var x = number.Range(1, 100000, 1)
 
 func TestSimpleStreamMap(t *testing.T) {
 	type args[T int, R string] struct {
-		a  SimpleSliceStream[T]
+		a  Stream[T]
 		fn func(T) R
 	}
 	type testCase[T int, R string] struct {
 		name string
 		args args[T, R]
-		want SimpleSliceStream[R]
+		want Stream[R]
 	}
 	tests := []testCase[int, string]{
 		{
 			name: "t1",
 			args: args[int, string]{
-				a:  NewSimpleSliceStream(x),
+				a:  NewStream(x),
 				fn: strconv.Itoa,
 			},
-			want: SimpleSliceStream[string]{
+			want: Stream[string]{
 				slice.Map(x, strconv.Itoa),
 			},
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := SimpleStreamMap(tt.args.a, tt.args.fn); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("SimpleStreamMap() = %v, want %v", got, tt.want)
+			if got := MapNewStream(tt.args.a, tt.args.fn); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("MapNewStream() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -393,36 +393,36 @@ func TestSimpleStreamMap(t *testing.T) {
 
 func TestSimpleParallelMap(t *testing.T) {
 	type args[T string, R int] struct {
-		a  SimpleSliceStream[string]
+		a  Stream[string]
 		fn func(T) R
 		c  int
 	}
 	type testCase[T string, R int] struct {
 		name string
 		args args[T, R]
-		want SimpleSliceStream[R]
+		want Stream[R]
 	}
 
 	tests := []testCase[string, int]{
 		{
 			name: "t1",
 			args: args[string, int]{
-				a: NewSimpleSliceStream(slice.Map(x, strconv.Itoa)),
+				a: NewStream(slice.Map(x, strconv.Itoa)),
 				fn: func(s string) int {
 					i, _ := strconv.Atoi(s)
 					return i
 				},
 				c: 6,
 			},
-			want: NewSimpleSliceStream(x),
+			want: NewStream(x),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := SimpleParallelMap(tt.args.a, tt.args.fn, tt.args.c).Sort(func(i, j int) bool {
+			if got := ParallelMap(tt.args.a, tt.args.fn, tt.args.c).Sort(func(i, j int) bool {
 				return i < j
 			}); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("SimpleParallelMap() = %v, want %v", got, tt.want)
+				t.Errorf("ParallelMap() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -430,20 +430,20 @@ func TestSimpleParallelMap(t *testing.T) {
 
 func TestSimpleParallelFilterAndMap(t *testing.T) {
 	type args[T string, R int] struct {
-		a  SimpleSliceStream[string]
+		a  Stream[string]
 		fn func(T) (R, bool)
 		c  int
 	}
 	type testCase[T string, R int] struct {
 		name string
 		args args[T, R]
-		want SimpleSliceStream[R]
+		want Stream[R]
 	}
 	tests := []testCase[string, int]{
 		{
 			name: "t1",
 			args: args[string, int]{
-				a: NewSimpleSliceStream(slice.Map(x, strconv.Itoa)),
+				a: NewStream(slice.Map(x, strconv.Itoa)),
 				fn: func(s string) (int, bool) {
 					i, _ := strconv.Atoi(s)
 					if i > 50000 {
@@ -453,15 +453,15 @@ func TestSimpleParallelFilterAndMap(t *testing.T) {
 				},
 				c: 6,
 			},
-			want: NewSimpleSliceStream(x[50000:]),
+			want: NewStream(x[50000:]),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := SimpleParallelFilterAndMap(tt.args.a, tt.args.fn, tt.args.c).Sort(func(i, j int) bool {
+			if got := ParallelFilterAndMap(tt.args.a, tt.args.fn, tt.args.c).Sort(func(i, j int) bool {
 				return i < j
 			}); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("SimpleParallelFilterAndMap() = %v, want %v", got, tt.want)
+				t.Errorf("ParallelFilterAndMap() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -469,19 +469,19 @@ func TestSimpleParallelFilterAndMap(t *testing.T) {
 
 func TestSimpleStreamFilterAndMap(t *testing.T) {
 	type args[T string, R int] struct {
-		a  SimpleSliceStream[T]
+		a  Stream[T]
 		fn func(T) (R, bool)
 	}
 	type testCase[T any, R any] struct {
 		name string
 		args args[string, int]
-		want SimpleSliceStream[R]
+		want Stream[R]
 	}
 	tests := []testCase[string, int]{
 		{
 			name: "t1",
 			args: args[string, int]{
-				a: NewSimpleSliceStream(slice.Map(x, strconv.Itoa)),
+				a: NewStream(slice.Map(x, strconv.Itoa)),
 				fn: func(s string) (int, bool) {
 					i, _ := strconv.Atoi(s)
 					if i > 50000 {
@@ -490,13 +490,13 @@ func TestSimpleStreamFilterAndMap(t *testing.T) {
 					return 0, false
 				},
 			},
-			want: NewSimpleSliceStream(x[50000:]),
+			want: NewStream(x[50000:]),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := SimpleStreamFilterAndMap(tt.args.a, tt.args.fn); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("SimpleStreamFilterAndMap() = %v, want %v", got, tt.want)
+			if got := FilterAndMapNewStream(tt.args.a, tt.args.fn); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("FilterAndMapNewStream() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -505,7 +505,7 @@ func TestSimpleStreamFilterAndMap(t *testing.T) {
 func TestSimpleSliceStream_Len(t *testing.T) {
 	type testCase[T int] struct {
 		name string
-		r    SimpleSliceStream[T]
+		r    Stream[T]
 		want int
 	}
 	tests := []testCase[int]{
@@ -526,20 +526,20 @@ func TestSimpleSliceStream_Len(t *testing.T) {
 
 func TestSimpleParallelFilterAndMapToMap(t *testing.T) {
 	type args[T int, K int, V int] struct {
-		a  SimpleSliceStream[V]
+		a  Stream[V]
 		fn func(t T) (K, V, bool)
 		c  int
 	}
 	type testCase[T int, K int, V int] struct {
 		name  string
 		args  args[T, K, V]
-		wantR SimpleMapStream[K, V]
+		wantR MapStream[K, V]
 	}
 	tests := []testCase[int, int, int]{
 		{
 			name: "t1",
 			args: args[int, int, int]{
-				a: NewSimpleSliceStream(x),
+				a: NewStream(x),
 				fn: func(v int) (int, int, bool) {
 					if v >= 50000 {
 						return v, v, true
@@ -555,8 +555,8 @@ func TestSimpleParallelFilterAndMapToMap(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if gotR := SimpleParallelFilterAndMapToMap(tt.args.a, tt.args.fn, tt.args.c); !reflect.DeepEqual(gotR, tt.wantR) {
-				t.Errorf("SimpleParallelFilterAndMapToMap() = %v, want %v", gotR, tt.wantR)
+			if gotR := ParallelFilterAndMapToMapStream(tt.args.a, tt.args.fn, tt.args.c); !reflect.DeepEqual(gotR, tt.wantR) {
+				t.Errorf("ParallelFilterAndMapToMapStream() = %v, want %v", gotR, tt.wantR)
 			}
 		})
 	}
@@ -564,20 +564,20 @@ func TestSimpleParallelFilterAndMapToMap(t *testing.T) {
 
 func TestSimpleSliceFilterAndMapToMap(t *testing.T) {
 	type args[T int, K int, V int] struct {
-		a           SimpleSliceStream[T]
+		a           Stream[T]
 		fn          func(t T) (K, V, bool)
 		isCoverPrev bool
 	}
 	type testCase[T int, K int, V int] struct {
 		name  string
 		args  args[T, K, V]
-		wantR SimpleMapStream[K, V]
+		wantR MapStream[K, V]
 	}
 	tests := []testCase[int, int, int]{
 		{
 			name: "t1",
 			args: args[int, int, int]{
-				a: NewSimpleSliceStream(number.Range(1, 10, 1)),
+				a: NewStream(number.Range(1, 10, 1)),
 				fn: func(i int) (int, int, bool) {
 					if i > 6 {
 						return i, i, true
@@ -592,8 +592,8 @@ func TestSimpleSliceFilterAndMapToMap(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if gotR := SimpleSliceFilterAndMapToMap(tt.args.a, tt.args.fn, tt.args.isCoverPrev); !reflect.DeepEqual(gotR, tt.wantR) {
-				t.Errorf("SimpleSliceFilterAndMapToMap() = %v, want %v", gotR, tt.wantR)
+			if gotR := SliceFilterAndMapToMapStream(tt.args.a, tt.args.fn, tt.args.isCoverPrev); !reflect.DeepEqual(gotR, tt.wantR) {
+				t.Errorf("SliceFilterAndMapToMapStream() = %v, want %v", gotR, tt.wantR)
 			}
 		})
 	}

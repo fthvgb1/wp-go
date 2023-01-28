@@ -23,7 +23,7 @@ func FuncMap() template.FuncMap {
 	return comFn
 }
 
-func AddTemplateFunc(fnName string, fn any) {
+func addTemplateFunc(fnName string, fn any) {
 	if _, ok := comFn[fnName]; ok {
 		panic("exists same name func")
 	}
