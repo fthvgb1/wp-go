@@ -529,7 +529,7 @@ func TestToAnySlice(t *testing.T) {
 	}
 }
 
-func TestFirst(t *testing.T) {
+func TestSearchFirst(t *testing.T) {
 	type args[T int] struct {
 		arr []T
 		fn  func(T) bool
@@ -565,18 +565,18 @@ func TestFirst(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, got1 := First(tt.args.arr, tt.args.fn)
+			got, got1 := SearchFirst(tt.args.arr, tt.args.fn)
 			if got != tt.want {
-				t.Errorf("First() got = %v, want %v", got, tt.want)
+				t.Errorf("SearchFirst() got = %v, want %v", got, tt.want)
 			}
 			if !reflect.DeepEqual(got1, tt.want1) {
-				t.Errorf("First() got1 = %v, want %v", got1, tt.want1)
+				t.Errorf("SearchFirst() got1 = %v, want %v", got1, tt.want1)
 			}
 		})
 	}
 }
 
-func TestLast(t *testing.T) {
+func TestSearchLast(t *testing.T) {
 	type args[T int] struct {
 		arr []T
 		fn  func(T) bool
@@ -612,12 +612,12 @@ func TestLast(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, got1 := Last(tt.args.arr, tt.args.fn)
+			got, got1 := SearchLast(tt.args.arr, tt.args.fn)
 			if got != tt.want {
-				t.Errorf("Last() got = %v, want %v", got, tt.want)
+				t.Errorf("SearchLast() got = %v, want %v", got, tt.want)
 			}
 			if !reflect.DeepEqual(got1, tt.want1) {
-				t.Errorf("Last() got1 = %v, want %v", got1, tt.want1)
+				t.Errorf("SearchLast() got1 = %v, want %v", got1, tt.want1)
 			}
 		})
 	}

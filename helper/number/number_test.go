@@ -1,6 +1,7 @@
 package number
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 )
@@ -187,6 +188,32 @@ func TestRand(t *testing.T) {
 				if got > tt.args.end || got < tt.args.start {
 					t.Errorf("RandNum() = %v, range error", got)
 				}
+				fmt.Println(got)
+			}
+		})
+	}
+}
+
+func TestAbs(t *testing.T) {
+	type args[T Number] struct {
+		n T
+	}
+	type testCase[T Number] struct {
+		name string
+		args args[T]
+		want T
+	}
+	tests := []testCase[int]{
+		{
+			name: "t1",
+			args: args[int]{-1},
+			want: 1,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := Abs(tt.args.n); got != tt.want {
+				t.Errorf("Abs() = %v, want %v", got, tt.want)
 			}
 		})
 	}

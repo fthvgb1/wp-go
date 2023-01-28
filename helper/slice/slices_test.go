@@ -77,3 +77,60 @@ func TestSplice(t *testing.T) {
 	fmt.Println(c)
 	fmt.Println(d)
 }
+
+func TestShuffle(t *testing.T) {
+	type args[T int] struct {
+		a *[]T
+	}
+	type testCase[T int] struct {
+		name string
+		args args[T]
+	}
+	a := number.Range(1, 10, 1)
+	tests := []testCase[int]{
+		{
+			name: "t1",
+			args: args[int]{&a},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			for i := 0; i < 20; i++ {
+				Shuffle(tt.args.a)
+				fmt.Println(a)
+			}
+		})
+	}
+}
+
+func TestDelete(t *testing.T) {
+	type args[T int] struct {
+		a     *[]T
+		index int
+	}
+	type testCase[T int] struct {
+		name string
+		args args[T]
+	}
+	a := number.Range(1, 5, 1)
+	b := number.Range(1, 5, 1)
+	fmt.Println(a)
+	fmt.Println(b)
+	tests := []testCase[int]{
+		{
+			name: "t1",
+			args: args[int]{&a, 0},
+		},
+		{
+			name: "t2",
+			args: args[int]{&b, 2},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			Delete(tt.args.a, tt.args.index)
+		})
+	}
+	fmt.Println(a)
+	fmt.Println(b)
+}

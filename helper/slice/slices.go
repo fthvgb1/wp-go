@@ -33,3 +33,27 @@ func Splice[T any](a *[]T, offset, length int, replacement []T) []T {
 	}
 	return nil
 }
+
+func Shuffle[T any](a *[]T) {
+	if len(*a) < 1 {
+		return
+	}
+	b := make([]T, 0, len(*a))
+	for {
+		v, l := RandPop(a)
+		b = append(b, v)
+		if l < 1 {
+			break
+		}
+
+	}
+	*a = b
+}
+
+func Delete[T any](a *[]T, index int) {
+	if index >= len(*a) || index < 0 {
+		return
+	}
+	arr := *a
+	*a = append(arr[:index], arr[index+1:]...)
+}

@@ -65,7 +65,7 @@ func Hook(status int, c *gin.Context, h gin.H, scene, stats int) {
 			}
 		} else if scene == plugins.Category {
 			cat := c.Param("category")
-			_, cate := slice.First(cache.Categories(c), func(my models.TermsMy) bool {
+			_, cate := slice.SearchFirst(cache.Categories(c), func(my models.TermsMy) bool {
 				return my.Name == cat
 			})
 			d = int(cate.Terms.TermId)
@@ -74,7 +74,7 @@ func Hook(status int, c *gin.Context, h gin.H, scene, stats int) {
 			}
 		} else if scene == plugins.Tag {
 			cat := c.Param("tag")
-			_, cate := slice.First(cache.Tags(c), func(my models.TermsMy) bool {
+			_, cate := slice.SearchFirst(cache.Tags(c), func(my models.TermsMy) bool {
 				return my.Name == cat
 			})
 			d = int(cate.Terms.TermId)

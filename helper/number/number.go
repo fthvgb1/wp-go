@@ -3,7 +3,13 @@ package number
 import (
 	"fmt"
 	"math/rand"
+	"time"
 )
+
+var _ = func() any {
+	rand.Seed(time.Now().UnixNano())
+	return nil
+}()
 
 type IntNumber interface {
 	~int | ~int64 | ~int32 | ~int8 | ~int16 |
@@ -70,6 +76,9 @@ func Sum[T Number](a ...T) T {
 func Add[T Number](i, j T) T {
 	return i + j
 }
+func Sub[T Number](i, j T) T {
+	return i - j
+}
 
 func ToString[T Number](n T) string {
 	return fmt.Sprintf("%v", n)
@@ -80,4 +89,12 @@ func Abs[T Number](n T) T {
 		return n
 	}
 	return -n
+}
+
+func Mul[T Number](i, j T) T {
+	return i * j
+}
+
+func Divide[T Number](i, j T) T {
+	return i / j
 }
