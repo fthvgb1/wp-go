@@ -24,19 +24,19 @@ import (
 )
 
 var confPath string
-var port string
+var address string
 var middleWareReloadFn func()
 var intReg = regexp.MustCompile(`^\d`)
 
 func init() {
 	flag.StringVar(&confPath, "c", "config.yaml", "config file")
-	flag.StringVar(&port, "p", "", "port")
+	flag.StringVar(&address, "p", "", "listen address(port)")
 	flag.Parse()
-	if port == "" && os.Getenv("PORT") == "" {
-		port = "80"
+	if address == "" && os.Getenv("PORT") == "" {
+		address = "80"
 	}
-	if intReg.MatchString(port) && !strings.Contains(port, ":") {
-		port = ":" + port
+	if intReg.MatchString(address) && !strings.Contains(address, ":") {
+		address = ":" + address
 	}
 	rand.Seed(time.Now().UnixNano())
 	err := initConf(confPath)
@@ -129,8 +129,16 @@ func signalNotify() {
 func main() {
 	go signalNotify()
 	Gin, reloadFn := route.SetupRouter()
+	c := config.Conf.Load()
 	middleWareReloadFn = reloadFn
-	err := Gin.Run(port)
+	if c.Ssl.Key != "" && c.Ssl.Cert != "" {
+		err := Gin.RunTLS(address, c.Ssl.Cert, c.Ssl.Key)
+		if err != nil {
+			panic(err)
+		}
+		return
+	}
+	err := Gin.Run(address)
 	if err != nil {
 		panic(err)
 	}
