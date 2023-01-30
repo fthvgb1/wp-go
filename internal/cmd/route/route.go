@@ -44,13 +44,20 @@ func SetupRouter() (*gin.Engine, func()) {
 		})))
 	}
 
-	f := static.Fs{FS: static.FsEx, Path: "wp-includes"}
-	r.StaticFileFS("/favicon.ico", "favicon.ico", http.FS(static.FsEx))
+	f := static.Fs{FS: static.FsDir, Path: "wp-includes"}
+	r.StaticFileFS("/favicon.ico", "favicon.ico", http.FS(static.FsDir))
 	r.StaticFS("/wp-includes", http.FS(f))
-	r.StaticFS("/wp-content", http.FS(static.Fs{
-		FS:   static.FsEx,
-		Path: "wp-content",
+	r.StaticFS("/wp-content/plugins", http.FS(static.Fs{
+		FS:   static.FsDir,
+		Path: "wp-content/plugins",
 	}))
+	r.StaticFS("/wp-content/themes", http.FS(static.Fs{
+		FS:   static.FsDir,
+		Path: "wp-content/themes",
+	}))
+	if c.UploadDir != "" {
+		r.Static("/wp-content/uploads", c.UploadDir)
+	}
 	store := cookie.NewStore([]byte("secret"))
 	r.Use(sessions.Sessions("go-wp", store))
 	sl, slRload := middleware.SearchLimit(c.SingleIpSearchNum)

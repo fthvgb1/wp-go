@@ -7,7 +7,6 @@ import (
 	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
-	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/fthvgb1/wp-go/model"
 	"strings"
 	"sync/atomic"
@@ -44,7 +43,8 @@ func GetPostsByIds(ids ...any) (m map[uint64]models.Posts, err error) {
 		}
 		postsMap[post.Id] = v
 	}
-	host, _ := wpconfig.Options.Load("siteurl")
+	//host, _ := wpconfig.Options.Load("siteurl")
+	host := ""
 	meta, _ := GetPostMetaByPostIds(ctx, id)
 	for k, pp := range postsMap {
 		if len(pp.Categories) > 0 {

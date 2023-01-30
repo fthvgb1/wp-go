@@ -9,7 +9,7 @@ import (
 )
 
 //go:embed wp-content wp-includes favicon.ico
-var FsEx embed.FS
+var FsDir embed.FS
 
 type Fs struct {
 	embed.FS

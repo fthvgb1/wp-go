@@ -40,6 +40,7 @@ type Config struct {
 	TrustServerNames        []string        `yaml:"trustServerNames"`
 	Theme                   string          `yaml:"theme"`
 	PostOrder               string          `yaml:"postOrder"`
+	UploadDir               string          `yaml:"uploadDir"`
 }
 
 type Ssl struct {
