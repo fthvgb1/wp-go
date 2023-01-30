@@ -110,7 +110,7 @@ type comment struct {
 	plugins.CommonCommentFormat
 }
 
-func (c comment) FormatLi(ctx *gin.Context, m models.Comments, depth int, eo, parent string) string {
+func (c comment) FormatLi(ctx *gin.Context, m models.Comments, depth int, isTls bool, eo, parent string) string {
 	templ := plugins.CommonLi()
 	templ = strings.ReplaceAll(templ, `<a rel="nofollow" class="comment-reply-link"
                href="/p/{{PostId}}?replytocom={{CommentId}}#respond" data-commentid="{{CommentId}}" data-postid="{{PostId}}"
@@ -121,7 +121,7 @@ func (c comment) FormatLi(ctx *gin.Context, m models.Comments, depth int, eo, pa
                data-belowelement="div-comment-{{CommentId}}" data-respondelement="respond"
                data-replyto="回复给{{CommentAuthor}}"
                aria-label="回复给{{CommentAuthor}}"><svg class="icon icon-mail-reply" aria-hidden="true" role="img"> <use href="#icon-mail-reply" xlink:href="#icon-mail-reply"></use> </svg>回复</a>`)
-	return plugins.FormatLi(templ, ctx, m, depth, eo, parent)
+	return plugins.FormatLi(templ, ctx, m, depth, isTls, eo, parent)
 }
 
 func postThumbnail(posts []models.Posts, scene int) []models.Posts {

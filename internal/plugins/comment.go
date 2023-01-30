@@ -4,6 +4,7 @@ import (
 	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/gin-gonic/gin"
+	"net/url"
 	"strconv"
 	"strings"
 )
@@ -13,6 +14,7 @@ type CommentHandler struct {
 	comments []*Comments
 	maxDepth int
 	depth    int
+	isTls    bool
 	i        CommentHtml
 }
 
@@ -23,16 +25,25 @@ type Comments struct {
 
 type CommentHtml interface {
 	Sort(i, j *Comments) bool
-	FormatLi(c *gin.Context, m models.Comments, depth int, eo, parent string) string
+	FormatLi(c *gin.Context, m models.Comments, depth int, isTls bool, eo, parent string) string
 }
 
 func FormatComments(c *gin.Context, i CommentHtml, comments []models.Comments, maxDepth int) string {
 	tree := treeComments(comments)
+	u := c.Request.Header.Get("Referer")
+	var isTls bool
+	if u != "" {
+		uu, _ := url.Parse(u)
+		if uu.Scheme == "https" {
+			isTls = true
+		}
+	}
 	h := CommentHandler{
 		Context:  c,
 		comments: tree,
 		maxDepth: maxDepth,
 		depth:    1,
+		isTls:    isTls,
 		i:        i,
 	}
 	return h.formatComment(h.comments, true)
@@ -55,7 +66,7 @@ func (d CommentHandler) formatComment(comments []*Comments, isTop bool) (html st
 			parent = "parent"
 			fl = true
 		}
-		s.WriteString(d.i.FormatLi(d.Context, comment.Comments, d.depth, eo, parent))
+		s.WriteString(d.i.FormatLi(d.Context, comment.Comments, d.depth, d.isTls, eo, parent))
 		if fl {
 			d.depth++
 			s.WriteString(`<ol class="children">`)
@@ -130,8 +141,8 @@ func (c CommonCommentFormat) Sort(i, j *Comments) bool {
 	return i.CommentDate.UnixNano() < j.CommentDate.UnixNano()
 }
 
-func (c CommonCommentFormat) FormatLi(ctx *gin.Context, m models.Comments, depth int, eo, parent string) string {
-	return FormatLi(CommonLi(), ctx, m, depth, eo, parent)
+func (c CommonCommentFormat) FormatLi(ctx *gin.Context, m models.Comments, depth int, isTls bool, eo, parent string) string {
+	return FormatLi(CommonLi(), ctx, m, depth, isTls, eo, parent)
 }
 
 var li = `
@@ -171,11 +182,11 @@ var li = `
 
 `
 
-func FormatLi(li string, c *gin.Context, comments models.Comments, depth int, eo, parent string) string {
+func FormatLi(li string, c *gin.Context, comments models.Comments, depth int, isTls bool, eo, parent string) string {
 	for k, v := range map[string]string{
 		"{{CommentId}}":        strconv.FormatUint(comments.CommentId, 10),
 		"{{Depth}}":            strconv.Itoa(depth),
-		"{{Gravatar}}":         Gravatar(comments.CommentAuthorEmail, c.Request.TLS != nil),
+		"{{Gravatar}}":         Gravatar(comments.CommentAuthorEmail, isTls),
 		"{{CommentAuthorUrl}}": comments.CommentAuthorUrl,
 		"{{CommentAuthor}}":    comments.CommentAuthor,
 		"{{PostId}}":           strconv.FormatUint(comments.CommentPostId, 10),
