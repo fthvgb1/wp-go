@@ -88,7 +88,8 @@ func Hook(status int, c *gin.Context, h gin.H, scene, stats int) {
 		h["HeaderImage"] = getHeaderImage(c)
 		post := h["post"].(models.Posts)
 		h["bodyClass"] = bodyClass(scene, int(post.Id))
-		host, _ := wpconfig.Options.Load("siteurl")
+		//host, _ := wpconfig.Options.Load("siteurl")
+		host := ""
 		img := plugins.Thumbnail(post.Thumbnail.OriginAttachmentData, "thumbnail", host, "thumbnail", "post-thumbnail")
 		img.Width = img.OriginAttachmentData.Width
 		img.Height = img.OriginAttachmentData.Height
@@ -109,7 +110,7 @@ type comment struct {
 	plugins.CommonCommentFormat
 }
 
-func (c comment) FormatLi(ctx *gin.Context, m models.Comments, depth int, eo, parent string) string {
+func (c comment) FormatLi(ctx *gin.Context, m models.Comments, depth int, isTls bool, eo, parent string) string {
 	templ := plugins.CommonLi()
 	templ = strings.ReplaceAll(templ, `<a rel="nofollow" class="comment-reply-link"
                href="/p/{{PostId}}?replytocom={{CommentId}}#respond" data-commentid="{{CommentId}}" data-postid="{{PostId}}"
@@ -120,7 +121,7 @@ func (c comment) FormatLi(ctx *gin.Context, m models.Comments, depth int, eo, pa
                data-belowelement="div-comment-{{CommentId}}" data-respondelement="respond"
                data-replyto="回复给{{CommentAuthor}}"
                aria-label="回复给{{CommentAuthor}}"><svg class="icon icon-mail-reply" aria-hidden="true" role="img"> <use href="#icon-mail-reply" xlink:href="#icon-mail-reply"></use> </svg>回复</a>`)
-	return plugins.FormatLi(templ, ctx, m, depth, eo, parent)
+	return plugins.FormatLi(templ, ctx, m, depth, isTls, eo, parent)
 }
 
 func postThumbnail(posts []models.Posts, scene int) []models.Posts {
@@ -149,12 +150,13 @@ func getHeaderImage(c *gin.Context) (r models.PostThumbnail) {
 			logs.ErrPrintln(err, "获取主题背景图信息错误")
 			return
 		}
-		host, _ := wpconfig.Options.Load("siteurl")
+		//host, _ := wpconfig.Options.Load("siteurl")
+		host := ""
 		m.Thumbnail = plugins.Thumbnail(m.AttachmentMetadata, "thumbnail", host, "thumbnail", "post-thumbnail", "twentyseventeen-thumbnail-avatar")
 		if m.Thumbnail.Path != "" {
 			r = m.Thumbnail
 			if len(m.AttachmentMetadata.Sizes) > 0 {
-				r.Srcset = str.Join(r.Path, " 2000vw, ", r.Srcset)
+				r.Srcset = str.Join(r.Path, " 2000w, ", r.Srcset)
 			}
 		}
 	}
