@@ -11,7 +11,6 @@ require (
 	github.com/gin-gonic/gin v1.8.1
 	github.com/go-sql-driver/mysql v1.6.0
 	github.com/jmoiron/sqlx v1.3.5
-	github.com/leeqvip/gophp v1.0.0
 	github.com/soxfmr/gomail v0.0.0-20200806033254-80bf84e583f0
 	golang.org/x/crypto v0.0.0-20220924013350-4ba4fb4dd9e7
 	gopkg.in/yaml.v2 v2.4.0

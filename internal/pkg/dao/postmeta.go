@@ -14,7 +14,7 @@ func GetPostMetaByPostIds(args ...any) (r map[uint64]map[string]any, err error) 
 	r = make(map[uint64]map[string]any)
 	ctx := args[0].(context.Context)
 	ids := args[1].([]uint64)
-	rr, err := model.Find[models.Postmeta](ctx, model.SqlBuilder{
+	rr, err := model.Find[models.PostMeta](ctx, model.SqlBuilder{
 		{"post_id", "in", ""},
 	}, "*", "", nil, nil, nil, 0, slice.ToAnySlice(ids))
 	if err != nil {
@@ -25,7 +25,7 @@ func GetPostMetaByPostIds(args ...any) (r map[uint64]map[string]any, err error) 
 			r[postmeta.PostId] = make(map[string]any)
 		}
 		if postmeta.MetaKey == "_wp_attachment_metadata" {
-			metadata, err := models.AttachmentMetadata(postmeta.MetaValue)
+			metadata, err := plugins.UnPHPSerialize[models.WpAttachmentMetadata](postmeta.MetaValue)
 			if err != nil {
 				logs.ErrPrintln(err, "解析postmeta失败", postmeta.MetaId, postmeta.MetaValue)
 				continue

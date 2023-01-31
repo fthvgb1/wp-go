@@ -41,7 +41,7 @@ var newCommentCache *cache.MapCache[string, string]
 
 var allUsernameCache *cache.VarCache[map[string]struct{}]
 
-var allCategories *cache.VarCache[map[string]struct{}]
+var headerImagesCache *cache.MapCache[string, []models.PostThumbnail]
 
 func InitActionsCommonCache() {
 	c := config.Conf.Load()
@@ -88,6 +88,8 @@ func InitActionsCommonCache() {
 
 	allUsernameCache = cache.NewVarCache(dao.AllUsername, c.UserInfoCacheTime)
 
+	headerImagesCache = cache.NewMapCacheByFn[string](getHeaderImages, c.ThemeHeaderImagCacheTime)
+
 	InitFeed()
 }
 
@@ -103,6 +105,7 @@ func ClearCache() {
 	usersNameCache.ClearExpired()
 	postFeedCache.ClearExpired()
 	newCommentCache.ClearExpired()
+	headerImagesCache.ClearExpired()
 }
 func FlushCache() {
 	searchPostIdsCache.Flush()
@@ -116,6 +119,7 @@ func FlushCache() {
 	usersCache.Flush()
 	postFeedCache.Flush()
 	newCommentCache.Flush()
+	headerImagesCache.Flush()
 }
 
 func Archives(ctx context.Context) (r []models.PostArchive) {

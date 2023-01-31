@@ -2,8 +2,6 @@ package twentyseventeen
 
 import (
 	"fmt"
-	"github.com/elliotchance/phpserialize"
-	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
@@ -18,21 +16,6 @@ import (
 
 const ThemeName = "twentyseventeen"
 
-type HeaderImageMeta struct {
-	CustomCssPostId  int       `json:"custom_css_post_id,omitempty"`
-	NavMenuLocations []string  `json:"nav_menu_locations,omitempty"`
-	HeaderImage      string    `json:"header_image,omitempty"`
-	HeaderImagData   ImageData `json:"header_image_data,omitempty"`
-}
-
-type ImageData struct {
-	AttachmentId int64  `json:"attachment_id,omitempty"`
-	Url          string `json:"url,omitempty"`
-	ThumbnailUrl string `json:"thumbnail_url,omitempty"`
-	Height       int64  `json:"height,omitempty"`
-	Width        int64  `json:"width,omitempty"`
-}
-
 var paginate = func() plugins.PageEle {
 	p := plugins.TwentyFifteenPagination()
 	p.PrevEle = `<a class="prev page-numbers" href="%s"><svg class="icon icon-arrow-left" aria-hidden="true" role="img"> <use href="#icon-arrow-left" xlink:href="#icon-arrow-left"></use> </svg>
@@ -45,8 +28,11 @@ var paginate = func() plugins.PageEle {
 
 func Hook(status int, c *gin.Context, h gin.H, scene, stats int) {
 	templ := "twentyseventeen/posts/index.gohtml"
+	h["HeaderImage"] = getHeaderImage(c)
+	if stats == plugins.Empty404 {
+		c.HTML(status, templ, h)
+	}
 	if _, ok := plugins.IndexSceneMap[scene]; ok {
-		h["HeaderImage"] = getHeaderImage(c)
 		posts := h["posts"].([]models.Posts)
 		p, ok := h["pagination"]
 		if ok {
@@ -85,7 +71,6 @@ func Hook(status int, c *gin.Context, h gin.H, scene, stats int) {
 		h["bodyClass"] = bodyClass(scene, d, s)
 		h["posts"] = postThumbnail(posts, scene)
 	} else if scene == plugins.Detail {
-		h["HeaderImage"] = getHeaderImage(c)
 		post := h["post"].(models.Posts)
 		h["bodyClass"] = bodyClass(scene, int(post.Id))
 		//host, _ := wpconfig.Options.Load("siteurl")
@@ -139,43 +124,16 @@ func postThumbnail(posts []models.Posts, scene int) []models.Posts {
 
 func getHeaderImage(c *gin.Context) (r models.PostThumbnail) {
 	r.Path = "/wp-content/themes/twentyseventeen/assets/images/header.jpg"
-	meta, err := getHeaderMarkup()
-	if err != nil {
-		logs.ErrPrintln(err, "解析主题背景图设置错误")
-		return
-	}
-	if meta.HeaderImagData.AttachmentId > 0 {
-		m, err := cache.GetPostById(c, uint64(meta.HeaderImagData.AttachmentId))
-		if err != nil {
-			logs.ErrPrintln(err, "获取主题背景图信息错误")
-			return
-		}
-		//host, _ := wpconfig.Options.Load("siteurl")
-		host := ""
-		m.Thumbnail = plugins.Thumbnail(m.AttachmentMetadata, "thumbnail", host, "thumbnail", "post-thumbnail", "twentyseventeen-thumbnail-avatar")
-		if m.Thumbnail.Path != "" {
-			r = m.Thumbnail
-			if len(m.AttachmentMetadata.Sizes) > 0 {
-				r.Srcset = str.Join(r.Path, " 2000w, ", r.Srcset)
-			}
-		}
-	}
 	r.Width = 2000
 	r.Height = 1200
-	r.Sizes = "100vw"
-	return
-}
-
-func getHeaderMarkup() (r HeaderImageMeta, err error) {
-	mods, ok := wpconfig.Options.Load("theme_mods_twentyseventeen")
-	var rr map[any]any
-	if ok {
-		err = phpserialize.Unmarshal([]byte(mods), &rr)
-		if err == nil {
-			rx := maps.AnyAnyToStrAny(rr)
-			r, err = maps.StrAnyMapToStruct[HeaderImageMeta](rx)
-		}
+	t, _ := wpconfig.Options.Load("template")
+	hs, err := cache.GetHeaderImages(c, t)
+	if err != nil {
+		logs.ErrPrintln(err, "获取页眉背景图失败")
+	} else if len(hs) > 0 && err == nil {
+		_, r = slice.Rand(hs)
 	}
+	r.Sizes = "100vw"
 	return
 }
 

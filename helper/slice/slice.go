@@ -225,6 +225,12 @@ func Pop[T any](a *[]T) T {
 
 // Rand 随机取一个元素
 func Rand[T any](a []T) (int, T) {
+	var r T
+	if len(a) < 1 {
+		return -1, r
+	} else if len(a) == 1 {
+		return 0, a[0]
+	}
 	i := number.Rand(0, len(a)-1)
 	return i, a[i]
 }

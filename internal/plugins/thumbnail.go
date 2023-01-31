@@ -7,6 +7,34 @@ import (
 	"strings"
 )
 
+type HeaderImageMeta struct {
+	CustomCssPostId  int       `json:"custom_css_post_id,omitempty"`
+	NavMenuLocations []string  `json:"nav_menu_locations,omitempty"`
+	HeaderImage      string    `json:"header_image,omitempty"`
+	HeaderImagData   ImageData `json:"header_image_data,omitempty"`
+	SidebarsWidgets  Sidebars  `json:"sidebars_widgets"`
+}
+
+type Sidebars struct {
+	Time int          `json:"time,omitempty"`
+	Data SidebarsData `json:"data"`
+}
+
+type SidebarsData struct {
+	WpInactiveWidgets []string `json:"wp_inactive_widgets,omitempty"`
+	Sidebar1          []string `json:"sidebar-1,omitempty"`
+	Sidebar2          []string `json:"sidebar-2,omitempty"`
+	Sidebar3          []string `json:"sidebar-3,omitempty"`
+}
+
+type ImageData struct {
+	AttachmentId int64  `json:"attachment_id,omitempty"`
+	Url          string `json:"url,omitempty"`
+	ThumbnailUrl string `json:"thumbnail_url,omitempty"`
+	Height       int64  `json:"height,omitempty"`
+	Width        int64  `json:"width,omitempty"`
+}
+
 func Thumbnail(metadata models.WpAttachmentMetadata, Type, host string, except ...string) (r models.PostThumbnail) {
 	if _, ok := metadata.Sizes[Type]; ok {
 		r.Path = fmt.Sprintf("%s/wp-content/uploads/%s", host, metadata.File)
