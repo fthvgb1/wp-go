@@ -1,50 +1,18 @@
 package models
 
-import (
-	"github.com/fthvgb1/wp-go/helper/maps"
-	"github.com/leeqvip/gophp"
-)
-
-type Postmeta struct {
+type PostMeta struct {
 	MetaId    uint64 `db:"meta_id" json:"meta_id" form:"meta_id"`
 	PostId    uint64 `db:"post_id" json:"post_id" form:"post_id"`
 	MetaKey   string `db:"meta_key" json:"meta_key" form:"meta_key"`
 	MetaValue string `db:"meta_value" json:"meta_value" form:"meta_value"`
 }
 
-func (p Postmeta) PrimaryKey() string {
+func (p PostMeta) PrimaryKey() string {
 	return "meta_id"
 }
 
-func (p Postmeta) Table() string {
+func (p PostMeta) Table() string {
 	return "wp_postmeta"
-}
-
-func (p Postmeta) AttachmentMetadata() (r WpAttachmentMetadata, err error) {
-	if p.MetaKey == "_wp_attachment_metadata" && p.MetaValue != "" {
-		unSerialize, er := gophp.Unserialize([]byte(p.MetaValue))
-		if er != nil {
-			err = er
-			return
-		}
-		info, ok := unSerialize.(map[string]any)
-		if ok {
-			r, err = maps.StrAnyMapToStruct[WpAttachmentMetadata](info)
-		}
-	}
-	return
-}
-func AttachmentMetadata(s string) (r WpAttachmentMetadata, err error) {
-	unSerialize, er := gophp.Unserialize([]byte(s))
-	if er != nil {
-		err = er
-		return
-	}
-	info, ok := unSerialize.(map[string]any)
-	if ok {
-		r, err = maps.StrAnyMapToStruct[WpAttachmentMetadata](info)
-	}
-	return
 }
 
 type WpAttachmentMetadata struct {

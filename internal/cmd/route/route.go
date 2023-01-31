@@ -78,8 +78,8 @@ func SetupRouter() (*gin.Engine, func()) {
 	r.GET("/comments/feed", actions.CommentsFeed)
 	cfl, _ := middleware.FlowLimit(c.MaxRequestSleepNum, 5, c.SleepTime)
 	r.POST("/comment", cfl, actions.PostComment)
-	if gin.Mode() != gin.ReleaseMode {
-		pprof.Register(r, "dev/pprof")
+	if c.Pprof != "" {
+		pprof.Register(r, c.Pprof)
 	}
 	fn := func() {
 		reloadValidServerNameFn()

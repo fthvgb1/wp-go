@@ -65,6 +65,9 @@ maxPostIdCacheTime: 1h
 userInfoCacheTime: 24h
 # 单独评论缓存时间
 commentsCacheTime: 24h
+# 主题的页眉图片缓存时间
+themeHeaderImagCacheTime: 5m
+
 # Gzip
 gzip: false
 # 提交评论url
@@ -81,3 +84,5 @@ theme: "twentyfifteen"
 postOrder: "desc"
 # 上传的目录
 uploadDir: ""
+# pprof route path 为空表示不开启pprof,否则为pprof的路由
+pprof: "/debug/pprof"

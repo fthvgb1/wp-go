@@ -38,9 +38,6 @@ type Posts struct {
 	AttachmentMetadata WpAttachmentMetadata
 }
 
-type Image struct {
-}
-
 type PostThumbnail struct {
 	Path                 string
 	Width                int
