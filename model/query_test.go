@@ -3,11 +3,15 @@ package model
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/fthvgb1/wp-go/helper/number"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
+	"log"
 	"reflect"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 )
@@ -104,12 +108,32 @@ type SqlxDb struct {
 
 var Db *SqlxDb
 
-func (r SqlxDb) Select(ctx context.Context, dest any, sql string, params ...any) error {
+func (r SqlxDb) Select(_ context.Context, dest any, sql string, params ...any) error {
+	log.Println(formatSql(sql, params))
 	return r.sqlx.Select(dest, sql, params...)
 }
 
-func (r SqlxDb) Get(ctx context.Context, dest any, sql string, params ...any) error {
+func (r SqlxDb) Get(_ context.Context, dest any, sql string, params ...any) error {
+	log.Println(formatSql(sql, params))
 	return r.sqlx.Get(dest, sql, params...)
+}
+
+func formatSql(sql string, params []any) string {
+	for _, param := range params {
+		switch param.(type) {
+		case string:
+			sql = strings.Replace(sql, "?", fmt.Sprintf("'%s'", param.(string)), 1)
+		case int64:
+			sql = strings.Replace(sql, "?", strconv.FormatInt(param.(int64), 10), 1)
+		case int:
+			sql = strings.Replace(sql, "?", strconv.Itoa(param.(int)), 1)
+		case uint64:
+			sql = strings.Replace(sql, "?", strconv.FormatUint(param.(uint64), 10), 1)
+		case float64:
+			sql = strings.Replace(sql, "?", fmt.Sprintf("%f", param.(float64)), 1)
+		}
+	}
+	return sql
 }
 
 var ctx = context.Background()
