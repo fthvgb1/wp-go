@@ -1,15 +1,11 @@
+// Package number
+// 使用随机数时需要先 调用 rand.seed()函数
 package number
 
 import (
 	"fmt"
 	"math/rand"
-	"time"
 )
-
-var _ = func() any {
-	rand.Seed(time.Now().UnixNano())
-	return nil
-}()
 
 type IntNumber interface {
 	~int | ~int64 | ~int32 | ~int8 | ~int16 |
