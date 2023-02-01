@@ -79,8 +79,8 @@ func SimplePagination[T Model](ctx context.Context, where ParseWhere, fields, gr
 		return
 	}
 	tp := "select %s from %s %s %s %s %s %s limit %d,%d"
-	sql := fmt.Sprintf(tp, fields, rr.Table(), j, w, groupBy, h, order.parseOrderBy(), offset, pageSize)
-	err = globalBb.Select(ctx, &r, sql, args...)
+	sq := fmt.Sprintf(tp, fields, rr.Table(), j, w, groupBy, h, order.parseOrderBy(), offset, pageSize)
+	err = globalBb.Select(ctx, &r, sq, args...)
 	if err != nil {
 		return
 	}
@@ -89,8 +89,8 @@ func SimplePagination[T Model](ctx context.Context, where ParseWhere, fields, gr
 
 func FindOneById[T Model, I number.IntNumber](ctx context.Context, id I) (T, error) {
 	var r T
-	sql := fmt.Sprintf("select * from `%s` where `%s`=?", r.Table(), r.PrimaryKey())
-	err := globalBb.Get(ctx, &r, sql, id)
+	sq := fmt.Sprintf("select * from `%s` where `%s`=?", r.Table(), r.PrimaryKey())
+	err := globalBb.Get(ctx, &r, sq, id)
 	if err != nil {
 		return r, err
 	}
@@ -109,8 +109,8 @@ func FirstOne[T Model](ctx context.Context, where ParseWhere, fields string, ord
 		}
 	}
 	tp := "select %s from %s %s %s"
-	sql := fmt.Sprintf(tp, fields, r.Table(), w, order.parseOrderBy())
-	err = globalBb.Get(ctx, &r, sql, args...)
+	sq := fmt.Sprintf(tp, fields, r.Table(), w, order.parseOrderBy())
+	err = globalBb.Get(ctx, &r, sq, args...)
 	if err != nil {
 		return r, err
 	}
@@ -129,8 +129,8 @@ func LastOne[T Model](ctx context.Context, where ParseWhere, fields string, in .
 		}
 	}
 	tp := "select %s from %s %s order by %s desc limit 1"
-	sql := fmt.Sprintf(tp, fields, r.Table(), w, r.PrimaryKey())
-	err = globalBb.Get(ctx, &r, sql, args...)
+	sq := fmt.Sprintf(tp, fields, r.Table(), w, r.PrimaryKey())
+	err = globalBb.Get(ctx, &r, sq, args...)
 	if err != nil {
 		return r, err
 	}
@@ -150,8 +150,8 @@ func SimpleFind[T Model](ctx context.Context, where ParseWhere, fields string, i
 		}
 	}
 	tp := "select %s from %s %s"
-	sql := fmt.Sprintf(tp, fields, rr.Table(), w)
-	err = globalBb.Select(ctx, &r, sql, args...)
+	sq := fmt.Sprintf(tp, fields, rr.Table(), w)
+	err = globalBb.Select(ctx, &r, sq, args...)
 	if err != nil {
 		return r, err
 	}
@@ -202,8 +202,8 @@ func Find[T Model](ctx context.Context, where ParseWhere, fields, group string, 
 	if limit > 0 {
 		l = fmt.Sprintf(" limit %d", limit)
 	}
-	sql := fmt.Sprintf(tp, fields, rr.Table(), j, w, groupBy, h, order.parseOrderBy(), l)
-	err = globalBb.Select(ctx, &r, sql, args...)
+	sq := fmt.Sprintf(tp, fields, rr.Table(), j, w, groupBy, h, order.parseOrderBy(), l)
+	err = globalBb.Select(ctx, &r, sq, args...)
 	return
 }
 
