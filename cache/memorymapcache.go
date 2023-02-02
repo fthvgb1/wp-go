@@ -2,13 +2,32 @@ package cache
 
 import (
 	"context"
-	"github.com/fthvgb1/wp-go/helper/number"
 	"github.com/fthvgb1/wp-go/safety"
+	"sync"
 	"time"
 )
 
 type MemoryMapCache[K comparable, V any] struct {
 	safety.Map[K, mapVal[V]]
+}
+
+func NewMemoryMapCacheByFn[K comparable, V any](fn func(...any) (V, error), expireTime time.Duration) *MapCache[K, V] {
+	return &MapCache[K, V]{
+		data:       NewMemoryMapCache[K, V](),
+		cacheFunc:  fn,
+		expireTime: expireTime,
+		mux:        sync.Mutex{},
+	}
+}
+func NewMemoryMapCacheByBatchFn[K comparable, V any](fn func(...any) (map[K]V, error), expireTime time.Duration) *MapCache[K, V] {
+	r := &MapCache[K, V]{
+		data:         NewMemoryMapCache[K, V](),
+		batchCacheFn: fn,
+		expireTime:   expireTime,
+		mux:          sync.Mutex{},
+	}
+	r.setCacheFn(fn)
+	return r
 }
 
 func NewMemoryMapCache[K comparable, V any]() *MemoryMapCache[K, V] {
@@ -49,9 +68,9 @@ func (m *MemoryMapCache[K, V]) Set(_ context.Context, key K, val V, _ time.Durat
 func (m *MemoryMapCache[K, V]) Ttl(_ context.Context, key K, expire time.Duration) time.Duration {
 	v, ok := m.Load(key)
 	if !ok {
-		return -1
+		return time.Duration(-1)
 	}
-	return number.Max(time.Duration(0), expire-time.Duration(time.Now().UnixNano()-v.setTime.UnixNano()))
+	return expire - time.Now().Sub(v.setTime)
 }
 
 func (m *MemoryMapCache[K, V]) Ver(_ context.Context, key K) int {

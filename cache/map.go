@@ -21,12 +21,16 @@ func (m *MapCache[K, V]) SetCacheFunc(fn func(...any) (V, error)) {
 	m.cacheFunc = fn
 }
 
+func (m *MapCache[K, V]) Ttl(ctx context.Context, k K) time.Duration {
+	return m.data.Ttl(ctx, k, m.expireTime)
+}
+
 func (m *MapCache[K, V]) GetLastSetTime(ctx context.Context, k K) (t time.Time) {
 	tt := m.data.Ttl(ctx, k, m.expireTime)
 	if tt <= 0 {
 		return
 	}
-	return time.Now().Add(m.data.Ttl(ctx, k, m.expireTime))
+	return time.Now().Add(m.data.Ttl(ctx, k, m.expireTime)).Add(-m.expireTime)
 }
 
 func (m *MapCache[K, V]) SetCacheBatchFn(fn func(...any) (map[K]V, error)) {
@@ -58,20 +62,20 @@ func (m *MapCache[K, V]) setCacheFn(fn func(...any) (map[K]V, error)) {
 	}
 }
 
-func NewMemoryMapCacheByFn[K comparable, V any](fn func(...any) (V, error), expireTime time.Duration) *MapCache[K, V] {
+func NewMapCacheByFn[K comparable, V any](cacheType Cache[K, V], fn func(...any) (V, error), expireTime time.Duration) *MapCache[K, V] {
 	return &MapCache[K, V]{
-		data:       NewMemoryMapCache[K, V](),
+		mux:        sync.Mutex{},
 		cacheFunc:  fn,
 		expireTime: expireTime,
-		mux:        sync.Mutex{},
+		data:       cacheType,
 	}
 }
-func NewMemoryMapCacheByBatchFn[K comparable, V any](fn func(...any) (map[K]V, error), expireTime time.Duration) *MapCache[K, V] {
+func NewMapCacheByBatchFn[K comparable, V any](cacheType Cache[K, V], fn func(...any) (map[K]V, error), expireTime time.Duration) *MapCache[K, V] {
 	r := &MapCache[K, V]{
-		data:         NewMemoryMapCache[K, V](),
+		mux:          sync.Mutex{},
 		batchCacheFn: fn,
 		expireTime:   expireTime,
-		mux:          sync.Mutex{},
+		data:         cacheType,
 	}
 	r.setCacheFn(fn)
 	return r
