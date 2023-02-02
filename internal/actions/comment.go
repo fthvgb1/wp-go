@@ -111,7 +111,7 @@ func PostComment(c *gin.Context) {
 			err = er
 			return
 		}
-		cache.NewCommentCache().Set(up.RawQuery, string(s))
+		cache.NewCommentCache().Set(c, up.RawQuery, string(s))
 		c.Redirect(http.StatusFound, res.Header.Get("Location"))
 		return
 	}

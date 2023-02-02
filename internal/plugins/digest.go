@@ -1,6 +1,7 @@
 package plugins
 
 import (
+	"context"
 	"fmt"
 	"github.com/fthvgb1/wp-go/cache"
 	"github.com/fthvgb1/wp-go/internal/pkg/config"
@@ -12,16 +13,18 @@ import (
 )
 
 var digestCache *cache.MapCache[uint64, string]
+var ctx context.Context
 
 func InitDigestCache() {
-	digestCache = cache.NewMapCacheByFn[uint64](digestRaw, config.Conf.Load().DigestCacheTime)
+	ctx = context.Background()
+	digestCache = cache.NewMemoryMapCacheByFn[uint64](digestRaw, config.Conf.Load().DigestCacheTime)
 }
 
 func ClearDigestCache() {
-	digestCache.ClearExpired()
+	digestCache.ClearExpired(ctx)
 }
 func FlushCache() {
-	digestCache.Flush()
+	digestCache.Flush(ctx)
 }
 
 func digestRaw(arg ...any) (string, error) {

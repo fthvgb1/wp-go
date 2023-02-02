@@ -76,7 +76,7 @@ func Detail(c *gin.Context) {
 	if post.PostPassword != "" && pw != post.PostPassword {
 		plugins.PasswdProjectContent(&post)
 		showComment = false
-	} else if s, ok := cache.NewCommentCache().Get(c.Request.URL.RawQuery); ok && s != "" && (post.PostPassword == "" || post.PostPassword != "" && pw == post.PostPassword) {
+	} else if s, ok := cache.NewCommentCache().Get(c, c.Request.URL.RawQuery); ok && s != "" && (post.PostPassword == "" || post.PostPassword != "" && pw == post.PostPassword) {
 		c.Writer.WriteHeader(http.StatusOK)
 		c.Writer.Header().Set("Content-Type", "text/html; charset=utf-8")
 		_, err = c.Writer.WriteString(s)
