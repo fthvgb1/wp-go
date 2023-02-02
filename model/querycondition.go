@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-// Finds can use offset
+// Finds  比 Find 多一个offset
 //
 // Conditions 中可用 Where Fields Group Having Join Order Offset Limit In 函数
 func Finds[T Model](ctx context.Context, q *QueryCondition) (r []T, err error) {
@@ -131,4 +131,11 @@ func Chunk[T Model, R any](ctx context.Context, perLimit int, fn func(rows T) (R
 		i++
 	}
 	return
+}
+
+// Pagination 同 SimplePagination
+//
+// Condition 中可使用 Where Fields Group Having Join Order Page Limit In 函数
+func Pagination[T Model](ctx context.Context, q *QueryCondition) ([]T, int, error) {
+	return SimplePagination[T](ctx, q.where, q.fields, q.group, q.page, q.limit, q.order, q.join, q.having, q.in...)
 }
