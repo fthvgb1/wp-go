@@ -82,7 +82,7 @@ func (m *MemoryMapCache[K, V]) Ver(_ context.Context, key K) int {
 }
 
 func (m *MemoryMapCache[K, V]) Flush(context.Context) {
-	m.Map = safety.NewMap[K, mapVal[V]]()
+	m.Map.Flush()
 }
 
 func (m *MemoryMapCache[K, V]) Delete(_ context.Context, key K) {
