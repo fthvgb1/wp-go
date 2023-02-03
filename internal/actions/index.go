@@ -241,7 +241,6 @@ func Index(c *gin.Context) {
 	recentComments := cache.RecentComments(c, 5)
 	ginH := gin.H{
 		"err":            err,
-		"options":        wpconfig.Options,
 		"recentPosts":    recent,
 		"archives":       archive,
 		"categories":     categoryItems,

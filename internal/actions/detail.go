@@ -25,7 +25,6 @@ func Detail(c *gin.Context) {
 	recentComments := cache.RecentComments(c, 5)
 	var ginH = gin.H{
 		"title":          wpconfig.Options.Value("blogname"),
-		"options":        wpconfig.Options,
 		"recentPosts":    recent,
 		"archives":       archive,
 		"categories":     categoryItems,
