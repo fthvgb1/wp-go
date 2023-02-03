@@ -152,8 +152,7 @@ func (m *MapCache[K, V]) GetCacheBatch(c context.Context, key []K, timeout time.
 			defer m.mux.Unlock()
 
 			vers := slice.Reduce(needFlush, func(t K, r int) int {
-				r += m.data.Ver(c, t)
-				return r
+				return r + m.data.Ver(c, t)
 			}, 0)
 
 			if vers > ver {
