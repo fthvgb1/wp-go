@@ -64,17 +64,9 @@ func ChunkFind[T Model](ctx context.Context, perLimit int, q *QueryCondition) (r
 		if 1 == i {
 			rr, total, err = SimplePagination[T](ctx, q.where, q.fields, q.group, i, perLimit, q.order, q.join, q.having, q.in...)
 		} else {
-			rr, err = Finds[T](ctx, Conditions(
-				Where(q.where),
-				Fields(q.fields),
-				Group(q.group),
-				Having(q.having),
-				Join(q.join),
-				Order(q.order),
-				Offset(offset),
-				Limit(perLimit),
-				In(q.in...),
-			))
+			q.offset = offset
+			q.limit = perLimit
+			rr, err = Finds[T](ctx, q)
 		}
 		offset += perLimit
 		if (err != nil && err != sql.ErrNoRows) || len(rr) < 1 {
@@ -102,17 +94,9 @@ func Chunk[T Model, R any](ctx context.Context, perLimit int, fn func(rows T) (R
 		if 1 == i {
 			rr, total, err = SimplePagination[T](ctx, q.where, q.fields, q.group, i, perLimit, q.order, q.join, q.having, q.in...)
 		} else {
-			rr, err = Finds[T](ctx, Conditions(
-				Where(q.where),
-				Fields(q.fields),
-				Group(q.group),
-				Having(q.having),
-				Join(q.join),
-				Order(q.order),
-				Offset(offset),
-				Limit(perLimit),
-				In(q.in...),
-			))
+			q.offset = offset
+			q.limit = perLimit
+			rr, err = Finds[T](ctx, q)
 		}
 		offset += perLimit
 		if (err != nil && err != sql.ErrNoRows) || len(rr) < 1 {

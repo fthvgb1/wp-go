@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper/slice"
+	"github.com/fthvgb1/wp-go/taskPools"
 	"reflect"
 	"strings"
 	"testing"
@@ -22,9 +23,10 @@ func init() {
 	}
 	ct = context.Background()
 	batchFn = func(a ...any) (map[string]string, error) {
+		fmt.Println(a)
 		arr := a[1].([]string)
-		return slice.SimpleToMap(arr, func(t string) string {
-			return strings.Repeat(t, 2)
+		return slice.FilterAndToMap(arr, func(t string) (string, string, bool) {
+			return t, strings.Repeat(t, 2), true
 		}), nil
 	}
 	ca = *NewMemoryMapCacheByFn[string, string](fn, time.Second*2)
@@ -190,14 +192,36 @@ func TestMapCache_GetCacheBatch(t *testing.T) {
 				c:       ct,
 				key:     []string{"xx", "oo"},
 				timeout: time.Second,
-				params:  []any{ct, []string{"xx", "oo"}},
+				params:  []any{ct, []string{"xx", "oo", "aa"}},
 			},
-			want:    []string{"xxxx", "oooo"},
+			want:    []string{"xxxx", "oooo", "aaaa"},
 			wantErr: false,
 		},
 	}
+	time.Sleep(2 * time.Second)
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			p := taskPools.NewPools(10)
+			for i := 0; i < 800000; i++ {
+				p.Execute(func() {
+					c := context.Background()
+					//time.Sleep(time.Millisecond * number.Rand[time.Duration](200, 400))
+					a, err := ca.GetCacheBatch(c, []string{"xx", "oo", "aa"}, time.Hour, c, []string{"xx", "oo", "aa"})
+					if err != nil {
+						panic(err)
+						return
+					}
+
+					if a[0] == "xxxx" && a[1] == "oooo" && a[2] == "aaaa" {
+
+					} else {
+						fmt.Println(a)
+						panic("xxx")
+					}
+					//fmt.Println(x)
+				})
+			}
+			p.Wait()
 			got, err := tt.m.GetCacheBatch(tt.args.c, tt.args.key, tt.args.timeout, tt.args.params...)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("GetCacheBatch() error = %v, wantErr %v", err, tt.wantErr)
