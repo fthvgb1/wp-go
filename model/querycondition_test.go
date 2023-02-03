@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"database/sql"
 	"github.com/fthvgb1/wp-go/helper/number"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	"reflect"
@@ -169,6 +170,62 @@ func TestChunk(t *testing.T) {
 			}
 			if !reflect.DeepEqual(gotR, tt.wantR) {
 				t.Errorf("Chunk() gotR = %v, want %v", gotR, tt.wantR)
+			}
+		})
+	}
+}
+
+func TestPagination(t *testing.T) {
+	type args struct {
+		ctx context.Context
+		q   *QueryCondition
+	}
+	type testCase[T Model] struct {
+		name    string
+		args    args
+		want    []T
+		want1   int
+		wantErr bool
+	}
+	tests := []testCase[post]{
+		{
+			name: "t1",
+			args: args{
+				ctx: ctx,
+				q: Conditions(
+					Where(SqlBuilder{
+						{"ID", "in", ""},
+					}),
+					Page(1),
+					Limit(5),
+					In([][]any{slice.ToAnySlice(number.Range(431, 440, 1))}...),
+				),
+			},
+			want: func() (r []post) {
+				r, err := Select[post](ctx, "select * from "+post{}.Table()+" where ID in (?,?,?,?,?)", slice.ToAnySlice(number.Range(431, 435, 1))...)
+				if err != nil && err != sql.ErrNoRows {
+					panic(err)
+				} else if err == sql.ErrNoRows {
+					err = nil
+				}
+				return
+			}(),
+			want1:   10,
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, got1, err := Pagination[post](tt.args.ctx, tt.args.q)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Pagination() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Pagination() got = %v, want %v", got, tt.want)
+			}
+			if got1 != tt.want1 {
+				t.Errorf("Pagination() got1 = %v, want %v", got1, tt.want1)
 			}
 		})
 	}

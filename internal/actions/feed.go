@@ -50,7 +50,7 @@ func setFeed(s string, c *gin.Context, t time.Time) {
 
 func PostFeed(c *gin.Context) {
 	id := c.Param("id")
-	if !isCacheExpired(c, cache.PostFeedCache().GetLastSetTime(id)) {
+	if !isCacheExpired(c, cache.PostFeedCache().GetLastSetTime(c, id)) {
 		c.Status(http.StatusNotModified)
 	} else {
 		s, err := cache.PostFeedCache().GetCache(c, id, time.Second, c, id)
@@ -60,7 +60,7 @@ func PostFeed(c *gin.Context) {
 			c.Error(err)
 			return
 		}
-		setFeed(s, c, cache.PostFeedCache().GetLastSetTime(id))
+		setFeed(s, c, cache.PostFeedCache().GetLastSetTime(c, id))
 	}
 }
 
