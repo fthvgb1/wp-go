@@ -3,7 +3,7 @@ package model
 import (
 	"context"
 	"fmt"
-	"github.com/fthvgb1/wp-go/helper/number"
+	"golang.org/x/exp/constraints"
 	"math/rand"
 	"strings"
 	"time"
@@ -87,7 +87,7 @@ func SimplePagination[T Model](ctx context.Context, where ParseWhere, fields, gr
 	return
 }
 
-func FindOneById[T Model, I number.IntNumber](ctx context.Context, id I) (T, error) {
+func FindOneById[T Model, I constraints.Integer](ctx context.Context, id I) (T, error) {
 	var r T
 	sq := fmt.Sprintf("select * from `%s` where `%s`=?", r.Table(), r.PrimaryKey())
 	err := globalBb.Get(ctx, &r, sq, id)

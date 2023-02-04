@@ -4,19 +4,11 @@ package number
 
 import (
 	"fmt"
+	"golang.org/x/exp/constraints"
 	"math/rand"
 )
 
-type IntNumber interface {
-	~int | ~int64 | ~int32 | ~int8 | ~int16 |
-		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64
-}
-
-type Number interface {
-	IntNumber | ~float64 | ~float32
-}
-
-func Range[T IntNumber](start, end, step T) []T {
+func Range[T constraints.Integer](start, end, step T) []T {
 	if step == 0 {
 		panic("step can't be 0")
 	}
@@ -36,12 +28,12 @@ func Range[T IntNumber](start, end, step T) []T {
 }
 
 // Rand 都为闭区间 [start,end]
-func Rand[T IntNumber](start, end T) T {
+func Rand[T constraints.Integer](start, end T) T {
 	end++
 	return T(rand.Int63n(int64(end-start))) + start
 }
 
-func Min[T Number](a ...T) T {
+func Min[T constraints.Integer | constraints.Float](a ...T) T {
 	min := a[0]
 	for _, t := range a {
 		if min > t {
@@ -51,7 +43,7 @@ func Min[T Number](a ...T) T {
 	return min
 }
 
-func Max[T Number](a ...T) T {
+func Max[T constraints.Integer | constraints.Float](a ...T) T {
 	max := a[0]
 	for _, t := range a {
 		if max < t {
@@ -61,7 +53,7 @@ func Max[T Number](a ...T) T {
 	return max
 }
 
-func Sum[T Number](a ...T) T {
+func Sum[T constraints.Integer | constraints.Float](a ...T) T {
 	s := T(0)
 	for _, t := range a {
 		s += t
@@ -69,28 +61,28 @@ func Sum[T Number](a ...T) T {
 	return s
 }
 
-func Add[T Number](i, j T) T {
+func Add[T constraints.Integer | constraints.Float](i, j T) T {
 	return i + j
 }
-func Sub[T Number](i, j T) T {
+func Sub[T constraints.Integer | constraints.Float](i, j T) T {
 	return i - j
 }
 
-func ToString[T Number](n T) string {
+func ToString[T constraints.Integer | constraints.Float](n T) string {
 	return fmt.Sprintf("%v", n)
 }
 
-func Abs[T Number](n T) T {
+func Abs[T constraints.Integer | constraints.Float](n T) T {
 	if n >= 0 {
 		return n
 	}
 	return -n
 }
 
-func Mul[T Number](i, j T) T {
+func Mul[T constraints.Integer | constraints.Float](i, j T) T {
 	return i * j
 }
 
-func Divide[T Number](i, j T) T {
+func Divide[T constraints.Integer | constraints.Float](i, j T) T {
 	return i / j
 }
