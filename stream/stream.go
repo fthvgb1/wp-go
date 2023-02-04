@@ -50,14 +50,6 @@ func FilterAndMapNewStream[R, T any](a Stream[T], fn func(T) (R, bool)) Stream[R
 	return NewStream(slice.FilterAndMap(a.arr, fn))
 }
 
-func ParallelMap[R, T any](a Stream[T], fn func(T) R, c int) Stream[R] {
-	var x []R
-	rr := safety.NewSlice(x)
-	a.ParallelForEach(func(t T) {
-		rr.Append(fn(t))
-	}, c)
-	return Stream[R]{rr.Load()}
-}
 func MapNewStream[R, T any](a Stream[T], fn func(T) R) Stream[R] {
 	return NewStream(slice.Map(a.arr, fn))
 }
@@ -91,31 +83,24 @@ func (r Stream[T]) ParallelForEach(fn func(T), c int) {
 	p.Wait()
 }
 
-func (r Stream[T]) ParallelFilter(fn func(T) bool, c int) Stream[T] {
+func (r Stream[T]) ParallelFilterAndMap(fn func(T) (T, bool), c int) Stream[T] {
 	rr := safety.NewSlice([]T{})
 	r.ParallelForEach(func(t T) {
-		if fn(t) {
-			rr.Append(t)
+		v, ok := fn(t)
+		if ok {
+			rr.Append(v)
 		}
 	}, c)
 	return Stream[T]{rr.Load()}
 }
-func (r Stream[T]) Filter(fn func(T) bool) Stream[T] {
-	r.arr = slice.Filter(r.arr, fn)
+
+func (r Stream[T]) FilterAndMap(fn func(T) (T, bool)) Stream[T] {
+	r.arr = slice.FilterAndMap(r.arr, fn)
 	return r
 }
 
-func (r Stream[T]) ParallelMap(fn func(T) T, c int) Stream[T] {
-	rr := safety.NewSlice([]T{})
-	r.ParallelForEach(func(t T) {
-		rr.Append(fn(t))
-	}, c)
-	return Stream[T]{rr.Load()}
-}
-
-func (r Stream[T]) Map(fn func(T) T) Stream[T] {
-	r.arr = slice.Map(r.arr, fn)
-	return r
+func (r Stream[T]) Reduce(fn func(v, r T) T, init T) T {
+	return slice.Reduce[T, T](r.arr, fn, init)
 }
 
 func (r Stream[T]) Sort(fn func(i, j T) bool) Stream[T] {
