@@ -13,6 +13,7 @@ require (
 	github.com/jmoiron/sqlx v1.3.5
 	github.com/soxfmr/gomail v0.0.0-20200806033254-80bf84e583f0
 	golang.org/x/crypto v0.0.0-20220924013350-4ba4fb4dd9e7
+	golang.org/x/exp v0.0.0-20230203172020-98cc5a0785f9
 	gopkg.in/yaml.v2 v2.4.0
 )
 

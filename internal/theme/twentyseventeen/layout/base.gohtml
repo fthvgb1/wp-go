@@ -28,13 +28,15 @@
                             </h1>
                             <p class="site-description">{{"blogdescription"| getOption}}</p>
                         </div><!-- .site-branding-text -->
+                        {{if eq .scene 1}}
+                            <a href="#content" class="menu-scroll-down">
+                                <svg class="icon icon-arrow-right" aria-hidden="true" role="img">
+                                    <use href="#icon-arrow-right" xlink:href="#icon-arrow-right"></use>
+                                </svg>
+                                <span class="screen-reader-text">向下滚动到内容</span>
+                            </a>
+                        {{end}}
 
-                        <a href="#content" class="menu-scroll-down">
-                            <svg class="icon icon-arrow-right" aria-hidden="true" role="img">
-                                <use href="#icon-arrow-right" xlink:href="#icon-arrow-right"></use>
-                            </svg>
-                            <span class="screen-reader-text">向下滚动到内容</span>
-                        </a>
                     </div><!-- .wrap -->
                 </div><!-- .site-branding -->
 

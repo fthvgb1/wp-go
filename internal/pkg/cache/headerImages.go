@@ -23,7 +23,7 @@ func getHeaderImages(a ...any) (r []models.PostThumbnail, err error) {
 	mods, ok := wpconfig.Options.Load(fmt.Sprintf("theme_mods_%s", theme))
 	if ok && mods != "" {
 		meta, er := plugins.UnPHPSerialize[plugins.HeaderImageMeta](mods)
-		if er != nil {
+		if er != nil || meta.HeaderImage == "" {
 			err = er
 			return
 		}

@@ -8,7 +8,6 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
-	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/fthvgb1/wp-go/plugin/pagination"
 	"github.com/gin-gonic/gin"
 	"strings"
@@ -26,69 +25,68 @@ var paginate = func() plugins.PageEle {
 	return p
 }()
 
-func Hook(status int, c *gin.Context, h gin.H, scene, stats int) {
-	templ := "twentyseventeen/posts/index.gohtml"
-	h["HeaderImage"] = getHeaderImage(c)
+type handle struct {
+	c      *gin.Context
+	ginH   gin.H
+	scene  int
+	status int
+	stats  int
+	templ  string
+}
+
+func Hook(status int, c *gin.Context, ginH gin.H, scene, stats int) {
+	h := handle{
+		c:      c,
+		ginH:   ginH,
+		scene:  scene,
+		status: status,
+		stats:  stats,
+		templ:  "twentyseventeen/posts/index.gohtml",
+	}
+	ginH["HeaderImage"] = h.getHeaderImage(c)
 	if stats == plugins.Empty404 {
-		c.HTML(status, templ, h)
+		c.HTML(status, h.templ, ginH)
+		return
 	}
-	if _, ok := plugins.IndexSceneMap[scene]; ok {
-		posts := h["posts"].([]models.Posts)
-		p, ok := h["pagination"]
+	if scene == plugins.Detail {
+		h.detail()
+		return
+	}
+	h.index()
+
+}
+
+func (h handle) index() {
+	posts := h.ginH["posts"].([]models.Posts)
+	p, ok := h.ginH["pagination"]
+	if ok {
+		pp, ok := p.(pagination.ParsePagination)
 		if ok {
-			pp, ok := p.(pagination.ParsePagination)
-			if ok {
-				h["pagination"] = pagination.Paginate(paginate, pp)
-			}
+			h.ginH["pagination"] = pagination.Paginate(paginate, pp)
 		}
-		d := 0
-		s := ""
-		if scene == plugins.Search {
-			if len(posts) > 0 {
-				d = 1
-			} else {
-				d = 0
-			}
-		} else if scene == plugins.Category {
-			cat := c.Param("category")
-			_, cate := slice.SearchFirst(cache.Categories(c), func(my models.TermsMy) bool {
-				return my.Name == cat
-			})
-			d = int(cate.Terms.TermId)
-			if cate.Slug[0] != '%' {
-				s = cate.Slug
-			}
-		} else if scene == plugins.Tag {
-			cat := c.Param("tag")
-			_, cate := slice.SearchFirst(cache.Tags(c), func(my models.TermsMy) bool {
-				return my.Name == cat
-			})
-			d = int(cate.Terms.TermId)
-			if cate.Slug[0] != '%' {
-				s = cate.Slug
-			}
-		}
-		h["bodyClass"] = bodyClass(scene, d, s)
-		h["posts"] = postThumbnail(posts, scene)
-	} else if scene == plugins.Detail {
-		post := h["post"].(models.Posts)
-		h["bodyClass"] = bodyClass(scene, int(post.Id))
-		//host, _ := wpconfig.Options.Load("siteurl")
-		host := ""
-		img := plugins.Thumbnail(post.Thumbnail.OriginAttachmentData, "thumbnail", host, "thumbnail", "post-thumbnail")
-		img.Width = img.OriginAttachmentData.Width
-		img.Height = img.OriginAttachmentData.Height
-		img.Sizes = "100vw"
-		img.Srcset = fmt.Sprintf("%s %dw, %s", img.Path, img.Width, img.Srcset)
-		post.Thumbnail = img
-		h["post"] = post
-		comments := h["comments"].([]models.Comments)
-		dep := h["maxDep"].(int)
-		h["comments"] = plugins.FormatComments(c, comment{}, comments, dep)
-		templ = "twentyseventeen/posts/detail.gohtml"
 	}
-	c.HTML(status, templ, h)
-	return
+	h.ginH["bodyClass"] = h.bodyClass()
+	h.ginH["posts"] = h.postThumbnail(posts, h.scene)
+	h.c.HTML(h.status, h.templ, h.ginH)
+}
+
+func (h handle) detail() {
+	post := h.ginH["post"].(models.Posts)
+	h.ginH["bodyClass"] = h.bodyClass()
+	//host, _ := wpconfig.Options.Load("siteurl")
+	host := ""
+	img := plugins.Thumbnail(post.Thumbnail.OriginAttachmentData, "thumbnail", host, "thumbnail", "post-thumbnail")
+	img.Width = img.OriginAttachmentData.Width
+	img.Height = img.OriginAttachmentData.Height
+	img.Sizes = "100vw"
+	img.Srcset = fmt.Sprintf("%s %dw, %s", img.Path, img.Width, img.Srcset)
+	post.Thumbnail = img
+	h.ginH["post"] = post
+	comments := h.ginH["comments"].([]models.Comments)
+	dep := h.ginH["maxDep"].(int)
+	h.ginH["comments"] = plugins.FormatComments(h.c, comment{}, comments, dep)
+	h.templ = "twentyseventeen/posts/detail.gohtml"
+	h.c.HTML(h.status, h.templ, h.ginH)
 }
 
 type comment struct {
@@ -109,7 +107,7 @@ func (c comment) FormatLi(ctx *gin.Context, m models.Comments, depth int, isTls 
 	return plugins.FormatLi(templ, ctx, m, depth, isTls, eo, parent)
 }
 
-func postThumbnail(posts []models.Posts, scene int) []models.Posts {
+func (h handle) postThumbnail(posts []models.Posts, scene int) []models.Posts {
 	return slice.Map(posts, func(t models.Posts) models.Posts {
 		if t.Thumbnail.Path != "" {
 			if slice.IsContained(scene, []int{plugins.Home, plugins.Archive, plugins.Search}) {
@@ -122,33 +120,50 @@ func postThumbnail(posts []models.Posts, scene int) []models.Posts {
 	})
 }
 
-func getHeaderImage(c *gin.Context) (r models.PostThumbnail) {
+func (h handle) getHeaderImage(c *gin.Context) (r models.PostThumbnail) {
 	r.Path = "/wp-content/themes/twentyseventeen/assets/images/header.jpg"
 	r.Width = 2000
 	r.Height = 1200
-	t, _ := wpconfig.Options.Load("template")
-	hs, err := cache.GetHeaderImages(c, t)
+	hs, err := cache.GetHeaderImages(c, ThemeName)
 	if err != nil {
 		logs.ErrPrintln(err, "获取页眉背景图失败")
 	} else if len(hs) > 0 && err == nil {
 		_, r = slice.Rand(hs)
+
 	}
 	r.Sizes = "100vw"
 	return
 }
 
-func bodyClass(scene, d int, a ...any) string {
+func (h handle) bodyClass() string {
 	s := ""
-	if scene == plugins.Search {
-		if d > 0 {
+	switch h.scene {
+	case plugins.Search:
+		if len(h.ginH["posts"].([]models.Posts)) > 0 {
 			s = "search-results"
 		} else {
 			s = "search-no-results"
 		}
-	} else if scene == plugins.Category || scene == plugins.Tag {
-		s = fmt.Sprintf("category-%d %v", d, a[0])
-	} else if scene == plugins.Detail {
-		s = fmt.Sprintf("postid-%d", d)
+	case plugins.Category:
+		cat := h.c.Param("category")
+		_, cate := slice.SearchFirst(cache.Categories(h.c), func(my models.TermsMy) bool {
+			return my.Name == cat
+		})
+		if cate.Slug[0] != '%' {
+			s = cate.Slug
+		}
+		s = fmt.Sprintf("category-%d %v", cate.Terms.TermId, s)
+	case plugins.Tag:
+		cat := h.c.Param("tag")
+		_, cate := slice.SearchFirst(cache.Tags(h.c), func(my models.TermsMy) bool {
+			return my.Name == cat
+		})
+		if cate.Slug[0] != '%' {
+			s = cate.Slug
+		}
+		s = fmt.Sprintf("category-%d %v", cate.Terms.TermId, s)
+	case plugins.Detail:
+		s = fmt.Sprintf("postid-%d", h.ginH["post"].(models.Posts).Id)
 	}
 	return map[int]string{
 		plugins.Home:     "home blog ",
@@ -157,5 +172,5 @@ func bodyClass(scene, d int, a ...any) string {
 		plugins.Tag:      str.Join("archive category page-two-column ", s),
 		plugins.Search:   str.Join("search ", s),
 		plugins.Detail:   str.Join("post-template-default single single-post single-format-standard ", s),
-	}[scene]
+	}[h.scene]
 }
