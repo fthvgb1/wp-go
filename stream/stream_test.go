@@ -11,40 +11,6 @@ import (
 
 var s = NewStream(number.Range(1, 10, 1))
 
-func TestSimpleSliceStream_Filter(t *testing.T) {
-	type args[T int] struct {
-		fn func(T) bool
-	}
-	type testCase[T int] struct {
-		name string
-		r    Stream[T]
-		args args[T]
-		want Stream[T]
-	}
-	tests := []testCase[int]{
-		{
-			name: "t1",
-			r:    s,
-			args: args[int]{
-				func(t int) (r bool) {
-					if t > 5 {
-						r = true
-					}
-					return
-				},
-			},
-			want: Stream[int]{number.Range(6, 10, 1)},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.r.Filter(tt.args.fn); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Filter() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestSimpleSliceStream_ForEach(t *testing.T) {
 	type args[T int] struct {
 		fn func(T)
@@ -116,37 +82,6 @@ func TestSimpleSliceStream_Limit(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := tt.r.Limit(tt.args.limit, tt.args.offset); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Limit() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestSimpleSliceStream_Map(t *testing.T) {
-	type args[T int] struct {
-		fn func(T) T
-	}
-	type testCase[T int] struct {
-		name string
-		r    Stream[T]
-		args args[T]
-		want Stream[T]
-	}
-	tests := []testCase[int]{
-		{
-			name: "t1",
-			r:    s,
-			args: args[int]{
-				func(t int) (r int) {
-					return t * 2
-				},
-			},
-			want: Stream[int]{number.Range(2, 20, 2)},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.r.Map(tt.args.fn); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("MapNewStream() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -234,76 +169,6 @@ func TestSimpleSliceStream_parallelForEach(t *testing.T) {
 	}
 }
 
-func TestSimpleSliceStream_ParallelFilter(t *testing.T) {
-	type args[T int] struct {
-		fn func(T) bool
-		c  int
-	}
-	type testCase[T int] struct {
-		name string
-		r    Stream[T]
-		args args[T]
-		want Stream[T]
-	}
-	tests := []testCase[int]{
-		{
-			name: "t1",
-			r:    s,
-			args: args[int]{
-				fn: func(t int) bool {
-					return t > 3
-				},
-				c: 6,
-			},
-			want: Stream[int]{number.Range(4, 10, 1)},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.r.ParallelFilter(tt.args.fn, tt.args.c).Sort(func(i, j int) bool {
-				return i < j
-			}); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ParallelFilter() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestSimpleSliceStream_ParallelMap(t *testing.T) {
-	type args[T int] struct {
-		fn func(T) T
-		c  int
-	}
-	type testCase[T int] struct {
-		name string
-		r    Stream[T]
-		args args[T]
-		want Stream[T]
-	}
-	tests := []testCase[int]{
-		{
-			name: "t1",
-			r:    s,
-			args: args[int]{
-				fn: func(t int) int {
-					return t * 2
-				},
-				c: 6,
-			},
-			want: Stream[int]{number.Range(2, 20, 2)},
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.r.ParallelMap(tt.args.fn, tt.args.c).Sort(func(i, j int) bool {
-				return i < j
-			}); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ParallelMap() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
 func TestReduce(t *testing.T) {
 	type args[S, T int] struct {
 		s    Stream[S]
@@ -386,43 +251,6 @@ func TestSimpleStreamMap(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := MapNewStream(tt.args.a, tt.args.fn); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("MapNewStream() = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestSimpleParallelMap(t *testing.T) {
-	type args[T string, R int] struct {
-		a  Stream[string]
-		fn func(T) R
-		c  int
-	}
-	type testCase[T string, R int] struct {
-		name string
-		args args[T, R]
-		want Stream[R]
-	}
-
-	tests := []testCase[string, int]{
-		{
-			name: "t1",
-			args: args[string, int]{
-				a: NewStream(slice.Map(x, strconv.Itoa)),
-				fn: func(s string) int {
-					i, _ := strconv.Atoi(s)
-					return i
-				},
-				c: 6,
-			},
-			want: NewStream(x),
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			if got := ParallelMap(tt.args.a, tt.args.fn, tt.args.c).Sort(func(i, j int) bool {
-				return i < j
-			}); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("ParallelMap() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -594,6 +422,83 @@ func TestSimpleSliceFilterAndMapToMap(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if gotR := SliceFilterAndMapToMapStream(tt.args.a, tt.args.fn, tt.args.isCoverPrev); !reflect.DeepEqual(gotR, tt.wantR) {
 				t.Errorf("SliceFilterAndMapToMapStream() = %v, want %v", gotR, tt.wantR)
+			}
+		})
+	}
+}
+
+func TestStream_ParallelFilterAndMap(t *testing.T) {
+	type xy struct {
+		args int
+		res  string
+	}
+	type args[T any] struct {
+		fn func(T) (T, bool)
+		c  int
+	}
+	type testCase[T xy] struct {
+		name string
+		r    Stream[T]
+		args args[T]
+		want Stream[T]
+	}
+	tests := []testCase[xy]{
+		{
+			name: "t1",
+			r: NewStream(slice.Map(number.Range(1, 10, 1), func(t int) xy {
+				return xy{args: t}
+			})),
+			args: args[xy]{func(v xy) (xy, bool) {
+				v.res = strconv.Itoa(v.args)
+				return v, true
+			}, 6},
+			want: NewStream(slice.Map(number.Range(1, 10, 1), func(t int) xy {
+				return xy{args: t, res: strconv.Itoa(t)}
+			})),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.r.ParallelFilterAndMap(tt.args.fn, tt.args.c).Sort(func(i, j xy) bool {
+				return i.args < j.args
+			}); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ParallelFilterAndMap() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestStream_Reduce(t *testing.T) {
+	type aa struct {
+		args int
+		res  int
+	}
+	type args[T any] struct {
+		fn   func(v, r T) T
+		init T
+	}
+	type testCase[T any] struct {
+		name string
+		r    Stream[T]
+		args args[T]
+		want T
+	}
+	tests := []testCase[aa]{
+		{
+			name: "t1",
+			r: NewStream(slice.Map(number.Range(1, 10, 1), func(t int) aa {
+				return aa{args: t}
+			})),
+			args: args[aa]{func(v, r aa) aa {
+				return aa{res: v.args + r.res}
+			}, aa{}},
+			want: aa{res: 55},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := tt.r.Reduce(tt.args.fn, tt.args.init); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Reduce() = %v, want %v", got, tt.want)
 			}
 		})
 	}
