@@ -34,6 +34,7 @@ type Config struct {
 }
 
 type CacheTime struct {
+	CacheControl             time.Duration   `yaml:"cacheControl"`
 	RecentPostCacheTime      time.Duration   `yaml:"recentPostCacheTime"`
 	CategoryCacheTime        time.Duration   `yaml:"categoryCacheTime"`
 	ArchiveCacheTime         time.Duration   `yaml:"archiveCacheTime"`

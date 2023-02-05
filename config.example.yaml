@@ -28,6 +28,8 @@ ssl:
   key: ""
 
 cacheTime:
+  # 静态资源缓存时间Cache-Control
+  cacheControl: 5d
   # 最近文章缓存时间
   recentPostCacheTime: 5m
   # 分类缓存时间

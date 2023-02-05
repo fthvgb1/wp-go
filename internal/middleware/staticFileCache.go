@@ -1,15 +1,26 @@
 package middleware
 
 import (
-	"github.com/fthvgb1/wp-go/helper/slice"
+	"fmt"
+	"github.com/fthvgb1/wp-go/internal/pkg/config"
 	"github.com/gin-gonic/gin"
 	"strings"
 )
 
+var path = map[string]struct{}{
+	"includes":    {},
+	"wp-content":  {},
+	"favicon.ico": {},
+}
+
 func SetStaticFileCache(c *gin.Context) {
 	f := strings.Split(strings.TrimLeft(c.FullPath(), "/"), "/")
-	if len(f) > 0 && slice.IsContained(f[0], []string{"wp-includes", "wp-content", "favicon.ico"}) {
-		c.Header("Cache-Control", "private, max-age=86400")
+	if _, ok := path[f[0]]; ok {
+		t := config.GetConfig().CacheTime.CacheControl
+		if t > 0 {
+			c.Header("Cache-Control", fmt.Sprintf("private, max-age=%d", int(t.Seconds())))
+		}
 	}
+
 	c.Next()
 }
