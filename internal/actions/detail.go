@@ -21,7 +21,7 @@ func Detail(c *gin.Context) {
 	var err error
 	recent := cache.RecentPosts(c, 5)
 	archive := cache.Archives(c)
-	categoryItems := cache.Categories(c)
+	categoryItems := cache.CategoriesTags(c, plugins.Category)
 	recentComments := cache.RecentComments(c, 5)
 	var ginH = gin.H{
 		"title":          wpconfig.Options.Value("blogname"),

@@ -141,7 +141,7 @@ func (h *indexHandle) parseParams() (err error) {
 		category = h.c.Param("tag")
 		if category != "" {
 			h.scene = plugins.Tag
-			allNames := cache.AllTagsNames(h.c)
+			allNames := cache.AllCategoryTagsNames(h.c, plugins.Tag)
 			if _, ok := allNames[category]; !ok {
 				return errors.New(str.Join("not exists tag ", category))
 			}
@@ -150,7 +150,7 @@ func (h *indexHandle) parseParams() (err error) {
 		}
 	} else {
 		h.scene = plugins.Category
-		allNames := cache.AllCategoryNames(h.c)
+		allNames := cache.AllCategoryTagsNames(h.c, plugins.Category)
 		if _, ok := allNames[category]; !ok {
 			return errors.New(str.Join("not exists category ", category))
 		}
@@ -237,7 +237,7 @@ func Index(c *gin.Context) {
 	var err error
 	archive := cache.Archives(c)
 	recent := cache.RecentPosts(c, 5)
-	categoryItems := cache.Categories(c)
+	categoryItems := cache.CategoriesTags(c, plugins.Category)
 	recentComments := cache.RecentComments(c, 5)
 	ginH := gin.H{
 		"err":            err,

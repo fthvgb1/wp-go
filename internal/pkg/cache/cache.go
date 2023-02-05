@@ -3,11 +3,13 @@ package cache
 import (
 	"context"
 	"github.com/fthvgb1/wp-go/cache"
+	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/internal/pkg/config"
 	"github.com/fthvgb1/wp-go/internal/pkg/dao"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
+	"github.com/fthvgb1/wp-go/internal/plugins"
 	"sync"
 	"time"
 )
@@ -155,39 +157,21 @@ func (c *Arch) getArchiveCache(ctx context.Context) []models.PostArchive {
 	return c.data
 }
 
-func Categories(ctx context.Context) []models.TermsMy {
+func CategoriesTags(ctx context.Context, t ...int) []models.TermsMy {
 	r, err := categoryAndTagsCaches.GetCache(ctx, time.Second, ctx)
 	logs.ErrPrintln(err, "get category err")
-	r = slice.Filter(r, func(my models.TermsMy) bool {
-		return my.Taxonomy == "category"
-	})
+	if len(t) > 0 {
+		return slice.Filter(r, func(my models.TermsMy) bool {
+			return helper.Or(t[0] == plugins.Tag, "post_tag", "category") == my.Taxonomy
+		})
+	}
 	return r
 }
-
-func Tags(ctx context.Context) []models.TermsMy {
-	r, err := categoryAndTagsCaches.GetCache(ctx, time.Second, ctx)
-	logs.ErrPrintln(err, "get category err")
-	r = slice.Filter(r, func(my models.TermsMy) bool {
-		return my.Taxonomy == "post_tag"
-	})
-	return r
-}
-func AllTagsNames(ctx context.Context) map[string]struct{} {
+func AllCategoryTagsNames(ctx context.Context, c int) map[string]struct{} {
 	r, err := categoryAndTagsCaches.GetCache(ctx, time.Second, ctx)
 	logs.ErrPrintln(err, "get category err")
 	return slice.FilterAndToMap(r, func(t models.TermsMy) (string, struct{}, bool) {
-		if t.Taxonomy == "post_tag" {
-			return t.Name, struct{}{}, true
-		}
-		return "", struct{}{}, false
-	})
-}
-
-func AllCategoryNames(ctx context.Context) map[string]struct{} {
-	r, err := categoryAndTagsCaches.GetCache(ctx, time.Second, ctx)
-	logs.ErrPrintln(err, "get category err")
-	return slice.FilterAndToMap(r, func(t models.TermsMy) (string, struct{}, bool) {
-		if t.Taxonomy == "category" {
+		if helper.Or(c == plugins.Tag, "post_tag", "category") == t.Taxonomy {
 			return t.Name, struct{}{}, true
 		}
 		return "", struct{}{}, false
