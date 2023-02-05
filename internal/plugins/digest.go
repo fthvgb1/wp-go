@@ -17,7 +17,7 @@ var ctx context.Context
 
 func InitDigestCache() {
 	ctx = context.Background()
-	digestCache = cache.NewMemoryMapCacheByFn[uint64](digestRaw, config.Conf.Load().DigestCacheTime)
+	digestCache = cache.NewMemoryMapCacheByFn[uint64](digestRaw, config.GetConfig().CacheTime.DigestCacheTime)
 }
 
 func ClearDigestCache() {
@@ -30,7 +30,7 @@ func FlushCache() {
 func digestRaw(arg ...any) (string, error) {
 	str := arg[0].(string)
 	id := arg[1].(uint64)
-	limit := config.Conf.Load().DigestWordCount
+	limit := config.GetConfig().DigestWordCount
 	if limit < 0 {
 		return str, nil
 	} else if limit == 0 {

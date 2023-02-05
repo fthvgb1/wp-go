@@ -48,39 +48,43 @@ var headerImagesCache *cache.MapCache[string, []models.PostThumbnail]
 var ctx context.Context
 
 func InitActionsCommonCache() {
-	c := config.Conf.Load()
+	c := config.GetConfig()
 	archivesCaches = &Arch{
 		mutex:        &sync.Mutex{},
 		setCacheFunc: dao.Archives,
 	}
 
-	searchPostIdsCache = cache.NewMemoryMapCacheByFn[string](dao.SearchPostIds, c.SearchPostCacheTime)
+	searchPostIdsCache = cache.NewMemoryMapCacheByFn[string](dao.SearchPostIds, c.CacheTime.SearchPostCacheTime)
 
-	postListIdsCache = cache.NewMemoryMapCacheByFn[string](dao.SearchPostIds, c.PostListCacheTime)
+	postListIdsCache = cache.NewMemoryMapCacheByFn[string](dao.SearchPostIds, c.CacheTime.PostListCacheTime)
 
-	monthPostsCache = cache.NewMemoryMapCacheByFn[string](dao.MonthPost, c.MonthPostCacheTime)
+	monthPostsCache = cache.NewMemoryMapCacheByFn[string](dao.MonthPost, c.CacheTime.MonthPostCacheTime)
 
-	postContextCache = cache.NewMemoryMapCacheByFn[uint64](dao.GetPostContext, c.ContextPostCacheTime)
+	postContextCache = cache.NewMemoryMapCacheByFn[uint64](dao.GetPostContext, c.CacheTime.ContextPostCacheTime)
 
-	postsCache = cache.NewMemoryMapCacheByBatchFn(dao.GetPostsByIds, c.PostDataCacheTime)
+	postsCache = cache.NewMemoryMapCacheByBatchFn(dao.GetPostsByIds, c.CacheTime.PostDataCacheTime)
 
-	postMetaCache = cache.NewMemoryMapCacheByBatchFn(dao.GetPostMetaByPostIds, c.PostDataCacheTime)
+	postMetaCache = cache.NewMemoryMapCacheByBatchFn(dao.GetPostMetaByPostIds, c.CacheTime.PostDataCacheTime)
 
-	categoryAndTagsCaches = cache.NewVarCache(dao.CategoriesAndTags, c.CategoryCacheTime)
+	categoryAndTagsCaches = cache.NewVarCache(dao.CategoriesAndTags, c.CacheTime.CategoryCacheTime)
 
-	recentPostsCaches = cache.NewVarCache(dao.RecentPosts, c.RecentPostCacheTime)
+	recentPostsCaches = cache.NewVarCache(dao.RecentPosts, c.CacheTime.RecentPostCacheTime)
 
-	recentCommentsCaches = cache.NewVarCache(dao.RecentComments, c.RecentCommentsCacheTime)
+	recentCommentsCaches = cache.NewVarCache(dao.RecentComments, c.CacheTime.RecentCommentsCacheTime)
 
-	postCommentCaches = cache.NewMemoryMapCacheByFn[uint64](dao.PostComments, c.PostCommentsCacheTime)
+	postCommentCaches = cache.NewMemoryMapCacheByFn[uint64](dao.PostComments, c.CacheTime.PostCommentsCacheTime)
 
-	maxPostIdCache = cache.NewVarCache(dao.GetMaxPostId, c.MaxPostIdCacheTime)
+	maxPostIdCache = cache.NewVarCache(dao.GetMaxPostId, c.CacheTime.MaxPostIdCacheTime)
 
-	usersCache = cache.NewMemoryMapCacheByFn[uint64](dao.GetUserById, c.UserInfoCacheTime)
+	usersCache = cache.NewMemoryMapCacheByFn[uint64](dao.GetUserById, c.CacheTime.UserInfoCacheTime)
 
-	usersNameCache = cache.NewMemoryMapCacheByFn[string](dao.GetUserByName, c.UserInfoCacheTime)
+	usersNameCache = cache.NewMemoryMapCacheByFn[string](dao.GetUserByName, c.CacheTime.UserInfoCacheTime)
 
-	commentsCache = cache.NewMemoryMapCacheByBatchFn(dao.GetCommentByIds, c.CommentsCacheTime)
+	commentsCache = cache.NewMemoryMapCacheByBatchFn(dao.GetCommentByIds, c.CacheTime.CommentsCacheTime)
+
+	allUsernameCache = cache.NewVarCache(dao.AllUsername, c.CacheTime.UserInfoCacheTime)
+
+	headerImagesCache = cache.NewMemoryMapCacheByFn[string](getHeaderImages, c.CacheTime.ThemeHeaderImagCacheTime)
 
 	feedCache = cache.NewVarCache(feed, time.Hour)
 
@@ -89,10 +93,6 @@ func InitActionsCommonCache() {
 	commentsFeedCache = cache.NewVarCache(commentsFeed, time.Hour)
 
 	newCommentCache = cache.NewMemoryMapCacheByFn[string, string](nil, 15*time.Minute)
-
-	allUsernameCache = cache.NewVarCache(dao.AllUsername, c.UserInfoCacheTime)
-
-	headerImagesCache = cache.NewMemoryMapCacheByFn[string](getHeaderImages, c.ThemeHeaderImagCacheTime)
 
 	ctx = context.Background()
 

@@ -18,7 +18,7 @@ func SetupRouter() (*gin.Engine, func()) {
 	// Disable Console Color
 	// gin.DisableConsoleColor()
 	r := gin.New()
-	c := config.Conf.Load()
+	c := config.GetConfig()
 	if len(c.TrustIps) > 0 {
 		err := r.SetTrustedProxies(c.TrustIps)
 		if err != nil {
@@ -29,7 +29,7 @@ func SetupRouter() (*gin.Engine, func()) {
 	r.HTMLRender = theme.GetTemplate()
 
 	validServerName, reloadValidServerNameFn := middleware.ValidateServerNames()
-	fl, flReload := middleware.FlowLimit(c.MaxRequestSleepNum, c.MaxRequestNum, c.SleepTime)
+	fl, flReload := middleware.FlowLimit(c.MaxRequestSleepNum, c.MaxRequestNum, c.CacheTime.SleepTime)
 	r.Use(
 		gin.Logger(),
 		validServerName,
@@ -76,15 +76,15 @@ func SetupRouter() (*gin.Engine, func()) {
 	r.GET("/p/:id/feed", actions.PostFeed)
 	r.GET("/feed", actions.Feed)
 	r.GET("/comments/feed", actions.CommentsFeed)
-	cfl, _ := middleware.FlowLimit(c.MaxRequestSleepNum, 5, c.SleepTime)
+	cfl, _ := middleware.FlowLimit(c.MaxRequestSleepNum, 5, c.CacheTime.SleepTime)
 	r.POST("/comment", cfl, actions.PostComment)
 	if c.Pprof != "" {
 		pprof.Register(r, c.Pprof)
 	}
 	fn := func() {
 		reloadValidServerNameFn()
-		c := config.Conf.Load()
-		flReload(c.MaxRequestSleepNum, c.MaxRequestNum, c.SleepTime)
+		c := config.GetConfig()
+		flReload(c.MaxRequestSleepNum, c.MaxRequestNum, c.CacheTime.SleepTime)
 		slRload(c.SingleIpSearchNum)
 	}
 	return r, fn

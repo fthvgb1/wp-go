@@ -8,41 +8,49 @@ import (
 	"time"
 )
 
-var Conf safety.Var[Config]
+var config safety.Var[Config]
+
+func GetConfig() Config {
+	return config.Load()
+}
 
 type Config struct {
-	Ssl                      Ssl             `yaml:"ssl"`
-	Mysql                    Mysql           `yaml:"mysql"`
-	Mail                     Mail            `yaml:"mail"`
+	Ssl                Ssl       `yaml:"ssl"`
+	Mysql              Mysql     `yaml:"mysql"`
+	Mail               Mail      `yaml:"mail"`
+	CacheTime          CacheTime `yaml:"cacheTime"`
+	DigestWordCount    int       `yaml:"digestWordCount"`
+	MaxRequestSleepNum int64     `yaml:"maxRequestSleepNum"`
+	MaxRequestNum      int64     `yaml:"maxRequestNum"`
+	SingleIpSearchNum  int64     `yaml:"singleIpSearchNum"`
+	Gzip               bool      `yaml:"gzip"`
+	PostCommentUrl     string    `yaml:"postCommentUrl"`
+	TrustIps           []string  `yaml:"trustIps"`
+	TrustServerNames   []string  `yaml:"trustServerNames"`
+	Theme              string    `yaml:"theme"`
+	PostOrder          string    `yaml:"postOrder"`
+	UploadDir          string    `yaml:"uploadDir"`
+	Pprof              string    `yaml:"pprof"`
+}
+
+type CacheTime struct {
 	RecentPostCacheTime      time.Duration   `yaml:"recentPostCacheTime"`
 	CategoryCacheTime        time.Duration   `yaml:"categoryCacheTime"`
 	ArchiveCacheTime         time.Duration   `yaml:"archiveCacheTime"`
 	ContextPostCacheTime     time.Duration   `yaml:"contextPostCacheTime"`
 	RecentCommentsCacheTime  time.Duration   `yaml:"recentCommentsCacheTime"`
 	DigestCacheTime          time.Duration   `yaml:"digestCacheTime"`
-	DigestWordCount          int             `yaml:"digestWordCount"`
 	PostListCacheTime        time.Duration   `yaml:"postListCacheTime"`
 	SearchPostCacheTime      time.Duration   `yaml:"searchPostCacheTime"`
 	MonthPostCacheTime       time.Duration   `yaml:"monthPostCacheTime"`
 	PostDataCacheTime        time.Duration   `yaml:"postDataCacheTime"`
 	PostCommentsCacheTime    time.Duration   `yaml:"postCommentsCacheTime"`
 	CrontabClearCacheTime    time.Duration   `yaml:"crontabClearCacheTime"`
-	MaxRequestSleepNum       int64           `yaml:"maxRequestSleepNum"`
-	SleepTime                []time.Duration `yaml:"sleepTime"`
-	MaxRequestNum            int64           `yaml:"maxRequestNum"`
-	SingleIpSearchNum        int64           `yaml:"singleIpSearchNum"`
 	MaxPostIdCacheTime       time.Duration   `yaml:"maxPostIdCacheTime"`
 	UserInfoCacheTime        time.Duration   `yaml:"userInfoCacheTime"`
 	CommentsCacheTime        time.Duration   `yaml:"commentsCacheTime"`
 	ThemeHeaderImagCacheTime time.Duration   `yaml:"themeHeaderImagCacheTime"`
-	Gzip                     bool            `yaml:"gzip"`
-	PostCommentUrl           string          `yaml:"postCommentUrl"`
-	TrustIps                 []string        `yaml:"trustIps"`
-	TrustServerNames         []string        `yaml:"trustServerNames"`
-	Theme                    string          `yaml:"theme"`
-	PostOrder                string          `yaml:"postOrder"`
-	UploadDir                string          `yaml:"uploadDir"`
-	Pprof                    string          `yaml:"pprof"`
+	SleepTime                []time.Duration `yaml:"sleepTime"`
 }
 
 type Ssl struct {
@@ -77,7 +85,7 @@ func InitConfig(conf string) error {
 	if err != nil {
 		return err
 	}
-	Conf.Store(c)
+	config.Store(c)
 	return nil
 }
 

@@ -72,7 +72,7 @@ func initConf(c string) (err error) {
 }
 
 func cronClearCache() {
-	t := time.NewTicker(config.Conf.Load().CrontabClearCacheTime)
+	t := time.NewTicker(config.GetConfig().CacheTime.CrontabClearCacheTime)
 	for {
 		select {
 		case <-t.C:
@@ -85,7 +85,7 @@ func cronClearCache() {
 func flushCache() {
 	defer func() {
 		if r := recover(); r != nil {
-			err := mail.SendMail([]string{config.Conf.Load().Mail.User}, "清空缓存失败", fmt.Sprintf("err:[%s]", r))
+			err := mail.SendMail([]string{config.GetConfig().Mail.User}, "清空缓存失败", fmt.Sprintf("err:[%s]", r))
 			logs.ErrPrintln(err, "发邮件失败")
 		}
 	}()
@@ -129,7 +129,7 @@ func signalNotify() {
 func main() {
 	go signalNotify()
 	Gin, reloadFn := route.SetupRouter()
-	c := config.Conf.Load()
+	c := config.GetConfig()
 	middleWareReloadFn = reloadFn
 	if c.Ssl.Key != "" && c.Ssl.Cert != "" {
 		err := Gin.RunTLS(address, c.Ssl.Cert, c.Ssl.Key)

@@ -18,7 +18,7 @@ func SendMail(mailTo []string, subject string, body string, files ...string) err
 	m := gomail.NewMessage(
 		gomail.SetEncoding(gomail.Base64),
 	)
-	c := config.Conf.Load()
+	c := config.GetConfig()
 	m.SetHeader("From",
 		m.FormatAddress(c.Mail.User,
 			c.Mail.Alias,

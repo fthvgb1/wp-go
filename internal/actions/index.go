@@ -99,7 +99,7 @@ func (h *indexHandle) parseParams() (err error) {
 	h.order = h.c.Query("order")
 
 	if !slice.IsContained(h.order, orders) {
-		order := config.Conf.Load().PostOrder
+		order := config.GetConfig().PostOrder
 		h.order = "asc"
 		if order != "" && slice.IsContained(order, orders) {
 			h.order = order

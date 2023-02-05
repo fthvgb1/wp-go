@@ -55,7 +55,7 @@ func formatSql(sql string, params []any) string {
 }
 
 func InitDb() error {
-	c := config.Conf.Load()
+	c := config.GetConfig()
 	dsn := c.Mysql.Dsn.GetDsn()
 	var err error
 	Db, err = sqlx.Open("mysql", dsn)
