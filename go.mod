@@ -1,6 +1,6 @@
 module github.com/fthvgb1/wp-go
 
-go 1.18
+go 1.19
 
 require (
 	github.com/dlclark/regexp2 v1.7.0
