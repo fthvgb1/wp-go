@@ -6,7 +6,6 @@ import (
 	"golang.org/x/exp/constraints"
 	"math/rand"
 	"strings"
-	"time"
 )
 
 func SimplePagination[T Model](ctx context.Context, where ParseWhere, fields, group string, page, pageSize int, order SqlBuilder, join SqlBuilder, having SqlBuilder, in ...[]any) (r []T, total int, err error) {
@@ -59,7 +58,6 @@ func SimplePagination[T Model](ctx context.Context, where ParseWhere, fields, gr
 		err = globalBb.Get(ctx, &n, sq, args...)
 	} else {
 		tpx := "select count(*) n from (select %s from %s %s %s %s %s ) %s"
-		rand.Seed(int64(time.Now().Nanosecond()))
 		sq := fmt.Sprintf(tpx, group, rr.Table(), j, w, groupBy, h, fmt.Sprintf("table%d", rand.Int()))
 		err = globalBb.Get(ctx, &n, sq, args...)
 	}

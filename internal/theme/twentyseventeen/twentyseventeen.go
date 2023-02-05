@@ -165,12 +165,14 @@ func (h handle) bodyClass() string {
 	case plugins.Detail:
 		s = fmt.Sprintf("postid-%d", h.ginH["post"].(models.Posts).Id)
 	}
-	return map[int]string{
-		plugins.Home:     "home blog ",
-		plugins.Archive:  "archive date page-two-column",
-		plugins.Category: str.Join("archive category page-two-column ", s),
-		plugins.Tag:      str.Join("archive category page-two-column ", s),
-		plugins.Search:   str.Join("search ", s),
-		plugins.Detail:   str.Join("post-template-default single single-post single-format-standard ", s),
-	}[h.scene]
+	return str.Join(class[h.scene], s)
+}
+
+var class = map[int]string{
+	plugins.Home:     "home blog ",
+	plugins.Archive:  "archive date page-two-column",
+	plugins.Category: "archive category page-two-column",
+	plugins.Tag:      "archive category page-two-column ",
+	plugins.Search:   "search ",
+	plugins.Detail:   "post-template-default single single-post single-format-standard ",
 }
