@@ -11,6 +11,19 @@ import (
 //
 // Conditions 中可用 Where Fields Group Having Join Order Offset Limit In 函数
 func Finds[T Model](ctx context.Context, q *QueryCondition) (r []T, err error) {
+	r, err = finds[T](globalBb, ctx, q)
+	return
+}
+
+// DBFind  同 Finds 使用指定 db 查询
+//
+// Conditions 中可用 Where Fields Group Having Join Order Offset Limit In 函数
+func DBFind[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r []T, err error) {
+	r, err = finds[T](db, ctx, q)
+	return
+}
+
+func finds[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r []T, err error) {
 	var rr T
 	w := ""
 	var args []any
@@ -48,25 +61,22 @@ func Finds[T Model](ctx context.Context, q *QueryCondition) (r []T, err error) {
 		l = fmt.Sprintf(" %s offset %d", l, q.offset)
 	}
 	sq := fmt.Sprintf(tp, q.fields, rr.Table(), j, w, groupBy, h, q.order.parseOrderBy(), l)
-	err = globalBb.Select(ctx, &r, sq, args...)
+	err = db.Select(ctx, &r, sq, args...)
 	return
 }
 
-// ChunkFind 分片查询并直接返回所有结果
-//
-// Conditions 中可用 Where Fields Group Having Join Order Limit In 函数
-func ChunkFind[T Model](ctx context.Context, perLimit int, q *QueryCondition) (r []T, err error) {
+func chunkFind[T Model](db dbQuery, ctx context.Context, perLimit int, q *QueryCondition) (r []T, err error) {
 	i := 1
 	var rr []T
 	var total int
 	var offset int
 	for {
 		if 1 == i {
-			rr, total, err = SimplePagination[T](ctx, q.where, q.fields, q.group, i, perLimit, q.order, q.join, q.having, q.in...)
+			rr, total, err = pagination[T](db, ctx, q.where, q.fields, q.group, i, perLimit, q.order, q.join, q.having, q.in...)
 		} else {
 			q.offset = offset
 			q.limit = perLimit
-			rr, err = Finds[T](ctx, q)
+			rr, err = finds[T](db, ctx, q)
 		}
 		offset += perLimit
 		if (err != nil && err != sql.ErrNoRows) || len(rr) < 1 {
@@ -81,10 +91,39 @@ func ChunkFind[T Model](ctx context.Context, perLimit int, q *QueryCondition) (r
 	return
 }
 
+// ChunkFind 分片查询并直接返回所有结果
+//
+// Conditions 中可用 Where Fields Group Having Join Order Limit In 函数
+func ChunkFind[T Model](ctx context.Context, perLimit int, q *QueryCondition) (r []T, err error) {
+	r, err = chunkFind[T](globalBb, ctx, perLimit, q)
+	return
+}
+
+// DBChunkFind 同 ChunkFind
+//
+// Conditions 中可用 Where Fields Group Having Join Order Limit In 函数
+func DBChunkFind[T Model](db dbQuery, ctx context.Context, perLimit int, q *QueryCondition) (r []T, err error) {
+	r, err = chunkFind[T](db, ctx, perLimit, q)
+	return
+}
+
 // Chunk 分片查询并函数过虑返回新类型的切片
 //
 // Conditions 中可用 Where Fields Group Having Join Order Limit In 函数
 func Chunk[T Model, R any](ctx context.Context, perLimit int, fn func(rows T) (R, bool), q *QueryCondition) (r []R, err error) {
+	r, err = chunk(globalBb, ctx, perLimit, fn, q)
+	return
+}
+
+// DBChunk 同 Chunk
+//
+// Conditions 中可用 Where Fields Group Having Join Order Limit In 函数
+func DBChunk[T Model, R any](db dbQuery, ctx context.Context, perLimit int, fn func(rows T) (R, bool), q *QueryCondition) (r []R, err error) {
+	r, err = chunk(db, ctx, perLimit, fn, q)
+	return
+}
+
+func chunk[T Model, R any](db dbQuery, ctx context.Context, perLimit int, fn func(rows T) (R, bool), q *QueryCondition) (r []R, err error) {
 	i := 1
 	var rr []T
 	var count int
@@ -92,11 +131,11 @@ func Chunk[T Model, R any](ctx context.Context, perLimit int, fn func(rows T) (R
 	var offset int
 	for {
 		if 1 == i {
-			rr, total, err = SimplePagination[T](ctx, q.where, q.fields, q.group, i, perLimit, q.order, q.join, q.having, q.in...)
+			rr, total, err = pagination[T](db, ctx, q.where, q.fields, q.group, i, perLimit, q.order, q.join, q.having, q.in...)
 		} else {
 			q.offset = offset
 			q.limit = perLimit
-			rr, err = Finds[T](ctx, q)
+			rr, err = finds[T](db, ctx, q)
 		}
 		offset += perLimit
 		if (err != nil && err != sql.ErrNoRows) || len(rr) < 1 {
@@ -122,4 +161,11 @@ func Chunk[T Model, R any](ctx context.Context, perLimit int, fn func(rows T) (R
 // Condition 中可使用 Where Fields Group Having Join Order Page Limit In 函数
 func Pagination[T Model](ctx context.Context, q *QueryCondition) ([]T, int, error) {
 	return SimplePagination[T](ctx, q.where, q.fields, q.group, q.page, q.limit, q.order, q.join, q.having, q.in...)
+}
+
+// DBPagination 同 Pagination 方便多个db使用
+//
+// Condition 中可使用 Where Fields Group Having Join Order Page Limit In 函数
+func DBPagination[T Model](db dbQuery, ctx context.Context, q *QueryCondition) ([]T, int, error) {
+	return pagination[T](db, ctx, q.where, q.fields, q.group, q.page, q.limit, q.order, q.join, q.having, q.in...)
 }

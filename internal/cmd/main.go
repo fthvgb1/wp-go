@@ -55,11 +55,11 @@ func initConf(c string) (err error) {
 		return
 	}
 
-	err = db.InitDb()
+	database, err := db.InitDb()
 	if err != nil {
 		return
 	}
-	model.InitDB(db.NewSqlxDb(db.Db))
+	model.InitDB(model.NewSqlxQuery(database))
 	err = wpconfig.InitOptions()
 	if err != nil {
 		return

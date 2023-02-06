@@ -8,7 +8,7 @@ import (
 )
 
 var path = map[string]struct{}{
-	"includes":    {},
+	"wp-includes": {},
 	"wp-content":  {},
 	"favicon.ico": {},
 }
