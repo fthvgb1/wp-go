@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/fthvgb1/wp-go/helper/slice"
 	"strings"
 )
 
@@ -168,4 +169,30 @@ func Pagination[T Model](ctx context.Context, q *QueryCondition) ([]T, int, erro
 // Condition 中可使用 Where Fields Group Having Join Order Page Limit In 函数
 func DBPagination[T Model](db dbQuery, ctx context.Context, q *QueryCondition) ([]T, int, error) {
 	return pagination[T](db, ctx, q.where, q.fields, q.group, q.page, q.limit, q.order, q.join, q.having, q.in...)
+}
+
+func Column[V Model, T any](ctx context.Context, fn func(V) (T, bool), q *QueryCondition) (r []T, err error) {
+	res, err := finds[V](globalBb, ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	r = slice.FilterAndMap(res, fn)
+	return
+}
+func DBColumn[V Model, T any](db dbQuery, ctx context.Context, fn func(V) (T, bool), q *QueryCondition) (r []T, err error) {
+	res, err := finds[V](db, ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	r = slice.FilterAndMap(res, fn)
+	return
+}
+
+func column[V Model, T any](db dbQuery, ctx context.Context, fn func(V) (T, bool), q *QueryCondition) (r []T, err error) {
+	res, err := finds[V](db, ctx, q)
+	if err != nil {
+		return nil, err
+	}
+	r = slice.FilterAndMap(res, fn)
+	return
 }
