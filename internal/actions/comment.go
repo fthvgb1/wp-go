@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper/slice"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/mail"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	"github.com/fthvgb1/wp-go/internal/pkg/config"
@@ -14,7 +15,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -92,8 +92,8 @@ func PostComment(c *gin.Context) {
 		}
 		cc := c.Copy()
 		go func() {
-			id, err := strconv.ParseUint(i, 10, 64)
-			if err != nil {
+			id := str.ToInteger[uint64](i, 0)
+			if id <= 0 {
 				logs.ErrPrintln(err, "获取文档id", i)
 				return
 			}

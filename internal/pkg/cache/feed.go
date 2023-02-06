@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/cache"
 	"github.com/fthvgb1/wp-go/helper/slice"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
@@ -11,7 +12,6 @@ import (
 	"github.com/fthvgb1/wp-go/plugin/digest"
 	"github.com/fthvgb1/wp-go/rss2"
 	"github.com/gin-gonic/gin"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -93,17 +93,10 @@ func feed(arg ...any) (xml []string, err error) {
 func postFeed(arg ...any) (x string, err error) {
 	c := arg[0].(*gin.Context)
 	id := arg[1].(string)
-	Id := 0
-	if id != "" {
-		Id, err = strconv.Atoi(id)
-		if err != nil {
-			return
-		}
-	}
-	ID := uint64(Id)
+	ID := str.ToInteger[uint64](id, 0)
 	maxId, err := GetMaxPostId(c)
 	logs.ErrPrintln(err, "get max post id")
-	if ID > maxId || err != nil {
+	if ID < 1 || ID > maxId || err != nil {
 		return
 	}
 	post, err := GetPostById(c, ID)

@@ -2,6 +2,7 @@ package actions
 
 import (
 	"fmt"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/plugins"
@@ -10,7 +11,6 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"strconv"
 )
 
 type detailHandler struct {
@@ -47,18 +47,11 @@ func Detail(c *gin.Context) {
 		t := theme.GetTemplateName()
 		theme.Hook(t, code, c, ginH, plugins.Detail, status)
 	}()
-	id := c.Param("id")
-	Id := 0
-	if id != "" {
-		Id, err = strconv.Atoi(id)
-		if err != nil {
-			return
-		}
-	}
-	ID := uint64(Id)
+	ID := str.ToInteger[uint64](c.Param("id"), 0)
+
 	maxId, err := cache.GetMaxPostId(c)
 	logs.ErrPrintln(err, "get max post id")
-	if ID > maxId || err != nil {
+	if ID > maxId || ID <= 0 || err != nil {
 		return
 	}
 	post, err := cache.GetPostById(c, ID)
@@ -92,12 +85,7 @@ func Detail(c *gin.Context) {
 	ginH["post"] = post
 	ginH["showComment"] = showComment
 	ginH["prev"] = prev
-	depth := wpconfig.Options.Value("thread_comments_depth")
-	d, err := strconv.Atoi(depth)
-	if err != nil {
-		logs.ErrPrintln(err, "get comment depth ", depth)
-		d = 5
-	}
+	d := str.ToInteger(wpconfig.Options.Value("thread_comments_depth"), 5)
 	ginH["maxDep"] = d
 	ginH["next"] = next
 	ginH["user"] = user
