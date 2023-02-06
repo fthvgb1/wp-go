@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-func SimplePagination[T Model](ctx context.Context, where ParseWhere, fields, group string, page, pageSize int, order SqlBuilder, join SqlBuilder, having SqlBuilder, in ...[]any) (r []T, total int, err error) {
+func pagination[T Model](db dbQuery, ctx context.Context, where ParseWhere, fields, group string, page, pageSize int, order SqlBuilder, join SqlBuilder, having SqlBuilder, in ...[]any) (r []T, total int, err error) {
 	var rr T
 	var w string
 	var args []any
@@ -55,11 +55,11 @@ func SimplePagination[T Model](ctx context.Context, where ParseWhere, fields, gr
 	if group == "" {
 		tpx := "select count(*) n from %s %s %s limit 1"
 		sq := fmt.Sprintf(tpx, rr.Table(), j, w)
-		err = globalBb.Get(ctx, &n, sq, args...)
+		err = db.Get(ctx, &n, sq, args...)
 	} else {
 		tpx := "select count(*) n from (select %s from %s %s %s %s %s ) %s"
 		sq := fmt.Sprintf(tpx, group, rr.Table(), j, w, groupBy, h, fmt.Sprintf("table%d", rand.Int()))
-		err = globalBb.Get(ctx, &n, sq, args...)
+		err = db.Get(ctx, &n, sq, args...)
 	}
 
 	if err != nil {
@@ -78,10 +78,15 @@ func SimplePagination[T Model](ctx context.Context, where ParseWhere, fields, gr
 	}
 	tp := "select %s from %s %s %s %s %s %s limit %d,%d"
 	sq := fmt.Sprintf(tp, fields, rr.Table(), j, w, groupBy, h, order.parseOrderBy(), offset, pageSize)
-	err = globalBb.Select(ctx, &r, sq, args...)
+	err = db.Select(ctx, &r, sq, args...)
 	if err != nil {
 		return
 	}
+	return
+}
+
+func SimplePagination[T Model](ctx context.Context, where ParseWhere, fields, group string, page, pageSize int, order SqlBuilder, join SqlBuilder, having SqlBuilder, in ...[]any) (r []T, total int, err error) {
+	r, total, err = pagination[T](globalBb, ctx, where, fields, group, page, pageSize, order, join, having, in...)
 	return
 }
 

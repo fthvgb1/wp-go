@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper/slice"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/mail"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	"github.com/fthvgb1/wp-go/internal/pkg/config"
@@ -14,7 +15,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"strconv"
 	"strings"
 	"time"
 )
@@ -34,6 +34,7 @@ func PostComment(c *gin.Context) {
 			c.Writer.WriteString(err.Error())
 		}
 	}()
+	conf := config.GetConfig()
 	if err != nil {
 		return
 	}
@@ -43,7 +44,7 @@ func PostComment(c *gin.Context) {
 	m := c.PostForm("email")
 	comment := c.PostForm("comment")
 	c.Request.Body = io.NopCloser(bytes.NewBuffer(data))
-	req, err := http.NewRequest("POST", config.Conf.Load().PostCommentUrl, strings.NewReader(c.Request.PostForm.Encode()))
+	req, err := http.NewRequest("POST", conf.PostCommentUrl, strings.NewReader(c.Request.PostForm.Encode()))
 	if err != nil {
 		return
 	}
@@ -68,7 +69,7 @@ func PostComment(c *gin.Context) {
 			err = er
 			return
 		}
-		cu, er := url.Parse(config.Conf.Load().PostCommentUrl)
+		cu, er := url.Parse(conf.PostCommentUrl)
 		if er != nil {
 			err = er
 			return
@@ -91,8 +92,8 @@ func PostComment(c *gin.Context) {
 		}
 		cc := c.Copy()
 		go func() {
-			id, err := strconv.ParseUint(i, 10, 64)
-			if err != nil {
+			id := str.ToInteger[uint64](i, 0)
+			if id <= 0 {
 				logs.ErrPrintln(err, "获取文档id", i)
 				return
 			}
@@ -102,8 +103,8 @@ func PostComment(c *gin.Context) {
 				return
 			}
 			su := fmt.Sprintf("%s: %s[%s]发表了评论对文档[%v]的评论", wpconfig.Options.Value("siteurl"), author, m, post.PostTitle)
-			err = mail.SendMail([]string{config.Conf.Load().Mail.User}, su, comment)
-			logs.ErrPrintln(err, "发送邮件", config.Conf.Load().Mail.User, su, comment)
+			err = mail.SendMail([]string{conf.Mail.User}, su, comment)
+			logs.ErrPrintln(err, "发送邮件", conf.Mail.User, su, comment)
 		}()
 
 		s, er := io.ReadAll(ress.Body)

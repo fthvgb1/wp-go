@@ -3,6 +3,7 @@ package actions
 import (
 	"errors"
 	"fmt"
+	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/number"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
@@ -52,13 +53,12 @@ type indexHandle struct {
 }
 
 func newIndexHandle(ctx *gin.Context) *indexHandle {
-	size := wpconfig.Options.Value("posts_per_page")
-	si, _ := strconv.Atoi(size)
+	size := str.ToInteger(wpconfig.Options.Value("posts_per_page"), 10)
 	return &indexHandle{
 		c:              ctx,
 		session:        sessions.Default(ctx),
 		page:           1,
-		pageSize:       si,
+		pageSize:       size,
 		paginationStep: 1,
 		titleL:         wpconfig.Options.Value("blogname"),
 		titleR:         wpconfig.Options.Value("blogdescription"),
@@ -93,24 +93,20 @@ func (h *indexHandle) getSearchKey() string {
 	return fmt.Sprintf("action:%s|%s|%s|%s|%s|%s|%d|%d", h.author, h.search, h.orderBy, h.order, h.category, h.categoryType, h.page, h.pageSize)
 }
 
-var orders = []string{"asc", "desc"}
+var orders = map[string]struct{}{"asc": {}, "desc": {}}
 
 func (h *indexHandle) parseParams() (err error) {
 	h.order = h.c.Query("order")
-
-	if !slice.IsContained(h.order, orders) {
-		order := config.Conf.Load().PostOrder
+	if !maps.IsExists(orders, h.order) {
+		order := config.GetConfig().PostOrder
 		h.order = "asc"
-		if order != "" && slice.IsContained(order, orders) {
+		if order != "" && maps.IsExists(orders, order) {
 			h.order = order
 		}
 	}
 	year := h.c.Param("year")
 	if year != "" {
-		y, er := strconv.Atoi(year)
-		if er != nil {
-			return err
-		}
+		y := str.ToInteger(year, -1)
 		if y > time.Now().Year() || y <= 1970 {
 			return errors.New(str.Join("year err : ", year))
 		}
@@ -120,11 +116,8 @@ func (h *indexHandle) parseParams() (err error) {
 	}
 	month := h.c.Param("month")
 	if month != "" {
-		m, err := strconv.Atoi(month)
-		if err != nil {
-			return err
-		}
-		if _, ok := months[m]; !ok {
+		m := str.ToInteger(month, -1)
+		if !maps.IsExists(months, m) {
 			return errors.New(str.Join("months err ", month))
 		}
 
@@ -137,27 +130,26 @@ func (h *indexHandle) parseParams() (err error) {
 		h.scene = plugins.Archive
 	}
 	category := h.c.Param("category")
-	if category == "" {
-		category = h.c.Param("tag")
-		if category != "" {
-			h.scene = plugins.Tag
-			allNames := cache.AllTagsNames(h.c)
-			if _, ok := allNames[category]; !ok {
-				return errors.New(str.Join("not exists tag ", category))
-			}
-			h.categoryType = "post_tag"
-			h.header = fmt.Sprintf("标签： <span>%s</span>", category)
-		}
-	} else {
+	if category != "" {
 		h.scene = plugins.Category
-		allNames := cache.AllCategoryNames(h.c)
-		if _, ok := allNames[category]; !ok {
+		if !maps.IsExists(cache.AllCategoryTagsNames(h.c, plugins.Category), category) {
 			return errors.New(str.Join("not exists category ", category))
 		}
 		h.categoryType = "category"
 		h.header = fmt.Sprintf("分类： <span>%s</span>", category)
+		h.category = category
 	}
-	h.category = category
+	tag := h.c.Param("tag")
+	if tag != "" {
+		h.scene = plugins.Tag
+		if !maps.IsExists(cache.AllCategoryTagsNames(h.c, plugins.Tag), tag) {
+			return errors.New(str.Join("not exists tag ", tag))
+		}
+		h.categoryType = "post_tag"
+		h.header = fmt.Sprintf("标签： <span>%s</span>", tag)
+		h.category = tag
+	}
+
 	username := h.c.Param("author")
 	if username != "" {
 		allUsername, er := cache.GetAllUsername(h.c)
@@ -165,7 +157,7 @@ func (h *indexHandle) parseParams() (err error) {
 			err = er
 			return
 		}
-		if _, ok := allUsername[username]; !ok {
+		if !maps.IsExists(allUsername, username) {
 			err = errors.New(str.Join("user ", username, " is not exists"))
 			return
 		}
@@ -179,9 +171,9 @@ func (h *indexHandle) parseParams() (err error) {
 			"post_author", "=", strconv.FormatUint(user.Id, 10), "int",
 		})
 	}
-	if category != "" {
+	if h.category != "" {
 		h.where = append(h.where, []string{
-			"d.name", category,
+			"d.name", h.category,
 		}, []string{"taxonomy", h.categoryType})
 		h.join = append(h.join, []string{
 			"a", "left join", "wp_term_relationships b", "a.Id=b.object_id",
@@ -190,7 +182,7 @@ func (h *indexHandle) parseParams() (err error) {
 		}, []string{
 			"left join", "wp_terms d", "c.term_id=d.term_id",
 		})
-		h.setTitleLR(category, wpconfig.Options.Value("blogname"))
+		h.setTitleLR(h.category, wpconfig.Options.Value("blogname"))
 	}
 	s := h.c.Query("s")
 	if s != "" && strings.Replace(s, " ", "", -1) != "" {
@@ -206,15 +198,7 @@ func (h *indexHandle) parseParams() (err error) {
 		h.search = s
 		h.scene = plugins.Search
 	}
-	p := h.c.Query("paged")
-	if p == "" {
-		p = h.c.Param("page")
-	}
-	if p != "" {
-		if pa, err := strconv.Atoi(p); err == nil {
-			h.page = pa
-		}
-	}
+	h.page = str.ToInteger(h.c.Param("page"), 1)
 	total := int(atomic.LoadInt64(&dao.TotalRaw))
 	if total > 0 && total < (h.page-1)*h.pageSize {
 		h.page = 1
@@ -236,8 +220,8 @@ func Index(c *gin.Context) {
 	var totalRaw int
 	var err error
 	archive := cache.Archives(c)
-	recent := cache.RecentPosts(c, 5)
-	categoryItems := cache.Categories(c)
+	recent := cache.RecentPosts(c, 5, true)
+	categoryItems := cache.CategoriesTags(c, plugins.Category)
 	recentComments := cache.RecentComments(c, 5)
 	ginH := gin.H{
 		"err":            err,
@@ -247,6 +231,7 @@ func Index(c *gin.Context) {
 		"search":         h.search,
 		"header":         h.header,
 		"recentComments": recentComments,
+		"posts":          posts,
 	}
 	defer func() {
 		code := http.StatusOK
@@ -292,18 +277,16 @@ func Index(c *gin.Context) {
 	pw := h.session.Get("post_password")
 	plug := plugins.NewPostPlugin(c, h.scene)
 	for i, post := range posts {
-		plugins.PasswordProjectTitle(&posts[i])
-		if post.PostPassword != "" && pw != post.PostPassword {
-			plugins.PasswdProjectContent(&posts[i])
+		if post.PostPassword != "" {
+			plugins.PasswordProjectTitle(&posts[i])
+			if pw != post.PostPassword {
+				plugins.PasswdProjectContent(&posts[i])
+			}
 		} else {
 			plugins.ApplyPlugin(plug, &posts[i])
 		}
 	}
-	for i, post := range recent {
-		if post.PostPassword != "" && pw != post.PostPassword {
-			plugins.PasswdProjectContent(&recent[i])
-		}
-	}
+
 	q := c.Request.URL.Query().Encode()
 	if q != "" {
 		q = fmt.Sprintf("?%s", q)

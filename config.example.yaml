@@ -27,30 +27,42 @@ ssl:
   cert: ""
   key: ""
 
-# 最近文章缓存时间
-recentPostCacheTime: 5m
-# 分类缓存时间
-categoryCacheTime: 5m
-# 上下篇缓存时间
-contextPostCacheTime: 10h
-# 最近评论缓存时间
-recentCommentsCacheTime: 5m
-# 摘要缓存时间
-digestCacheTime: 5m
+cacheTime:
+  # 静态资源缓存时间Cache-Control
+  cacheControl: 5d
+  # 最近文章缓存时间
+  recentPostCacheTime: 5m
+  # 分类缓存时间
+  categoryCacheTime: 5m
+  # 上下篇缓存时间
+  contextPostCacheTime: 10h
+  # 最近评论缓存时间
+  recentCommentsCacheTime: 5m
+  # 摘要缓存时间
+  digestCacheTime: 5m
+  # 文档列表id页缓存 包括默认列表、分类
+  postListCacheTime: 1h
+  # 搜索文档id缓存时间
+  searchPostCacheTime: 5m
+  # 月归档文章id缓存时间
+  monthPostCacheTime: 1h
+  # 文档数据缓存时间
+  postDataCacheTime: 1h
+  # 文章评论缓存时间
+  postCommentsCacheTime: 5m
+  # 定时清理缓存周期时间
+  crontabClearCacheTime: 5m
+  # 文档最大id缓存时间
+  maxPostIdCacheTime: 1h
+  # 用户信息缓存时间
+  userInfoCacheTime: 24h
+  # 单独评论缓存时间
+  commentsCacheTime: 24h
+  # 主题的页眉图片缓存时间
+  themeHeaderImagCacheTime: 5m
 # 摘要字数
 digestWordCount: 300
-# 文档列表id页缓存 包括默认列表、分类
-postListCacheTime: 1h
-# 搜索文档id缓存时间
-searchPostCacheTime: 5m
-# 月归档文章id缓存时间
-monthPostCacheTime: 1h
-# 文档数据缓存时间
-postDataCacheTime: 1h
-# 文章评论缓存时间
-postCommentsCacheTime: 5m
-# 定时清理缓存周期时间
-crontabClearCacheTime: 5m
+
 # 到达指定并发请求数时随机sleep
 maxRequestSleepNum: 100
 # 随机sleep时间
@@ -59,14 +71,7 @@ sleepTime: [1s,3s]
 maxRequestNum: 500
 # 单ip同时最大搜索请求数
 singleIpSearchNum: 10
-# 文档最大id缓存时间
-maxPostIdCacheTime: 1h
-# 用户信息缓存时间
-userInfoCacheTime: 24h
-# 单独评论缓存时间
-commentsCacheTime: 24h
-# 主题的页眉图片缓存时间
-themeHeaderImagCacheTime: 5m
+
 
 # Gzip
 gzip: false

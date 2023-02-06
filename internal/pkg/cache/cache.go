@@ -3,11 +3,13 @@ package cache
 import (
 	"context"
 	"github.com/fthvgb1/wp-go/cache"
+	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/internal/pkg/config"
 	"github.com/fthvgb1/wp-go/internal/pkg/dao"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
+	"github.com/fthvgb1/wp-go/internal/plugins"
 	"sync"
 	"time"
 )
@@ -46,39 +48,43 @@ var headerImagesCache *cache.MapCache[string, []models.PostThumbnail]
 var ctx context.Context
 
 func InitActionsCommonCache() {
-	c := config.Conf.Load()
+	c := config.GetConfig()
 	archivesCaches = &Arch{
-		mutex:        &sync.Mutex{},
-		setCacheFunc: dao.Archives,
+		mutex: &sync.Mutex{},
+		fn:    dao.Archives,
 	}
 
-	searchPostIdsCache = cache.NewMemoryMapCacheByFn[string](dao.SearchPostIds, c.SearchPostCacheTime)
+	searchPostIdsCache = cache.NewMemoryMapCacheByFn[string](dao.SearchPostIds, c.CacheTime.SearchPostCacheTime)
 
-	postListIdsCache = cache.NewMemoryMapCacheByFn[string](dao.SearchPostIds, c.PostListCacheTime)
+	postListIdsCache = cache.NewMemoryMapCacheByFn[string](dao.SearchPostIds, c.CacheTime.PostListCacheTime)
 
-	monthPostsCache = cache.NewMemoryMapCacheByFn[string](dao.MonthPost, c.MonthPostCacheTime)
+	monthPostsCache = cache.NewMemoryMapCacheByFn[string](dao.MonthPost, c.CacheTime.MonthPostCacheTime)
 
-	postContextCache = cache.NewMemoryMapCacheByFn[uint64](dao.GetPostContext, c.ContextPostCacheTime)
+	postContextCache = cache.NewMemoryMapCacheByFn[uint64](dao.GetPostContext, c.CacheTime.ContextPostCacheTime)
 
-	postsCache = cache.NewMemoryMapCacheByBatchFn(dao.GetPostsByIds, c.PostDataCacheTime)
+	postsCache = cache.NewMemoryMapCacheByBatchFn(dao.GetPostsByIds, c.CacheTime.PostDataCacheTime)
 
-	postMetaCache = cache.NewMemoryMapCacheByBatchFn(dao.GetPostMetaByPostIds, c.PostDataCacheTime)
+	postMetaCache = cache.NewMemoryMapCacheByBatchFn(dao.GetPostMetaByPostIds, c.CacheTime.PostDataCacheTime)
 
-	categoryAndTagsCaches = cache.NewVarCache(dao.CategoriesAndTags, c.CategoryCacheTime)
+	categoryAndTagsCaches = cache.NewVarCache(dao.CategoriesAndTags, c.CacheTime.CategoryCacheTime)
 
-	recentPostsCaches = cache.NewVarCache(dao.RecentPosts, c.RecentPostCacheTime)
+	recentPostsCaches = cache.NewVarCache(dao.RecentPosts, c.CacheTime.RecentPostCacheTime)
 
-	recentCommentsCaches = cache.NewVarCache(dao.RecentComments, c.RecentCommentsCacheTime)
+	recentCommentsCaches = cache.NewVarCache(dao.RecentComments, c.CacheTime.RecentCommentsCacheTime)
 
-	postCommentCaches = cache.NewMemoryMapCacheByFn[uint64](dao.PostComments, c.PostCommentsCacheTime)
+	postCommentCaches = cache.NewMemoryMapCacheByFn[uint64](dao.PostComments, c.CacheTime.PostCommentsCacheTime)
 
-	maxPostIdCache = cache.NewVarCache(dao.GetMaxPostId, c.MaxPostIdCacheTime)
+	maxPostIdCache = cache.NewVarCache(dao.GetMaxPostId, c.CacheTime.MaxPostIdCacheTime)
 
-	usersCache = cache.NewMemoryMapCacheByFn[uint64](dao.GetUserById, c.UserInfoCacheTime)
+	usersCache = cache.NewMemoryMapCacheByFn[uint64](dao.GetUserById, c.CacheTime.UserInfoCacheTime)
 
-	usersNameCache = cache.NewMemoryMapCacheByFn[string](dao.GetUserByName, c.UserInfoCacheTime)
+	usersNameCache = cache.NewMemoryMapCacheByFn[string](dao.GetUserByName, c.CacheTime.UserInfoCacheTime)
 
-	commentsCache = cache.NewMemoryMapCacheByBatchFn(dao.GetCommentByIds, c.CommentsCacheTime)
+	commentsCache = cache.NewMemoryMapCacheByBatchFn(dao.GetCommentByIds, c.CacheTime.CommentsCacheTime)
+
+	allUsernameCache = cache.NewVarCache(dao.AllUsername, c.CacheTime.UserInfoCacheTime)
+
+	headerImagesCache = cache.NewMemoryMapCacheByFn[string](getHeaderImages, c.CacheTime.ThemeHeaderImagCacheTime)
 
 	feedCache = cache.NewVarCache(feed, time.Hour)
 
@@ -87,10 +93,6 @@ func InitActionsCommonCache() {
 	commentsFeedCache = cache.NewVarCache(commentsFeed, time.Hour)
 
 	newCommentCache = cache.NewMemoryMapCacheByFn[string, string](nil, 15*time.Minute)
-
-	allUsernameCache = cache.NewVarCache(dao.AllUsername, c.UserInfoCacheTime)
-
-	headerImagesCache = cache.NewMemoryMapCacheByFn[string](getHeaderImages, c.ThemeHeaderImagCacheTime)
 
 	ctx = context.Background()
 
@@ -132,62 +134,44 @@ func Archives(ctx context.Context) (r []models.PostArchive) {
 }
 
 type Arch struct {
-	data         []models.PostArchive
-	mutex        *sync.Mutex
-	setCacheFunc func(context.Context) ([]models.PostArchive, error)
-	month        time.Month
+	data  []models.PostArchive
+	mutex *sync.Mutex
+	fn    func(context.Context) ([]models.PostArchive, error)
+	month time.Month
 }
 
-func (c *Arch) getArchiveCache(ctx context.Context) []models.PostArchive {
-	l := len(c.data)
+func (a *Arch) getArchiveCache(ctx context.Context) []models.PostArchive {
+	l := len(a.data)
 	m := time.Now().Month()
-	if l > 0 && c.month != m || l < 1 {
-		r, err := c.setCacheFunc(ctx)
+	if l > 0 && a.month != m || l < 1 {
+		r, err := a.fn(ctx)
 		if err != nil {
 			logs.ErrPrintln(err, "set cache err[%s]")
 			return nil
 		}
-		c.mutex.Lock()
-		defer c.mutex.Unlock()
-		c.month = m
-		c.data = r
+		a.mutex.Lock()
+		defer a.mutex.Unlock()
+		a.month = m
+		a.data = r
 	}
-	return c.data
+	return a.data
 }
 
-func Categories(ctx context.Context) []models.TermsMy {
+func CategoriesTags(ctx context.Context, t ...int) []models.TermsMy {
 	r, err := categoryAndTagsCaches.GetCache(ctx, time.Second, ctx)
 	logs.ErrPrintln(err, "get category err")
-	r = slice.Filter(r, func(my models.TermsMy) bool {
-		return my.Taxonomy == "category"
-	})
+	if len(t) > 0 {
+		return slice.Filter(r, func(my models.TermsMy) bool {
+			return helper.Or(t[0] == plugins.Tag, "post_tag", "category") == my.Taxonomy
+		})
+	}
 	return r
 }
-
-func Tags(ctx context.Context) []models.TermsMy {
-	r, err := categoryAndTagsCaches.GetCache(ctx, time.Second, ctx)
-	logs.ErrPrintln(err, "get category err")
-	r = slice.Filter(r, func(my models.TermsMy) bool {
-		return my.Taxonomy == "post_tag"
-	})
-	return r
-}
-func AllTagsNames(ctx context.Context) map[string]struct{} {
+func AllCategoryTagsNames(ctx context.Context, c int) map[string]struct{} {
 	r, err := categoryAndTagsCaches.GetCache(ctx, time.Second, ctx)
 	logs.ErrPrintln(err, "get category err")
 	return slice.FilterAndToMap(r, func(t models.TermsMy) (string, struct{}, bool) {
-		if t.Taxonomy == "post_tag" {
-			return t.Name, struct{}{}, true
-		}
-		return "", struct{}{}, false
-	})
-}
-
-func AllCategoryNames(ctx context.Context) map[string]struct{} {
-	r, err := categoryAndTagsCaches.GetCache(ctx, time.Second, ctx)
-	logs.ErrPrintln(err, "get category err")
-	return slice.FilterAndToMap(r, func(t models.TermsMy) (string, struct{}, bool) {
-		if t.Taxonomy == "category" {
+		if helper.Or(c == plugins.Tag, "post_tag", "category") == t.Taxonomy {
 			return t.Name, struct{}{}, true
 		}
 		return "", struct{}{}, false

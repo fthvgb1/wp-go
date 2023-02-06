@@ -11,7 +11,7 @@ import (
 func ValidateServerNames() (func(ctx *gin.Context), func()) {
 	var serverName safety.Map[string, struct{}]
 	fn := func() {
-		r := config.Conf.Load().TrustServerNames
+		r := config.GetConfig().TrustServerNames
 		if len(r) > 0 {
 			for _, name := range r {
 				serverName.Store(name, struct{}{})

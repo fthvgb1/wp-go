@@ -11,7 +11,7 @@ func InitThemeAndTemplateFuncMap() {
 }
 
 func GetTemplateName() string {
-	tmlp := config.Conf.Load().Theme
+	tmlp := config.GetConfig().Theme
 	if tmlp == "" {
 		tmlp = wpconfig.Options.Value("template")
 	}

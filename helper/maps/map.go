@@ -49,6 +49,11 @@ func AnyAnyToStrAny(m map[any]any) (r map[string]any) {
 	return
 }
 
+func IsExists[K comparable, V any](m map[K]V, k K) bool {
+	_, ok := m[k]
+	return ok
+}
+
 func Reduce[T, V any, K comparable](m map[K]V, fn func(K, V, T) T, r T) T {
 	for k, v := range m {
 		r = fn(k, v, r)

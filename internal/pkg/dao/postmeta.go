@@ -14,9 +14,10 @@ func GetPostMetaByPostIds(args ...any) (r map[uint64]map[string]any, err error) 
 	r = make(map[uint64]map[string]any)
 	ctx := args[0].(context.Context)
 	ids := args[1].([]uint64)
-	rr, err := model.Find[models.PostMeta](ctx, model.SqlBuilder{
-		{"post_id", "in", ""},
-	}, "*", "", nil, nil, nil, 0, slice.ToAnySlice(ids))
+	rr, err := model.Finds[models.PostMeta](ctx, model.Conditions(
+		model.Where(model.SqlBuilder{{"post_id", "in", ""}}),
+		model.In(slice.ToAnySlice(ids)),
+	))
 	if err != nil {
 		return
 	}
@@ -24,6 +25,7 @@ func GetPostMetaByPostIds(args ...any) (r map[uint64]map[string]any, err error) 
 		if _, ok := r[postmeta.PostId]; !ok {
 			r[postmeta.PostId] = make(map[string]any)
 		}
+		r[postmeta.PostId][postmeta.MetaKey] = postmeta.MetaValue
 		if postmeta.MetaKey == "_wp_attachment_metadata" {
 			metadata, err := plugins.UnPHPSerialize[models.WpAttachmentMetadata](postmeta.MetaValue)
 			if err != nil {
@@ -31,11 +33,7 @@ func GetPostMetaByPostIds(args ...any) (r map[uint64]map[string]any, err error) 
 				continue
 			}
 			r[postmeta.PostId][postmeta.MetaKey] = metadata
-
-		} else {
-			r[postmeta.PostId][postmeta.MetaKey] = postmeta.MetaValue
 		}
-
 	}
 	return
 }

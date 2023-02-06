@@ -3,7 +3,9 @@ package strings
 import (
 	"crypto/md5"
 	"fmt"
+	"golang.org/x/exp/constraints"
 	"io"
+	"strconv"
 	"strings"
 )
 
@@ -18,6 +20,17 @@ func Join(s ...string) (str string) {
 		str = b.String()
 	}
 	return
+}
+
+func ToInteger[T constraints.Integer](s string, defaults T) T {
+	if s == "" {
+		return defaults
+	}
+	i, err := strconv.ParseInt(s, 10, 64)
+	if err != nil {
+		return defaults
+	}
+	return T(i)
 }
 
 func Md5(str string) string {

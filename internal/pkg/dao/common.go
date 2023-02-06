@@ -2,7 +2,6 @@ package dao
 
 import (
 	"context"
-	"fmt"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/fthvgb1/wp-go/model"
@@ -20,23 +19,21 @@ type PostContext struct {
 	Next models.Posts
 }
 
-func PasswordProjectTitle(post *models.Posts) {
-	if post.PostPassword != "" {
-		post.PostTitle = fmt.Sprintf("密码保护：%s", post.PostTitle)
-	}
-}
-
 func CategoriesAndTags(a ...any) (terms []models.TermsMy, err error) {
 	ctx := a[0].(context.Context)
 	var in = []any{"category", "post_tag"}
-	terms, err = model.Find[models.TermsMy](ctx, model.SqlBuilder{
-		{"tt.count", ">", "0", "int"},
-		{"tt.taxonomy", "in", ""},
-	}, "t.term_id", "", model.SqlBuilder{
-		{"t.name", "asc"},
-	}, model.SqlBuilder{
-		{"t", "inner join", "wp_term_taxonomy tt", "t.term_id = tt.term_id"},
-	}, nil, 0, in)
+	terms, err = model.Finds[models.TermsMy](ctx, model.Conditions(
+		model.Where(model.SqlBuilder{
+			{"tt.count", ">", "0", "int"},
+			{"tt.taxonomy", "in", ""},
+		}),
+		model.Fields("t.term_id"),
+		model.Order(model.SqlBuilder{{"t.name", "asc"}}),
+		model.Join(model.SqlBuilder{
+			{"t", "inner join", "wp_term_taxonomy tt", "t.term_id = tt.term_id"},
+		}),
+		model.In(in),
+	))
 	for i := 0; i < len(terms); i++ {
 		if v, ok := wpconfig.Terms.Load(terms[i].Terms.TermId); ok {
 			terms[i].Terms = v
@@ -49,7 +46,13 @@ func CategoriesAndTags(a ...any) (terms []models.TermsMy, err error) {
 }
 
 func Archives(ctx context.Context) ([]models.PostArchive, error) {
-	return model.Find[models.PostArchive](ctx, model.SqlBuilder{
-		{"post_type", "post"}, {"post_status", "publish"},
-	}, "YEAR(post_date) AS `year`, MONTH(post_date) AS `month`, count(ID) as posts", "year,month", model.SqlBuilder{{"year", "desc"}, {"month", "desc"}}, nil, nil, 0)
+	return model.Finds[models.PostArchive](ctx, model.Conditions(
+		model.Where(model.SqlBuilder{
+			{"post_type", "post"},
+			{"post_status", "publish"},
+		}),
+		model.Fields("YEAR(post_date) AS `year`, MONTH(post_date) AS `month`, count(ID) as posts"),
+		model.Group("year,month"),
+		model.Order(model.SqlBuilder{{"year", "desc"}, {"month", "desc"}}),
+	))
 }

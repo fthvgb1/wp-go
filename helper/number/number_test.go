@@ -2,6 +2,7 @@ package number
 
 import (
 	"fmt"
+	"golang.org/x/exp/constraints"
 	"reflect"
 	"testing"
 )
@@ -195,10 +196,10 @@ func TestRand(t *testing.T) {
 }
 
 func TestAbs(t *testing.T) {
-	type args[T Number] struct {
+	type args[T constraints.Integer | constraints.Float] struct {
 		n T
 	}
-	type testCase[T Number] struct {
+	type testCase[T constraints.Integer | constraints.Float] struct {
 		name string
 		args args[T]
 		want T

@@ -230,3 +230,46 @@ func TestPagination(t *testing.T) {
 		})
 	}
 }
+
+func TestColumn(t *testing.T) {
+	type args[V Model, T any] struct {
+		ctx context.Context
+		fn  func(V) (T, bool)
+		q   *QueryCondition
+	}
+	type testCase[V Model, T any] struct {
+		name    string
+		args    args[V, T]
+		wantR   []T
+		wantErr bool
+	}
+	tests := []testCase[post, uint64]{
+		{
+			name: "t1",
+			args: args[post, uint64]{
+				ctx: ctx,
+				fn: func(t post) (uint64, bool) {
+					return t.Id, true
+				},
+				q: Conditions(
+					Where(SqlBuilder{
+						{"ID", "<", "200", "int"},
+					}),
+				),
+			},
+			wantR: []uint64{63, 64, 190, 193},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotR, err := Column[post](tt.args.ctx, tt.args.fn, tt.args.q)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Column() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(gotR, tt.wantR) {
+				t.Errorf("Column() gotR = %v, want %v", gotR, tt.wantR)
+			}
+		})
+	}
+}

@@ -2,15 +2,16 @@ package actions
 
 import (
 	"fmt"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
+	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
 	"github.com/fthvgb1/wp-go/internal/theme"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"net/http"
-	"strconv"
 )
 
 type detailHandler struct {
@@ -19,9 +20,10 @@ type detailHandler struct {
 
 func Detail(c *gin.Context) {
 	var err error
-	recent := cache.RecentPosts(c, 5)
+	var post models.Posts
+	recent := cache.RecentPosts(c, 5, true)
 	archive := cache.Archives(c)
-	categoryItems := cache.Categories(c)
+	categoryItems := cache.CategoriesTags(c, plugins.Category)
 	recentComments := cache.RecentComments(c, 5)
 	var ginH = gin.H{
 		"title":          wpconfig.Options.Value("blogname"),
@@ -29,6 +31,7 @@ func Detail(c *gin.Context) {
 		"archives":       archive,
 		"categories":     categoryItems,
 		"recentComments": recentComments,
+		"post":           post,
 	}
 	isApproveComment := false
 	status := plugins.Ok
@@ -47,21 +50,14 @@ func Detail(c *gin.Context) {
 		t := theme.GetTemplateName()
 		theme.Hook(t, code, c, ginH, plugins.Detail, status)
 	}()
-	id := c.Param("id")
-	Id := 0
-	if id != "" {
-		Id, err = strconv.Atoi(id)
-		if err != nil {
-			return
-		}
-	}
-	ID := uint64(Id)
+	ID := str.ToInteger[uint64](c.Param("id"), 0)
+
 	maxId, err := cache.GetMaxPostId(c)
 	logs.ErrPrintln(err, "get max post id")
-	if ID > maxId || err != nil {
+	if ID > maxId || ID <= 0 || err != nil {
 		return
 	}
-	post, err := cache.GetPostById(c, ID)
+	post, err = cache.GetPostById(c, ID)
 	if post.Id == 0 || err != nil || post.PostStatus != "publish" {
 		return
 	}
@@ -71,10 +67,13 @@ func Detail(c *gin.Context) {
 		showComment = true
 	}
 	user := cache.GetUserById(c, post.PostAuthor)
-	plugins.PasswordProjectTitle(&post)
-	if post.PostPassword != "" && pw != post.PostPassword {
-		plugins.PasswdProjectContent(&post)
-		showComment = false
+
+	if post.PostPassword != "" {
+		plugins.PasswordProjectTitle(&post)
+		if pw != post.PostPassword {
+			plugins.PasswdProjectContent(&post)
+			showComment = false
+		}
 	} else if s, ok := cache.NewCommentCache().Get(c, c.Request.URL.RawQuery); ok && s != "" && (post.PostPassword == "" || post.PostPassword != "" && pw == post.PostPassword) {
 		c.Writer.WriteHeader(http.StatusOK)
 		c.Writer.Header().Set("Content-Type", "text/html; charset=utf-8")
@@ -92,12 +91,7 @@ func Detail(c *gin.Context) {
 	ginH["post"] = post
 	ginH["showComment"] = showComment
 	ginH["prev"] = prev
-	depth := wpconfig.Options.Value("thread_comments_depth")
-	d, err := strconv.Atoi(depth)
-	if err != nil {
-		logs.ErrPrintln(err, "get comment depth ", depth)
-		d = 5
-	}
+	d := str.ToInteger(wpconfig.Options.Value("thread_comments_depth"), 5)
 	ginH["maxDep"] = d
 	ginH["next"] = next
 	ginH["user"] = user

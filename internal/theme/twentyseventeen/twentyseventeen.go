@@ -139,23 +139,16 @@ func (h handle) bodyClass() string {
 	s := ""
 	switch h.scene {
 	case plugins.Search:
+		s = "search-no-results"
 		if len(h.ginH["posts"].([]models.Posts)) > 0 {
 			s = "search-results"
-		} else {
-			s = "search-no-results"
 		}
-	case plugins.Category:
+	case plugins.Category, plugins.Tag:
 		cat := h.c.Param("category")
-		_, cate := slice.SearchFirst(cache.Categories(h.c), func(my models.TermsMy) bool {
-			return my.Name == cat
-		})
-		if cate.Slug[0] != '%' {
-			s = cate.Slug
+		if cat == "" {
+			cat = h.c.Param("tag")
 		}
-		s = fmt.Sprintf("category-%d %v", cate.Terms.TermId, s)
-	case plugins.Tag:
-		cat := h.c.Param("tag")
-		_, cate := slice.SearchFirst(cache.Tags(h.c), func(my models.TermsMy) bool {
+		_, cate := slice.SearchFirst(cache.CategoriesTags(h.c, h.scene), func(my models.TermsMy) bool {
 			return my.Name == cat
 		})
 		if cate.Slug[0] != '%' {
