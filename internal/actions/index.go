@@ -277,18 +277,16 @@ func Index(c *gin.Context) {
 	pw := h.session.Get("post_password")
 	plug := plugins.NewPostPlugin(c, h.scene)
 	for i, post := range posts {
-		plugins.PasswordProjectTitle(&posts[i])
-		if post.PostPassword != "" && pw != post.PostPassword {
-			plugins.PasswdProjectContent(&posts[i])
+		if post.PostPassword != "" {
+			plugins.PasswordProjectTitle(&posts[i])
+			if pw != post.PostPassword {
+				plugins.PasswdProjectContent(&posts[i])
+			}
 		} else {
 			plugins.ApplyPlugin(plug, &posts[i])
 		}
 	}
-	for i, post := range recent {
-		if post.PostPassword != "" && pw != post.PostPassword {
-			plugins.PasswdProjectContent(&recent[i])
-		}
-	}
+
 	q := c.Request.URL.Query().Encode()
 	if q != "" {
 		q = fmt.Sprintf("?%s", q)

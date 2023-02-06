@@ -54,21 +54,22 @@ func feed(arg ...any) (xml []string, err error) {
 	if err != nil {
 		return
 	}
+	site := wpconfig.Options.Value("siteurl")
 	rs := templateRss
 	rs.LastBuildDate = time.Now().Format(timeFormat)
 	rs.Items = slice.Map(posts, func(t models.Posts) rss2.Item {
 		desc := "无法提供摘要。这是一篇受保护的文章。"
-		plugins.PasswordProjectTitle(&t)
 		if t.PostPassword != "" {
+			plugins.PasswordProjectTitle(&t)
 			plugins.PasswdProjectContent(&t)
 		} else {
 			desc = digest.Raw(t.PostContent, 55, fmt.Sprintf("/p/%d", t.Id))
 		}
 		l := ""
 		if t.CommentStatus == "open" && t.CommentCount > 0 {
-			l = fmt.Sprintf("%s/p/%d#comments", wpconfig.Options.Value("siteurl"), t.Id)
+			l = fmt.Sprintf("%s/p/%d#comments", site, t.Id)
 		} else if t.CommentStatus == "open" && t.CommentCount == 0 {
-			l = fmt.Sprintf("%s/p/%d#respond", wpconfig.Options.Value("siteurl"), t.Id)
+			l = fmt.Sprintf("%s/p/%d#respond", site, t.Id)
 		}
 		user := GetUserById(c, t.PostAuthor)
 
@@ -80,8 +81,8 @@ func feed(arg ...any) (xml []string, err error) {
 			Content:       t.PostContent,
 			Category:      strings.Join(t.Categories, "、"),
 			CommentLink:   l,
-			CommentRss:    fmt.Sprintf("%s/p/%d/feed", wpconfig.Options.Value("siteurl"), t.Id),
-			Link:          fmt.Sprintf("%s/p/%d", wpconfig.Options.Value("siteurl"), t.Id),
+			CommentRss:    fmt.Sprintf("%s/p/%d/feed", site, t.Id),
+			Link:          fmt.Sprintf("%s/p/%d", site, t.Id),
 			Description:   desc,
 			PubDate:       t.PostDateGmt.Format(timeFormat),
 		}
@@ -103,25 +104,26 @@ func postFeed(arg ...any) (x string, err error) {
 	if post.Id == 0 || err != nil {
 		return
 	}
-	plugins.PasswordProjectTitle(&post)
 	comments, err := PostComments(c, post.Id)
 	if err != nil {
 		return
 	}
 	rs := templateRss
+	site := wpconfig.Options.Value("siteurl")
 
 	rs.Title = fmt.Sprintf("《%s》的评论", post.PostTitle)
-	rs.AtomLink = fmt.Sprintf("%s/p/%d/feed", wpconfig.Options.Value("siteurl"), post.Id)
-	rs.Link = fmt.Sprintf("%s/p/%d", wpconfig.Options.Value("siteurl"), post.Id)
+	rs.AtomLink = fmt.Sprintf("%s/p/%d/feed", site, post.Id)
+	rs.Link = fmt.Sprintf("%s/p/%d", site, post.Id)
 	rs.LastBuildDate = time.Now().Format(timeFormat)
 	if post.PostPassword != "" {
+		plugins.PasswordProjectTitle(&post)
+		plugins.PasswdProjectContent(&post)
 		if len(comments) > 0 {
-			plugins.PasswdProjectContent(&post)
 			t := comments[len(comments)-1]
 			rs.Items = []rss2.Item{
 				{
 					Title:       fmt.Sprintf("评价者：%s", t.CommentAuthor),
-					Link:        fmt.Sprintf("%s/p/%d#comment-%d", wpconfig.Options.Value("siteurl"), post.Id, t.CommentId),
+					Link:        fmt.Sprintf("%s/p/%d#comment-%d", site, post.Id, t.CommentId),
 					Creator:     t.CommentAuthor,
 					PubDate:     t.CommentDateGmt.Format(timeFormat),
 					Guid:        fmt.Sprintf("%s#comment-%d", post.Guid, t.CommentId),
@@ -134,7 +136,7 @@ func postFeed(arg ...any) (x string, err error) {
 		rs.Items = slice.Map(comments, func(t models.Comments) rss2.Item {
 			return rss2.Item{
 				Title:   fmt.Sprintf("评价者：%s", t.CommentAuthor),
-				Link:    fmt.Sprintf("%s/p/%d#comment-%d", wpconfig.Options.Value("siteurl"), post.Id, t.CommentId),
+				Link:    fmt.Sprintf("%s/p/%d#comment-%d", site, post.Id, t.CommentId),
 				Creator: t.CommentAuthor,
 				PubDate: t.CommentDateGmt.Format(timeFormat),
 				Guid:    fmt.Sprintf("%s#comment-%d", post.Guid, t.CommentId),
@@ -153,7 +155,8 @@ func commentsFeed(args ...any) (r []string, err error) {
 	rs := templateRss
 	rs.Title = fmt.Sprintf("\"%s\"的评论", wpconfig.Options.Value("blogname"))
 	rs.LastBuildDate = time.Now().Format(timeFormat)
-	rs.AtomLink = fmt.Sprintf("%s/comments/feed", wpconfig.Options.Value("siteurl"))
+	site := wpconfig.Options.Value("siteurl")
+	rs.AtomLink = fmt.Sprintf("%s/comments/feed", site)
 	com, err := GetCommentByIds(c, slice.Map(commens, func(t models.Comments) uint64 {
 		return t.CommentId
 	}))
@@ -162,10 +165,10 @@ func commentsFeed(args ...any) (r []string, err error) {
 	}
 	rs.Items = slice.Map(com, func(t models.Comments) rss2.Item {
 		post, _ := GetPostById(c, t.CommentPostId)
-		plugins.PasswordProjectTitle(&post)
 		desc := "评论受保护：要查看请输入密码。"
 		content := t.CommentContent
 		if post.PostPassword != "" {
+			plugins.PasswordProjectTitle(&post)
 			plugins.PasswdProjectContent(&post)
 			content = post.PostContent
 		} else {
@@ -174,7 +177,7 @@ func commentsFeed(args ...any) (r []string, err error) {
 		}
 		return rss2.Item{
 			Title:       fmt.Sprintf("%s对《%s》的评论", t.CommentAuthor, post.PostTitle),
-			Link:        fmt.Sprintf("%s/p/%d#comment-%d", wpconfig.Options.Value("siteurl"), post.Id, t.CommentId),
+			Link:        fmt.Sprintf("%s/p/%d#comment-%d", site, post.Id, t.CommentId),
 			Creator:     t.CommentAuthor,
 			Description: desc,
 			PubDate:     t.CommentDateGmt.Format(timeFormat),

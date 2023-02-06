@@ -43,7 +43,7 @@ func GetMaxPostId(ctx *gin.Context) (uint64, error) {
 	return maxPostIdCache.GetCache(ctx, time.Second, ctx)
 }
 
-func RecentPosts(ctx context.Context, n int, password bool) (r []models.Posts) {
+func RecentPosts(ctx context.Context, n int, project bool) (r []models.Posts) {
 	nn := n
 	if nn <= 5 {
 		nn = 10
@@ -52,7 +52,7 @@ func RecentPosts(ctx context.Context, n int, password bool) (r []models.Posts) {
 	if n < len(r) {
 		r = r[:n]
 	}
-	if password {
+	if project {
 		r = slice.Map(r, func(t models.Posts) models.Posts {
 			if t.PostPassword != "" {
 				plugins.PasswordProjectTitle(&t)
