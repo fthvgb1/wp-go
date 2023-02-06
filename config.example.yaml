@@ -29,7 +29,7 @@ ssl:
 
 cacheTime:
   # 静态资源缓存时间Cache-Control
-  cacheControl: 5d
+  cacheControl: 72h
   # 最近文章缓存时间
   recentPostCacheTime: 5m
   # 分类缓存时间
