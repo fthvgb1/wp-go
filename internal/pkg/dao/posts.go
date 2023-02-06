@@ -178,7 +178,7 @@ func MonthPost(args ...any) (r []uint64, err error) {
 	return model.Column[models.Posts, uint64](ctx, func(v models.Posts) (uint64, bool) {
 		return v.Id, true
 	}, model.Conditions(
+		model.Fields("ID"),
 		model.Where(where),
-		model.Order(model.SqlBuilder{{"Id", "asc"}}),
 	))
 }
