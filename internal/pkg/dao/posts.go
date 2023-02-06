@@ -170,19 +170,15 @@ func MonthPost(args ...any) (r []uint64, err error) {
 	ctx := args[0].(context.Context)
 	year, month := args[1].(string), args[2].(string)
 	where := model.SqlBuilder{
-		{"post_type", "in", ""},
-		{"post_status", "in", ""},
+		{"post_type", "post"},
+		{"post_status", "publish"},
 		{"year(post_date)", year},
 		{"month(post_date)", month},
 	}
-	postType := []any{"post"}
-	status := []any{"publish"}
-	ids, err := model.Find[models.Posts](ctx, where, "ID", "", model.SqlBuilder{{"Id", "asc"}}, nil, nil, 0, postType, status)
-	if err != nil {
-		return
-	}
-	for _, post := range ids {
-		r = append(r, post.Id)
-	}
-	return
+	return model.Column[models.Posts, uint64](ctx, func(v models.Posts) (uint64, bool) {
+		return v.Id, true
+	}, model.Conditions(
+		model.Where(where),
+		model.Order(model.SqlBuilder{{"Id", "asc"}}),
+	))
 }
