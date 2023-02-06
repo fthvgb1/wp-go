@@ -171,21 +171,11 @@ func DBPagination[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (
 	return pagination[T](db, ctx, q.where, q.fields, q.group, q.page, q.limit, q.order, q.join, q.having, q.in...)
 }
 
-func Column[V Model, T any](ctx context.Context, fn func(V) (T, bool), q *QueryCondition) (r []T, err error) {
-	res, err := finds[V](globalBb, ctx, q)
-	if err != nil {
-		return nil, err
-	}
-	r = slice.FilterAndMap(res, fn)
-	return
+func Column[V Model, T any](ctx context.Context, fn func(V) (T, bool), q *QueryCondition) ([]T, error) {
+	return column[V, T](globalBb, ctx, fn, q)
 }
 func DBColumn[V Model, T any](db dbQuery, ctx context.Context, fn func(V) (T, bool), q *QueryCondition) (r []T, err error) {
-	res, err := finds[V](db, ctx, q)
-	if err != nil {
-		return nil, err
-	}
-	r = slice.FilterAndMap(res, fn)
-	return
+	return column[V, T](db, ctx, fn, q)
 }
 
 func column[V Model, T any](db dbQuery, ctx context.Context, fn func(V) (T, bool), q *QueryCondition) (r []T, err error) {
