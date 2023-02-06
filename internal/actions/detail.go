@@ -21,7 +21,7 @@ type detailHandler struct {
 func Detail(c *gin.Context) {
 	var err error
 	var post models.Posts
-	recent := cache.RecentPosts(c, 5)
+	recent := cache.RecentPosts(c, 5, true)
 	archive := cache.Archives(c)
 	categoryItems := cache.CategoriesTags(c, plugins.Category)
 	recentComments := cache.RecentComments(c, 5)

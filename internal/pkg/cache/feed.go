@@ -46,7 +46,7 @@ func PostFeedCache() *cache.MapCache[string, string] {
 
 func feed(arg ...any) (xml []string, err error) {
 	c := arg[0].(*gin.Context)
-	r := RecentPosts(c, 10)
+	r := RecentPosts(c, 10, true)
 	ids := slice.Map(r, func(t models.Posts) uint64 {
 		return t.Id
 	})

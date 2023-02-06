@@ -98,7 +98,11 @@ func SearchPostIds(args ...any) (ids PostIds, err error) {
 	join := args[5].(model.SqlBuilder)
 	postType := args[6].([]any)
 	postStatus := args[7].([]any)
-	res, total, err := model.SimplePagination[models.Posts](ctx, where, "ID", "", page, limit, order, join, nil, postType, postStatus)
+	res, total, err := model.SimplePagination[models.Posts](
+		ctx, where, "ID",
+		"", page, limit, order,
+		join, nil, postType, postStatus,
+	)
 	for _, posts := range res {
 		ids.Ids = append(ids.Ids, posts.Id)
 	}
@@ -113,7 +117,10 @@ func SearchPostIds(args ...any) (ids PostIds, err error) {
 
 func GetMaxPostId(a ...any) (uint64, error) {
 	ctx := a[0].(context.Context)
-	r, err := model.SimpleFind[models.Posts](ctx, model.SqlBuilder{{"post_type", "post"}, {"post_status", "publish"}}, "max(ID) ID")
+	r, err := model.SimpleFind[models.Posts](ctx,
+		model.SqlBuilder{{"post_type", "post"}, {"post_status", "publish"}},
+		"max(ID) ID",
+	)
 	var id uint64
 	if len(r) > 0 {
 		id = r[0].Id
@@ -123,14 +130,16 @@ func GetMaxPostId(a ...any) (uint64, error) {
 
 func RecentPosts(a ...any) (r []models.Posts, err error) {
 	ctx := a[0].(context.Context)
-	r, err = model.Find[models.Posts](ctx, model.SqlBuilder{{
-		"post_type", "post",
-	}, {"post_status", "publish"}}, "ID,post_title,post_password", "", model.SqlBuilder{{"post_date", "desc"}}, nil, nil, 10)
-	for i, post := range r {
-		if post.PostPassword != "" {
-			PasswordProjectTitle(&r[i])
-		}
-	}
+	num := a[1].(int)
+	r, err = model.Finds[models.Posts](ctx, model.Conditions(
+		model.Where(model.SqlBuilder{
+			{"post_type", "post"},
+			{"post_status", "publish"},
+		}),
+		model.Fields("ID,post_title,post_password"),
+		model.Order(model.SqlBuilder{{"post_date", "desc"}}),
+		model.Limit(num),
+	))
 	return
 }
 

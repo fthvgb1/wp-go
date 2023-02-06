@@ -3,6 +3,7 @@ package models
 import "time"
 
 type Posts struct {
+	post
 	Id                  uint64    `gorm:"column:ID" db:"ID" json:"ID" form:"ID"`
 	PostAuthor          uint64    `gorm:"column:post_author" db:"post_author" json:"post_author" form:"post_author"`
 	PostDate            time.Time `gorm:"column:post_date" db:"post_date" json:"post_date" form:"post_date"`
@@ -47,23 +48,19 @@ type PostThumbnail struct {
 	OriginAttachmentData WpAttachmentMetadata
 }
 
-func (w Posts) PrimaryKey() string {
+type post struct {
+}
+
+func (w post) PrimaryKey() string {
 	return "ID"
 }
 
-func (w Posts) Table() string {
-	return "wp_posts"
-}
-
-func (w PostArchive) PrimaryKey() string {
-	return "ID"
-}
-
-func (w PostArchive) Table() string {
+func (w post) Table() string {
 	return "wp_posts"
 }
 
 type PostArchive struct {
+	post
 	Year  string `db:"year"`
 	Month string `db:"month"`
 	Posts int    `db:"posts"`
