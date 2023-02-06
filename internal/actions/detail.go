@@ -5,6 +5,7 @@ import (
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
+	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
 	"github.com/fthvgb1/wp-go/internal/theme"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
@@ -19,6 +20,7 @@ type detailHandler struct {
 
 func Detail(c *gin.Context) {
 	var err error
+	var post models.Posts
 	recent := cache.RecentPosts(c, 5)
 	archive := cache.Archives(c)
 	categoryItems := cache.CategoriesTags(c, plugins.Category)
@@ -29,6 +31,7 @@ func Detail(c *gin.Context) {
 		"archives":       archive,
 		"categories":     categoryItems,
 		"recentComments": recentComments,
+		"post":           post,
 	}
 	isApproveComment := false
 	status := plugins.Ok
@@ -54,7 +57,7 @@ func Detail(c *gin.Context) {
 	if ID > maxId || ID <= 0 || err != nil {
 		return
 	}
-	post, err := cache.GetPostById(c, ID)
+	post, err = cache.GetPostById(c, ID)
 	if post.Id == 0 || err != nil || post.PostStatus != "publish" {
 		return
 	}

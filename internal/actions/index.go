@@ -231,6 +231,7 @@ func Index(c *gin.Context) {
 		"search":         h.search,
 		"header":         h.header,
 		"recentComments": recentComments,
+		"posts":          posts,
 	}
 	defer func() {
 		code := http.StatusOK

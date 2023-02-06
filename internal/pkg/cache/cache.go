@@ -50,8 +50,8 @@ var ctx context.Context
 func InitActionsCommonCache() {
 	c := config.GetConfig()
 	archivesCaches = &Arch{
-		mutex:        &sync.Mutex{},
-		setCacheFunc: dao.Archives,
+		mutex: &sync.Mutex{},
+		fn:    dao.Archives,
 	}
 
 	searchPostIdsCache = cache.NewMemoryMapCacheByFn[string](dao.SearchPostIds, c.CacheTime.SearchPostCacheTime)
@@ -134,27 +134,27 @@ func Archives(ctx context.Context) (r []models.PostArchive) {
 }
 
 type Arch struct {
-	data         []models.PostArchive
-	mutex        *sync.Mutex
-	setCacheFunc func(context.Context) ([]models.PostArchive, error)
-	month        time.Month
+	data  []models.PostArchive
+	mutex *sync.Mutex
+	fn    func(context.Context) ([]models.PostArchive, error)
+	month time.Month
 }
 
-func (c *Arch) getArchiveCache(ctx context.Context) []models.PostArchive {
-	l := len(c.data)
+func (a *Arch) getArchiveCache(ctx context.Context) []models.PostArchive {
+	l := len(a.data)
 	m := time.Now().Month()
-	if l > 0 && c.month != m || l < 1 {
-		r, err := c.setCacheFunc(ctx)
+	if l > 0 && a.month != m || l < 1 {
+		r, err := a.fn(ctx)
 		if err != nil {
 			logs.ErrPrintln(err, "set cache err[%s]")
 			return nil
 		}
-		c.mutex.Lock()
-		defer c.mutex.Unlock()
-		c.month = m
-		c.data = r
+		a.mutex.Lock()
+		defer a.mutex.Unlock()
+		a.month = m
+		a.data = r
 	}
-	return c.data
+	return a.data
 }
 
 func CategoriesTags(ctx context.Context, t ...int) []models.TermsMy {
