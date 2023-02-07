@@ -14,10 +14,6 @@ import (
 	"net/http"
 )
 
-type detailHandler struct {
-	*gin.Context
-}
-
 func Detail(c *gin.Context) {
 	var err error
 	var post models.Posts

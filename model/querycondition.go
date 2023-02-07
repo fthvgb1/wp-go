@@ -16,10 +16,10 @@ func Finds[T Model](ctx context.Context, q *QueryCondition) (r []T, err error) {
 	return
 }
 
-// DBFind  同 Finds 使用指定 db 查询
+// FindFromDB  同 Finds 使用指定 db 查询
 //
 // Conditions 中可用 Where Fields Group Having Join Order Offset Limit In 函数
-func DBFind[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r []T, err error) {
+func FindFromDB[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r []T, err error) {
 	r, err = finds[T](db, ctx, q)
 	return
 }
@@ -100,10 +100,10 @@ func ChunkFind[T Model](ctx context.Context, perLimit int, q *QueryCondition) (r
 	return
 }
 
-// DBChunkFind 同 ChunkFind
+// ChunkFindFromDB 同 ChunkFind
 //
 // Conditions 中可用 Where Fields Group Having Join Order Limit In 函数
-func DBChunkFind[T Model](db dbQuery, ctx context.Context, perLimit int, q *QueryCondition) (r []T, err error) {
+func ChunkFindFromDB[T Model](db dbQuery, ctx context.Context, perLimit int, q *QueryCondition) (r []T, err error) {
 	r, err = chunkFind[T](db, ctx, perLimit, q)
 	return
 }
@@ -116,10 +116,10 @@ func Chunk[T Model, R any](ctx context.Context, perLimit int, fn func(rows T) (R
 	return
 }
 
-// DBChunk 同 Chunk
+// ChunkFromDB 同 Chunk
 //
 // Conditions 中可用 Where Fields Group Having Join Order Limit In 函数
-func DBChunk[T Model, R any](db dbQuery, ctx context.Context, perLimit int, fn func(rows T) (R, bool), q *QueryCondition) (r []R, err error) {
+func ChunkFromDB[T Model, R any](db dbQuery, ctx context.Context, perLimit int, fn func(rows T) (R, bool), q *QueryCondition) (r []R, err error) {
 	r, err = chunk(db, ctx, perLimit, fn, q)
 	return
 }
@@ -164,17 +164,17 @@ func Pagination[T Model](ctx context.Context, q *QueryCondition) ([]T, int, erro
 	return SimplePagination[T](ctx, q.where, q.fields, q.group, q.page, q.limit, q.order, q.join, q.having, q.in...)
 }
 
-// DBPagination 同 Pagination 方便多个db使用
+// PaginationFromDB 同 Pagination 方便多个db使用
 //
 // Condition 中可使用 Where Fields Group Having Join Order Page Limit In 函数
-func DBPagination[T Model](db dbQuery, ctx context.Context, q *QueryCondition) ([]T, int, error) {
+func PaginationFromDB[T Model](db dbQuery, ctx context.Context, q *QueryCondition) ([]T, int, error) {
 	return pagination[T](db, ctx, q.where, q.fields, q.group, q.page, q.limit, q.order, q.join, q.having, q.in...)
 }
 
 func Column[V Model, T any](ctx context.Context, fn func(V) (T, bool), q *QueryCondition) ([]T, error) {
 	return column[V, T](globalBb, ctx, fn, q)
 }
-func DBColumn[V Model, T any](db dbQuery, ctx context.Context, fn func(V) (T, bool), q *QueryCondition) (r []T, err error) {
+func ColumnFromDB[V Model, T any](db dbQuery, ctx context.Context, fn func(V) (T, bool), q *QueryCondition) (r []T, err error) {
 	return column[V, T](db, ctx, fn, q)
 }
 
