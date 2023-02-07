@@ -1,6 +1,8 @@
 package maps
 
-import "encoding/json"
+import (
+	"encoding/json"
+)
 
 func StrAnyMapToStruct[T any, M any](m M) (r T, err error) {
 	str, err := json.Marshal(m)
@@ -52,6 +54,17 @@ func AnyAnyToStrAny(m map[any]any) (r map[string]any) {
 func IsExists[K comparable, V any](m map[K]V, k K) bool {
 	_, ok := m[k]
 	return ok
+}
+
+func Keys[K comparable, V any](m map[K]V) []K {
+	return FilterToSlice(m, func(k K, v V) (K, bool) {
+		return k, true
+	})
+}
+func Values[K comparable, V any](m map[K]V) []V {
+	return FilterToSlice(m, func(k K, v V) (V, bool) {
+		return v, true
+	})
 }
 
 func Reduce[T, V any, K comparable](m map[K]V, fn func(K, V, T) T, r T) T {
