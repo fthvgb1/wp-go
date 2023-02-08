@@ -14,6 +14,7 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
 	"github.com/fthvgb1/wp-go/internal/theme"
+	"github.com/fthvgb1/wp-go/internal/theme/common"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/fthvgb1/wp-go/model"
 	"github.com/fthvgb1/wp-go/plugin/pagination"
@@ -49,7 +50,7 @@ type indexHandle struct {
 	header         string
 	paginationStep int
 	scene          int
-	status         int
+	stats          int
 }
 
 func newIndexHandle(ctx *gin.Context) *indexHandle {
@@ -71,7 +72,7 @@ func newIndexHandle(ctx *gin.Context) *indexHandle {
 		postType:   []any{"post"},
 		postStatus: []any{"publish"},
 		scene:      plugins.Home,
-		status:     plugins.Ok,
+		stats:      plugins.Ok,
 	}
 }
 
@@ -233,20 +234,32 @@ func Index(c *gin.Context) {
 		"recentComments": recentComments,
 		"posts":          posts,
 	}
+	pw := h.session.Get("post_password")
+	pws, ok := pw.(string)
+	if !ok {
+		pws = ""
+	}
 	defer func() {
 		code := http.StatusOK
 		if err != nil {
 			code = http.StatusNotFound
-			if h.status == plugins.InternalErr {
+			if h.stats == plugins.InternalErr {
 				code = http.StatusInternalServerError
 				c.Error(err)
 				return
 			}
 			c.Error(err)
-			h.status = plugins.Error
+			h.stats = plugins.Error
 		}
 		t := theme.GetTemplateName()
-		theme.Hook(t, code, c, ginH, h.scene, h.status)
+		theme.Hook(t, common.Handle{
+			C:        c,
+			GinH:     ginH,
+			Password: pws,
+			Scene:    h.scene,
+			Code:     code,
+			Stats:    h.stats,
+		})
 	}()
 	err = h.parseParams()
 	if err != nil {
@@ -264,29 +277,15 @@ func Index(c *gin.Context) {
 		posts, totalRaw, err = cache.PostLists(c, h.getSearchKey(), c, h.where, h.page, h.pageSize, model.SqlBuilder{{h.orderBy, h.order}}, h.join, h.postType, h.postStatus)
 	}
 	if err != nil {
-		h.status = plugins.Error
+		h.stats = plugins.Error
 		logs.ErrPrintln(err, "获取数据错误")
 		return
 	}
 
 	if len(posts) < 1 && h.category != "" {
 		h.titleL = "未找到页面"
-		h.status = plugins.Empty404
+		h.stats = plugins.Empty404
 	}
-
-	pw := h.session.Get("post_password")
-	plug := plugins.NewPostPlugin(c, h.scene)
-	for i, post := range posts {
-		if post.PostPassword != "" {
-			plugins.PasswordProjectTitle(&posts[i])
-			if pw != post.PostPassword {
-				plugins.PasswdProjectContent(&posts[i])
-			}
-		} else {
-			plugins.ApplyPlugin(plug, &posts[i])
-		}
-	}
-
 	q := c.Request.URL.Query().Encode()
 	if q != "" {
 		q = fmt.Sprintf("?%s", q)

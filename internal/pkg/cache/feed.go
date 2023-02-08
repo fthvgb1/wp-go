@@ -25,7 +25,7 @@ func InitFeed() {
 		AtomLink:        fmt.Sprintf("%s/feed", wpconfig.Options.Value("home")),
 		Link:            wpconfig.Options.Value("siteurl"),
 		Description:     wpconfig.Options.Value("blogdescription"),
-		Language:        "zh-CN",
+		Language:        wpconfig.GetLang(),
 		UpdatePeriod:    "hourly",
 		UpdateFrequency: 1,
 		Generator:       wpconfig.Options.Value("home"),

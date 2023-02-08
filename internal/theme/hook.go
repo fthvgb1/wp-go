@@ -1,30 +1,25 @@
 package theme
 
 import (
-	"errors"
-	"github.com/fthvgb1/wp-go/internal/pkg/logs"
-	"github.com/fthvgb1/wp-go/internal/pkg/models"
-	"github.com/fthvgb1/wp-go/internal/plugins"
-	"github.com/fthvgb1/wp-go/plugin/pagination"
-	"github.com/gin-gonic/gin"
+	"github.com/fthvgb1/wp-go/internal/theme/common"
 )
 
-var themeMap = map[string]func(int, *gin.Context, gin.H, int, int){}
+var themeMap = map[string]func(handle common.Handle){}
 
-func addThemeHookFunc(name string, fn func(int, *gin.Context, gin.H, int, int)) {
+func addThemeHookFunc(name string, fn func(handle common.Handle)) {
 	if _, ok := themeMap[name]; ok {
 		panic("exists same name theme")
 	}
 	themeMap[name] = fn
 }
 
-func Hook(themeName string, code int, c *gin.Context, h gin.H, scene, status int) {
+func Hook(themeName string, handle common.Handle) {
 	fn, ok := themeMap[themeName]
 	if ok && fn != nil {
-		fn(code, c, h, scene, status)
+		fn(handle)
 		return
 	}
-	if _, ok := plugins.IndexSceneMap[scene]; ok {
+	/*if _, ok := plugins.IndexSceneMap[scene]; ok {
 		p, ok := h["pagination"]
 		if ok {
 			pp, ok := p.(pagination.ParsePagination)
@@ -39,5 +34,5 @@ func Hook(themeName string, code int, c *gin.Context, h gin.H, scene, status int
 		c.HTML(code, "twentyfifteen/posts/detail.gohtml", h)
 		return
 	}
-	logs.ErrPrintln(errors.New("what happening"), " how reached here", themeName, code, h, scene, status)
+	logs.ErrPrintln(errors.New("what happening"), " how reached here", themeName, code, h, scene, status)*/
 }

@@ -7,7 +7,6 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/config"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/plugin/digest"
-	"github.com/gin-gonic/gin"
 	"strings"
 	"time"
 )
@@ -30,7 +29,7 @@ func FlushCache() {
 func digestRaw(arg ...any) (string, error) {
 	str := arg[0].(string)
 	id := arg[1].(uint64)
-	limit := config.GetConfig().DigestWordCount
+	limit := arg[2].(int)
 	if limit < 0 {
 		return str, nil
 	} else if limit == 0 {
@@ -39,20 +38,11 @@ func digestRaw(arg ...any) (string, error) {
 	return digest.Raw(str, limit, fmt.Sprintf("/p/%d", id)), nil
 }
 
-func Digest(p *Plugin[models.Posts], c *gin.Context, post *models.Posts, scene int) {
-	if scene == Detail {
-		return
-	}
-	if post.PostExcerpt != "" {
-		post.PostContent = strings.Replace(post.PostExcerpt, "\n", "<br/>", -1)
-	} else {
-		post.PostContent = DigestCache(c, post.Id, post.PostContent)
-
-	}
-	p.Next()
+func Digest(ctx context.Context, post *models.Posts, limit int) {
+	content, _ := digestCache.GetCache(ctx, post.Id, time.Second, post.PostContent, post.Id, limit)
+	post.PostContent = content
 }
 
-func DigestCache(ctx *gin.Context, id uint64, str string) string {
-	content, _ := digestCache.GetCache(ctx, id, time.Second, str, id)
-	return content
+func PostExcerpt(post *models.Posts) {
+	post.PostContent = strings.Replace(post.PostExcerpt, "\n", "<br/>", -1)
 }

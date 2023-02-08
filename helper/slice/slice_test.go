@@ -840,3 +840,36 @@ func TestShift(t *testing.T) {
 		})
 	}
 }
+
+func TestReverseReduce(t *testing.T) {
+	type args[T int, R string] struct {
+		a  []T
+		fn func(T, R) R
+		r  R
+	}
+	type testCase[T int, R string] struct {
+		name string
+		args args[T, R]
+		want R
+	}
+	tests := []testCase[int, string]{
+		{
+			name: "t1",
+			args: args[int, string]{
+				a: number.Range(1, 10, 1),
+				fn: func(i int, r string) string {
+					return fmt.Sprintf("%s%d", r, i)
+				},
+				r: "",
+			},
+			want: "10987654321",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := ReverseReduce(tt.args.a, tt.args.fn, tt.args.r); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("ReverseReduce() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

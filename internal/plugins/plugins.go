@@ -35,18 +35,3 @@ type Plugin[T any] struct {
 	scene int
 	c     *gin.Context
 }
-
-func NewPlugin[T any](calls []Func[T], index int, post *T, scene int, c *gin.Context) *Plugin[T] {
-	return &Plugin[T]{calls: calls, index: index, post: post, scene: scene, c: c}
-}
-
-func (p *Plugin[T]) Push(call ...Func[T]) {
-	p.calls = append(p.calls, call...)
-}
-
-func (p *Plugin[T]) Next() {
-	p.index++
-	for ; p.index < len(p.calls); p.index++ {
-		p.calls[p.index](p, p.c, p.post, p.scene)
-	}
-}

@@ -8,6 +8,7 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
+	"github.com/fthvgb1/wp-go/internal/theme/common"
 	"github.com/fthvgb1/wp-go/plugin/pagination"
 	"github.com/gin-gonic/gin"
 	"strings"
@@ -26,53 +27,52 @@ var paginate = func() plugins.PageEle {
 }()
 
 type handle struct {
-	c      *gin.Context
-	ginH   gin.H
-	scene  int
-	status int
-	stats  int
-	templ  string
+	common.Handle
+	templ string
 }
 
-func Hook(status int, c *gin.Context, ginH gin.H, scene, stats int) {
+func Hook(h2 common.Handle) {
 	h := handle{
-		c:      c,
-		ginH:   ginH,
-		scene:  scene,
-		status: status,
-		stats:  stats,
+		Handle: h2,
 		templ:  "twentyseventeen/posts/index.gohtml",
 	}
-	ginH["HeaderImage"] = h.getHeaderImage(c)
-	if stats == plugins.Empty404 {
-		c.HTML(status, h.templ, ginH)
+	h.GinH["HeaderImage"] = h.getHeaderImage(h.C)
+	if h.Stats == plugins.Empty404 {
+		h.C.HTML(h.Code, h.templ, h.GinH)
 		return
 	}
-	if scene == plugins.Detail {
+	if h.Scene == plugins.Detail {
 		h.detail()
 		return
 	}
 	h.index()
+}
 
+var plugin = []common.Plugin[models.Posts]{
+	common.PasswordProject, common.Digest,
 }
 
 func (h handle) index() {
-	posts := h.ginH["posts"].([]models.Posts)
-	p, ok := h.ginH["pagination"]
-	if ok {
-		pp, ok := p.(pagination.ParsePagination)
+	if h.Stats != plugins.Empty404 {
+		posts := h.GinH["posts"].([]models.Posts)
+		posts = slice.Map(posts, common.PluginFn(plugin, h.Handle, common.Default[models.Posts]))
+		p, ok := h.GinH["pagination"]
 		if ok {
-			h.ginH["pagination"] = pagination.Paginate(paginate, pp)
+			pp, ok := p.(pagination.ParsePagination)
+			if ok {
+				h.GinH["pagination"] = pagination.Paginate(paginate, pp)
+			}
 		}
+		h.GinH["posts"] = h.postThumbnail(posts, h.Scene)
 	}
-	h.ginH["bodyClass"] = h.bodyClass()
-	h.ginH["posts"] = h.postThumbnail(posts, h.scene)
-	h.c.HTML(h.status, h.templ, h.ginH)
+
+	h.GinH["bodyClass"] = h.bodyClass()
+	h.C.HTML(h.Code, h.templ, h.GinH)
 }
 
 func (h handle) detail() {
-	post := h.ginH["post"].(models.Posts)
-	h.ginH["bodyClass"] = h.bodyClass()
+	post := h.GinH["post"].(models.Posts)
+	h.GinH["bodyClass"] = h.bodyClass()
 	//host, _ := wpconfig.Options.Load("siteurl")
 	host := ""
 	img := plugins.Thumbnail(post.Thumbnail.OriginAttachmentData, "thumbnail", host, "thumbnail", "post-thumbnail")
@@ -81,12 +81,12 @@ func (h handle) detail() {
 	img.Sizes = "100vw"
 	img.Srcset = fmt.Sprintf("%s %dw, %s", img.Path, img.Width, img.Srcset)
 	post.Thumbnail = img
-	h.ginH["post"] = post
-	comments := h.ginH["comments"].([]models.Comments)
-	dep := h.ginH["maxDep"].(int)
-	h.ginH["comments"] = plugins.FormatComments(h.c, comment{}, comments, dep)
+	h.GinH["post"] = post
+	comments := h.GinH["comments"].([]models.Comments)
+	dep := h.GinH["maxDep"].(int)
+	h.GinH["comments"] = plugins.FormatComments(h.C, comment{}, comments, dep)
 	h.templ = "twentyseventeen/posts/detail.gohtml"
-	h.c.HTML(h.status, h.templ, h.ginH)
+	h.C.HTML(h.Code, h.templ, h.GinH)
 }
 
 type comment struct {
@@ -137,18 +137,18 @@ func (h handle) getHeaderImage(c *gin.Context) (r models.PostThumbnail) {
 
 func (h handle) bodyClass() string {
 	s := ""
-	switch h.scene {
+	switch h.Scene {
 	case plugins.Search:
 		s = "search-no-results"
-		if len(h.ginH["posts"].([]models.Posts)) > 0 {
+		if len(h.GinH["posts"].([]models.Posts)) > 0 {
 			s = "search-results"
 		}
 	case plugins.Category, plugins.Tag:
-		cat := h.c.Param("category")
+		cat := h.C.Param("category")
 		if cat == "" {
-			cat = h.c.Param("tag")
+			cat = h.C.Param("tag")
 		}
-		_, cate := slice.SearchFirst(cache.CategoriesTags(h.c, h.scene), func(my models.TermsMy) bool {
+		_, cate := slice.SearchFirst(cache.CategoriesTags(h.C, h.Scene), func(my models.TermsMy) bool {
 			return my.Name == cat
 		})
 		if cate.Slug[0] != '%' {
@@ -156,9 +156,9 @@ func (h handle) bodyClass() string {
 		}
 		s = fmt.Sprintf("category-%d %v", cate.Terms.TermId, s)
 	case plugins.Detail:
-		s = fmt.Sprintf("postid-%d", h.ginH["post"].(models.Posts).Id)
+		s = fmt.Sprintf("postid-%d", h.GinH["post"].(models.Posts).Id)
 	}
-	return str.Join(class[h.scene], s)
+	return str.Join(class[h.Scene], s)
 }
 
 var class = map[int]string{

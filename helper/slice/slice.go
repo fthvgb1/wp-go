@@ -66,6 +66,13 @@ func Reduce[R, T any](arr []T, fn func(T, R) R, r R) R {
 	return r
 }
 
+func ReverseReduce[R, T any](a []T, fn func(T, R) R, r R) R {
+	for i := len(a) - 1; i >= 0; i-- {
+		r = fn(a[i], r)
+	}
+	return r
+}
+
 func Reverse[T any](arr []T) []T {
 	var r = make([]T, 0, len(arr))
 	for i := len(arr); i > 0; i-- {

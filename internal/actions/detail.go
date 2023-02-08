@@ -8,6 +8,7 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
 	"github.com/fthvgb1/wp-go/internal/theme"
+	"github.com/fthvgb1/wp-go/internal/theme/common"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -31,6 +32,8 @@ func Detail(c *gin.Context) {
 	}
 	isApproveComment := false
 	status := plugins.Ok
+	pw := sessions.Default(c).Get("post_password")
+
 	defer func() {
 		code := http.StatusOK
 		if err != nil {
@@ -44,7 +47,14 @@ func Detail(c *gin.Context) {
 		}
 
 		t := theme.GetTemplateName()
-		theme.Hook(t, code, c, ginH, plugins.Detail, status)
+		theme.Hook(t, common.Handle{
+			C:        c,
+			GinH:     ginH,
+			Password: "",
+			Scene:    plugins.Detail,
+			Code:     code,
+			Stats:    status,
+		})
 	}()
 	ID := str.ToInteger[uint64](c.Param("id"), 0)
 
@@ -57,7 +67,6 @@ func Detail(c *gin.Context) {
 	if post.Id == 0 || err != nil || post.PostStatus != "publish" {
 		return
 	}
-	pw := sessions.Default(c).Get("post_password")
 	showComment := false
 	if post.CommentCount > 0 || post.CommentStatus == "open" {
 		showComment = true
@@ -77,7 +86,6 @@ func Detail(c *gin.Context) {
 		isApproveComment = true
 		return
 	}
-	plugins.ApplyPlugin(plugins.NewPostPlugin(c, plugins.Detail), &post)
 	comments, err := cache.PostComments(c, post.Id)
 	logs.ErrPrintln(err, "get post comment", post.Id)
 	ginH["comments"] = comments

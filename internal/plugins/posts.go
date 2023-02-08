@@ -3,20 +3,7 @@ package plugins
 import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
-	"github.com/gin-gonic/gin"
 )
-
-func NewPostPlugin(ctx *gin.Context, scene int) *Plugin[models.Posts] {
-	p := NewPlugin[models.Posts](nil, -1, nil, scene, ctx)
-	p.Push(Digest)
-	return p
-}
-
-func ApplyPlugin(p *Plugin[models.Posts], post *models.Posts) {
-	p.post = post
-	p.Next()
-	p.index = -1
-}
 
 func PasswordProjectTitle(post *models.Posts) {
 	post.PostTitle = fmt.Sprintf("密码保护：%s", post.PostTitle)

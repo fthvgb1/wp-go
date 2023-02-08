@@ -27,16 +27,17 @@ func isCacheExpired(c *gin.Context, lastTime time.Time) bool {
 func Feed(c *gin.Context) {
 	if !isCacheExpired(c, cache.FeedCache().GetLastSetTime()) {
 		c.Status(http.StatusNotModified)
-	} else {
-		r, err := cache.FeedCache().GetCache(c, time.Second, c)
-		if err != nil {
-			c.Status(http.StatusInternalServerError)
-			c.Abort()
-			c.Error(err)
-			return
-		}
-		setFeed(r[0], c, cache.FeedCache().GetLastSetTime())
+		return
 	}
+
+	r, err := cache.FeedCache().GetCache(c, time.Second, c)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		c.Abort()
+		c.Error(err)
+		return
+	}
+	setFeed(r[0], c, cache.FeedCache().GetLastSetTime())
 }
 
 func setFeed(s string, c *gin.Context, t time.Time) {
@@ -52,29 +53,29 @@ func PostFeed(c *gin.Context) {
 	id := c.Param("id")
 	if !isCacheExpired(c, cache.PostFeedCache().GetLastSetTime(c, id)) {
 		c.Status(http.StatusNotModified)
-	} else {
-		s, err := cache.PostFeedCache().GetCache(c, id, time.Second, c, id)
-		if err != nil {
-			c.Status(http.StatusInternalServerError)
-			c.Abort()
-			c.Error(err)
-			return
-		}
-		setFeed(s, c, cache.PostFeedCache().GetLastSetTime(c, id))
+		return
 	}
+	s, err := cache.PostFeedCache().GetCache(c, id, time.Second, c, id)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		c.Abort()
+		c.Error(err)
+		return
+	}
+	setFeed(s, c, cache.PostFeedCache().GetLastSetTime(c, id))
 }
 
 func CommentsFeed(c *gin.Context) {
 	if !isCacheExpired(c, cache.CommentsFeedCache().GetLastSetTime()) {
 		c.Status(http.StatusNotModified)
-	} else {
-		r, err := cache.CommentsFeedCache().GetCache(c, time.Second, c)
-		if err != nil {
-			c.Status(http.StatusInternalServerError)
-			c.Abort()
-			c.Error(err)
-			return
-		}
-		setFeed(r[0], c, cache.CommentsFeedCache().GetLastSetTime())
+		return
 	}
+	r, err := cache.CommentsFeedCache().GetCache(c, time.Second, c)
+	if err != nil {
+		c.Status(http.StatusInternalServerError)
+		c.Abort()
+		c.Error(err)
+		return
+	}
+	setFeed(r[0], c, cache.CommentsFeedCache().GetLastSetTime())
 }

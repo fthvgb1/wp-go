@@ -29,10 +29,8 @@ func SortSelf[T any](arr []T, fn func(i, j T) bool) {
 }
 
 func Sort[T any](arr []T, fn func(i, j T) bool) (r []T) {
-	r = make([]T, 0, len(arr))
-	for _, t := range arr {
-		r = append(r, t)
-	}
+	r = make([]T, len(arr))
+	copy(r, arr)
 	slice := anyArr[T]{
 		data: r,
 		fn:   fn,
