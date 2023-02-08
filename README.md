@@ -1,7 +1,6 @@
 ## wp-go
-a simple front of WordPress build with golang.
 
-一个go写的WordPress的前端，功能比较简单，只有列表页和详情页,rss2，主题只有twentyfifteen和twentyseventeen两套主题，插件的话只有一个简单的列表页的摘要生成和enlighter代码高亮。本身只用于展示文章，添加评论走的转发请求到php的WordPress。因为大量用了泛型功能，所以要求go的版本在1.18及以上。
+一个go写的WordPress的前端，功能比较简单，只有列表页和详情页,rss2，主题只有twentyfifteen和twentyseventeen两套主题，插件的话只有一个简单的列表页的摘要生成和enlighter代码高亮。本身只用于展示文章，添加评论走的转发请求到php的WordPress。因为大量用了泛型功能，所以要求go的版本在1.19及以上，越新越好。。。。
 
 #### 特色功能
 

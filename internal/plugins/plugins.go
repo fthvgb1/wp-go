@@ -1,9 +1,5 @@
 package plugins
 
-import (
-	"github.com/gin-gonic/gin"
-)
-
 const (
 	Home = iota + 1
 	Archive
@@ -24,14 +20,4 @@ var IndexSceneMap = map[int]struct{}{
 	Category: {},
 	Tag:      {},
 	Search:   {},
-}
-
-type Func[T any] func(*Plugin[T], *gin.Context, *T, int)
-
-type Plugin[T any] struct {
-	calls []Func[T]
-	index int
-	post  *T
-	scene int
-	c     *gin.Context
 }
