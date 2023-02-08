@@ -134,3 +134,34 @@ func TestDelete(t *testing.T) {
 	fmt.Println(a)
 	fmt.Println(b)
 }
+
+func TestCopy(t *testing.T) {
+	type args[T int] struct {
+		a []T
+	}
+	type testCase[T int] struct {
+		name string
+		args args[T]
+		want []T
+	}
+	tests := []testCase[int]{
+		{
+			name: "t1",
+			args: args[int]{
+				a: number.Range(1, 10, 1),
+			},
+			want: number.Range(1, 10, 1),
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := Copy(tt.args.a)
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Copy() = %v, want %v", got, tt.want)
+			}
+			got[9] = 111
+			fmt.Println(tt.args.a)
+			fmt.Println(got)
+		})
+	}
+}

@@ -28,6 +28,14 @@ func PluginFn[T any](a []Plugin[T], h Handle, fn Fn[T]) Fn[T] {
 	}, fn)
 }
 
+var plugin = []Plugin[models.Posts]{
+	PasswordProject, Digest,
+}
+
+func Plugins() []Plugin[models.Posts] {
+	return plugin
+}
+
 func Default[T any](t T) T {
 	return t
 }

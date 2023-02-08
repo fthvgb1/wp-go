@@ -57,3 +57,9 @@ func Delete[T any](a *[]T, index int) {
 	arr := *a
 	*a = append(arr[:index], arr[index+1:]...)
 }
+
+func Copy[T any](a []T) []T {
+	dst := make([]T, len(a))
+	copy(dst, a)
+	return dst
+}
