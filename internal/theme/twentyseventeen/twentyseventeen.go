@@ -2,6 +2,7 @@ package twentyseventeen
 
 import (
 	"fmt"
+	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
@@ -44,17 +45,15 @@ func Hook(cHandle common.Handle) {
 	h.Index()
 }
 
-var plugin = func() []common.Plugin[models.Posts] {
-	return append(common.Plugins(), postThumbnail)
+var pluginFns = func() map[string]common.Plugin[models.Posts] {
+	return maps.Merge(common.Plugins(), map[string]common.Plugin[models.Posts]{
+		"twentyseventeen_postThumbnail": postThumbnail,
+	})
 }()
 
 func (h handle) Index() {
 	if h.Stats != plugins.Empty404 {
-
-		h.GinH["posts"] = slice.Map(
-			h.GinH["posts"].([]models.Posts),
-			common.PluginFn[models.Posts](plugin, h.Handle, common.DigestsAndOthers(h.C)))
-
+		h.ExecListPagePlugin(pluginFns)
 		p, ok := h.GinH["pagination"]
 		if ok {
 			pp, ok := p.(pagination.ParsePagination)

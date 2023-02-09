@@ -89,3 +89,5 @@ postOrder: "desc"
 uploadDir: ""
 # pprof route path 为空表示不开启pprof,否则为pprof的路由
 pprof: "/debug/pprof"
+# 列表页面post使用的插件
+listPagePlugins: ["passwordProject","digest","twentyseventeen_postThumbnail"]

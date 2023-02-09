@@ -1,7 +1,6 @@
 package twentyfifteen
 
 import (
-	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
 	"github.com/fthvgb1/wp-go/internal/theme/common"
@@ -37,9 +36,7 @@ var plugin = common.Plugins()
 func (h handle) Index() {
 	if h.Stats != plugins.Empty404 {
 
-		h.GinH["posts"] = slice.Map(
-			h.GinH["posts"].([]models.Posts),
-			common.PluginFn[models.Posts](plugin, h.Handle, common.DigestsAndOthers(h.C)))
+		h.ExecListPagePlugin(plugin)
 
 		p, ok := h.GinH["pagination"]
 		if ok {

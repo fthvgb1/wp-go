@@ -85,3 +85,26 @@ func Replace[K comparable, V any](m map[K]V, mm ...map[K]V) map[K]V {
 	}
 	return m
 }
+
+func Copy[K comparable, V any](m map[K]V) map[K]V {
+	r := make(map[K]V)
+	for k, v := range m {
+		r[k] = v
+	}
+	return r
+}
+
+func Merge[K comparable, V any](m ...map[K]V) map[K]V {
+	if len(m) < 1 {
+		panic("no map")
+	} else if len(m) < 2 {
+		return m[0]
+	}
+	mm := m[0]
+	for _, m2 := range m[1:] {
+		for k, v := range m2 {
+			mm[k] = v
+		}
+	}
+	return mm
+}

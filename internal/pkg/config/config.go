@@ -31,6 +31,7 @@ type Config struct {
 	PostOrder          string    `yaml:"postOrder"`
 	UploadDir          string    `yaml:"uploadDir"`
 	Pprof              string    `yaml:"pprof"`
+	ListPagePlugins    []string  `yaml:"listPagePlugins"`
 }
 
 type CacheTime struct {
