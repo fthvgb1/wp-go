@@ -7,22 +7,15 @@
 
                 <div class="wrap">
                     <header class="page-header">
-                        <h2 class="page-title">文章</h2>
+                        {{if .header}}
+                            <h1 class="page-title">{{.header | unescaped}}</h1>
+                        {{else}}
+                            <h2 class="page-title">文章</h2>
+                        {{end}}
                     </header>
 
                     <div id="primary" class="content-area">
                         <main id="main" class="site-main">
-                            {{if .header}}
-                                <header class="page-header">
-                                    <h1 class="page-title">
-                                        {{if .search}}
-                                            {{.header}}
-                                        {{else}}
-                                            {{.header |unescaped}}
-                                        {{end}}
-                                    </h1>
-                                </header>
-                            {{end}}
                             {{ range $k,$v:=.posts}}
                                 <article id="post-{{$v.Id}}"
                                          class="post-{{$v.Id}} post {{if $v.Thumbnail.Path}}has-post-thumbnail{{end}} type-post status-publish format-standard hentry category">

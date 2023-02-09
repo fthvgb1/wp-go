@@ -32,7 +32,7 @@ func Detail(c *gin.Context) {
 		"post":           post,
 	}
 	isApproveComment := false
-	status := plugins.Ok
+	stats := plugins.Ok
 	pw := sessions.Default(c).Get("post_password")
 
 	defer func() {
@@ -40,7 +40,7 @@ func Detail(c *gin.Context) {
 		if err != nil {
 			code = http.StatusNotFound
 			c.Error(err)
-			status = plugins.Error
+			stats = plugins.Error
 			return
 		}
 		if isApproveComment == true {
@@ -54,7 +54,7 @@ func Detail(c *gin.Context) {
 			Password: "",
 			Scene:    plugins.Detail,
 			Code:     code,
-			Stats:    status,
+			Stats:    stats,
 		})
 	}()
 	id := str.ToInteger[uint64](c.Param("id"), 0)
@@ -62,10 +62,12 @@ func Detail(c *gin.Context) {
 	maxId, err := cache.GetMaxPostId(c)
 	logs.ErrPrintln(err, "get max post id")
 	if id > maxId || id <= 0 || err != nil {
+		stats = plugins.Empty404
 		return
 	}
 	post, err = cache.GetPostById(c, id)
 	if post.Id == 0 || err != nil || post.PostStatus != "publish" {
+		stats = plugins.Empty404
 		return
 	}
 	showComment := false

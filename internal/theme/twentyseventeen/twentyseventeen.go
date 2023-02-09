@@ -37,10 +37,6 @@ func Hook(cHandle common.Handle) {
 		templ:  "twentyseventeen/posts/index.gohtml",
 	}
 	h.GinH["HeaderImage"] = h.getHeaderImage(h.C)
-	if h.Stats == plugins.Empty404 {
-		h.C.HTML(h.Code, h.templ, h.GinH)
-		return
-	}
 	if h.Scene == plugins.Detail {
 		h.Detail()
 		return
@@ -75,6 +71,10 @@ func (h handle) Index() {
 func (h handle) Detail() {
 	post := h.GinH["post"].(models.Posts)
 	h.GinH["bodyClass"] = h.bodyClass()
+	if h.Stats == plugins.Empty404 {
+		h.C.HTML(h.Code, h.templ, h.GinH)
+		return
+	}
 	//host, _ := wpconfig.Options.Load("siteurl")
 	host := ""
 	img := plugins.Thumbnail(post.Thumbnail.OriginAttachmentData, "thumbnail", host, "thumbnail", "post-thumbnail")
@@ -84,12 +84,16 @@ func (h handle) Detail() {
 	img.Srcset = fmt.Sprintf("%s %dw, %s", img.Path, img.Width, img.Srcset)
 	post.Thumbnail = img
 	h.GinH["post"] = post
-	comments := h.GinH["comments"].([]models.Comments)
-	dep := h.GinH["maxDep"].(int)
-	h.GinH["comments"] = plugins.FormatComments(h.C, comment{}, comments, dep)
+	if h.GinH["comments"] != nil {
+		comments := h.GinH["comments"].([]models.Comments)
+		dep := h.GinH["maxDep"].(int)
+		h.GinH["comments"] = plugins.FormatComments(h.C, commentFormat, comments, dep)
+	}
 	h.templ = "twentyseventeen/posts/detail.gohtml"
 	h.C.HTML(h.Code, h.templ, h.GinH)
 }
+
+var commentFormat = comment{}
 
 type comment struct {
 	plugins.CommonCommentFormat
@@ -136,6 +140,9 @@ func (h handle) getHeaderImage(c *gin.Context) (r models.PostThumbnail) {
 
 func (h handle) bodyClass() string {
 	s := ""
+	if h.Stats == plugins.Empty404 {
+		return "error404"
+	}
 	switch h.Scene {
 	case plugins.Search:
 		s = "search-no-results"

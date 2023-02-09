@@ -185,7 +185,10 @@ func (h *indexHandle) parseParams() (err error) {
 		})
 		h.setTitleLR(h.category, wpconfig.Options.Value("blogname"))
 	}
-	s := h.c.Query("s")
+	s, ok := h.c.GetQuery("s")
+	if ok {
+		h.scene = plugins.Search
+	}
 	if s != "" && strings.Replace(s, " ", "", -1) != "" {
 		q := str.Join("%", s, "%")
 		h.where = append(h.where, []string{
@@ -194,7 +197,7 @@ func (h *indexHandle) parseParams() (err error) {
 			"or", "post_excerpt", "like", q, "",
 		}, []string{"post_password", ""})
 		h.postType = append(h.postType, "page", "attachment")
-		h.header = fmt.Sprintf("%s的搜索结果", s)
+		h.header = fmt.Sprintf("<span>%s</span>的搜索结果", s)
 		h.setTitleLR(str.Join(`"`, s, `"`, "的搜索结果"), wpconfig.Options.Value("blogname"))
 		h.search = s
 		h.scene = plugins.Search
@@ -229,8 +232,6 @@ func Index(c *gin.Context) {
 		"recentPosts":    recent,
 		"archives":       archive,
 		"categories":     categoryItems,
-		"search":         h.search,
-		"header":         h.header,
 		"recentComments": recentComments,
 		"posts":          posts,
 	}
@@ -266,6 +267,8 @@ func Index(c *gin.Context) {
 		return
 	}
 	ginH["title"] = h.getTitle()
+	ginH["search"] = h.search
+	ginH["header"] = h.header
 	if c.Param("month") != "" {
 		posts, totalRaw, err = cache.GetMonthPostIds(c, c.Param("year"), c.Param("month"), h.page, h.pageSize, h.order)
 		if err != nil {
