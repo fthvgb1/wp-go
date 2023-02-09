@@ -49,10 +49,6 @@ func PluginFn[T any](a []Plugin[T], h Handle, fn Fn[T]) Fn[T] {
 	}, fn)
 }
 
-var plugin = []Plugin[models.Posts]{
-	PasswordProject,
-}
-
 var pluginFns = map[string]Plugin[models.Posts]{
 	"passwordProject": PasswordProject,
 	"digest":          Digest,
