@@ -2,6 +2,7 @@ package theme
 
 import (
 	"github.com/fthvgb1/wp-go/internal/theme/common"
+	"github.com/fthvgb1/wp-go/internal/theme/twentyfifteen"
 )
 
 var themeMap = map[string]func(handle common.Handle){}
@@ -19,20 +20,5 @@ func Hook(themeName string, handle common.Handle) {
 		fn(handle)
 		return
 	}
-	/*if _, ok := plugins.IndexSceneMap[scene]; ok {
-		p, ok := h["pagination"]
-		if ok {
-			pp, ok := p.(pagination.ParsePagination)
-			if ok {
-				h["pagination"] = pagination.Paginate(plugins.TwentyFifteenPagination(), pp)
-			}
-		}
-		c.HTML(code, "twentyfifteen/posts/index.gohtml", h)
-		return
-	} else if scene == plugins.Detail {
-		h["comments"] = plugins.FormatComments(c, plugins.CommentRender(), h["comments"].([]models.Comments), h["maxDep"].(int))
-		c.HTML(code, "twentyfifteen/posts/detail.gohtml", h)
-		return
-	}
-	logs.ErrPrintln(errors.New("what happening"), " how reached here", themeName, code, h, scene, status)*/
+	themeMap[twentyfifteen.ThemeName](handle)
 }

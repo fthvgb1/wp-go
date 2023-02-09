@@ -165,3 +165,57 @@ func TestCopy(t *testing.T) {
 		})
 	}
 }
+
+func TestUnshift(t *testing.T) {
+	type args[T int] struct {
+		a *[]T
+		e []T
+	}
+	type testCase[T int] struct {
+		name string
+		args args[T]
+	}
+	a := number.Range(1, 10, 1)
+	tests := []testCase[int]{
+		{
+			name: "t1",
+			args: args[int]{
+				a: &a,
+				e: number.Range(11, 15, 1),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			Unshift(tt.args.a, tt.args.e...)
+			fmt.Println(tt.args.a)
+		})
+	}
+}
+
+func TestPush(t *testing.T) {
+	type args[T int] struct {
+		a *[]T
+		e []T
+	}
+	type testCase[T int] struct {
+		name string
+		args args[T]
+	}
+	a := number.Range(1, 10, 1)
+	tests := []testCase[int]{
+		{
+			name: "t1",
+			args: args[int]{
+				a: &a,
+				e: number.Range(11, 15, 1),
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			Push(tt.args.a, tt.args.e...)
+			fmt.Println(tt.args.a)
+		})
+	}
+}

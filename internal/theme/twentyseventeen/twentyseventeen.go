@@ -31,9 +31,9 @@ type handle struct {
 	templ string
 }
 
-func Hook(h2 common.Handle) {
+func Hook(cHandle common.Handle) {
 	h := handle{
-		Handle: h2,
+		Handle: cHandle,
 		templ:  "twentyseventeen/posts/index.gohtml",
 	}
 	h.GinH["HeaderImage"] = h.getHeaderImage(h.C)
@@ -57,7 +57,7 @@ func (h handle) Index() {
 
 		h.GinH["posts"] = slice.Map(
 			h.GinH["posts"].([]models.Posts),
-			common.PluginFn[models.Posts](plugin, h.Handle, common.Digests(h.C)))
+			common.PluginFn[models.Posts](plugin, h.Handle, common.DigestsAndOthers(h.C)))
 
 		p, ok := h.GinH["pagination"]
 		if ok {
@@ -111,9 +111,8 @@ func (c comment) FormatLi(ctx *gin.Context, m models.Comments, depth int, isTls 
 
 func postThumbnail(next common.Fn[models.Posts], h common.Handle, t models.Posts) models.Posts {
 	if t.Thumbnail.Path != "" {
-		if slice.IsContained(h.Scene, []int{plugins.Home, plugins.Archive, plugins.Search}) {
-			t.Thumbnail.Sizes = "(max-width: 767px) 89vw, (max-width: 1000px) 54vw, (max-width: 1071px) 543px, 580px"
-		} else {
+		t.Thumbnail.Sizes = "(max-width: 767px) 89vw, (max-width: 1000px) 54vw, (max-width: 1071px) 543px, 580px"
+		if h.Scene == plugins.Detail {
 			t.Thumbnail.Sizes = "100vw"
 		}
 	}

@@ -63,3 +63,11 @@ func Copy[T any](a []T) []T {
 	copy(dst, a)
 	return dst
 }
+
+func Unshift[T any](a *[]T, e ...T) {
+	*a = append(e, *a...)
+}
+
+func Push[T any](a *[]T, e ...T) {
+	*a = append(*a, e...)
+}

@@ -78,12 +78,17 @@ func Digest(next Fn[models.Posts], h Handle, post models.Posts) models.Posts {
 	return next(post)
 }
 
-func Digests(ctx context.Context) Fn[models.Posts] {
+func DigestsAndOthers(ctx context.Context, calls ...func(*models.Posts)) Fn[models.Posts] {
 	return func(post models.Posts) models.Posts {
 		if post.PostExcerpt != "" {
 			plugins.PostExcerpt(&post)
 		} else {
 			plugins.Digest(ctx, &post, config.GetConfig().DigestWordCount)
+		}
+		if len(calls) > 0 {
+			for _, call := range calls {
+				call(&post)
+			}
 		}
 		return post
 	}
