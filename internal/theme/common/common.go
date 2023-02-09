@@ -1,6 +1,7 @@
 package common
 
 import (
+	"context"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/internal/pkg/config"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
@@ -29,11 +30,11 @@ func PluginFn[T any](a []Plugin[T], h Handle, fn Fn[T]) Fn[T] {
 }
 
 var plugin = []Plugin[models.Posts]{
-	PasswordProject, Digest,
+	PasswordProject,
 }
 
 func Plugins() []Plugin[models.Posts] {
-	return plugin
+	return slice.Copy(plugin)
 }
 
 func Default[T any](t T) T {
@@ -60,4 +61,15 @@ func Digest(next Fn[models.Posts], h Handle, post models.Posts) models.Posts {
 		plugins.Digest(h.C, &post, config.GetConfig().DigestWordCount)
 	}
 	return next(post)
+}
+
+func Digests(ctx context.Context) Fn[models.Posts] {
+	return func(post models.Posts) models.Posts {
+		if post.PostExcerpt != "" {
+			plugins.PostExcerpt(&post)
+		} else {
+			plugins.Digest(ctx, &post, config.GetConfig().DigestWordCount)
+		}
+		return post
+	}
 }

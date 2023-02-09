@@ -48,12 +48,12 @@ func Hook(h2 common.Handle) {
 	h.index()
 }
 
-var plugin = slice.Copy(common.Plugins())
+var plugin = common.Plugins()
 
 func (h handle) index() {
 	if h.Stats != plugins.Empty404 {
 		posts := h.GinH["posts"].([]models.Posts)
-		posts = slice.Map(posts, common.PluginFn[models.Posts](plugin, h.Handle, common.Default[models.Posts]))
+		posts = slice.Map(posts, common.PluginFn[models.Posts](plugin, h.Handle, common.Digests(h.C)))
 		p, ok := h.GinH["pagination"]
 		if ok {
 			pp, ok := p.(pagination.ParsePagination)
