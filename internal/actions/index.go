@@ -221,7 +221,7 @@ func Index(c *gin.Context) {
 	var totalRaw int
 	var err error
 	archive := cache.Archives(c)
-	recent := cache.RecentPosts(c, 5, true)
+	recent := slice.Map(cache.RecentPosts(c, 5), common.ProjectTitle)
 	categoryItems := cache.CategoriesTags(c, plugins.Category)
 	recentComments := cache.RecentComments(c, 5)
 	ginH := gin.H{

@@ -9,7 +9,11 @@ import (
 )
 
 func RecentComments(ctx context.Context, n int) (r []models.Comments) {
-	r, err := recentCommentsCaches.GetCache(ctx, time.Second, ctx)
+	nn := n
+	if nn <= 5 {
+		nn = 10
+	}
+	r, err := recentCommentsCaches.GetCache(ctx, time.Second, ctx, nn)
 	if len(r) > n {
 		r = r[0:n]
 	}

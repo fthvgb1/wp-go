@@ -6,7 +6,6 @@ import (
 	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
-	"github.com/fthvgb1/wp-go/internal/plugins"
 	"github.com/gin-gonic/gin"
 	"time"
 )
@@ -43,7 +42,7 @@ func GetMaxPostId(ctx *gin.Context) (uint64, error) {
 	return maxPostIdCache.GetCache(ctx, time.Second, ctx)
 }
 
-func RecentPosts(ctx context.Context, n int, project bool) (r []models.Posts) {
+func RecentPosts(ctx context.Context, n int) (r []models.Posts) {
 	nn := n
 	if nn <= 5 {
 		nn = 10
@@ -51,14 +50,6 @@ func RecentPosts(ctx context.Context, n int, project bool) (r []models.Posts) {
 	r, err := recentPostsCaches.GetCache(ctx, time.Second, ctx, nn)
 	if n < len(r) {
 		r = r[:n]
-	}
-	if project {
-		r = slice.Map(r, func(t models.Posts) models.Posts {
-			if t.PostPassword != "" {
-				plugins.PasswordProjectTitle(&t)
-			}
-			return t
-		})
 	}
 	logs.ErrPrintln(err, "get recent post")
 	return

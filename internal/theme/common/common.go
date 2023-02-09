@@ -54,6 +54,13 @@ func PasswordProject(next Fn[models.Posts], h Handle, post models.Posts) (r mode
 	return
 }
 
+func ProjectTitle(t models.Posts) models.Posts {
+	if t.PostPassword != "" {
+		plugins.PasswordProjectTitle(&t)
+	}
+	return t
+}
+
 func Digest(next Fn[models.Posts], h Handle, post models.Posts) models.Posts {
 	if post.PostExcerpt != "" {
 		plugins.PostExcerpt(&post)

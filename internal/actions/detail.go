@@ -2,6 +2,7 @@ package actions
 
 import (
 	"fmt"
+	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
@@ -18,7 +19,7 @@ import (
 func Detail(c *gin.Context) {
 	var err error
 	var post models.Posts
-	recent := cache.RecentPosts(c, 5, true)
+	recent := slice.Map(cache.RecentPosts(c, 5), common.ProjectTitle)
 	archive := cache.Archives(c)
 	categoryItems := cache.CategoriesTags(c, plugins.Category)
 	recentComments := cache.RecentComments(c, 5)
@@ -56,14 +57,14 @@ func Detail(c *gin.Context) {
 			Stats:    status,
 		})
 	}()
-	ID := str.ToInteger[uint64](c.Param("id"), 0)
+	id := str.ToInteger[uint64](c.Param("id"), 0)
 
 	maxId, err := cache.GetMaxPostId(c)
 	logs.ErrPrintln(err, "get max post id")
-	if ID > maxId || ID <= 0 || err != nil {
+	if id > maxId || id <= 0 || err != nil {
 		return
 	}
-	post, err = cache.GetPostById(c, ID)
+	post, err = cache.GetPostById(c, id)
 	if post.Id == 0 || err != nil || post.PostStatus != "publish" {
 		return
 	}
