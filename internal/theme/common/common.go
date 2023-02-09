@@ -18,6 +18,14 @@ type Handle struct {
 	Stats    int
 }
 
+func (h Handle) Detail() {
+
+}
+
+func (h Handle) Index() {
+
+}
+
 type Fn[T any] func(T) T
 type Plugin[T any] func(next Fn[T], h Handle, t T) T
 

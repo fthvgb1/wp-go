@@ -42,18 +42,23 @@ func Hook(h2 common.Handle) {
 		return
 	}
 	if h.Scene == plugins.Detail {
-		h.detail()
+		h.Detail()
 		return
 	}
-	h.index()
+	h.Index()
 }
 
-var plugin = common.Plugins()
+var plugin = func() []common.Plugin[models.Posts] {
+	return append(common.Plugins(), postThumbnail)
+}()
 
-func (h handle) index() {
+func (h handle) Index() {
 	if h.Stats != plugins.Empty404 {
-		posts := h.GinH["posts"].([]models.Posts)
-		posts = slice.Map(posts, common.PluginFn[models.Posts](plugin, h.Handle, common.Digests(h.C)))
+
+		h.GinH["posts"] = slice.Map(
+			h.GinH["posts"].([]models.Posts),
+			common.PluginFn[models.Posts](plugin, h.Handle, common.Digests(h.C)))
+
 		p, ok := h.GinH["pagination"]
 		if ok {
 			pp, ok := p.(pagination.ParsePagination)
@@ -61,14 +66,13 @@ func (h handle) index() {
 				h.GinH["pagination"] = pagination.Paginate(paginate, pp)
 			}
 		}
-		h.GinH["posts"] = h.postThumbnail(posts, h.Scene)
 	}
 
 	h.GinH["bodyClass"] = h.bodyClass()
 	h.C.HTML(h.Code, h.templ, h.GinH)
 }
 
-func (h handle) detail() {
+func (h handle) Detail() {
 	post := h.GinH["post"].(models.Posts)
 	h.GinH["bodyClass"] = h.bodyClass()
 	//host, _ := wpconfig.Options.Load("siteurl")
@@ -105,17 +109,15 @@ func (c comment) FormatLi(ctx *gin.Context, m models.Comments, depth int, isTls 
 	return plugins.FormatLi(templ, ctx, m, depth, isTls, eo, parent)
 }
 
-func (h handle) postThumbnail(posts []models.Posts, scene int) []models.Posts {
-	return slice.Map(posts, func(t models.Posts) models.Posts {
-		if t.Thumbnail.Path != "" {
-			if slice.IsContained(scene, []int{plugins.Home, plugins.Archive, plugins.Search}) {
-				t.Thumbnail.Sizes = "(max-width: 767px) 89vw, (max-width: 1000px) 54vw, (max-width: 1071px) 543px, 580px"
-			} else {
-				t.Thumbnail.Sizes = "100vw"
-			}
+func postThumbnail(next common.Fn[models.Posts], h common.Handle, t models.Posts) models.Posts {
+	if t.Thumbnail.Path != "" {
+		if slice.IsContained(h.Scene, []int{plugins.Home, plugins.Archive, plugins.Search}) {
+			t.Thumbnail.Sizes = "(max-width: 767px) 89vw, (max-width: 1000px) 54vw, (max-width: 1071px) 543px, 580px"
+		} else {
+			t.Thumbnail.Sizes = "100vw"
 		}
-		return t
-	})
+	}
+	return next(t)
 }
 
 func (h handle) getHeaderImage(c *gin.Context) (r models.PostThumbnail) {
