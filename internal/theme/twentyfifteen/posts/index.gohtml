@@ -7,11 +7,7 @@
                 {{if .header}}
                     <header class="page-header">
                         <h1 class="page-title">
-                            {{if .search}}
-                                {{.header}}
-                            {{else}}
-                                {{.header |unescaped}}
-                            {{end}}
+                            {{.header |unescaped}}
                         </h1>
                     </header>
                 {{end}}
