@@ -6,6 +6,7 @@ import (
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
+	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
@@ -38,7 +39,7 @@ func Hook(cHandle common.Handle) {
 		templ:  "twentyseventeen/posts/index.gohtml",
 	}
 	h.GinH["HeaderImage"] = h.getHeaderImage(h.C)
-	if h.Scene == plugins.Detail {
+	if h.Scene == constraints.Detail {
 		h.Detail()
 		return
 	}
@@ -46,20 +47,17 @@ func Hook(cHandle common.Handle) {
 }
 
 var pluginFns = func() map[string]common.Plugin[models.Posts] {
-	return maps.Merge(common.Plugins(), map[string]common.Plugin[models.Posts]{
+	return maps.Merge(common.ListPostPlugins(), map[string]common.Plugin[models.Posts]{
 		"twentyseventeen_postThumbnail": postThumbnail,
 	})
 }()
 
 func (h handle) Index() {
-	if h.Stats != plugins.Empty404 {
+	if h.Stats != constraints.Empty404 {
 		h.ExecListPagePlugin(pluginFns)
-		p, ok := h.GinH["pagination"]
+		page, ok := maps.GetStrMapAnyVal[pagination.ParsePagination](h.GinH, "pagination")
 		if ok {
-			pp, ok := p.(pagination.ParsePagination)
-			if ok {
-				h.GinH["pagination"] = pagination.Paginate(paginate, pp)
-			}
+			h.GinH["pagination"] = pagination.Paginate(paginate, page)
 		}
 	}
 
@@ -70,7 +68,7 @@ func (h handle) Index() {
 func (h handle) Detail() {
 	post := h.GinH["post"].(models.Posts)
 	h.GinH["bodyClass"] = h.bodyClass()
-	if h.Stats == plugins.Empty404 {
+	if h.Stats == constraints.Empty404 {
 		h.C.HTML(h.Code, h.templ, h.GinH)
 		return
 	}
@@ -115,7 +113,7 @@ func (c comment) FormatLi(ctx *gin.Context, m models.Comments, depth int, isTls 
 func postThumbnail(next common.Fn[models.Posts], h common.Handle, t models.Posts) models.Posts {
 	if t.Thumbnail.Path != "" {
 		t.Thumbnail.Sizes = "(max-width: 767px) 89vw, (max-width: 1000px) 54vw, (max-width: 1071px) 543px, 580px"
-		if h.Scene == plugins.Detail {
+		if h.Scene == constraints.Detail {
 			t.Thumbnail.Sizes = "100vw"
 		}
 	}
@@ -139,16 +137,16 @@ func (h handle) getHeaderImage(c *gin.Context) (r models.PostThumbnail) {
 
 func (h handle) bodyClass() string {
 	s := ""
-	if h.Stats == plugins.Empty404 {
+	if h.Stats == constraints.Empty404 {
 		return "error404"
 	}
 	switch h.Scene {
-	case plugins.Search:
+	case constraints.Search:
 		s = "search-no-results"
 		if len(h.GinH["posts"].([]models.Posts)) > 0 {
 			s = "search-results"
 		}
-	case plugins.Category, plugins.Tag:
+	case constraints.Category, constraints.Tag:
 		cat := h.C.Param("category")
 		if cat == "" {
 			cat = h.C.Param("tag")
@@ -160,17 +158,17 @@ func (h handle) bodyClass() string {
 			s = cate.Slug
 		}
 		s = fmt.Sprintf("category-%d %v", cate.Terms.TermId, s)
-	case plugins.Detail:
+	case constraints.Detail:
 		s = fmt.Sprintf("postid-%d", h.GinH["post"].(models.Posts).Id)
 	}
 	return str.Join(class[h.Scene], s)
 }
 
 var class = map[int]string{
-	plugins.Home:     "home blog ",
-	plugins.Archive:  "archive date page-two-column",
-	plugins.Category: "archive category page-two-column",
-	plugins.Tag:      "archive category page-two-column ",
-	plugins.Search:   "search ",
-	plugins.Detail:   "post-template-default single single-post single-format-standard ",
+	constraints.Home:     "home blog ",
+	constraints.Archive:  "archive date page-two-column",
+	constraints.Category: "archive category page-two-column",
+	constraints.Tag:      "archive category page-two-column ",
+	constraints.Search:   "search ",
+	constraints.Detail:   "post-template-default single single-post single-format-standard ",
 }

@@ -60,13 +60,13 @@ cacheTime:
   commentsCacheTime: 24h
   # 主题的页眉图片缓存时间
   themeHeaderImagCacheTime: 5m
+  # 随机sleep时间
+  sleepTime: [ 1s,3s ]
 # 摘要字数
 digestWordCount: 300
 
 # 到达指定并发请求数时随机sleep
 maxRequestSleepNum: 100
-# 随机sleep时间
-sleepTime: [1s,3s]
 # 全局最大请求数，超过直接403
 maxRequestNum: 500
 # 单ip同时最大搜索请求数
@@ -79,6 +79,10 @@ gzip: false
 postCommentUrl: http://wp.test/wp-comments-post.php
 # TrustIps
 trustIps: []
+# 分页器间隔数
+paginationStep: 1
+# 显示查询的sql语句
+showQuerySql: false
 # trust servername 信任的域名
 trustServerNames: ["xy.test","blog.xy.test"]
 # 主题 为空值为option template，没有就默认为twentyfifteen

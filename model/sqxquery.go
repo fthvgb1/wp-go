@@ -20,19 +20,19 @@ func NewSqlxQuery(sqlx *sqlx.DB) SqlxQuery {
 
 func (r SqlxQuery) Select(ctx context.Context, dest any, sql string, params ...any) error {
 	if os.Getenv("SHOW_SQL") == "true" {
-		go log.Println(formatSql(sql, params))
+		go log.Println(FormatSql(sql, params...))
 	}
 	return r.sqlx.Select(dest, sql, params...)
 }
 
 func (r SqlxQuery) Get(ctx context.Context, dest any, sql string, params ...any) error {
 	if os.Getenv("SHOW_SQL") == "true" {
-		go log.Println(formatSql(sql, params))
+		go log.Println(FormatSql(sql, params...))
 	}
 	return r.sqlx.Get(dest, sql, params...)
 }
 
-func formatSql(sql string, params []any) string {
+func FormatSql(sql string, params ...any) string {
 	for _, param := range params {
 		switch param.(type) {
 		case string:

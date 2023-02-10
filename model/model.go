@@ -11,6 +11,8 @@ func InitDB(db dbQuery) {
 	globalBb = db
 }
 
+type QueryFn func(context.Context, any, string, ...any) error
+
 type Model interface {
 	PrimaryKey() string
 	Table() string

@@ -32,6 +32,8 @@ type Config struct {
 	UploadDir          string    `yaml:"uploadDir"`
 	Pprof              string    `yaml:"pprof"`
 	ListPagePlugins    []string  `yaml:"listPagePlugins"`
+	PaginationStep     int       `yaml:"paginationStep"`
+	ShowQuerySql       bool      `yaml:"showQuerySql"`
 }
 
 type CacheTime struct {

@@ -10,11 +10,13 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
 type Handle struct {
 	C        *gin.Context
+	Session  sessions.Session
 	GinH     gin.H
 	Password string
 	Scene    int
@@ -31,12 +33,21 @@ func (h Handle) Index() {
 }
 
 func (h Handle) ExecListPagePlugin(m map[string]Plugin[models.Posts], calls ...func(*models.Posts)) {
+
 	pluginConf := config.GetConfig().ListPagePlugins
-	plugin := GetPlugins(pluginConf, m)
-	h.GinH["posts"] = slice.Map(
-		h.GinH["posts"].([]models.Posts),
-		PluginFn[models.Posts](plugin, h, Defaults(calls...)))
+
+	plugin := GetListPostPlugins(pluginConf, m)
+
+	posts, ok := maps.GetStrMapAnyVal[[]models.Posts](h.GinH, "posts")
+
+	if ok {
+		h.GinH["posts"] = slice.Map(posts, PluginFn[models.Posts](plugin, h, Defaults(calls...)))
+	}
 }
+
+/*func (h Handle) Pagination(paginate pagination)  {
+
+}*/
 
 type Fn[T any] func(T) T
 type Plugin[T any] func(next Fn[T], h Handle, t T) T
@@ -54,7 +65,7 @@ var pluginFns = map[string]Plugin[models.Posts]{
 	"digest":          Digest,
 }
 
-func Plugins() map[string]Plugin[models.Posts] {
+func ListPostPlugins() map[string]Plugin[models.Posts] {
 	return maps.Copy(pluginFns)
 }
 
@@ -71,7 +82,7 @@ func Default[T any](t T) T {
 	return t
 }
 
-func GetPlugins(name []string, m map[string]Plugin[models.Posts]) []Plugin[models.Posts] {
+func GetListPostPlugins(name []string, m map[string]Plugin[models.Posts]) []Plugin[models.Posts] {
 	return slice.FilterAndMap(name, func(t string) (Plugin[models.Posts], bool) {
 		v, ok := m[t]
 		if ok {

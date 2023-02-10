@@ -6,10 +6,10 @@ import (
 	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/internal/pkg/config"
+	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/dao"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
-	"github.com/fthvgb1/wp-go/internal/plugins"
 	"sync"
 	"time"
 )
@@ -162,7 +162,7 @@ func CategoriesTags(ctx context.Context, t ...int) []models.TermsMy {
 	logs.ErrPrintln(err, "get category err")
 	if len(t) > 0 {
 		return slice.Filter(r, func(my models.TermsMy) bool {
-			return helper.Or(t[0] == plugins.Tag, "post_tag", "category") == my.Taxonomy
+			return helper.Or(t[0] == constraints.Tag, "post_tag", "category") == my.Taxonomy
 		})
 	}
 	return r
@@ -171,7 +171,7 @@ func AllCategoryTagsNames(ctx context.Context, c int) map[string]struct{} {
 	r, err := categoryAndTagsCaches.GetCache(ctx, time.Second, ctx)
 	logs.ErrPrintln(err, "get category err")
 	return slice.FilterAndToMap(r, func(t models.TermsMy) (string, struct{}, bool) {
-		if helper.Or(c == plugins.Tag, "post_tag", "category") == t.Taxonomy {
+		if helper.Or(c == constraints.Tag, "post_tag", "category") == t.Taxonomy {
 			return t.Name, struct{}{}, true
 		}
 		return "", struct{}{}, false

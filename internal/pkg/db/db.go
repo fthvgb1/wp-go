@@ -1,9 +1,12 @@
 package db
 
 import (
+	"context"
 	"github.com/fthvgb1/wp-go/internal/pkg/config"
+	"github.com/fthvgb1/wp-go/model"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
+	"log"
 )
 
 var db *sqlx.DB
@@ -29,4 +32,24 @@ func InitDb() (*sqlx.DB, error) {
 		db.SetConnMaxLifetime(c.Mysql.Pool.ConnMaxLifetime)
 	}
 	return db, err
+}
+
+func QueryDb(db *sqlx.DB) model.UniversalDb {
+	query := model.NewUniversalDb(
+
+		func(ctx context.Context, a any, s string, args ...any) error {
+			if config.GetConfig().ShowQuerySql {
+				go log.Println(model.FormatSql(s, args...))
+			}
+			return db.Select(a, s, args...)
+		},
+
+		func(ctx context.Context, a any, s string, args ...any) error {
+			if config.GetConfig().ShowQuerySql {
+				go log.Println(model.FormatSql(s, args...))
+			}
+			return db.Get(a, s, args...)
+		})
+
+	return query
 }

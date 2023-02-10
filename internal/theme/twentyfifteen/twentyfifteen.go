@@ -1,6 +1,8 @@
 package twentyfifteen
 
 import (
+	"github.com/fthvgb1/wp-go/helper/maps"
+	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
 	"github.com/fthvgb1/wp-go/internal/theme/common"
@@ -20,30 +22,27 @@ func Hook(h2 common.Handle) {
 		templ:  "twentyfifteen/posts/index.gohtml",
 	}
 	//h.GinH["HeaderImage"] = h.getHeaderImage(h.C)
-	if h.Stats == plugins.Empty404 {
+	if h.Stats == constraints.Empty404 {
 		h.C.HTML(h.Code, h.templ, h.GinH)
 		return
 	}
-	if h.Scene == plugins.Detail {
+	if h.Scene == constraints.Detail {
 		h.Detail()
 		return
 	}
 	h.Index()
 }
 
-var plugin = common.Plugins()
+var plugin = common.ListPostPlugins()
 
 func (h handle) Index() {
-	if h.Stats != plugins.Empty404 {
+	if h.Stats != constraints.Empty404 {
 
 		h.ExecListPagePlugin(plugin)
 
-		p, ok := h.GinH["pagination"]
+		page, ok := maps.GetStrMapAnyVal[pagination.ParsePagination](h.GinH, "pagination")
 		if ok {
-			pp, ok := p.(pagination.ParsePagination)
-			if ok {
-				h.GinH["pagination"] = pagination.Paginate(plugins.TwentyFifteenPagination(), pp)
-			}
+			h.GinH["pagination"] = pagination.Paginate(plugins.TwentyFifteenPagination(), page)
 		}
 	}
 
