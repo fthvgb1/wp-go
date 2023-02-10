@@ -4,6 +4,7 @@ import (
 	"github.com/fthvgb1/wp-go/internal/actions"
 	"github.com/fthvgb1/wp-go/internal/middleware"
 	"github.com/fthvgb1/wp-go/internal/pkg/config"
+	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/static"
 	"github.com/fthvgb1/wp-go/internal/theme"
 	"github.com/gin-contrib/gzip"
@@ -61,16 +62,16 @@ func SetupRouter() (*gin.Engine, func()) {
 	store := cookie.NewStore([]byte("secret"))
 	r.Use(sessions.Sessions("go-wp", store))
 	sl, slRload := middleware.SearchLimit(c.SingleIpSearchNum)
-	r.GET("/", sl, actions.Index)
-	r.GET("/page/:page", actions.Index)
-	r.GET("/p/category/:category", actions.Index)
-	r.GET("/p/category/:category/page/:page", actions.Index)
-	r.GET("/p/tag/:tag", actions.Index)
-	r.GET("/p/tag/:tag/page/:page", actions.Index)
-	r.GET("/p/date/:year/:month", actions.Index)
-	r.GET("/p/date/:year/:month/page/:page", actions.Index)
-	r.GET("/p/author/:author", actions.Index)
-	r.GET("/p/author/:author/page/:page", actions.Index)
+	r.GET("/", sl, actions.Index(constraints.Home))
+	r.GET("/page/:page", actions.Index(constraints.Home))
+	r.GET("/p/category/:category", actions.Index(constraints.Category))
+	r.GET("/p/category/:category/page/:page", actions.Index(constraints.Category))
+	r.GET("/p/tag/:tag", actions.Index(constraints.Tag))
+	r.GET("/p/tag/:tag/page/:page", actions.Index(constraints.Tag))
+	r.GET("/p/date/:year/:month", actions.Index(constraints.Archive))
+	r.GET("/p/date/:year/:month/page/:page", actions.Index(constraints.Archive))
+	r.GET("/p/author/:author", actions.Index(constraints.Author))
+	r.GET("/p/author/:author/page/:page", actions.Index(constraints.Author))
 	r.POST("/login", actions.Login)
 	r.GET("/p/:id", actions.Detail)
 	r.GET("/p/:id/feed", actions.PostFeed)

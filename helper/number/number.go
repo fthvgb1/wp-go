@@ -5,6 +5,7 @@ package number
 import (
 	"fmt"
 	"golang.org/x/exp/constraints"
+	"math"
 	"math/rand"
 )
 
@@ -85,4 +86,8 @@ func Mul[T constraints.Integer | constraints.Float](i, j T) T {
 
 func Divide[T constraints.Integer | constraints.Float](i, j T) T {
 	return i / j
+}
+
+func CalTotalPage[T constraints.Integer](totalRows, size T) T {
+	return T(math.Ceil(float64(totalRows) / float64(size)))
 }

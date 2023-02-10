@@ -10,7 +10,7 @@ const (
 	Detail
 
 	Ok
-	Empty404
+	Error404
 	ParamError
 	InternalErr
 )

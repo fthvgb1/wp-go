@@ -12,6 +12,7 @@ import (
 	"github.com/fthvgb1/wp-go/internal/plugins"
 	"github.com/fthvgb1/wp-go/internal/theme/common"
 	"github.com/fthvgb1/wp-go/plugin/pagination"
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"strings"
 )
@@ -38,6 +39,8 @@ func Hook(cHandle common.Handle) {
 		Handle: cHandle,
 		templ:  "twentyseventeen/posts/index.gohtml",
 	}
+	h.WidgetAreaData()
+	h.Session = sessions.Default(h.C)
 	h.GinH["HeaderImage"] = h.getHeaderImage(h.C)
 	if h.Scene == constraints.Detail {
 		h.Detail()
@@ -52,23 +55,25 @@ var pluginFns = func() map[string]common.Plugin[models.Posts] {
 	})
 }()
 
-func (h handle) Index() {
-	if h.Stats != constraints.Empty404 {
-		h.ExecListPagePlugin(pluginFns)
-		page, ok := maps.GetStrMapAnyVal[pagination.ParsePagination](h.GinH, "pagination")
-		if ok {
-			h.GinH["pagination"] = pagination.Paginate(paginate, page)
-		}
-	}
-
+func (h *handle) Index() {
+	err := h.Indexs()
 	h.GinH["bodyClass"] = h.bodyClass()
+	if err != nil {
+		h.C.HTML(h.Code, h.templ, h.GinH)
+		return
+	}
+	h.ExecListPagePlugin(pluginFns)
+	page, ok := maps.GetStrMapAnyVal[pagination.ParsePagination](h.GinH, "pagination")
+	if ok {
+		h.GinH["pagination"] = pagination.Paginate(paginate, page)
+	}
 	h.C.HTML(h.Code, h.templ, h.GinH)
 }
 
-func (h handle) Detail() {
+func (h *handle) Detail() {
 	post := h.GinH["post"].(models.Posts)
 	h.GinH["bodyClass"] = h.bodyClass()
-	if h.Stats == constraints.Empty404 {
+	if h.Stats == constraints.Error404 {
 		h.C.HTML(h.Code, h.templ, h.GinH)
 		return
 	}
@@ -110,7 +115,7 @@ func (c comment) FormatLi(ctx *gin.Context, m models.Comments, depth int, isTls 
 	return plugins.FormatLi(templ, ctx, m, depth, isTls, eo, parent)
 }
 
-func postThumbnail(next common.Fn[models.Posts], h common.Handle, t models.Posts) models.Posts {
+func postThumbnail(next common.Fn[models.Posts], h *common.Handle, t models.Posts) models.Posts {
 	if t.Thumbnail.Path != "" {
 		t.Thumbnail.Sizes = "(max-width: 767px) 89vw, (max-width: 1000px) 54vw, (max-width: 1071px) 543px, 580px"
 		if h.Scene == constraints.Detail {
@@ -120,7 +125,7 @@ func postThumbnail(next common.Fn[models.Posts], h common.Handle, t models.Posts
 	return next(t)
 }
 
-func (h handle) getHeaderImage(c *gin.Context) (r models.PostThumbnail) {
+func (h *handle) getHeaderImage(c *gin.Context) (r models.PostThumbnail) {
 	r.Path = "/wp-content/themes/twentyseventeen/assets/images/header.jpg"
 	r.Width = 2000
 	r.Height = 1200
@@ -135,9 +140,9 @@ func (h handle) getHeaderImage(c *gin.Context) (r models.PostThumbnail) {
 	return
 }
 
-func (h handle) bodyClass() string {
+func (h *handle) bodyClass() string {
 	s := ""
-	if h.Stats == constraints.Empty404 {
+	if constraints.Ok != h.Stats {
 		return "error404"
 	}
 	switch h.Scene {

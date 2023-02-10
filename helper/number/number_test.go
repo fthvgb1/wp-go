@@ -219,3 +219,34 @@ func TestAbs(t *testing.T) {
 		})
 	}
 }
+
+func TestCalTotalPage(t *testing.T) {
+	type args[T constraints.Integer] struct {
+		totalRows T
+		size      T
+	}
+	type testCase[T constraints.Integer] struct {
+		name string
+		args args[T]
+		want T
+	}
+	tests := []testCase[int]{
+		{
+			name: "t1",
+			args: args[int]{5, 2},
+			want: 3,
+		},
+		{
+			name: "t1",
+			args: args[int]{4, 2},
+			want: 2,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := CalTotalPage(tt.args.totalRows, tt.args.size); got != tt.want {
+				t.Errorf("CalTotalPage() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

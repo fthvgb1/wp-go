@@ -5,6 +5,7 @@ import (
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
+	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
@@ -21,7 +22,7 @@ func Detail(c *gin.Context) {
 	var post models.Posts
 	recent := slice.Map(cache.RecentPosts(c, 5), common.ProjectTitle)
 	archive := cache.Archives(c)
-	categoryItems := cache.CategoriesTags(c, plugins.Category)
+	categoryItems := cache.CategoriesTags(c, constraints.Category)
 	recentComments := cache.RecentComments(c, 5)
 	var ginH = gin.H{
 		"title":          wpconfig.Options.Value("blogname"),
@@ -32,7 +33,7 @@ func Detail(c *gin.Context) {
 		"post":           post,
 	}
 	isApproveComment := false
-	stats := plugins.Ok
+	stats := constraints.Ok
 	pw := sessions.Default(c).Get("post_password")
 
 	defer func() {
@@ -40,7 +41,7 @@ func Detail(c *gin.Context) {
 		if err != nil {
 			code = http.StatusNotFound
 			c.Error(err)
-			stats = plugins.Error
+			stats = constraints.ParamError
 			return
 		}
 		if isApproveComment == true {
@@ -52,7 +53,7 @@ func Detail(c *gin.Context) {
 			C:        c,
 			GinH:     ginH,
 			Password: "",
-			Scene:    plugins.Detail,
+			Scene:    constraints.Detail,
 			Code:     code,
 			Stats:    stats,
 		})
@@ -62,12 +63,12 @@ func Detail(c *gin.Context) {
 	maxId, err := cache.GetMaxPostId(c)
 	logs.ErrPrintln(err, "get max post id")
 	if id > maxId || id <= 0 || err != nil {
-		stats = plugins.Empty404
+		stats = constraints.Error404
 		return
 	}
 	post, err = cache.GetPostById(c, id)
 	if post.Id == 0 || err != nil || post.PostStatus != "publish" {
-		stats = plugins.Empty404
+		stats = constraints.Error404
 		return
 	}
 	showComment := false
@@ -102,5 +103,5 @@ func Detail(c *gin.Context) {
 	ginH["maxDep"] = d
 	ginH["next"] = next
 	ginH["user"] = user
-	ginH["scene"] = plugins.Detail
+	ginH["scene"] = constraints.Detail
 }

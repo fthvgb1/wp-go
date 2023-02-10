@@ -24,15 +24,15 @@ type Handle struct {
 	Stats    int
 }
 
-func (h Handle) Detail() {
+func (h *Handle) Detail() {
 
 }
 
-func (h Handle) Index() {
+func (h *Handle) Index() {
 
 }
 
-func (h Handle) ExecListPagePlugin(m map[string]Plugin[models.Posts], calls ...func(*models.Posts)) {
+func (h *Handle) ExecListPagePlugin(m map[string]Plugin[models.Posts], calls ...func(*models.Posts)) {
 
 	pluginConf := config.GetConfig().ListPagePlugins
 
@@ -45,14 +45,14 @@ func (h Handle) ExecListPagePlugin(m map[string]Plugin[models.Posts], calls ...f
 	}
 }
 
-/*func (h Handle) Pagination(paginate pagination)  {
+/*func (h *Handle) Pagination(paginate pagination)  {
 
 }*/
 
 type Fn[T any] func(T) T
-type Plugin[T any] func(next Fn[T], h Handle, t T) T
+type Plugin[T any] func(next Fn[T], h *Handle, t T) T
 
-func PluginFn[T any](a []Plugin[T], h Handle, fn Fn[T]) Fn[T] {
+func PluginFn[T any](a []Plugin[T], h *Handle, fn Fn[T]) Fn[T] {
 	return slice.ReverseReduce(a, func(next Plugin[T], forward Fn[T]) Fn[T] {
 		return func(t T) T {
 			return next(forward, h, t)
@@ -94,7 +94,7 @@ func GetListPostPlugins(name []string, m map[string]Plugin[models.Posts]) []Plug
 }
 
 // PasswordProject 标题和内容密码保护
-func PasswordProject(next Fn[models.Posts], h Handle, post models.Posts) (r models.Posts) {
+func PasswordProject(next Fn[models.Posts], h *Handle, post models.Posts) (r models.Posts) {
 	r = post
 	if post.PostPassword != "" {
 		plugins.PasswordProjectTitle(&r)
@@ -115,7 +115,7 @@ func ProjectTitle(t models.Posts) models.Posts {
 }
 
 // Digest 生成摘要
-func Digest(next Fn[models.Posts], h Handle, post models.Posts) models.Posts {
+func Digest(next Fn[models.Posts], h *Handle, post models.Posts) models.Posts {
 	if post.PostExcerpt != "" {
 		plugins.PostExcerpt(&post)
 	} else {

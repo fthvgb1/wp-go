@@ -7,6 +7,7 @@ import (
 	"github.com/fthvgb1/wp-go/internal/plugins"
 	"github.com/fthvgb1/wp-go/internal/theme/common"
 	"github.com/fthvgb1/wp-go/plugin/pagination"
+	"github.com/gin-contrib/sessions"
 )
 
 const ThemeName = "twentyfifteen"
@@ -16,13 +17,15 @@ type handle struct {
 	templ string
 }
 
-func Hook(h2 common.Handle) {
+func Hook(cHandle common.Handle) {
 	h := handle{
-		Handle: h2,
+		Handle: cHandle,
 		templ:  "twentyfifteen/posts/index.gohtml",
 	}
-	//h.GinH["HeaderImage"] = h.getHeaderImage(h.C)
-	if h.Stats == constraints.Empty404 {
+	h.WidgetAreaData()
+	h.Session = sessions.Default(h.C)
+
+	if h.Stats == constraints.Error404 {
 		h.C.HTML(h.Code, h.templ, h.GinH)
 		return
 	}
@@ -36,17 +39,17 @@ func Hook(h2 common.Handle) {
 var plugin = common.ListPostPlugins()
 
 func (h handle) Index() {
-	if h.Stats != constraints.Empty404 {
-
-		h.ExecListPagePlugin(plugin)
-
-		page, ok := maps.GetStrMapAnyVal[pagination.ParsePagination](h.GinH, "pagination")
-		if ok {
-			h.GinH["pagination"] = pagination.Paginate(plugins.TwentyFifteenPagination(), page)
-		}
+	err := h.Indexs()
+	if err != nil {
+		h.C.HTML(h.Code, h.templ, h.GinH)
+		return
 	}
 
-	//h.GinH["bodyClass"] = h.bodyClass()
+	h.ExecListPagePlugin(plugin)
+	page, ok := maps.GetStrMapAnyVal[pagination.ParsePagination](h.GinH, "pagination")
+	if ok {
+		h.GinH["pagination"] = pagination.Paginate(plugins.TwentyFifteenPagination(), page)
+	}
 	h.C.HTML(h.Code, h.templ, h.GinH)
 }
 
