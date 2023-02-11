@@ -4,6 +4,7 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/plugins"
 	"github.com/fthvgb1/wp-go/internal/theme/common"
+	"net/http"
 )
 
 const ThemeName = "twentyfifteen"
@@ -39,6 +40,8 @@ func (i *indexHandle) Index() {
 
 	err := i.BuildIndexData(common.NewIndexParams(i.C))
 	if err != nil {
+		i.Stats = constraints.Error404
+		i.Code = http.StatusNotFound
 		i.C.HTML(i.Code, i.Templ, i.GinH)
 		return
 	}
@@ -54,6 +57,7 @@ func (d *detailHandle) Detail() {
 	err := d.BuildDetailData()
 	if err != nil {
 		d.Stats = constraints.Error404
+		d.Code = http.StatusNotFound
 		d.C.HTML(d.Code, d.Templ, d.GinH)
 		return
 	}

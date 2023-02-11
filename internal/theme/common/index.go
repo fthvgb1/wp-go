@@ -11,7 +11,6 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/model"
 	"github.com/fthvgb1/wp-go/plugin/pagination"
-	"net/http"
 )
 
 func (i *IndexHandle) ParseIndex(parm *IndexParams) (err error) {
@@ -76,14 +75,10 @@ func (i *IndexHandle) Pagination() {
 func (i *IndexHandle) BuildIndexData(parm *IndexParams) (err error) {
 	err = i.ParseIndex(parm)
 	if err != nil {
-		i.Stats = constraints.ParamError
-		i.Code = http.StatusNotFound
 		return
 	}
 	posts, totalRows, err := i.GetIndexData()
 	if err != nil && err != sql.ErrNoRows {
-		i.Scene = constraints.InternalErr
-		i.Code = http.StatusInternalServerError
 		return
 	}
 	i.GinH["posts"] = posts

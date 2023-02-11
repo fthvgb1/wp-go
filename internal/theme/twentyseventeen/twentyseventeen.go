@@ -73,27 +73,31 @@ var pluginFns = func() map[string]common.Plugin[models.Posts] {
 
 func (i *indexHandle) Index() {
 	i.Templ = "twentyseventeen/posts/index.gohtml"
-	p := common.NewIndexParams(i.C)
-	err := i.BuildIndexData(p)
-	i.GinH["bodyClass"] = i.h.bodyClass()
+	err := i.BuildIndexData(common.NewIndexParams(i.C))
 	if err != nil {
+		i.Stats = constraints.Error404
+		i.Code = http.StatusNotFound
+		i.GinH["bodyClass"] = i.h.bodyClass()
 		i.C.HTML(i.Code, i.Templ, i.GinH)
 		return
 	}
 	i.PageEle = paginate
 	i.ExecListPagePlugin(pluginFns)
 	i.Pagination()
+	i.GinH["bodyClass"] = i.h.bodyClass()
 	i.C.HTML(i.Code, i.Templ, i.GinH)
 }
 
 func (d *detailHandle) Detail() {
 	err := d.BuildDetailData()
-	d.GinH["bodyClass"] = d.h.bodyClass()
 	if err != nil {
 		d.Code = http.StatusNotFound
+		d.Stats = constraints.Error404
+		d.GinH["bodyClass"] = d.h.bodyClass()
 		d.C.HTML(d.Code, d.Templ, d.GinH)
 		return
 	}
+	d.GinH["bodyClass"] = d.h.bodyClass()
 	img := plugins.Thumbnail(d.Post.Thumbnail.OriginAttachmentData, "thumbnail", "", "thumbnail", "post-thumbnail")
 	img.Width = img.OriginAttachmentData.Width
 	img.Height = img.OriginAttachmentData.Height

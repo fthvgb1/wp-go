@@ -4,7 +4,6 @@ import (
 	"fmt"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
-	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
@@ -26,7 +25,6 @@ func (d *DetailHandle) BuildDetailData() (err error) {
 	d.GinH["title"] = wpconfig.Options.Value("blogname")
 	err = d.CheckAndGetPost()
 	if err != nil {
-		d.Scene = constraints.Error404
 		return
 	}
 	d.WidgetAreaData()
@@ -41,12 +39,10 @@ func (d *DetailHandle) CheckAndGetPost() (err error) {
 	maxId, err := cache.GetMaxPostId(d.C)
 	logs.ErrPrintln(err, "get max post id")
 	if id > maxId || id <= 0 || err != nil {
-		d.Stats = constraints.Error404
 		return
 	}
 	post, err := cache.GetPostById(d.C, id)
 	if post.Id == 0 || err != nil || post.PostStatus != "publish" {
-		d.Stats = constraints.Error404
 		return
 	}
 
