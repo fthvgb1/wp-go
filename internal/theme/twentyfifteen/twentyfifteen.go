@@ -1,67 +1,64 @@
 package twentyfifteen
 
 import (
-	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
-	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
 	"github.com/fthvgb1/wp-go/internal/theme/common"
-	"github.com/fthvgb1/wp-go/plugin/pagination"
-	"github.com/gin-contrib/sessions"
 )
 
 const ThemeName = "twentyfifteen"
 
-type handle struct {
-	common.Handle
-	templ string
+type indexHandle struct {
+	*common.IndexHandle
 }
 
-func Hook(cHandle common.Handle) {
-	h := handle{
-		Handle: cHandle,
-		templ:  "twentyfifteen/posts/index.gohtml",
-	}
+func newIndexHandle(iHandle *common.IndexHandle) *indexHandle {
+	return &indexHandle{iHandle}
+}
+
+type detailHandle struct {
+	*common.DetailHandle
+}
+
+func newDetailHandle(dHandle *common.DetailHandle) *detailHandle {
+	return &detailHandle{DetailHandle: dHandle}
+}
+
+func Hook(h *common.Handle) {
 	h.WidgetAreaData()
-	h.Session = sessions.Default(h.C)
-
-	if h.Stats == constraints.Error404 {
-		h.C.HTML(h.Code, h.templ, h.GinH)
-		return
-	}
+	h.GetPassword()
 	if h.Scene == constraints.Detail {
-		h.Detail()
+		newDetailHandle(common.NewDetailHandle(h)).Detail()
 		return
 	}
-	h.Index()
+	newIndexHandle(common.NewIndexHandle(h)).Index()
 }
 
-var plugin = common.ListPostPlugins()
+func (i *indexHandle) Index() {
+	i.Templ = "twentyfifteen/posts/index.gohtml"
 
-func (h handle) Index() {
-	err := h.Indexs()
+	err := i.BuildIndexData(common.NewIndexParams(i.C))
 	if err != nil {
-		h.C.HTML(h.Code, h.templ, h.GinH)
+		i.C.HTML(i.Code, i.Templ, i.GinH)
 		return
 	}
-
-	h.ExecListPagePlugin(plugin)
-	page, ok := maps.GetStrMapAnyVal[pagination.ParsePagination](h.GinH, "pagination")
-	if ok {
-		h.GinH["pagination"] = pagination.Paginate(plugins.TwentyFifteenPagination(), page)
-	}
-	h.C.HTML(h.Code, h.templ, h.GinH)
+	i.ExecPostsPlugin()
+	i.PageEle = plugins.TwentyFifteenPagination()
+	i.Pagination()
+	i.C.HTML(i.Code, i.Templ, i.GinH)
 }
 
-func (h handle) Detail() {
-	//h.GinH["bodyClass"] = h.bodyClass()
-	//host, _ := wpconfig.Options.Load("siteurl")
-	if h.GinH["comments"] != nil {
-		comments := h.GinH["comments"].([]models.Comments)
-		dep := h.GinH["maxDep"].(int)
-		h.GinH["comments"] = plugins.FormatComments(h.C, plugins.CommentRender(), comments, dep)
-	}
+func (d *detailHandle) Detail() {
+	d.Templ = "twentyfifteen/posts/detail.gohtml"
 
-	h.templ = "twentyfifteen/posts/detail.gohtml"
-	h.C.HTML(h.Code, h.templ, h.GinH)
+	err := d.BuildDetailData()
+	if err != nil {
+		d.Stats = constraints.Error404
+		d.C.HTML(d.Code, d.Templ, d.GinH)
+		return
+	}
+	d.PasswordProject()
+	d.CommentRender = plugins.CommentRender()
+	d.RenderComment()
+	d.C.HTML(d.Code, d.Templ, d.GinH)
 }

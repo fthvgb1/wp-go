@@ -11,9 +11,8 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
 	"github.com/fthvgb1/wp-go/internal/theme/common"
-	"github.com/fthvgb1/wp-go/plugin/pagination"
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"net/http"
 	"strings"
 )
 
@@ -30,23 +29,40 @@ var paginate = func() plugins.PageEle {
 }()
 
 type handle struct {
-	common.Handle
-	templ string
+	*common.Handle
 }
 
-func Hook(cHandle common.Handle) {
-	h := handle{
-		Handle: cHandle,
-		templ:  "twentyseventeen/posts/index.gohtml",
-	}
+func newHandle(h *common.Handle) *handle {
+	return &handle{Handle: h}
+}
+
+type indexHandle struct {
+	*common.IndexHandle
+	h *handle
+}
+
+func newIndexHandle(iHandle *common.IndexHandle) *indexHandle {
+	return &indexHandle{IndexHandle: iHandle, h: newHandle(iHandle.Handle)}
+}
+
+type detailHandle struct {
+	*common.DetailHandle
+	h *handle
+}
+
+func newDetailHandle(dHandle *common.DetailHandle) *detailHandle {
+	return &detailHandle{DetailHandle: dHandle, h: newHandle(dHandle.Handle)}
+}
+
+func Hook(h *common.Handle) {
 	h.WidgetAreaData()
-	h.Session = sessions.Default(h.C)
-	h.GinH["HeaderImage"] = h.getHeaderImage(h.C)
+	h.GetPassword()
+	h.GinH["HeaderImage"] = getHeaderImage(h.C)
 	if h.Scene == constraints.Detail {
-		h.Detail()
+		newDetailHandle(common.NewDetailHandle(h)).Detail()
 		return
 	}
-	h.Index()
+	newIndexHandle(common.NewIndexHandle(h)).Index()
 }
 
 var pluginFns = func() map[string]common.Plugin[models.Posts] {
@@ -55,44 +71,41 @@ var pluginFns = func() map[string]common.Plugin[models.Posts] {
 	})
 }()
 
-func (h *handle) Index() {
-	err := h.Indexs()
-	h.GinH["bodyClass"] = h.bodyClass()
+func (i *indexHandle) Index() {
+	i.Templ = "twentyseventeen/posts/index.gohtml"
+	p := common.NewIndexParams(i.C)
+	err := i.BuildIndexData(p)
+	i.GinH["bodyClass"] = i.h.bodyClass()
 	if err != nil {
-		h.C.HTML(h.Code, h.templ, h.GinH)
+		i.C.HTML(i.Code, i.Templ, i.GinH)
 		return
 	}
-	h.ExecListPagePlugin(pluginFns)
-	page, ok := maps.GetStrMapAnyVal[pagination.ParsePagination](h.GinH, "pagination")
-	if ok {
-		h.GinH["pagination"] = pagination.Paginate(paginate, page)
-	}
-	h.C.HTML(h.Code, h.templ, h.GinH)
+	i.PageEle = paginate
+	i.ExecListPagePlugin(pluginFns)
+	i.Pagination()
+	i.C.HTML(i.Code, i.Templ, i.GinH)
 }
 
-func (h *handle) Detail() {
-	post := h.GinH["post"].(models.Posts)
-	h.GinH["bodyClass"] = h.bodyClass()
-	if h.Stats == constraints.Error404 {
-		h.C.HTML(h.Code, h.templ, h.GinH)
+func (d *detailHandle) Detail() {
+	err := d.BuildDetailData()
+	d.GinH["bodyClass"] = d.h.bodyClass()
+	if err != nil {
+		d.Code = http.StatusNotFound
+		d.C.HTML(d.Code, d.Templ, d.GinH)
 		return
 	}
-	//host, _ := wpconfig.Options.Load("siteurl")
-	host := ""
-	img := plugins.Thumbnail(post.Thumbnail.OriginAttachmentData, "thumbnail", host, "thumbnail", "post-thumbnail")
+	img := plugins.Thumbnail(d.Post.Thumbnail.OriginAttachmentData, "thumbnail", "", "thumbnail", "post-thumbnail")
 	img.Width = img.OriginAttachmentData.Width
 	img.Height = img.OriginAttachmentData.Height
 	img.Sizes = "100vw"
 	img.Srcset = fmt.Sprintf("%s %dw, %s", img.Path, img.Width, img.Srcset)
-	post.Thumbnail = img
-	h.GinH["post"] = post
-	if h.GinH["comments"] != nil {
-		comments := h.GinH["comments"].([]models.Comments)
-		dep := h.GinH["maxDep"].(int)
-		h.GinH["comments"] = plugins.FormatComments(h.C, commentFormat, comments, dep)
-	}
-	h.templ = "twentyseventeen/posts/detail.gohtml"
-	h.C.HTML(h.Code, h.templ, h.GinH)
+	d.Post.Thumbnail = img
+	d.GinH["post"] = d.Post
+	d.CommentRender = commentFormat
+	d.RenderComment()
+	d.PasswordProject()
+	d.Templ = "twentyseventeen/posts/detail.gohtml"
+	d.C.HTML(d.Code, d.Templ, d.GinH)
 }
 
 var commentFormat = comment{}
@@ -125,7 +138,7 @@ func postThumbnail(next common.Fn[models.Posts], h *common.Handle, t models.Post
 	return next(t)
 }
 
-func (h *handle) getHeaderImage(c *gin.Context) (r models.PostThumbnail) {
+func getHeaderImage(c *gin.Context) (r models.PostThumbnail) {
 	r.Path = "/wp-content/themes/twentyseventeen/assets/images/header.jpg"
 	r.Width = 2000
 	r.Height = 1200
@@ -140,23 +153,23 @@ func (h *handle) getHeaderImage(c *gin.Context) (r models.PostThumbnail) {
 	return
 }
 
-func (h *handle) bodyClass() string {
+func (i *handle) bodyClass() string {
 	s := ""
-	if constraints.Ok != h.Stats {
+	if constraints.Ok != i.Stats {
 		return "error404"
 	}
-	switch h.Scene {
+	switch i.Scene {
 	case constraints.Search:
 		s = "search-no-results"
-		if len(h.GinH["posts"].([]models.Posts)) > 0 {
+		if len(i.GinH["posts"].([]models.Posts)) > 0 {
 			s = "search-results"
 		}
 	case constraints.Category, constraints.Tag:
-		cat := h.C.Param("category")
+		cat := i.C.Param("category")
 		if cat == "" {
-			cat = h.C.Param("tag")
+			cat = i.C.Param("tag")
 		}
-		_, cate := slice.SearchFirst(cache.CategoriesTags(h.C, h.Scene), func(my models.TermsMy) bool {
+		_, cate := slice.SearchFirst(cache.CategoriesTags(i.C, i.Scene), func(my models.TermsMy) bool {
 			return my.Name == cat
 		})
 		if cate.Slug[0] != '%' {
@@ -164,9 +177,9 @@ func (h *handle) bodyClass() string {
 		}
 		s = fmt.Sprintf("category-%d %v", cate.Terms.TermId, s)
 	case constraints.Detail:
-		s = fmt.Sprintf("postid-%d", h.GinH["post"].(models.Posts).Id)
+		s = fmt.Sprintf("postid-%d", i.GinH["post"].(models.Posts).Id)
 	}
-	return str.Join(class[h.Scene], s)
+	return str.Join(class[i.Scene], s)
 }
 
 var class = map[int]string{
