@@ -61,7 +61,7 @@ type IndexHandle struct {
 	Posts        []models.Posts
 	PageEle      pagination.Elements
 	TotalRows    int
-	PostsPlugins map[string]Plugin[models.Posts]
+	PostsPlugins map[string]Plugin[models.Posts, *Handle]
 }
 
 func NewIndexHandle(handle *Handle) *IndexHandle {

@@ -65,8 +65,8 @@ func Hook(h *common.Handle) {
 	newIndexHandle(common.NewIndexHandle(h)).Index()
 }
 
-var pluginFns = func() map[string]common.Plugin[models.Posts] {
-	return maps.Merge(common.ListPostPlugins(), map[string]common.Plugin[models.Posts]{
+var pluginFns = func() map[string]common.Plugin[models.Posts, *common.Handle] {
+	return maps.Merge(common.ListPostPlugins(), map[string]common.Plugin[models.Posts, *common.Handle]{
 		"twentyseventeen_postThumbnail": postThumbnail,
 	})
 }()

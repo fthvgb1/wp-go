@@ -45,17 +45,17 @@ func (h *Handle) GetPassword() {
 	}
 }
 
-func (i *IndexHandle) ExecListPagePlugin(m map[string]Plugin[models.Posts], calls ...func(*models.Posts)) {
+func (i *IndexHandle) ExecListPagePlugin(m map[string]Plugin[models.Posts, *Handle], calls ...func(*models.Posts)) {
 
 	pluginConf := config.GetConfig().ListPagePlugins
 
 	plugin := GetListPostPlugins(pluginConf, m)
 
-	i.GinH["posts"] = slice.Map(i.Posts, PluginFn[models.Posts](plugin, i.Handle, Defaults(calls...)))
+	i.GinH["posts"] = slice.Map(i.Posts, PluginFn[models.Posts, *Handle](plugin, i.Handle, Defaults(calls...)))
 
 }
 
-func ListPostPlugins() map[string]Plugin[models.Posts] {
+func ListPostPlugins() map[string]Plugin[models.Posts, *Handle] {
 	return maps.Copy(pluginFns)
 }
 
@@ -79,8 +79,8 @@ func ProjectTitle(t models.Posts) models.Posts {
 	return t
 }
 
-func GetListPostPlugins(name []string, m map[string]Plugin[models.Posts]) []Plugin[models.Posts] {
-	return slice.FilterAndMap(name, func(t string) (Plugin[models.Posts], bool) {
+func GetListPostPlugins(name []string, m map[string]Plugin[models.Posts, *Handle]) []Plugin[models.Posts, *Handle] {
+	return slice.FilterAndMap(name, func(t string) (Plugin[models.Posts, *Handle], bool) {
 		v, ok := m[t]
 		if ok {
 			return v, true

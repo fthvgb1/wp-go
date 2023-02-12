@@ -8,17 +8,17 @@ import (
 )
 
 type Fn[T any] func(T) T
-type Plugin[T any] func(initialFn Fn[T], h *Handle, t T) T
+type Plugin[T, H any] func(initialFn Fn[T], h H, t T) T
 
-func PluginFn[T any](a []Plugin[T], h *Handle, fn Fn[T]) Fn[T] {
-	return slice.ReverseReduce(a, func(next Plugin[T], fn Fn[T]) Fn[T] {
+func PluginFn[T, H any](a []Plugin[T, H], h H, fn Fn[T]) Fn[T] {
+	return slice.ReverseReduce(a, func(next Plugin[T, H], fn Fn[T]) Fn[T] {
 		return func(t T) T {
 			return next(fn, h, t)
 		}
 	}, fn)
 }
 
-var pluginFns = map[string]Plugin[models.Posts]{
+var pluginFns = map[string]Plugin[models.Posts, *Handle]{
 	"passwordProject": PasswordProject,
 	"digest":          Digest,
 }
