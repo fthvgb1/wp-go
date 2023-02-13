@@ -7,12 +7,20 @@ import (
 	"strings"
 )
 
-type HeaderImageMeta struct {
-	CustomCssPostId  int       `json:"custom_css_post_id,omitempty"`
-	NavMenuLocations []string  `json:"nav_menu_locations,omitempty"`
-	HeaderImage      string    `json:"header_image,omitempty"`
-	HeaderImagData   ImageData `json:"header_image_data,omitempty"`
-	SidebarsWidgets  Sidebars  `json:"sidebars_widgets"`
+type ThemeMods struct {
+	CustomCssPostId       int       `json:"custom_css_post_id,omitempty"`
+	NavMenuLocations      []string  `json:"nav_menu_locations,omitempty"`
+	HeaderImage           string    `json:"header_image,omitempty"`
+	BackgroundImage       string    `json:"background_image"`
+	BackgroundSize        string    `json:"background_size"`
+	BackgroundRepeat      string    `json:"background_repeat"`
+	BackgroundColor       string    `json:"background_color"`
+	ColorScheme           string    `json:"color_scheme"`
+	SidebarTextcolor      string    `json:"sidebar_textcolor"`
+	HeaderBackgroundColor string    `json:"header_background_color"`
+	HeaderTextcolor       string    `json:"header_textcolor"`
+	HeaderImagData        ImageData `json:"header_image_data,omitempty"`
+	SidebarsWidgets       Sidebars  `json:"sidebars_widgets"`
 }
 
 type Sidebars struct {

@@ -22,20 +22,26 @@ func getHeaderImages(a ...any) (r []models.PostThumbnail, err error) {
 	theme := a[1].(string)
 	mods, ok := wpconfig.Options.Load(fmt.Sprintf("theme_mods_%s", theme))
 	if ok && mods != "" {
-		meta, er := plugins.UnPHPSerialize[plugins.HeaderImageMeta](mods)
+		meta, er := plugins.UnPHPSerialize[plugins.ThemeMods](mods)
 		if er != nil || meta.HeaderImage == "" {
 			err = er
 			return
 		}
 		if "random-uploaded-image" == meta.HeaderImage {
-			headers, er := model.Find[models.Posts](ctx, model.SqlBuilder{
-				{"post_type", "attachment"},
-				{"post_status", "inherit"},
-				{"meta_value", theme},
-				{"meta_key", "_wp_attachment_is_custom_header"},
-			}, "a.ID", "a.ID", nil, model.SqlBuilder{
-				{" a", "left join", "wp_postmeta b", "a.ID=b.post_id"},
-			}, nil, 0)
+			headers, er := model.Finds[models.Posts](ctx, model.Conditions(
+				model.Where(model.SqlBuilder{
+					{"post_type", "attachment"},
+					{"post_status", "inherit"},
+					{"meta_value", theme},
+					{"meta_key", "_wp_attachment_is_custom_header"},
+				}),
+				model.Fields("a.ID"),
+				model.Group("a.ID"),
+				model.Join(model.SqlBuilder{
+					{" a", "left join", "wp_postmeta b", "a.ID=b.post_id"},
+				}),
+			))
+
 			if er != nil {
 				err = er
 				return

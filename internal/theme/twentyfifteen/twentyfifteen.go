@@ -1,9 +1,15 @@
 package twentyfifteen
 
 import (
+	"fmt"
+	"github.com/fthvgb1/wp-go/helper/slice"
+	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
+	"github.com/fthvgb1/wp-go/internal/pkg/logs"
+	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
 	"github.com/fthvgb1/wp-go/internal/theme/common"
+	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
@@ -37,7 +43,8 @@ func Hook(h *common.Handle) {
 
 func (i *indexHandle) Index() {
 	i.Templ = "twentyfifteen/posts/index.gohtml"
-
+	img := getHeaderImage(i.C)
+	fmt.Println(img)
 	err := i.BuildIndexData(common.NewIndexParams(i.C))
 	if err != nil {
 		i.Stats = constraints.Error404
@@ -65,4 +72,19 @@ func (d *detailHandle) Detail() {
 	d.CommentRender = plugins.CommentRender()
 	d.RenderComment()
 	d.C.HTML(d.Code, d.Templ, d.GinH)
+}
+
+func getHeaderImage(c *gin.Context) (r models.PostThumbnail) {
+	r.Path = "/wp-content/themes/twentyseventeen/assets/images/header.jpg"
+	r.Width = 2000
+	r.Height = 1200
+	hs, err := cache.GetHeaderImages(c, ThemeName)
+	if err != nil {
+		logs.ErrPrintln(err, "获取页眉背景图失败")
+	} else if len(hs) > 0 && err == nil {
+		_, r = slice.Rand(hs)
+
+	}
+	r.Sizes = "100vw"
+	return
 }
