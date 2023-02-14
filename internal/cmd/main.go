@@ -45,7 +45,7 @@ func init() {
 	}
 	cache.InitActionsCommonCache()
 	plugins.InitDigestCache()
-	theme.InitThemeAndTemplateFuncMap()
+	theme.InitTheme()
 	go cronClearCache()
 }
 
@@ -105,6 +105,7 @@ func reload() {
 	err = wpconfig.InitOptions()
 	logs.ErrPrintln(err, "获取网站设置WpOption失败")
 	err = wpconfig.InitTerms()
+	wpconfig.FlushModes()
 	logs.ErrPrintln(err, "获取WpTerms表失败")
 	if middleWareReloadFn != nil {
 		middleWareReloadFn()

@@ -1,4 +1,4 @@
-package plugins
+package phphelper
 
 import (
 	"github.com/elliotchance/phpserialize"

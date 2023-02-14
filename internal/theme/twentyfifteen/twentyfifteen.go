@@ -55,6 +55,7 @@ func (i *indexHandle) Index() {
 	i.ExecPostsPlugin()
 	i.PageEle = plugins.TwentyFifteenPagination()
 	i.Pagination()
+	i.CalBodyClass()
 	i.C.HTML(i.Code, i.Templ, i.GinH)
 }
 
@@ -71,6 +72,7 @@ func (d *detailHandle) Detail() {
 	d.PasswordProject()
 	d.CommentRender = plugins.CommentRender()
 	d.RenderComment()
+	d.CalBodyClass()
 	d.C.HTML(d.Code, d.Templ, d.GinH)
 }
 
@@ -87,4 +89,13 @@ func getHeaderImage(c *gin.Context) (r models.PostThumbnail) {
 	}
 	r.Sizes = "100vw"
 	return
+}
+
+func ThemeSupport() map[string]struct{} {
+	return map[string]struct{}{
+		"custom-background": {},
+		"wp-custom-logo":    {},
+		"responsive-embeds": {},
+		"post-formats":      {},
+	}
 }

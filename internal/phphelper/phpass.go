@@ -1,4 +1,4 @@
-package phpass
+package phphelper
 
 import (
 	"crypto/md5"

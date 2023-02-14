@@ -11,6 +11,7 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
 	"github.com/fthvgb1/wp-go/internal/theme/common"
+	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
@@ -98,7 +99,7 @@ func (d *detailHandle) Detail() {
 		return
 	}
 	d.GinH["bodyClass"] = d.h.bodyClass()
-	img := plugins.Thumbnail(d.Post.Thumbnail.OriginAttachmentData, "thumbnail", "", "thumbnail", "post-thumbnail")
+	img := wpconfig.Thumbnail(d.Post.Thumbnail.OriginAttachmentData, "thumbnail", "", "thumbnail", "post-thumbnail")
 	img.Width = img.OriginAttachmentData.Width
 	img.Height = img.OriginAttachmentData.Height
 	img.Sizes = "100vw"

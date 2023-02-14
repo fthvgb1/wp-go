@@ -1,15 +1,18 @@
-package plugins
+package wpconfig
 
 import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper/maps"
+	"github.com/fthvgb1/wp-go/internal/phphelper"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
+	"github.com/fthvgb1/wp-go/safety"
 	"strings"
 )
 
 type ThemeMods struct {
 	CustomCssPostId       int       `json:"custom_css_post_id,omitempty"`
 	NavMenuLocations      []string  `json:"nav_menu_locations,omitempty"`
+	CustomLogo            int       `json:"custom_logo"`
 	HeaderImage           string    `json:"header_image,omitempty"`
 	BackgroundImage       string    `json:"background_image"`
 	BackgroundSize        string    `json:"background_size"`
@@ -69,4 +72,51 @@ func Thumbnail(metadata models.WpAttachmentMetadata, Type, host string, except .
 		r.OriginAttachmentData = metadata
 	}
 	return
+}
+
+var themeModes = safety.Map[string, ThemeMods]{}
+
+func FlushModes() {
+	themeModes.Flush()
+}
+
+func GetThemeMods(theme string) (r ThemeMods, err error) {
+	r, ok := themeModes.Load(theme)
+	if ok {
+		return
+	}
+
+	mods, ok := Options.Load(fmt.Sprintf("theme_mods_%s", theme))
+	if !ok || mods == "" {
+		return
+	}
+	r, err = phphelper.UnPHPSerialize[ThemeMods](mods)
+	if err != nil {
+		return
+	}
+	themeModes.Store(theme, r)
+	return
+}
+
+func IsCustomBackground(theme string) bool {
+	mods, err := GetThemeMods(theme)
+	if err != nil {
+		return false
+	}
+	if mods.BackgroundColor != "" && mods.BackgroundColor != "default-color" || mods.BackgroundImage != "" && mods.BackgroundImage != "default-image" {
+		return true
+	}
+
+	return false
+}
+func IsCustomLogo(theme string) bool {
+	mods, err := GetThemeMods(theme)
+	if err != nil {
+		return false
+	}
+	if mods.CustomLogo > 0 {
+		return true
+	}
+
+	return false
 }

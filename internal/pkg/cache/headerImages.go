@@ -6,7 +6,6 @@ import (
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
-	"github.com/fthvgb1/wp-go/internal/plugins"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/fthvgb1/wp-go/model"
 	"time"
@@ -20,13 +19,8 @@ func GetHeaderImages(ctx context.Context, theme string) (r []models.PostThumbnai
 func getHeaderImages(a ...any) (r []models.PostThumbnail, err error) {
 	ctx := a[0].(context.Context)
 	theme := a[1].(string)
-	mods, ok := wpconfig.Options.Load(fmt.Sprintf("theme_mods_%s", theme))
-	if ok && mods != "" {
-		meta, er := plugins.UnPHPSerialize[plugins.ThemeMods](mods)
-		if er != nil || meta.HeaderImage == "" {
-			err = er
-			return
-		}
+	meta, err := wpconfig.GetThemeMods(theme)
+	if err != nil && meta.HeaderImage != "" {
 		if "random-uploaded-image" == meta.HeaderImage {
 			headers, er := model.Finds[models.Posts](ctx, model.Conditions(
 				model.Where(model.SqlBuilder{
@@ -72,7 +66,7 @@ func getHeaderImages(a ...any) (r []models.PostThumbnail, err error) {
 }
 
 func thumb(m models.Posts, theme string) models.PostThumbnail {
-	m.Thumbnail = plugins.Thumbnail(m.AttachmentMetadata, "thumbnail", "", "thumbnail", "post-thumbnail", fmt.Sprintf("%s-thumbnail-avatar", theme))
+	m.Thumbnail = wpconfig.Thumbnail(m.AttachmentMetadata, "thumbnail", "", "thumbnail", "post-thumbnail", fmt.Sprintf("%s-thumbnail-avatar", theme))
 	m.Thumbnail.Width = m.AttachmentMetadata.Width
 	m.Thumbnail.Height = m.AttachmentMetadata.Height
 	if m.Thumbnail.Path != "" {

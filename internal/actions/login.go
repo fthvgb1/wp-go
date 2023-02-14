@@ -3,7 +3,7 @@ package actions
 import (
 	"fmt"
 	str "github.com/fthvgb1/wp-go/helper/strings"
-	"github.com/fthvgb1/wp-go/internal/phpass"
+	"github.com/fthvgb1/wp-go/internal/phphelper"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -28,7 +28,7 @@ func Login(c *gin.Context) {
 		c.Error(err)
 		return
 	}
-	pass, err := phpass.NewPasswordHash(8, true).HashPassword(password)
+	pass, err := phphelper.NewPasswordHash(8, true).HashPassword(password)
 	if err != nil {
 		c.Error(err)
 		return

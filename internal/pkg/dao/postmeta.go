@@ -3,9 +3,10 @@ package dao
 import (
 	"context"
 	"github.com/fthvgb1/wp-go/helper/slice"
+	"github.com/fthvgb1/wp-go/internal/phphelper"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
-	"github.com/fthvgb1/wp-go/internal/plugins"
+	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/fthvgb1/wp-go/model"
 	"strconv"
 )
@@ -27,7 +28,7 @@ func GetPostMetaByPostIds(args ...any) (r map[uint64]map[string]any, err error) 
 		}
 		r[postmeta.PostId][postmeta.MetaKey] = postmeta.MetaValue
 		if postmeta.MetaKey == "_wp_attachment_metadata" {
-			metadata, err := plugins.UnPHPSerialize[models.WpAttachmentMetadata](postmeta.MetaValue)
+			metadata, err := phphelper.UnPHPSerialize[models.WpAttachmentMetadata](postmeta.MetaValue)
 			if err != nil {
 				logs.ErrPrintln(err, "解析postmeta失败", postmeta.MetaId, postmeta.MetaValue)
 				continue
@@ -60,7 +61,7 @@ func ToPostThumb(c context.Context, meta map[string]any, host string) (r models.
 		if ok {
 			metadata, ok := x.(models.WpAttachmentMetadata)
 			if ok {
-				r = plugins.Thumbnail(metadata, "post-thumbnail", host, "thumbnail")
+				r = wpconfig.Thumbnail(metadata, "post-thumbnail", host, "thumbnail")
 			}
 		}
 	}

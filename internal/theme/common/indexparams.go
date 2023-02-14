@@ -80,7 +80,7 @@ func (i *IndexParams) setTitleLR(l, r string) {
 }
 
 func (i *IndexParams) getTitle() string {
-	i.Title = fmt.Sprintf("%s-%s", i.TitleL, i.TitleR)
+	i.Title = fmt.Sprintf("%s - %s", i.TitleL, i.TitleR)
 	return i.Title
 }
 

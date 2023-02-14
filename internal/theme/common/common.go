@@ -18,6 +18,7 @@ import (
 
 type Handle struct {
 	C        *gin.Context
+	Theme    string
 	Session  sessions.Session
 	GinH     gin.H
 	Password string
@@ -25,11 +26,13 @@ type Handle struct {
 	Code     int
 	Stats    int
 	Templ    string
+	Class    []string
 }
 
-func NewHandle(c *gin.Context, scene int) *Handle {
+func NewHandle(c *gin.Context, scene int, theme string) *Handle {
 	return &Handle{
 		C:       c,
+		Theme:   theme,
 		Session: sessions.Default(c),
 		GinH:    gin.H{},
 		Scene:   scene,
