@@ -33,8 +33,8 @@ func (i *IndexHandle) ParseIndex(parm *IndexParams) (err error) {
 		i.Stats = constraints.ParamError
 		return
 	}
-	i.Param.CacheKey = i.Param.getSearchKey()
 	i.Param.ParseParams()
+	i.Param.CacheKey = i.Param.getSearchKey()
 	i.GinH["title"] = i.Param.getTitle()
 	i.GinH["search"] = i.Param.Search
 	i.GinH["header"] = i.Param.Header

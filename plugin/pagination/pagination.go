@@ -6,7 +6,7 @@ import (
 )
 
 type Elements interface {
-	Current(page, totalPage int) string
+	Current(page, totalPage, totalRows int) string
 	Prev(url string) string
 	Next(url string) string
 	Dots() string
@@ -67,7 +67,7 @@ func (p ParsePagination) ToHtml() (html string) {
 	for page := start; page <= end; page++ {
 		h := ""
 		if p.CurrentPage == page {
-			h = p.Current(page, p.TotalPage)
+			h = p.Current(page, p.TotalPage, p.TotalRaw)
 		} else {
 			h = p.Middle(page, p.Url(p.Path, p.Query, page))
 		}
