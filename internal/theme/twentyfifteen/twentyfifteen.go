@@ -1,16 +1,13 @@
 package twentyfifteen
 
 import (
-	"fmt"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
-	"github.com/fthvgb1/wp-go/internal/plugins"
 	"github.com/fthvgb1/wp-go/internal/theme/common"
 	"github.com/gin-gonic/gin"
-	"net/http"
 )
 
 const ThemeName = "twentyfifteen"
@@ -42,38 +39,11 @@ func Hook(h *common.Handle) {
 }
 
 func (i *indexHandle) Index() {
-	i.Templ = "twentyfifteen/posts/index.gohtml"
-	img := getHeaderImage(i.C)
-	fmt.Println(img)
-	err := i.BuildIndexData(common.NewIndexParams(i.C))
-	if err != nil {
-		i.Stats = constraints.Error404
-		i.Code = http.StatusNotFound
-		i.C.HTML(i.Code, i.Templ, i.GinH)
-		return
-	}
-	i.ExecPostsPlugin()
-	i.PageEle = plugins.TwentyFifteenPagination()
-	i.Pagination()
-	i.CalBodyClass()
-	i.C.HTML(i.Code, i.Templ, i.GinH)
+	i.Indexs()
 }
 
 func (d *detailHandle) Detail() {
-	d.Templ = "twentyfifteen/posts/detail.gohtml"
-
-	err := d.BuildDetailData()
-	if err != nil {
-		d.Stats = constraints.Error404
-		d.Code = http.StatusNotFound
-		d.C.HTML(d.Code, d.Templ, d.GinH)
-		return
-	}
-	d.PasswordProject()
-	d.CommentRender = plugins.CommentRender()
-	d.RenderComment()
-	d.CalBodyClass()
-	d.C.HTML(d.Code, d.Templ, d.GinH)
+	d.Details()
 }
 
 func getHeaderImage(c *gin.Context) (r models.PostThumbnail) {

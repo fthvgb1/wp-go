@@ -37,12 +37,12 @@ func PasswordProject(next Fn[models.Posts], h *Handle, post models.Posts) (r mod
 	return
 }
 
-// Digest 生成摘要
+// Digest 生成摘要 注意放到最后，不继续往下执行
 func Digest(next Fn[models.Posts], h *Handle, post models.Posts) models.Posts {
 	if post.PostExcerpt != "" {
 		plugins.PostExcerpt(&post)
 	} else {
 		plugins.Digest(h.C, &post, config.GetConfig().DigestWordCount)
 	}
-	return next(post)
+	return post
 }

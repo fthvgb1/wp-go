@@ -9,8 +9,10 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/config"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
+	"github.com/fthvgb1/wp-go/internal/plugins"
 	"github.com/fthvgb1/wp-go/model"
 	"github.com/fthvgb1/wp-go/plugin/pagination"
+	"net/http"
 )
 
 func (i *IndexHandle) ParseIndex(parm *IndexParams) (err error) {
@@ -102,4 +104,28 @@ func (i *IndexHandle) ExecPostsPlugin(calls ...func(*models.Posts)) {
 
 	i.GinH["posts"] = slice.Map(i.Posts, PluginFn[models.Posts](plugin, i.Handle, Defaults(calls...)))
 
+}
+
+func (i *IndexHandle) Render() {
+	i.ExecPostsPlugin()
+	if i.PageEle == nil {
+		i.PageEle = plugins.TwentyFifteenPagination()
+	}
+	i.Pagination()
+	i.CalBodyClass()
+	if i.Templ == "" {
+		i.Templ = fmt.Sprintf("%s/posts/index.gohtml", i.Theme)
+	}
+	i.C.HTML(i.Code, i.Templ, i.GinH)
+}
+
+func (i *IndexHandle) Indexs() {
+	err := i.BuildIndexData(NewIndexParams(i.C))
+	if err != nil {
+		i.Stats = constraints.Error404
+		i.Code = http.StatusNotFound
+		i.C.HTML(i.Code, i.Templ, i.GinH)
+		return
+	}
+	i.Render()
 }

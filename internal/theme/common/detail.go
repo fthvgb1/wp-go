@@ -4,10 +4,12 @@ import (
 	"fmt"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
+	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
+	"net/http"
 )
 
 type DetailHandle struct {
@@ -88,4 +90,28 @@ func (d *DetailHandle) ContextPost() {
 	logs.ErrPrintln(err, "get pre and next post", d.Post.Id, d.Post.PostDate)
 	d.GinH["next"] = next
 	d.GinH["prev"] = prev
+}
+
+func (d *DetailHandle) Render() {
+	d.PasswordProject()
+	if d.CommentRender == nil {
+		d.CommentRender = plugins.CommentRender()
+	}
+	d.RenderComment()
+	d.CalBodyClass()
+	if d.Templ == "" {
+		d.Templ = fmt.Sprintf("%s/posts/detail.gohtml", d.Theme)
+	}
+	d.C.HTML(d.Code, d.Templ, d.GinH)
+}
+
+func (d *DetailHandle) Details() {
+	err := d.BuildDetailData()
+	if err != nil {
+		d.Stats = constraints.Error404
+		d.Code = http.StatusNotFound
+		d.C.HTML(d.Code, d.Templ, d.GinH)
+		return
+	}
+	d.Render()
 }

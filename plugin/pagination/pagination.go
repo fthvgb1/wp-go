@@ -1,7 +1,7 @@
 package pagination
 
 import (
-	"math"
+	"github.com/fthvgb1/wp-go/helper/number"
 	"strings"
 )
 
@@ -26,8 +26,7 @@ type ParsePagination struct {
 }
 
 func NewParsePagination(totalRaw int, pageSize int, currentPage, step int, query string, path string) ParsePagination {
-	allPage := int(math.Ceil(float64(totalRaw) / float64(pageSize)))
-	return ParsePagination{TotalPage: allPage, TotalRaw: totalRaw, PageSize: pageSize, CurrentPage: currentPage, Query: query, Path: path, Step: step}
+	return ParsePagination{TotalPage: number.CalTotalPage(totalRaw, pageSize), TotalRaw: totalRaw, PageSize: pageSize, CurrentPage: currentPage, Query: query, Path: path, Step: step}
 }
 
 func Paginate(e Elements, p ParsePagination) string {
@@ -36,7 +35,7 @@ func Paginate(e Elements, p ParsePagination) string {
 }
 
 func (p ParsePagination) ToHtml() (html string) {
-	if p.TotalRaw < 2 {
+	if p.TotalPage < 2 {
 		return
 	}
 	s := strings.Builder{}
