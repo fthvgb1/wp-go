@@ -20,7 +20,7 @@ func getHeaderImages(a ...any) (r []models.PostThumbnail, err error) {
 	ctx := a[0].(context.Context)
 	theme := a[1].(string)
 	meta, err := wpconfig.GetThemeMods(theme)
-	if err != nil && meta.HeaderImage != "" {
+	if err == nil && meta.HeaderImage != "" {
 		if "random-uploaded-image" == meta.HeaderImage {
 			headers, er := model.Finds[models.Posts](ctx, model.Conditions(
 				model.Where(model.SqlBuilder{
