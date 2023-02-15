@@ -108,3 +108,11 @@ func Merge[K comparable, V any](m ...map[K]V) map[K]V {
 	}
 	return mm
 }
+
+func WithDefaultVal[K comparable, V any](m map[K]V, k K, defaults V) V {
+	vv, ok := m[k]
+	if ok {
+		return vv
+	}
+	return defaults
+}

@@ -35,3 +35,13 @@ func (r *Var[T]) Store(v T) {
 		}
 	}
 }
+
+func (r *Var[T]) Flush() {
+	for {
+		px := atomic.LoadPointer(&r.p)
+		var v T
+		if atomic.CompareAndSwapPointer(&r.p, px, unsafe.Pointer(&v)) {
+			return
+		}
+	}
+}

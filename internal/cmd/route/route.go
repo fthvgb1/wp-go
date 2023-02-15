@@ -7,6 +7,7 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/static"
 	"github.com/fthvgb1/wp-go/internal/theme"
+	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-contrib/sessions"
@@ -28,6 +29,7 @@ func SetupRouter() (*gin.Engine, func()) {
 	}
 
 	r.HTMLRender = theme.GetTemplate()
+	wpconfig.SetTemplateFs(theme.TemplateFs)
 
 	validServerName, reloadValidServerNameFn := middleware.ValidateServerNames()
 	fl, flReload := middleware.FlowLimit(c.MaxRequestSleepNum, c.MaxRequestNum, c.CacheTime.SleepTime)

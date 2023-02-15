@@ -97,3 +97,50 @@ func TestToAny(t *testing.T) {
 		})
 	}
 }
+
+func TestCutUrlHost(t *testing.T) {
+	type args struct {
+		u string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "http",
+			args: args{"http://xx.yy/xxoo?ss=fff"},
+			want: "/xxoo?ss=fff",
+		}, {
+			name: "https",
+			args: args{"https://xx.yy/xxoo?ff=fff"},
+			want: "/xxoo?ff=fff",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := CutUrlHost(tt.args.u); got != tt.want {
+				t.Errorf("CutUrlHost() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestDefaults(t *testing.T) {
+	v := 0
+	want := 1
+	t.Run("int", func(t *testing.T) {
+		if got := Defaults(v, want); !reflect.DeepEqual(got, want) {
+			t.Errorf("Defaults() = %v, want %v", got, want)
+		}
+	})
+	{
+		v := ""
+		want := "a"
+		t.Run("string", func(t *testing.T) {
+			if got := Defaults(v, want); !reflect.DeepEqual(got, want) {
+				t.Errorf("Defaults() = %v, want %v", got, want)
+			}
+		})
+	}
+}

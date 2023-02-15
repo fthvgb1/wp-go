@@ -195,3 +195,12 @@ var class = map[int]string{
 	constraints.Search:   "search ",
 	constraints.Detail:   "post-template-default single single-post single-format-standard ",
 }
+
+func ThemeSupport() map[string]struct{} {
+	return map[string]struct{}{
+		"custom-header":     {},
+		"wp-custom-logo":    {},
+		"responsive-embeds": {},
+		"post-formats":      {},
+	}
+}

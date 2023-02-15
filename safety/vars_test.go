@@ -1,6 +1,7 @@
 package safety
 
 import (
+	"fmt"
 	"reflect"
 	"testing"
 	"unsafe"
@@ -36,6 +37,30 @@ func TestVar_Load(t *testing.T) {
 			if got := r.Load(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Load() = %v, want %v", got, tt.want)
 			}
+		})
+	}
+}
+
+func TestVar_Delete(t *testing.T) {
+	{
+		v := NewVar("")
+		t.Run("string", func(t *testing.T) {
+			v.Delete()
+			fmt.Println(v.Load())
+			v.Store("xx")
+			fmt.Println(v.Load())
+		})
+	}
+}
+
+func TestVar_Flush(t *testing.T) {
+	{
+		v := NewVar("")
+		t.Run("string", func(t *testing.T) {
+			v.Flush()
+			fmt.Println(v.Load())
+			v.Store("xx")
+			fmt.Println(v.Load())
 		})
 	}
 }

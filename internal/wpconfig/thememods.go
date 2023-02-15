@@ -1,34 +1,53 @@
 package wpconfig
 
 import (
+	"embed"
+	"encoding/json"
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/internal/phphelper"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/safety"
+	"path/filepath"
 	"strings"
 )
 
+var templateFs embed.FS
+
+func SetTemplateFs(fs embed.FS) {
+	templateFs = fs
+}
+
 type ThemeMods struct {
-	CustomCssPostId       int       `json:"custom_css_post_id,omitempty"`
-	NavMenuLocations      []string  `json:"nav_menu_locations,omitempty"`
-	CustomLogo            int       `json:"custom_logo"`
-	HeaderImage           string    `json:"header_image,omitempty"`
-	BackgroundImage       string    `json:"background_image"`
-	BackgroundSize        string    `json:"background_size"`
-	BackgroundRepeat      string    `json:"background_repeat"`
-	BackgroundColor       string    `json:"background_color"`
-	ColorScheme           string    `json:"color_scheme"`
-	SidebarTextcolor      string    `json:"sidebar_textcolor"`
-	HeaderBackgroundColor string    `json:"header_background_color"`
-	HeaderTextcolor       string    `json:"header_textcolor"`
+	CustomCssPostId       int      `json:"custom_css_post_id,omitempty"`
+	NavMenuLocations      []string `json:"nav_menu_locations,omitempty"`
+	CustomLogo            int      `json:"custom_logo,omitempty"`
+	HeaderImage           string   `json:"header_image,omitempty"`
+	BackgroundImage       string   `json:"background_image,omitempty"`
+	BackgroundSize        string   `json:"background_size,omitempty"`
+	BackgroundRepeat      string   `json:"background_repeat,omitempty"`
+	BackgroundColor       string   `json:"background_color,omitempty"`
+	BackgroundPreset      string   `json:"background_preset"`
+	BackgroundPositionX   string   `json:"background_position_x,omitempty"`
+	BackgroundPositionY   string   `json:"background_position_y"`
+	BackgroundAttachment  string   `json:"background_attachment"`
+	ColorScheme           map[string]ColorScheme
+	SidebarTextcolor      string    `json:"sidebar_textcolor,omitempty"`
+	HeaderBackgroundColor string    `json:"header_background_color,omitempty"`
+	HeaderTextcolor       string    `json:"header_textcolor,omitempty"`
 	HeaderImagData        ImageData `json:"header_image_data,omitempty"`
-	SidebarsWidgets       Sidebars  `json:"sidebars_widgets"`
+	SidebarsWidgets       Sidebars  `json:"sidebars_widgets,omitempty"`
+	ThemeSupport          ThemeSupport
 }
 
 type Sidebars struct {
 	Time int          `json:"time,omitempty"`
-	Data SidebarsData `json:"data"`
+	Data SidebarsData `json:"data,omitempty"`
+}
+
+type ColorScheme struct {
+	Label  string   `json:"label,omitempty"`
+	Colors []string `json:"colors,omitempty"`
 }
 
 type SidebarsData struct {
@@ -94,6 +113,7 @@ func GetThemeMods(theme string) (r ThemeMods, err error) {
 	if err != nil {
 		return
 	}
+	r.setThemeColorScheme(theme)
 	themeModes.Store(theme, r)
 	return
 }
@@ -119,4 +139,29 @@ func IsCustomLogo(theme string) bool {
 	}
 
 	return false
+}
+
+func (m *ThemeMods) setThemeColorScheme(themeName string) {
+	bytes, err := templateFs.ReadFile(filepath.Join(themeName, "colorscheme.json"))
+	if err != nil {
+		return
+	}
+	var scheme map[string]ColorScheme
+	err = json.Unmarshal(bytes, &scheme)
+	if err != nil {
+		return
+	}
+	m.ColorScheme = scheme
+}
+func (m *ThemeMods) setThemeSupport(themeName string) {
+	bytes, err := templateFs.ReadFile(filepath.Join(themeName, "themesupport.json"))
+	if err != nil {
+		return
+	}
+	var themeSupport ThemeSupport
+	err = json.Unmarshal(bytes, &themeSupport)
+	if err != nil {
+		return
+	}
+	m.ThemeSupport = themeSupport
 }
