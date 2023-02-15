@@ -1,7 +1,9 @@
 package strings
 
 import (
+	"fmt"
 	"golang.org/x/exp/constraints"
+	"strings"
 	"testing"
 )
 
@@ -50,6 +52,49 @@ func TestToInteger(t *testing.T) {
 			if got := ToInteger[int64](tt.args.s, tt.args.z); got != tt.want {
 				t.Errorf("StrToInt() = %v, want %v", got, tt.want)
 			}
+		})
+	}
+}
+
+func TestBuilder_WriteString(t *testing.T) {
+	type fields struct {
+		Builder *strings.Builder
+	}
+	type args struct {
+		s []string
+	}
+	//s :=NewBuilder()
+	tests := []struct {
+		name      string
+		fields    fields
+		args      args
+		wantCount int
+		wantErr   bool
+	}{
+		{
+			name: "t1",
+			fields: fields{
+				Builder: &strings.Builder{},
+			},
+			args:      args{s: []string{"11", "22", "不"}},
+			wantErr:   false,
+			wantCount: 7,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			b := &Builder{
+				Builder: tt.fields.Builder,
+			}
+			gotCount, err := b.WriteString(tt.args.s...)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("WriteString() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if gotCount != tt.wantCount {
+				t.Errorf("WriteString() gotCount = %v, want %v", gotCount, tt.wantCount)
+			}
+			fmt.Println(b.String())
 		})
 	}
 }

@@ -2,6 +2,7 @@ package strings
 
 import (
 	"crypto/md5"
+	"errors"
 	"fmt"
 	"golang.org/x/exp/constraints"
 	"io"
@@ -40,4 +41,36 @@ func Md5(str string) string {
 		return ""
 	}
 	return fmt.Sprintf("%x", h.Sum(nil))
+}
+
+func BuilderJoin(s *strings.Builder, str ...string) {
+	for _, ss := range str {
+		s.WriteString(ss)
+	}
+}
+
+func BuilderFormat(s *strings.Builder, format string, args ...any) {
+	s.WriteString(fmt.Sprintf(format, args...))
+}
+
+type Builder struct {
+	*strings.Builder
+}
+
+func NewBuilder() *Builder {
+	return &Builder{&strings.Builder{}}
+}
+
+func (b *Builder) WriteString(s ...string) (count int, err error) {
+	for _, ss := range s {
+		i, er := b.Builder.WriteString(ss)
+		if er != nil {
+			err = errors.Join(er)
+		}
+		count += i
+	}
+	return
+}
+func (b *Builder) Sprintf(format string, a ...any) (int, error) {
+	return b.WriteString(fmt.Sprintf(format, a...))
 }
