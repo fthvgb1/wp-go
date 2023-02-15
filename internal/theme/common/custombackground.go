@@ -31,11 +31,11 @@ var repeat = map[string]string{
 	"no-repeat": "no-repeat",
 }
 
-var backgroud = safety.NewVar("")
+var backgroud = safety.NewVar("default")
 
 func (h *Handle) CustomBackGround() {
 	b := backgroud.Load()
-	if b == "" {
+	if b == "default" {
 		b = h.CalCustomBackGround()
 		backgroud.Store(b)
 	}
