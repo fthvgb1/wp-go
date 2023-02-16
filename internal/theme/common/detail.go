@@ -99,6 +99,7 @@ func (d *DetailHandle) Render() {
 	}
 	d.SiteIcon()
 	d.CustomLogo()
+	d.CustomCss()
 	d.RenderComment()
 	d.CalBodyClass()
 	if d.Templ == "" {

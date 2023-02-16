@@ -114,6 +114,7 @@ func (i *IndexHandle) Render() {
 	i.Pagination()
 	i.SiteIcon()
 	i.CustomLogo()
+	i.CustomCss()
 	i.CalBodyClass()
 	if i.Templ == "" {
 		i.Templ = fmt.Sprintf("%s/posts/index.gohtml", i.Theme)
