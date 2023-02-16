@@ -2,7 +2,6 @@ package common
 
 import (
 	"fmt"
-	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
@@ -21,22 +20,6 @@ var commonClass = map[int]string{
 	constraints.Detail:   "post-template-default single single-post ",
 }
 
-type Support map[string]struct{}
-
-var themeSupport = map[string]Support{}
-
-func AddThemeSupport(theme string, support Support) {
-	themeSupport[theme] = support
-}
-
-func (h *Handle) IsSupport(name string) bool {
-	m, ok := themeSupport[h.Theme]
-	if ok {
-		return maps.IsExists(m, name)
-	}
-	return ok
-}
-
 func (h *Handle) CalBodyClass() {
 	h.GinH["bodyClass"] = h.bodyClass(h.Class...)
 }
@@ -46,6 +29,7 @@ func (h *Handle) bodyClass(class ...string) string {
 	if constraints.Ok != h.Stats {
 		return "error404"
 	}
+	mods, err := wpconfig.GetThemeMods(h.Theme)
 	switch h.Scene {
 	case constraints.Search:
 		s = "search-no-results"
@@ -66,12 +50,12 @@ func (h *Handle) bodyClass(class ...string) string {
 		s = fmt.Sprintf("category-%v category-%v", s, cate.Terms.TermId)
 	case constraints.Detail:
 		s = fmt.Sprintf("postid-%d", h.GinH["post"].(models.Posts).Id)
-		if h.IsSupport("post-formats") {
+		if len(mods.ThemeSupport.PostFormats) > 0 {
 			s = str.Join(s, " single-format-standard")
 		}
 	}
 	class = append(class, s)
-	mods, err := wpconfig.GetThemeMods(h.Theme)
+
 	if err == nil {
 		if wpconfig.IsCustomBackground(h.Theme) {
 			class = append(class, "custom-background")

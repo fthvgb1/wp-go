@@ -11,7 +11,6 @@ import (
 func InitTheme() {
 	addThemeHookFunc(twentyfifteen.ThemeName, twentyfifteen.Hook)
 	addThemeHookFunc(twentyseventeen.ThemeName, twentyseventeen.Hook)
-	common.AddThemeSupport(twentyfifteen.ThemeName, twentyfifteen.ThemeSupport())
 }
 
 func Reload() {
