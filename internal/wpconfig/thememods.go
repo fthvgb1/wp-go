@@ -66,13 +66,23 @@ type ImageData struct {
 }
 
 func Thumbnail(metadata models.WpAttachmentMetadata, Type, host string, except ...string) (r models.PostThumbnail) {
+	up := strings.Split(metadata.File, "/")
+	if Type == "full" {
+		metadata.Sizes["full"] = models.MetaDataFileSize{
+			File:     filepath.Base(metadata.File),
+			Width:    metadata.Width,
+			Height:   metadata.Height,
+			MimeType: metadata.Sizes["thumbnail"].MimeType,
+			FileSize: metadata.FileSize,
+		}
+	}
 	if _, ok := metadata.Sizes[Type]; ok {
 		r.Path = fmt.Sprintf("%s/wp-content/uploads/%s", host, metadata.File)
 		r.Width = metadata.Sizes[Type].Width
 		r.Height = metadata.Sizes[Type].Height
-		up := strings.Split(metadata.File, "/")
+
 		r.Srcset = strings.Join(maps.FilterToSlice[string](metadata.Sizes, func(s string, size models.MetaDataFileSize) (r string, ok bool) {
-			up[2] = size.File
+			up[len(up)-1] = size.File
 			for _, s2 := range except {
 				if s == s2 {
 					return
@@ -125,17 +135,6 @@ func IsCustomBackground(theme string) bool {
 		return false
 	}
 	if mods.BackgroundColor != "" && mods.BackgroundColor != "default-color" || mods.BackgroundImage != "" && mods.BackgroundImage != "default-image" {
-		return true
-	}
-
-	return false
-}
-func IsCustomLogo(theme string) bool {
-	mods, err := GetThemeMods(theme)
-	if err != nil {
-		return false
-	}
-	if mods.CustomLogo > 0 {
 		return true
 	}
 

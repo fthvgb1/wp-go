@@ -71,14 +71,18 @@ func (h *Handle) bodyClass(class ...string) string {
 		}
 	}
 	class = append(class, s)
-	if h.IsSupport("custom-background") && wpconfig.IsCustomBackground(h.Theme) {
-		class = append(class, "custom-background")
+	mods, err := wpconfig.GetThemeMods(h.Theme)
+	if err == nil {
+		if wpconfig.IsCustomBackground(h.Theme) {
+			class = append(class, "custom-background")
+		}
+		if mods.CustomLogo > 0 {
+			class = append(class, "wp-custom-logo")
+		}
+		if mods.ThemeSupport.ResponsiveEmbeds {
+			class = append(class, "wp-embed-responsive")
+		}
 	}
-	if h.IsSupport("custom-logo") && wpconfig.IsCustomLogo(h.Theme) {
-		class = append(class, "wp-custom-logo")
-	}
-	if h.IsSupport("responsive-embeds") {
-		class = append(class, "wp-embed-responsive")
-	}
+
 	return str.Join(commonClass[h.Scene], strings.Join(class, " "))
 }

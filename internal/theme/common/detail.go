@@ -98,6 +98,7 @@ func (d *DetailHandle) Render() {
 		d.CommentRender = plugins.CommentRender()
 	}
 	d.SiteIcon()
+	d.CustomLogo()
 	d.RenderComment()
 	d.CalBodyClass()
 	if d.Templ == "" {

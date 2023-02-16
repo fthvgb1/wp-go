@@ -1,0 +1,54 @@
+package common
+
+import (
+	"fmt"
+	"github.com/fthvgb1/wp-go/helper/maps"
+	"github.com/fthvgb1/wp-go/internal/pkg/cache"
+	"github.com/fthvgb1/wp-go/internal/wpconfig"
+	"github.com/fthvgb1/wp-go/safety"
+)
+
+var logo = safety.NewVar("default")
+
+func (h *Handle) CalCustomLogo() (r string) {
+	mods, err := wpconfig.GetThemeMods(h.Theme)
+	if err != nil {
+		return
+	}
+	id := uint64(mods.CustomLogo)
+	if id < 1 {
+		return
+	}
+	logo, err := cache.GetPostById(h.C, id)
+	if err != nil || logo.AttachmentMetadata.File == "" {
+		return
+	}
+	siz := "full"
+	meta, _ := cache.GetPostMetaByPostId(h.C, id)
+	alt := maps.WithDefaultVal(meta, "_wp_attachment_image_alt", any(wpconfig.Options.Value("blogname")))
+	desc := alt.(string)
+	imgx := map[string]string{
+		"class":    "custom-logo",
+		"alt":      desc,
+		"decoding": "async",
+		//"loading":"lazy",
+	}
+	img := wpconfig.Thumbnail(logo.AttachmentMetadata, siz, "", "")
+	imgx["srcset"] = img.Srcset
+	imgx["sizes"] = img.Sizes
+	imgx["src"] = img.Path
+	r = fmt.Sprintf("%s />", maps.Reduce(imgx, func(k string, v string, t string) string {
+		return fmt.Sprintf(`%s %s="%s"`, t, k, v)
+	}, fmt.Sprintf(`<img wight="%v" height="%v"`, img.Width, img.Height)))
+	r = fmt.Sprintf(`<a href="%s" class="custom-logo-link" rel="home"%s>%s</a>`, "/", ` aria-current="page"`, r)
+	return
+}
+
+func (h *Handle) CustomLogo() {
+	s := logo.Load()
+	if s == "default" {
+		s = h.CalCustomLogo()
+		logo.Store(s)
+	}
+	h.GinH["customLogo"] = s
+}
