@@ -86,11 +86,8 @@ func TestBuilder_WriteString(t *testing.T) {
 			b := &Builder{
 				Builder: tt.fields.Builder,
 			}
-			gotCount, err := b.WriteString(tt.args.s...)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("WriteString() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
+			gotCount := b.WriteString(tt.args.s...)
+
 			if gotCount != tt.wantCount {
 				t.Errorf("WriteString() gotCount = %v, want %v", gotCount, tt.wantCount)
 			}

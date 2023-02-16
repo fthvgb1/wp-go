@@ -2,6 +2,7 @@ package plugins
 
 import (
 	"github.com/fthvgb1/wp-go/helper/slice"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/gin-gonic/gin"
 	"net/url"
@@ -50,7 +51,7 @@ func FormatComments(c *gin.Context, i CommentHtml, comments []models.Comments, m
 }
 
 func (d CommentHandler) formatComment(comments []*Comments, isTop bool) (html string) {
-	s := strings.Builder{}
+	s := str.NewBuilder()
 	if d.depth > d.maxDepth {
 		comments = d.findComments(comments)
 	}
@@ -69,9 +70,7 @@ func (d CommentHandler) formatComment(comments []*Comments, isTop bool) (html st
 		s.WriteString(d.i.FormatLi(d.Context, comment.Comments, d.depth, d.isTls, eo, parent))
 		if fl {
 			d.depth++
-			s.WriteString(`<ol class="children">`)
-			s.WriteString(d.formatComment(comment.Children, false))
-			s.WriteString(`</ol>`)
+			s.WriteString(`<ol class="children">`, d.formatComment(comment.Children, false), `</ol>`)
 			if isTop {
 				d.depth = 1
 			}

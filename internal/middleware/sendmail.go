@@ -3,6 +3,7 @@ package middleware
 import (
 	"bytes"
 	"fmt"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/mail"
 	"github.com/fthvgb1/wp-go/internal/pkg/config"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
@@ -64,17 +65,13 @@ var (
 )
 
 func formatStack(s string) (r string) {
-	ss := strings.Builder{}
+	ss := str.NewBuilder()
 	t := strings.Split(s, "\n")
 	for i, line := range t {
 		if i%2 == 0 {
-			ss.WriteString("<dt>")
-			ss.WriteString(line)
-			ss.WriteString("</dt>")
+			ss.WriteString("<dt>", line, "</dt>")
 		} else {
-			ss.WriteString("<dd>")
-			ss.WriteString(strings.Trim(line, "\t"))
-			ss.WriteString("</dd>")
+			ss.WriteString("<dt>", strings.Trim(line, "\t"), "</dt>")
 		}
 	}
 	r = ss.String()

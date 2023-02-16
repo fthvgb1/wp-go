@@ -2,7 +2,6 @@ package strings
 
 import (
 	"crypto/md5"
-	"errors"
 	"fmt"
 	"golang.org/x/exp/constraints"
 	"io"
@@ -61,16 +60,14 @@ func NewBuilder() *Builder {
 	return &Builder{&strings.Builder{}}
 }
 
-func (b *Builder) WriteString(s ...string) (count int, err error) {
+func (b *Builder) WriteString(s ...string) (count int) {
 	for _, ss := range s {
-		i, er := b.Builder.WriteString(ss)
-		if er != nil {
-			err = errors.Join(er)
-		}
+		i, _ := b.Builder.WriteString(ss)
 		count += i
 	}
 	return
 }
-func (b *Builder) Sprintf(format string, a ...any) (int, error) {
-	return b.WriteString(fmt.Sprintf(format, a...))
+func (b *Builder) Sprintf(format string, a ...any) int {
+	i, _ := fmt.Fprintf(b, format, a...)
+	return i
 }

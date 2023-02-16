@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/helper/maps"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/fthvgb1/wp-go/safety"
-	"strings"
 )
 
 var postx = map[string]string{
@@ -50,11 +50,9 @@ func (h *Handle) CalCustomBackGround() (r string) {
 	if mods.BackgroundImage == "" && mods.BackgroundColor == mods.ThemeSupport.CustomBackground.DefaultColor {
 		return
 	}
-	s := strings.Builder{}
+	s := str.NewBuilder()
 	if mods.BackgroundImage != "" {
-		s.WriteString(` background-image: url("`)
-		s.WriteString(helper.CutUrlHost(mods.BackgroundImage))
-		s.WriteString(`");`)
+		s.Sprintf(` background-image: url("%s");`, helper.CutUrlHost(mods.BackgroundImage))
 	}
 	backgroundPositionX := helper.Defaults(mods.BackgroundPositionX, mods.ThemeSupport.CustomBackground.DefaultPositionX)
 	backgroundPositionX = maps.WithDefaultVal(postx, backgroundPositionX, "left")
@@ -74,10 +72,7 @@ func (h *Handle) CalCustomBackGround() (r string) {
 	attachment := helper.Defaults(mods.BackgroundAttachment, mods.ThemeSupport.CustomBackground.DefaultAttachment)
 	attachment = helper.Or(attachment == "fixed", "fixed", "scroll")
 	attachment = fmt.Sprintf(" background-attachment: %s;", attachment)
-	s.WriteString(positon)
-	s.WriteString(siz)
-	s.WriteString(repeats)
-	s.WriteString(attachment)
+	s.WriteString(positon, siz, repeats, attachment)
 	r = fmt.Sprintf(`<style id="custom-background-css">
 body.custom-background {%s}
 </style>`, s.String())
