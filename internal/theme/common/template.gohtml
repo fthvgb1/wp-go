@@ -1,0 +1,21 @@
+{{define "common/head"}}
+    {{if .customBackground}}
+        {{.customBackground|unescaped}}
+    {{end}}
+    {{if .customHeader}}
+        {{.customHeader|unescaped}}
+    {{end}}
+
+    {{if .siteIcon}}
+        {{.siteIcon|unescaped}}
+    {{end}}
+    {{if .customCss}}
+        {{.customCss|unescaped}}
+    {{end}}
+{{end}}
+
+{{define "common/customLogo"}}
+    {{if .customLogo}}
+        {{.customLogo|unescaped}}
+    {{end}}
+{{end}}

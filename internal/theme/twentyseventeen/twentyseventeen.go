@@ -82,11 +82,9 @@ func (i *indexHandle) Index() {
 		i.C.HTML(i.Code, i.Templ, i.GinH)
 		return
 	}
+	i.PostsPlugins = pluginFns
 	i.PageEle = paginate
-	i.ExecListPagePlugin(pluginFns)
-	i.Pagination()
-	i.GinH["bodyClass"] = i.h.bodyClass()
-	i.C.HTML(i.Code, i.Templ, i.GinH)
+	i.Render()
 }
 
 func (d *detailHandle) Detail() {
@@ -105,12 +103,10 @@ func (d *detailHandle) Detail() {
 	img.Sizes = "100vw"
 	img.Srcset = fmt.Sprintf("%s %dw, %s", img.Path, img.Width, img.Srcset)
 	d.Post.Thumbnail = img
-	d.GinH["post"] = d.Post
 	d.CommentRender = commentFormat
-	d.RenderComment()
-	d.PasswordProject()
-	d.Templ = "twentyseventeen/posts/detail.gohtml"
-	d.C.HTML(d.Code, d.Templ, d.GinH)
+	d.GinH["post"] = d.Post
+	d.Render()
+
 }
 
 var commentFormat = comment{}
@@ -194,13 +190,4 @@ var class = map[int]string{
 	constraints.Tag:      "archive category page-two-column ",
 	constraints.Search:   "search ",
 	constraints.Detail:   "post-template-default single single-post single-format-standard ",
-}
-
-func ThemeSupport() map[string]struct{} {
-	return map[string]struct{}{
-		"custom-header":     {},
-		"wp-custom-logo":    {},
-		"responsive-embeds": {},
-		"post-formats":      {},
-	}
 }

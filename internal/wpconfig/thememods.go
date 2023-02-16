@@ -18,7 +18,7 @@ func SetTemplateFs(fs embed.FS) {
 	templateFs = fs
 }
 
-type ThemeMods struct {
+type ThemeMod struct {
 	CustomCssPostId       int      `json:"custom_css_post_id,omitempty"`
 	NavMenuLocations      []string `json:"nav_menu_locations,omitempty"`
 	CustomLogo            int      `json:"custom_logo,omitempty"`
@@ -103,13 +103,13 @@ func Thumbnail(metadata models.WpAttachmentMetadata, Type, host string, except .
 	return
 }
 
-var themeModes = safety.Map[string, ThemeMods]{}
+var themeModes = safety.Map[string, ThemeMod]{}
 
 func FlushModes() {
 	themeModes.Flush()
 }
 
-func GetThemeMods(theme string) (r ThemeMods, err error) {
+func GetThemeMods(theme string) (r ThemeMod, err error) {
 	r, ok := themeModes.Load(theme)
 	if ok {
 		return
@@ -119,7 +119,7 @@ func GetThemeMods(theme string) (r ThemeMods, err error) {
 	if !ok || mods == "" {
 		return
 	}
-	r, err = phphelper.UnPHPSerialize[ThemeMods](mods)
+	r, err = phphelper.UnPHPSerialize[ThemeMod](mods)
 	if err != nil {
 		return
 	}
@@ -141,7 +141,7 @@ func IsCustomBackground(theme string) bool {
 	return false
 }
 
-func (m *ThemeMods) setThemeColorScheme(themeName string) {
+func (m *ThemeMod) setThemeColorScheme(themeName string) {
 	bytes, err := templateFs.ReadFile(filepath.Join(themeName, "colorscheme.json"))
 	if err != nil {
 		return
@@ -153,7 +153,7 @@ func (m *ThemeMods) setThemeColorScheme(themeName string) {
 	}
 	m.ColorScheme = scheme
 }
-func (m *ThemeMods) setThemeSupport(themeName string) {
+func (m *ThemeMod) setThemeSupport(themeName string) {
 	bytes, err := templateFs.ReadFile(filepath.Join(themeName, "themesupport.json"))
 	if err != nil {
 		return

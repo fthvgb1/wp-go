@@ -16,9 +16,7 @@
         <div id="sidebar" class="sidebar" style="position: relative; ">
             <header id="masthead" class="site-header">
                 <div class="site-branding">
-                    {{if .customLogo}}
-                        {{.customLogo|unescaped}}
-                        {{end}}
+                    {{template "common/customLogo" .}}
                     <h1 class="site-title">
                         <a href="/" rel="home">{{ "blogname"| getOption }}</a>
                     </h1>

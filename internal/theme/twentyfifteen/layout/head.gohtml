@@ -58,18 +58,6 @@
     <meta name="generator" content="WordPress 6.0.2" />
     <style>.recentcomments a{display:inline !important;padding:0 !important;margin:0 !important;}</style>
 
-    {{if .customBackground}}
-        {{.customBackground|unescaped}}
-    {{end}}
-    {{if .customHeader}}
-        {{.customHeader|unescaped}}
-    {{end}}
-
-    {{if .siteIcon}}
-        {{.siteIcon|unescaped}}
-    {{end}}
-    {{if .customCss}}
-        {{.customCss|unescaped}}
-    {{end}}
+    {{template "common/head" .}}
 
 {{end}}

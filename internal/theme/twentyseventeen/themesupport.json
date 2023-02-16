@@ -1,0 +1,134 @@
+{
+  "core-block-patterns": true,
+  "widgets-block-editor": true,
+  "automatic-feed-links": true,
+  "title-tag": true,
+  "custom-line-height": true,
+  "post-thumbnails": true,
+  "menus": true,
+  "html5": [
+    "comment-form",
+    "comment-list",
+    "gallery",
+    "caption",
+    "script",
+    "style",
+    "navigation-widgets"
+  ],
+  "post-formats": [
+    "aside",
+    "image",
+    "video",
+    "quote",
+    "link",
+    "gallery",
+    "audio"
+  ],
+  "custom-logo": {
+    "width": 250,
+    "height": 250,
+    "flex-width": true,
+    "flex-height": false,
+    "header-text": "",
+    "unlink-homepage-logo": false
+  },
+  "customize-selective-refresh-widgets": true,
+  "editor-style": true,
+  "editor-styles": true,
+  "wp-block-styles": true,
+  "responsive-embeds": true,
+  "starter-content": {
+    "widgets": {
+      "sidebar-1": [
+        "text_business_info",
+        "search",
+        "text_about"
+      ],
+      "sidebar-2": [
+        "text_business_info"
+      ],
+      "sidebar-3": [
+        "text_about",
+        "search"
+      ]
+    },
+    "posts": {
+      "0": "home",
+      "about": {
+        "thumbnail": "{{image-sandwich}}"
+      },
+      "contact": {
+        "thumbnail": "{{image-espresso}}"
+      },
+      "blog": {
+        "thumbnail": "{{image-coffee}}"
+      },
+      "homepage-section": {
+        "thumbnail": "{{image-espresso}}"
+      }
+    },
+    "attachments": {
+      "image-espresso": {
+        "post_title": "浓缩咖啡",
+        "file": "assets\/images\/espresso.jpg"
+      },
+      "image-sandwich": {
+        "post_title": "三明治",
+        "file": "assets\/images\/sandwich.jpg"
+      },
+      "image-coffee": {
+        "post_title": "咖啡",
+        "file": "assets\/images\/coffee.jpg"
+      }
+    },
+    "options": {
+      "show_on_front": "page",
+      "page_on_front": "{{home}}",
+      "page_for_posts": "{{blog}}"
+    },
+    "theme_mods": {
+      "panel_1": "{{homepage-section}}",
+      "panel_2": "{{about}}",
+      "panel_3": "{{blog}}",
+      "panel_4": "{{contact}}"
+    },
+    "nav_menus": {
+      "top": {
+        "name": "顶部菜单",
+        "items": [
+          "link_home",
+          "page_about",
+          "page_blog",
+          "page_contact"
+        ]
+      },
+      "social": {
+        "name": "社交网络链接菜单",
+        "items": [
+          "link_yelp",
+          "link_facebook",
+          "link_twitter",
+          "link_instagram",
+          "link_email"
+        ]
+      }
+    }
+  },
+  "custom-header": {
+    "default-image": "http:\/\/wp.test\/wp-content\/themes\/twentyseventeen\/assets\/images\/header.jpg",
+    "random-default": false,
+    "width": 2000,
+    "height": 1200,
+    "flex-height": true,
+    "flex-width": false,
+    "default-text-color": "",
+    "header-text": true,
+    "uploads": true,
+    "wp-head-callback": "twentyseventeen_header_style",
+    "admin-head-callback": "",
+    "admin-preview-callback": "",
+    "video": true,
+    "video-active-callback": "is_front_page"
+  },
+  "widgets": true
+}

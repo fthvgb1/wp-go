@@ -3,6 +3,7 @@ package common
 import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper/maps"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/fthvgb1/wp-go/safety"
@@ -17,7 +18,10 @@ func (h *Handle) CalCustomLogo() (r string) {
 	}
 	id := uint64(mods.CustomLogo)
 	if id < 1 {
-		return
+		id = str.ToInteger[uint64](wpconfig.Options.Value("site_logo"), 0)
+		if id < 1 {
+			return
+		}
 	}
 	logo, err := cache.GetPostById(h.C, id)
 	if err != nil || logo.AttachmentMetadata.File == "" {
