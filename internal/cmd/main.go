@@ -11,7 +11,6 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/plugins"
 	"github.com/fthvgb1/wp-go/internal/theme"
-	"github.com/fthvgb1/wp-go/internal/theme/common"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/fthvgb1/wp-go/model"
 	"log"
@@ -107,7 +106,7 @@ func reload() {
 	logs.ErrPrintln(err, "获取网站设置WpOption失败")
 	err = wpconfig.InitTerms()
 	wpconfig.FlushModes()
-	common.Reload()
+	theme.Reload()
 	logs.ErrPrintln(err, "获取WpTerms表失败")
 	if middleWareReloadFn != nil {
 		middleWareReloadFn()

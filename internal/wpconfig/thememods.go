@@ -114,6 +114,7 @@ func GetThemeMods(theme string) (r ThemeMods, err error) {
 		return
 	}
 	r.setThemeColorScheme(theme)
+	r.setThemeSupport(theme)
 	themeModes.Store(theme, r)
 	return
 }

@@ -1,5 +1,5 @@
 package common
 
 func Reload() {
-	backgroud.Flush()
+	backgroud.Store("default")
 }

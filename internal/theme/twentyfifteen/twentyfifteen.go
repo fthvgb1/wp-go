@@ -12,12 +12,13 @@ import (
 
 const ThemeName = "twentyfifteen"
 
-type indexHandle struct {
+type handle struct {
 	*common.IndexHandle
+	*common.DetailHandle
 }
 
-func newIndexHandle(iHandle *common.IndexHandle) *indexHandle {
-	return &indexHandle{iHandle}
+func newHandle(iHandle *common.IndexHandle, dHandle *common.DetailHandle) *handle {
+	return &handle{iHandle, dHandle}
 }
 
 type detailHandle struct {
@@ -31,19 +32,22 @@ func newDetailHandle(dHandle *common.DetailHandle) *detailHandle {
 func Hook(h *common.Handle) {
 	h.WidgetAreaData()
 	h.GetPassword()
+	handle := newHandle(common.NewIndexHandle(h), common.NewDetailHandle(h))
 	if h.Scene == constraints.Detail {
-		newDetailHandle(common.NewDetailHandle(h)).Detail()
+		handle.Detail()
 		return
 	}
-	newIndexHandle(common.NewIndexHandle(h)).Index()
+	handle.Index()
 }
 
-func (i *indexHandle) Index() {
-	i.Indexs()
+func (h *handle) Index() {
+	h.CustomHeader()
+	h.Indexs()
 }
 
-func (d *detailHandle) Detail() {
-	d.Details()
+func (h *handle) Detail() {
+	h.CustomHeader()
+	h.Details()
 }
 
 func getHeaderImage(c *gin.Context) (r models.PostThumbnail) {

@@ -14,6 +14,11 @@ func InitTheme() {
 	common.AddThemeSupport(twentyfifteen.ThemeName, twentyfifteen.ThemeSupport())
 }
 
+func Reload() {
+	twentyfifteen.Reload()
+	common.Reload()
+}
+
 func GetTemplateName() string {
 	tmlp := config.GetConfig().Theme
 	if tmlp == "" {
