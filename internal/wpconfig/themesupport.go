@@ -1,11 +1,11 @@
 package wpconfig
 
 type ThemeSupport struct {
-	CoreBlockPatterns                bool `json:"core-block-patterns"`
-	WidgetsBlockEditor               bool `json:"widgets-block-editor"`
-	AutomaticFeedLinks               bool `json:"automatic-feed-links"`
-	TitleTag                         bool
-	CustomLineHeight                 bool                    `json:"title-tag"`
+	CoreBlockPatterns                bool                    `json:"core-block-patterns"`
+	WidgetsBlockEditor               bool                    `json:"widgets-block-editor"`
+	AutomaticFeedLinks               bool                    `json:"automatic-feed-links"`
+	TitleTag                         bool                    `json:"title-tag"`
+	CustomLineHeight                 bool                    `json:"custom-line-height"`
 	PostThumbnails                   bool                    `json:"post-thumbnails"`
 	Menus                            bool                    `json:"menus"`
 	HTML5                            []string                `json:"html5"`
