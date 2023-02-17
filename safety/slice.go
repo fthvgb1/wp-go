@@ -3,7 +3,7 @@ package safety
 import "sync"
 
 type Slice[T any] struct {
-	Var[[]T]
+	*Var[[]T]
 	mu sync.Mutex
 }
 

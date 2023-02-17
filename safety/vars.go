@@ -10,8 +10,8 @@ type Var[T any] struct {
 	p   unsafe.Pointer
 }
 
-func NewVar[T any](val T) Var[T] {
-	return Var[T]{val: val, p: unsafe.Pointer(&val)}
+func NewVar[T any](val T) *Var[T] {
+	return &Var[T]{val: val, p: unsafe.Pointer(&val)}
 }
 
 func (r *Var[T]) Load() T {

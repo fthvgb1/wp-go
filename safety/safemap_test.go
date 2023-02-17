@@ -16,7 +16,7 @@ func TestMap_Load(t *testing.T) {
 	m.Store(1, 1)
 	type testCase[K comparable, V any] struct {
 		name      string
-		m         Map[K, V]
+		m         *Map[K, V]
 		args      args[K]
 		wantValue V
 		wantOk    bool

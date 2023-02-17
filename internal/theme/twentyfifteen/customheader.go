@@ -2,7 +2,8 @@ package twentyfifteen
 
 import (
 	str "github.com/fthvgb1/wp-go/helper/strings"
-	"github.com/fthvgb1/wp-go/safety"
+	"github.com/fthvgb1/wp-go/internal/cmd/reload"
+	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 )
 
 var style = `<style type="text/css" id="twentyfifteen-header-css">`
@@ -79,11 +80,7 @@ var imgStyle = `.site-header {
 			}
 		}`
 
-var header = safety.NewVar("default")
-
-func Reload() {
-	header.Store("default")
-}
+var header = reload.Vars(constraints.Defaults)
 
 func (h *handle) CalCustomHeader() (r string, rand bool) {
 	img, rand := h.IndexHandle.GetCustomHeader()
@@ -112,7 +109,7 @@ func (h *handle) CalCustomHeader() (r string, rand bool) {
 
 func (h *handle) CustomHeader() {
 	headers := header.Load()
-	if headers == "default" {
+	if headers == constraints.Defaults {
 		headerss, rand := h.CalCustomHeader()
 		headers = headerss
 		if !rand {

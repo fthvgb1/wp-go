@@ -3,6 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
+	"github.com/fthvgb1/wp-go/internal/cmd/cachemanager"
+	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/cmd/route"
 	"github.com/fthvgb1/wp-go/internal/mail"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
@@ -25,7 +27,6 @@ import (
 
 var confPath string
 var address string
-var middleWareReloadFn func()
 var intReg = regexp.MustCompile(`^\d`)
 
 func init() {
@@ -76,8 +77,7 @@ func cronClearCache() {
 	for {
 		select {
 		case <-t.C:
-			cache.ClearCache()
-			plugins.ClearDigestCache()
+			cachemanager.ClearExpired()
 		}
 	}
 }
@@ -89,12 +89,11 @@ func flushCache() {
 			logs.ErrPrintln(err, "发邮件失败")
 		}
 	}()
-	cache.FlushCache()
-	plugins.FlushCache()
+	cachemanager.Flush()
 	log.Println("all cache flushed")
 }
 
-func reload() {
+func reloads() {
 	defer func() {
 		if r := recover(); r != nil {
 			log.Println(r)
@@ -105,12 +104,8 @@ func reload() {
 	err = wpconfig.InitOptions()
 	logs.ErrPrintln(err, "获取网站设置WpOption失败")
 	err = wpconfig.InitTerms()
-	wpconfig.FlushModes()
-	theme.Reload()
 	logs.ErrPrintln(err, "获取WpTerms表失败")
-	if middleWareReloadFn != nil {
-		middleWareReloadFn()
-	}
+	reload.Reload()
 	flushCache()
 	log.Println("reload complete")
 }
@@ -121,7 +116,7 @@ func signalNotify() {
 	for {
 		switch <-c {
 		case syscall.SIGUSR1:
-			go reload()
+			go reloads()
 		case syscall.SIGUSR2:
 			go flushCache()
 		}
@@ -130,9 +125,8 @@ func signalNotify() {
 
 func main() {
 	go signalNotify()
-	Gin, reloadFn := route.SetupRouter()
+	Gin := route.SetupRouter()
 	c := config.GetConfig()
-	middleWareReloadFn = reloadFn
 	if c.Ssl.Key != "" && c.Ssl.Cert != "" {
 		err := Gin.RunTLS(address, c.Ssl.Cert, c.Ssl.Key)
 		if err != nil {

@@ -1,35 +1,33 @@
 package middleware
 
 import (
+	"github.com/fthvgb1/wp-go/helper/maps"
+	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/pkg/config"
-	"github.com/fthvgb1/wp-go/safety"
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
 )
 
-func ValidateServerNames() (func(ctx *gin.Context), func()) {
-	var serverName safety.Map[string, struct{}]
-	fn := func() {
+func ValidateServerNames() func(ctx *gin.Context) {
+	sites := reload.VarsBy(func() map[string]struct{} {
 		r := config.GetConfig().TrustServerNames
+		m := map[string]struct{}{}
 		if len(r) > 0 {
 			for _, name := range r {
-				serverName.Store(name, struct{}{})
+				m[name] = struct{}{}
 			}
-		} else {
-			serverName.Flush()
 		}
+		return m
+	})
 
-	}
-	fn()
 	return func(c *gin.Context) {
-		if serverName.Len() > 0 {
-			if _, ok := serverName.Load(strings.Split(c.Request.Host, ":")[0]); !ok {
-				c.Status(http.StatusForbidden)
-				c.Abort()
-				return
-			}
+		m := sites.Load()
+		if len(m) > 0 && !maps.IsExists(m, strings.Split(c.Request.Host, ":")[0]) {
+			c.Status(http.StatusForbidden)
+			c.Abort()
+			return
 		}
 		c.Next()
-	}, fn
+	}
 }

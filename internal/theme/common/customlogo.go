@@ -4,12 +4,13 @@ import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper/maps"
 	str "github.com/fthvgb1/wp-go/helper/strings"
+	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
+	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
-	"github.com/fthvgb1/wp-go/safety"
 )
 
-var logo = safety.NewVar("default")
+var logo = reload.Vars(constraints.Defaults)
 
 func (h *Handle) CalCustomLogo() (r string) {
 	mods, err := wpconfig.GetThemeMods(h.Theme)
@@ -50,7 +51,7 @@ func (h *Handle) CalCustomLogo() (r string) {
 
 func (h *Handle) CustomLogo() {
 	s := logo.Load()
-	if s == "default" {
+	if s == constraints.Defaults {
 		s = h.CalCustomLogo()
 		logo.Store(s)
 	}

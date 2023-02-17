@@ -3,12 +3,13 @@ package common
 import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper/html"
+	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
+	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
-	"github.com/fthvgb1/wp-go/safety"
 )
 
-var css = safety.NewVar("default")
+var css = reload.Vars(constraints.Defaults)
 
 func (h *Handle) CalCustomCss() (r string) {
 	mods, err := wpconfig.GetThemeMods(h.Theme)
@@ -25,7 +26,7 @@ func (h *Handle) CalCustomCss() (r string) {
 
 func (h *Handle) CustomCss() {
 	cs := css.Load()
-	if cs == "default" {
+	if cs == constraints.Defaults {
 		cs = h.CalCustomCss()
 		css.Store(cs)
 	}

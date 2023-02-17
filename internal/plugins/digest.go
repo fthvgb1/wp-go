@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/fthvgb1/wp-go/cache"
+	"github.com/fthvgb1/wp-go/internal/cmd/cachemanager"
 	"github.com/fthvgb1/wp-go/internal/pkg/config"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/plugin/digest"
@@ -12,18 +13,9 @@ import (
 )
 
 var digestCache *cache.MapCache[uint64, string]
-var ctx context.Context
 
 func InitDigestCache() {
-	ctx = context.Background()
-	digestCache = cache.NewMemoryMapCacheByFn[uint64](digestRaw, config.GetConfig().CacheTime.DigestCacheTime)
-}
-
-func ClearDigestCache() {
-	digestCache.ClearExpired(ctx)
-}
-func FlushCache() {
-	digestCache.Flush(ctx)
+	digestCache = cachemanager.MapCacheBy[uint64](digestRaw, config.GetConfig().CacheTime.DigestCacheTime)
 }
 
 func digestRaw(arg ...any) (string, error) {

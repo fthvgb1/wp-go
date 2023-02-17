@@ -8,7 +8,7 @@ import (
 )
 
 type MemoryMapCache[K comparable, V any] struct {
-	safety.Map[K, mapVal[V]]
+	*safety.Map[K, mapVal[V]]
 }
 
 func NewMemoryMapCacheByFn[K comparable, V any](fn func(...any) (V, error), expireTime time.Duration) *MapCache[K, V] {

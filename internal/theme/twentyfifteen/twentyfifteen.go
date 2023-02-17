@@ -37,10 +37,12 @@ func Hook(h *common.Handle) {
 
 func (h *handle) Index() {
 	h.CustomHeader()
+	h.CustomBackGround()
 	h.Indexs()
 }
 
 func (h *handle) Detail() {
 	h.CustomHeader()
+	h.CustomBackGround()
 	h.Details()
 }

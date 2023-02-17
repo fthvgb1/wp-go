@@ -39,6 +39,12 @@ func TestVar_Load(t *testing.T) {
 			}
 		})
 	}
+	r := NewVar("ff")
+	fmt.Println(r.Load())
+	q := r
+	fmt.Println(q.Load())
+	q.Store("xx")
+	fmt.Println(r.Load(), q.Load())
 }
 
 func TestVar_Delete(t *testing.T) {

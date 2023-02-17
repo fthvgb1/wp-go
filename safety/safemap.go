@@ -58,8 +58,8 @@ type Map[K comparable, V any] struct {
 	expunged unsafe.Pointer
 }
 
-func NewMap[K comparable, V any]() Map[K, V] {
-	return Map[K, V]{
+func NewMap[K comparable, V any]() *Map[K, V] {
+	return &Map[K, V]{
 		expunged: unsafe.Pointer(new(any)),
 	}
 }

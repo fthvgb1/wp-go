@@ -10,7 +10,7 @@ import (
 )
 
 type VarCache[T any] struct {
-	v safety.Var[vars[T]]
+	v *safety.Var[vars[T]]
 }
 
 type vars[T any] struct {

@@ -119,7 +119,6 @@ func (i *IndexHandle) Render() {
 	if i.Templ == "" {
 		i.Templ = fmt.Sprintf("%s/posts/index.gohtml", i.Theme)
 	}
-	i.CustomBackGround()
 	i.C.HTML(i.Code, i.Templ, i.GinH)
 }
 

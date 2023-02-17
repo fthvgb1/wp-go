@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
+	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
+	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
-	"github.com/fthvgb1/wp-go/safety"
 	"strings"
 )
 
-var icon = safety.NewVar("default")
+var icon = reload.Vars(constraints.Defaults)
 var sizes = []string{"site_icon-270", "site_icon-32", "site_icon-192", "site_icon-180"}
 
 func (h *Handle) CalSiteIcon() (r string) {
@@ -44,7 +45,7 @@ func (h *Handle) CalSiteIcon() (r string) {
 
 func (h *Handle) SiteIcon() {
 	s := icon.Load()
-	if s == "default" {
+	if s == constraints.Defaults {
 		s = h.CalSiteIcon()
 		icon.Store(s)
 	}

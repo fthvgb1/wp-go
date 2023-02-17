@@ -13,4 +13,6 @@ const (
 	Error404
 	ParamError
 	InternalErr
+
+	Defaults = "default"
 )

@@ -105,7 +105,6 @@ func (d *DetailHandle) Render() {
 	if d.Templ == "" {
 		d.Templ = fmt.Sprintf("%s/posts/detail.gohtml", d.Theme)
 	}
-	d.CustomBackGround()
 	d.C.HTML(d.Code, d.Templ, d.GinH)
 }
 

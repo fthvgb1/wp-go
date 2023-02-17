@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper/maps"
+	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/phphelper"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/safety"
@@ -103,11 +104,13 @@ func Thumbnail(metadata models.WpAttachmentMetadata, Type, host string, except .
 	return
 }
 
-var themeModes = safety.Map[string, ThemeMod]{}
-
-func FlushModes() {
-	themeModes.Flush()
-}
+var themeModes = func() *safety.Map[string, ThemeMod] {
+	m := safety.NewMap[string, ThemeMod]()
+	reload.Push(func() {
+		m.Flush()
+	})
+	return m
+}()
 
 func GetThemeMods(theme string) (r ThemeMod, err error) {
 	r, ok := themeModes.Load(theme)

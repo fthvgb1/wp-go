@@ -60,4 +60,8 @@
 
     {{template "common/head" .}}
 
+    {{if .customBackground}}
+        {{.customBackground|unescaped}}
+    {{end}}
+
 {{end}}

@@ -2,6 +2,7 @@ package route
 
 import (
 	"github.com/fthvgb1/wp-go/internal/actions"
+	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/middleware"
 	"github.com/fthvgb1/wp-go/internal/pkg/config"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
@@ -16,7 +17,7 @@ import (
 	"net/http"
 )
 
-func SetupRouter() (*gin.Engine, func()) {
+func SetupRouter() *gin.Engine {
 	// Disable Console Color
 	// gin.DisableConsoleColor()
 	r := gin.New()
@@ -30,14 +31,12 @@ func SetupRouter() (*gin.Engine, func()) {
 
 	r.HTMLRender = theme.GetTemplate()
 	wpconfig.SetTemplateFs(theme.TemplateFs)
-
-	validServerName, reloadValidServerNameFn := middleware.ValidateServerNames()
-	fl, flReload := middleware.FlowLimit(c.MaxRequestSleepNum, c.MaxRequestNum, c.CacheTime.SleepTime)
+	siteFlowLimitMiddleware, siteFlow := middleware.FlowLimit(c.MaxRequestSleepNum, c.MaxRequestNum, c.CacheTime.SleepTime)
 	r.Use(
 		gin.Logger(),
-		validServerName,
+		middleware.ValidateServerNames(),
 		middleware.RecoverAndSendMail(gin.DefaultErrorWriter),
-		fl,
+		siteFlowLimitMiddleware,
 		middleware.SetStaticFileCache,
 	)
 	//gzip 因为一般会用nginx做反代时自动使用gzip,所以go这边本身可以不用
@@ -63,8 +62,7 @@ func SetupRouter() (*gin.Engine, func()) {
 	}
 	store := cookie.NewStore([]byte("secret"))
 	r.Use(sessions.Sessions("go-wp", store))
-	sl, slRload := middleware.SearchLimit(c.SingleIpSearchNum)
-	r.GET("/", sl, actions.ThemeHook(constraints.Home))
+	r.GET("/", middleware.SearchLimit(c.SingleIpSearchNum), actions.ThemeHook(constraints.Home))
 	r.GET("/page/:page", actions.ThemeHook(constraints.Home))
 	r.GET("/p/category/:category", actions.ThemeHook(constraints.Category))
 	r.GET("/p/category/:category/page/:page", actions.ThemeHook(constraints.Category))
@@ -79,16 +77,14 @@ func SetupRouter() (*gin.Engine, func()) {
 	r.GET("/p/:id/feed", actions.PostFeed)
 	r.GET("/feed", actions.Feed)
 	r.GET("/comments/feed", actions.CommentsFeed)
-	cfl, _ := middleware.FlowLimit(c.MaxRequestSleepNum, 5, c.CacheTime.SleepTime)
-	r.POST("/comment", cfl, actions.PostComment)
+	commentMiddleWare, _ := middleware.FlowLimit(c.MaxRequestSleepNum, 5, c.CacheTime.SleepTime)
+	r.POST("/comment", commentMiddleWare, actions.PostComment)
 	if c.Pprof != "" {
 		pprof.Register(r, c.Pprof)
 	}
-	fn := func() {
-		reloadValidServerNameFn()
+	reload.Push(func() {
 		c := config.GetConfig()
-		flReload(c.MaxRequestSleepNum, c.MaxRequestNum, c.CacheTime.SleepTime)
-		slRload(c.SingleIpSearchNum)
-	}
-	return r, fn
+		siteFlow(c.MaxRequestSleepNum, c.MaxRequestNum, c.CacheTime.SleepTime)
+	})
+	return r
 }

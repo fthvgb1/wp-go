@@ -5,6 +5,7 @@ import (
 	"github.com/fthvgb1/wp-go/cache"
 	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/helper/slice"
+	"github.com/fthvgb1/wp-go/internal/cmd/cachemanager"
 	"github.com/fthvgb1/wp-go/internal/pkg/config"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/dao"
@@ -54,17 +55,17 @@ func InitActionsCommonCache() {
 		fn:    dao.Archives,
 	}
 
-	searchPostIdsCache = cache.NewMemoryMapCacheByFn[string](dao.SearchPostIds, c.CacheTime.SearchPostCacheTime)
+	searchPostIdsCache = cachemanager.MapCacheBy[string](dao.SearchPostIds, c.CacheTime.SearchPostCacheTime)
 
-	postListIdsCache = cache.NewMemoryMapCacheByFn[string](dao.SearchPostIds, c.CacheTime.PostListCacheTime)
+	postListIdsCache = cachemanager.MapCacheBy[string](dao.SearchPostIds, c.CacheTime.PostListCacheTime)
 
-	monthPostsCache = cache.NewMemoryMapCacheByFn[string](dao.MonthPost, c.CacheTime.MonthPostCacheTime)
+	monthPostsCache = cachemanager.MapCacheBy[string](dao.MonthPost, c.CacheTime.MonthPostCacheTime)
 
-	postContextCache = cache.NewMemoryMapCacheByFn[uint64](dao.GetPostContext, c.CacheTime.ContextPostCacheTime)
+	postContextCache = cachemanager.MapCacheBy[uint64](dao.GetPostContext, c.CacheTime.ContextPostCacheTime)
 
-	postsCache = cache.NewMemoryMapCacheByBatchFn(dao.GetPostsByIds, c.CacheTime.PostDataCacheTime)
+	postsCache = cachemanager.MapBatchCacheBy(dao.GetPostsByIds, c.CacheTime.PostDataCacheTime)
 
-	postMetaCache = cache.NewMemoryMapCacheByBatchFn(dao.GetPostMetaByPostIds, c.CacheTime.PostDataCacheTime)
+	postMetaCache = cachemanager.MapBatchCacheBy(dao.GetPostMetaByPostIds, c.CacheTime.PostDataCacheTime)
 
 	categoryAndTagsCaches = cache.NewVarCache(dao.CategoriesAndTags, c.CacheTime.CategoryCacheTime)
 
@@ -72,61 +73,31 @@ func InitActionsCommonCache() {
 
 	recentCommentsCaches = cache.NewVarCache(dao.RecentComments, c.CacheTime.RecentCommentsCacheTime)
 
-	postCommentCaches = cache.NewMemoryMapCacheByFn[uint64](dao.PostComments, c.CacheTime.PostCommentsCacheTime)
+	postCommentCaches = cachemanager.MapCacheBy[uint64](dao.PostComments, c.CacheTime.PostCommentsCacheTime)
 
 	maxPostIdCache = cache.NewVarCache(dao.GetMaxPostId, c.CacheTime.MaxPostIdCacheTime)
 
-	usersCache = cache.NewMemoryMapCacheByFn[uint64](dao.GetUserById, c.CacheTime.UserInfoCacheTime)
+	usersCache = cachemanager.MapCacheBy[uint64](dao.GetUserById, c.CacheTime.UserInfoCacheTime)
 
-	usersNameCache = cache.NewMemoryMapCacheByFn[string](dao.GetUserByName, c.CacheTime.UserInfoCacheTime)
+	usersNameCache = cachemanager.MapCacheBy[string](dao.GetUserByName, c.CacheTime.UserInfoCacheTime)
 
-	commentsCache = cache.NewMemoryMapCacheByBatchFn(dao.GetCommentByIds, c.CacheTime.CommentsCacheTime)
+	commentsCache = cachemanager.MapBatchCacheBy(dao.GetCommentByIds, c.CacheTime.CommentsCacheTime)
 
 	allUsernameCache = cache.NewVarCache(dao.AllUsername, c.CacheTime.UserInfoCacheTime)
 
-	headerImagesCache = cache.NewMemoryMapCacheByFn[string](getHeaderImages, c.CacheTime.ThemeHeaderImagCacheTime)
+	headerImagesCache = cachemanager.MapCacheBy[string](getHeaderImages, c.CacheTime.ThemeHeaderImagCacheTime)
 
 	feedCache = cache.NewVarCache(feed, time.Hour)
 
-	postFeedCache = cache.NewMemoryMapCacheByFn[string](postFeed, time.Hour)
+	postFeedCache = cachemanager.MapCacheBy[string](postFeed, time.Hour)
 
 	commentsFeedCache = cache.NewVarCache(commentsFeed, time.Hour)
 
-	newCommentCache = cache.NewMemoryMapCacheByFn[string, string](nil, 15*time.Minute)
+	newCommentCache = cachemanager.MapCacheBy[string, string](nil, 15*time.Minute)
 
 	ctx = context.Background()
 
 	InitFeed()
-}
-
-func ClearCache() {
-	searchPostIdsCache.ClearExpired(ctx)
-	searchPostIdsCache.ClearExpired(ctx)
-	postsCache.ClearExpired(ctx)
-	postMetaCache.ClearExpired(ctx)
-	postListIdsCache.ClearExpired(ctx)
-	monthPostsCache.ClearExpired(ctx)
-	postContextCache.ClearExpired(ctx)
-	usersCache.ClearExpired(ctx)
-	commentsCache.ClearExpired(ctx)
-	usersNameCache.ClearExpired(ctx)
-	postFeedCache.ClearExpired(ctx)
-	newCommentCache.ClearExpired(ctx)
-	headerImagesCache.ClearExpired(ctx)
-}
-func FlushCache() {
-	searchPostIdsCache.Flush(ctx)
-	postsCache.Flush(ctx)
-	postMetaCache.Flush(ctx)
-	postListIdsCache.Flush(ctx)
-	monthPostsCache.Flush(ctx)
-	postContextCache.Flush(ctx)
-	usersCache.Flush(ctx)
-	commentsCache.Flush(ctx)
-	usersCache.Flush(ctx)
-	postFeedCache.Flush(ctx)
-	newCommentCache.Flush(ctx)
-	headerImagesCache.Flush(ctx)
 }
 
 func Archives(ctx context.Context) (r []models.PostArchive) {
