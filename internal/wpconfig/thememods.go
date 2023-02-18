@@ -19,20 +19,20 @@ func SetTemplateFs(fs embed.FS) {
 	templateFs = fs
 }
 
-type ThemeMod struct {
-	CustomCssPostId       int      `json:"custom_css_post_id,omitempty"`
-	NavMenuLocations      []string `json:"nav_menu_locations,omitempty"`
-	CustomLogo            int      `json:"custom_logo,omitempty"`
-	HeaderImage           string   `json:"header_image,omitempty"`
-	BackgroundImage       string   `json:"background_image,omitempty"`
-	BackgroundSize        string   `json:"background_size,omitempty"`
-	BackgroundRepeat      string   `json:"background_repeat,omitempty"`
-	BackgroundColor       string   `json:"background_color,omitempty"`
-	BackgroundPreset      string   `json:"background_preset"`
-	BackgroundPositionX   string   `json:"background_position_x,omitempty"`
-	BackgroundPositionY   string   `json:"background_position_y"`
-	BackgroundAttachment  string   `json:"background_attachment"`
-	ColorScheme           map[string]ColorScheme
+type ThemeMods struct {
+	CustomCssPostId       int       `json:"custom_css_post_id,omitempty"`
+	NavMenuLocations      []string  `json:"nav_menu_locations,omitempty"`
+	CustomLogo            int       `json:"custom_logo,omitempty"`
+	HeaderImage           string    `json:"header_image,omitempty"`
+	BackgroundImage       string    `json:"background_image,omitempty"`
+	BackgroundSize        string    `json:"background_size,omitempty"`
+	BackgroundRepeat      string    `json:"background_repeat,omitempty"`
+	BackgroundColor       string    `json:"background_color,omitempty"`
+	BackgroundPreset      string    `json:"background_preset"`
+	BackgroundPositionX   string    `json:"background_position_x,omitempty"`
+	BackgroundPositionY   string    `json:"background_position_y"`
+	BackgroundAttachment  string    `json:"background_attachment"`
+	ColorScheme           string    `json:"color_scheme"`
 	SidebarTextcolor      string    `json:"sidebar_textcolor,omitempty"`
 	HeaderBackgroundColor string    `json:"header_background_color,omitempty"`
 	HeaderTextcolor       string    `json:"header_textcolor,omitempty"`
@@ -104,29 +104,27 @@ func Thumbnail(metadata models.WpAttachmentMetadata, Type, host string, except .
 	return
 }
 
-var themeModes = func() *safety.Map[string, ThemeMod] {
-	m := safety.NewMap[string, ThemeMod]()
+var themeModes = func() *safety.Map[string, ThemeMods] {
+	m := safety.NewMap[string, ThemeMods]()
 	reload.Push(func() {
 		m.Flush()
 	})
 	return m
 }()
 
-func GetThemeMods(theme string) (r ThemeMod, err error) {
+func GetThemeMods(theme string) (r ThemeMods, err error) {
 	r, ok := themeModes.Load(theme)
 	if ok {
 		return
 	}
-
 	mods, ok := Options.Load(fmt.Sprintf("theme_mods_%s", theme))
 	if !ok || mods == "" {
 		return
 	}
-	r, err = phphelper.UnPHPSerialize[ThemeMod](mods)
+	r, err = phphelper.UnPHPSerialize[ThemeMods](mods)
 	if err != nil {
 		return
 	}
-	r.setThemeColorScheme(theme)
 	r.setThemeSupport(theme)
 	themeModes.Store(theme, r)
 	return
@@ -144,19 +142,7 @@ func IsCustomBackground(theme string) bool {
 	return false
 }
 
-func (m *ThemeMod) setThemeColorScheme(themeName string) {
-	bytes, err := templateFs.ReadFile(filepath.Join(themeName, "colorscheme.json"))
-	if err != nil {
-		return
-	}
-	var scheme map[string]ColorScheme
-	err = json.Unmarshal(bytes, &scheme)
-	if err != nil {
-		return
-	}
-	m.ColorScheme = scheme
-}
-func (m *ThemeMod) setThemeSupport(themeName string) {
+func (m *ThemeMods) setThemeSupport(themeName string) {
 	bytes, err := templateFs.ReadFile(filepath.Join(themeName, "themesupport.json"))
 	if err != nil {
 		return

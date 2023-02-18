@@ -29,7 +29,6 @@ func (h *Handle) bodyClass(class ...string) string {
 	if constraints.Ok != h.Stats {
 		return "error404"
 	}
-	mods, err := wpconfig.GetThemeMods(h.Theme)
 	switch h.Scene {
 	case constraints.Search:
 		s = "search-no-results"
@@ -50,22 +49,20 @@ func (h *Handle) bodyClass(class ...string) string {
 		s = fmt.Sprintf("category-%v category-%v", s, cate.Terms.TermId)
 	case constraints.Detail:
 		s = fmt.Sprintf("postid-%d", h.GinH["post"].(models.Posts).Id)
-		if len(mods.ThemeSupport.PostFormats) > 0 {
+		if len(h.ThemeMods.ThemeSupport.PostFormats) > 0 {
 			s = str.Join(s, " single-format-standard")
 		}
 	}
 	class = append(class, s)
 
-	if err == nil {
-		if wpconfig.IsCustomBackground(h.Theme) {
-			class = append(class, "custom-background")
-		}
-		if mods.CustomLogo > 0 {
-			class = append(class, "wp-custom-logo")
-		}
-		if mods.ThemeSupport.ResponsiveEmbeds {
-			class = append(class, "wp-embed-responsive")
-		}
+	if wpconfig.IsCustomBackground(h.Theme) {
+		class = append(class, "custom-background")
+	}
+	if h.ThemeMods.CustomLogo > 0 {
+		class = append(class, "wp-custom-logo")
+	}
+	if h.ThemeMods.ThemeSupport.ResponsiveEmbeds {
+		class = append(class, "wp-embed-responsive")
 	}
 
 	return str.Join(commonClass[h.Scene], strings.Join(class, " "))

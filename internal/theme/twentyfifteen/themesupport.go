@@ -30,4 +30,5 @@ type EditorGradientPresets struct {
 	Gradient string `json:"gradient"`
 }
 
-var themesupport = themeSupport{}
+var themesupport themeSupport
+var colorscheme map[string]ColorScheme

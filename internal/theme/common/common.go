@@ -11,33 +11,38 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
+	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
 type Handle struct {
-	C        *gin.Context
-	Theme    string
-	Session  sessions.Session
-	GinH     gin.H
-	Password string
-	Scene    int
-	Code     int
-	Stats    int
-	Templ    string
-	Class    []string
+	C         *gin.Context
+	Theme     string
+	Session   sessions.Session
+	GinH      gin.H
+	Password  string
+	Scene     int
+	Code      int
+	Stats     int
+	Templ     string
+	Class     []string
+	ThemeMods wpconfig.ThemeMods
 }
 
 func NewHandle(c *gin.Context, scene int, theme string) *Handle {
+	mods, err := wpconfig.GetThemeMods(theme)
+	logs.ErrPrintln(err, "获取mods失败")
 	return &Handle{
-		C:       c,
-		Theme:   theme,
-		Session: sessions.Default(c),
-		GinH:    gin.H{},
-		Scene:   scene,
-		Code:    http.StatusOK,
-		Stats:   constraints.Ok,
+		C:         c,
+		Theme:     theme,
+		Session:   sessions.Default(c),
+		GinH:      gin.H{},
+		Scene:     scene,
+		Code:      http.StatusOK,
+		Stats:     constraints.Ok,
+		ThemeMods: mods,
 	}
 }
 

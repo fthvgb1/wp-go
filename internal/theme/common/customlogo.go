@@ -13,11 +13,7 @@ import (
 var logo = reload.Vars(constraints.Defaults)
 
 func (h *Handle) CalCustomLogo() (r string) {
-	mods, err := wpconfig.GetThemeMods(h.Theme)
-	if err != nil {
-		return
-	}
-	id := uint64(mods.CustomLogo)
+	id := uint64(h.ThemeMods.CustomLogo)
 	if id < 1 {
 		id = str.ToInteger[uint64](wpconfig.Options.Value("site_logo"), 0)
 		if id < 1 {

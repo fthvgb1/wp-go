@@ -5,15 +5,10 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
-	"github.com/fthvgb1/wp-go/internal/wpconfig"
 )
 
 func (h *Handle) DisplayHeaderText() bool {
-	mods, err := wpconfig.GetThemeMods(h.Theme)
-	if err != nil {
-		return false
-	}
-	return mods.ThemeSupport.CustomHeader.HeaderText && "blank" != mods.HeaderTextcolor
+	return h.ThemeMods.ThemeSupport.CustomHeader.HeaderText && "blank" != h.ThemeMods.HeaderTextcolor
 }
 
 func (h *Handle) GetCustomHeader() (r models.PostThumbnail, isRand bool) {
