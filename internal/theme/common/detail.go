@@ -97,9 +97,10 @@ func (d *DetailHandle) Render() {
 	if d.CommentRender == nil {
 		d.CommentRender = plugins.CommentRender()
 	}
-	d.SiteIcon()
-	d.CustomLogo()
-	d.CustomCss()
+	d.CalBodyClass()
+	d.AutoCal("siteIcon", d.CalSiteIcon)
+	d.AutoCal("customLogo", d.CalCustomLogo)
+	d.AutoCal("customCss", d.CalCustomCss)
 	d.RenderComment()
 	d.CalBodyClass()
 	if d.Templ == "" {

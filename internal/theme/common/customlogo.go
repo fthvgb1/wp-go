@@ -4,13 +4,9 @@ import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper/maps"
 	str "github.com/fthvgb1/wp-go/helper/strings"
-	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
-	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 )
-
-var logo = reload.Vars(constraints.Defaults)
 
 func (h *Handle) CalCustomLogo() (r string) {
 	id := uint64(h.ThemeMods.CustomLogo)
@@ -43,13 +39,4 @@ func (h *Handle) CalCustomLogo() (r string) {
 	}, fmt.Sprintf(`<img wight="%v" height="%v"`, img.Width, img.Height)))
 	r = fmt.Sprintf(`<a href="%s" class="custom-logo-link" rel="home"%s>%s</a>`, "/", ` aria-current="page"`, r)
 	return
-}
-
-func (h *Handle) CustomLogo() {
-	s := logo.Load()
-	if s == constraints.Defaults {
-		s = h.CalCustomLogo()
-		logo.Store(s)
-	}
-	h.GinH["customLogo"] = s
 }

@@ -37,14 +37,6 @@ func newHandle(iHandle *common.IndexHandle, dHandle *common.DetailHandle) *handl
 	return &handle{iHandle, dHandle}
 }
 
-type detailHandle struct {
-	*common.DetailHandle
-}
-
-func newDetailHandle(dHandle *common.DetailHandle) *detailHandle {
-	return &detailHandle{DetailHandle: dHandle}
-}
-
 func Hook(h *common.Handle) {
 	h.WidgetAreaData()
 	h.GetPassword()
@@ -58,14 +50,14 @@ func Hook(h *common.Handle) {
 
 func (h *handle) Index() {
 	h.CustomHeader()
-	h.colorSchemeCss()
-	h.CustomBackGround()
+	h.IndexHandle.AutoCal("colorScheme", h.colorSchemeCss)
+	h.IndexHandle.AutoCal("customBackground", h.CalCustomBackGround)
 	h.Indexs()
 }
 
 func (h *handle) Detail() {
 	h.CustomHeader()
-	h.colorSchemeCss()
-	h.CustomBackGround()
+	h.IndexHandle.AutoCal("colorScheme", h.colorSchemeCss)
+	h.IndexHandle.AutoCal("customBackground", h.CalCustomBackGround)
 	h.Details()
 }

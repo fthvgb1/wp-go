@@ -6,6 +6,7 @@ import (
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
+	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/pkg/config"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
@@ -51,6 +52,15 @@ func (h *Handle) GetPassword() {
 	if pw != nil {
 		h.Password = pw.(string)
 	}
+}
+
+func (h *Handle) AutoCal(name string, fn func() string) {
+	v, ok := reload.GetStr(name)
+	if !ok {
+		v = fn()
+		reload.SetStr(name, v)
+	}
+	h.GinH[name] = v
 }
 
 func (i *IndexHandle) ExecListPagePlugin(m map[string]Plugin[models.Posts, *Handle], calls ...func(*models.Posts)) {

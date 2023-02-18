@@ -4,6 +4,15 @@ import "github.com/fthvgb1/wp-go/safety"
 
 var calls []func()
 
+var str = safety.NewMap[string, string]()
+
+func GetStr(name string) (string, bool) {
+	return str.Load(name)
+}
+func SetStr(name, val string) {
+	str.Store(name, val)
+}
+
 func Vars[T any](defaults T) *safety.Var[T] {
 	ss := safety.NewVar(defaults)
 	calls = append(calls, func() {
@@ -27,4 +36,5 @@ func Reload() {
 	for _, call := range calls {
 		call()
 	}
+	str.Flush()
 }

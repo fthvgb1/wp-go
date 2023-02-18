@@ -112,9 +112,9 @@ func (i *IndexHandle) Render() {
 		i.PageEle = plugins.TwentyFifteenPagination()
 	}
 	i.Pagination()
-	i.SiteIcon()
-	i.CustomLogo()
-	i.CustomCss()
+	i.AutoCal("siteIcon", i.CalSiteIcon)
+	i.AutoCal("customLogo", i.CalCustomLogo)
+	i.AutoCal("customCss", i.CalCustomCss)
 	i.CalBodyClass()
 	if i.Templ == "" {
 		i.Templ = fmt.Sprintf("%s/posts/index.gohtml", i.Theme)

@@ -5,8 +5,6 @@ import (
 	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/helper/maps"
 	str "github.com/fthvgb1/wp-go/helper/strings"
-	"github.com/fthvgb1/wp-go/internal/cmd/reload"
-	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 )
 
 var postx = map[string]string{
@@ -29,17 +27,6 @@ var repeat = map[string]string{
 	"repeat-y":  "repeat-y",
 	"repeat":    "repeat",
 	"no-repeat": "no-repeat",
-}
-
-var background = reload.Vars(constraints.Defaults)
-
-func (h *handle) CustomBackGround() {
-	b := background.Load()
-	if b == constraints.Defaults {
-		b = h.CalCustomBackGround()
-		background.Store(b)
-	}
-	h.IndexHandle.GinH["customBackground"] = b
 }
 
 func (h *handle) CalCustomBackGround() (r string) {

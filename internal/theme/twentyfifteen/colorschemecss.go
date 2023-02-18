@@ -3,24 +3,15 @@ package twentyfifteen
 import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper/slice"
-	"github.com/fthvgb1/wp-go/internal/cmd/reload"
-	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"strconv"
 	"strings"
 )
 
-var colorCss = reload.Vars("default")
-
-func (h *handle) colorSchemeCss() {
-	color := colorCss.Load()
-	if color == constraints.Defaults {
-		s := slice.Filter([]string{h.calColorSchemeCss(), h.calSidebarTextColorCss(), h.calHeaderBackgroundColorCss()}, func(s string) bool {
-			return s != ""
-		})
-		color = fmt.Sprintf(`<style id='%s-inline-css'%s>\n%s\n</style>\n`, "twentyfifteen-style", "", strings.Join(s, "\n"))
-		colorCss.Store(color)
-	}
-	h.IndexHandle.GinH["colorScheme"] = color
+func (h *handle) colorSchemeCss() string {
+	s := slice.Filter([]string{h.calColorSchemeCss(), h.calSidebarTextColorCss(), h.calHeaderBackgroundColorCss()}, func(s string) bool {
+		return s != ""
+	})
+	return fmt.Sprintf(`<style id='%s-inline-css'%s>\n%s\n</style>\n`, "twentyfifteen-style", "", strings.Join(s, "\n"))
 }
 func (h *handle) calColorSchemeCss() (r string) {
 	color := h.getColorScheme()
