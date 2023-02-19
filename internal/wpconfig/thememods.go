@@ -21,7 +21,7 @@ func SetTemplateFs(fs embed.FS) {
 
 type ThemeMods struct {
 	CustomCssPostId       int       `json:"custom_css_post_id,omitempty"`
-	NavMenuLocations      []string  `json:"nav_menu_locations,omitempty"`
+	NavMenuLocations      any       `json:"nav_menu_locations,omitempty"`
 	CustomLogo            int       `json:"custom_logo,omitempty"`
 	HeaderImage           string    `json:"header_image,omitempty"`
 	BackgroundImage       string    `json:"background_image,omitempty"`
