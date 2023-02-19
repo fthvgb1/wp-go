@@ -11,6 +11,9 @@ func (h *handle) colorSchemeCss() string {
 	s := slice.Filter([]string{h.calColorSchemeCss(), h.calSidebarTextColorCss(), h.calHeaderBackgroundColorCss()}, func(s string) bool {
 		return s != ""
 	})
+	if len(s) < 1 {
+		return ""
+	}
 	return fmt.Sprintf(`<style id='%s-inline-css'%s>\n%s\n</style>`, "twentyfifteen-style", "", strings.Join(s, "\n"))
 }
 func (h *handle) calColorSchemeCss() (r string) {
@@ -44,7 +47,7 @@ func (h *handle) calColorSchemeCss() (r string) {
 
 func (h *handle) calSidebarTextColorCss() (r string) {
 	colors := h.getColorScheme()
-	if h.IndexHandle.ThemeMods.SidebarTextcolor != "" && h.IndexHandle.ThemeMods.SidebarTextcolor == colors[4] {
+	if h.IndexHandle.ThemeMods.SidebarTextcolor == "" || h.IndexHandle.ThemeMods.SidebarTextcolor == colors[4] {
 		return
 	}
 	linkColorRgb := Hex2RgbUint8(h.IndexHandle.ThemeMods.SidebarTextcolor)
@@ -58,7 +61,7 @@ func (h *handle) calSidebarTextColorCss() (r string) {
 
 func (h *handle) calHeaderBackgroundColorCss() (r string) {
 	colors := h.getColorScheme()
-	if h.IndexHandle.ThemeMods.HeaderBackgroundColor != "" && h.IndexHandle.ThemeMods.HeaderBackgroundColor == colors[1] {
+	if h.IndexHandle.ThemeMods.HeaderBackgroundColor == "" || h.IndexHandle.ThemeMods.HeaderBackgroundColor == colors[1] {
 		return
 	}
 	r = fmt.Sprintf(headerBackgroundColorCssTemplate, h.IndexHandle.ThemeMods.HeaderBackgroundColor, h.IndexHandle.ThemeMods.HeaderBackgroundColor)
