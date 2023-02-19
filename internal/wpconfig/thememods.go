@@ -20,24 +20,24 @@ func SetTemplateFs(fs embed.FS) {
 }
 
 type ThemeMods struct {
-	CustomCssPostId       int       `json:"custom_css_post_id,omitempty"`
-	NavMenuLocations      any       `json:"nav_menu_locations,omitempty"`
-	CustomLogo            int       `json:"custom_logo,omitempty"`
-	HeaderImage           string    `json:"header_image,omitempty"`
-	BackgroundImage       string    `json:"background_image,omitempty"`
-	BackgroundSize        string    `json:"background_size,omitempty"`
-	BackgroundRepeat      string    `json:"background_repeat,omitempty"`
-	BackgroundColor       string    `json:"background_color,omitempty"`
-	BackgroundPreset      string    `json:"background_preset"`
-	BackgroundPositionX   string    `json:"background_position_x,omitempty"`
-	BackgroundPositionY   string    `json:"background_position_y"`
-	BackgroundAttachment  string    `json:"background_attachment"`
-	ColorScheme           string    `json:"color_scheme"`
-	SidebarTextcolor      string    `json:"sidebar_textcolor,omitempty"`
-	HeaderBackgroundColor string    `json:"header_background_color,omitempty"`
-	HeaderTextcolor       string    `json:"header_textcolor,omitempty"`
-	HeaderImagData        ImageData `json:"header_image_data,omitempty"`
-	SidebarsWidgets       Sidebars  `json:"sidebars_widgets,omitempty"`
+	CustomCssPostId       int            `json:"custom_css_post_id,omitempty"`
+	NavMenuLocations      map[string]int `json:"nav_menu_locations,omitempty"`
+	CustomLogo            int            `json:"custom_logo,omitempty"`
+	HeaderImage           string         `json:"header_image,omitempty"`
+	BackgroundImage       string         `json:"background_image,omitempty"`
+	BackgroundSize        string         `json:"background_size,omitempty"`
+	BackgroundRepeat      string         `json:"background_repeat,omitempty"`
+	BackgroundColor       string         `json:"background_color,omitempty"`
+	BackgroundPreset      string         `json:"background_preset"`
+	BackgroundPositionX   string         `json:"background_position_x,omitempty"`
+	BackgroundPositionY   string         `json:"background_position_y"`
+	BackgroundAttachment  string         `json:"background_attachment"`
+	ColorScheme           string         `json:"color_scheme"`
+	SidebarTextcolor      string         `json:"sidebar_textcolor,omitempty"`
+	HeaderBackgroundColor string         `json:"header_background_color,omitempty"`
+	HeaderTextcolor       string         `json:"header_textcolor,omitempty"`
+	HeaderImagData        ImageData      `json:"header_image_data,omitempty"`
+	SidebarsWidgets       Sidebars       `json:"sidebars_widgets,omitempty"`
 	ThemeSupport          ThemeSupport
 }
 
@@ -121,10 +121,8 @@ func GetThemeMods(theme string) (r ThemeMods, err error) {
 	if !ok || mods == "" {
 		return
 	}
+	//这里在的err可以不用处理，因为php的默认值和有设置过的类型可能不一样，直接按有设置的类型处理就行
 	r, err = phphelper.UnPHPSerialize[ThemeMods](mods)
-	if err != nil {
-		return
-	}
 	r.setThemeSupport(theme)
 	themeModes.Store(theme, r)
 	return
