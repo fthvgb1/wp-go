@@ -1,11 +1,8 @@
 {{ define "layout/base"}}
     <!DOCTYPE html>
     <html lang="{{getLang}}" class="no-js">
-    <head>
-        {{template "layout/head" .}}
-        {{block "head" .}}
-        {{end}}
-    </head>
+    {{template "layout/head" .}}
+
     <body class="{{.bodyClass}}">
     {{template "svg"}}
     <div id="page" class="hfeed site">

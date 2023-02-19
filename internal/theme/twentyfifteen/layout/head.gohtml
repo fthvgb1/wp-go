@@ -1,4 +1,5 @@
 {{define "layout/head"}}
+    <head>
     <meta charset="{{"blog_charset"| getOption}}">
     <meta name="viewport" content="width=device-width">
     <link rel="profile" href="https://gmpg.org/xfn/11">
@@ -44,6 +45,9 @@
     <link rel='stylesheet' id='twentyfifteen-fonts-css'  href='/wp-includes/css/googleapicss.css' media='all' />
     <link rel='stylesheet' id='genericons-css'  href='/wp-content/themes/twentyfifteen/genericons/genericons.css?ver=20201208' media='all' />
     <link rel='stylesheet' id='twentyfifteen-style-css'  href='/wp-content/themes/twentyfifteen/style.css?ver=20201208' media='all' />
+    {{if .colorScheme}}
+        {{.colorScheme|unescaped}}
+    {{end}}
     <link rel='stylesheet' id='twentyfifteen-block-style-css'  href='/wp-content/themes/twentyfifteen/css/blocks.css?ver=20220524' media='all' />
     <!--[if lt IE 9]>
     <link rel='stylesheet' id='twentyfifteen-ie-css'  href='/wp-content/themes/twentyfifteen/css/ie.css?ver=20170916' media='all' />
@@ -58,14 +62,12 @@
     <meta name="generator" content="WordPress 6.0.2" />
     <style>.recentcomments a{display:inline !important;padding:0 !important;margin:0 !important;}</style>
 
-    {{template "common/head" .}}
-
     {{if .customBackground}}
         {{.customBackground|unescaped}}
     {{end}}
 
-    {{if .colorScheme}}
-        {{.colorScheme|unescaped}}
+    {{template "common/head" .}}
+    {{block "head" .}}
     {{end}}
-
+    </head>
 {{end}}

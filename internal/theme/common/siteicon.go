@@ -30,7 +30,7 @@ func (h *Handle) CalSiteIcon() (r string) {
 		case "site_icon-270":
 			return fmt.Sprintf(`<meta name="msapplication-TileImage" content="/wp-content/uploads/%s/%s" />`, m, s.File), true
 		case "site_icon-180":
-			return fmt.Sprintf(`<link rel="apple-touch-icon" href="/wp-content/uploads/%s/%s" />"`, m, s.File), true
+			return fmt.Sprintf(`<link rel="apple-touch-icon" href="/wp-content/uploads/%s/%s" />`, m, s.File), true
 		default:
 			ss := strings.Replace(t, "site_icon-", "", 1)
 			return fmt.Sprintf(`<link rel="icon" href="/wp-content/uploads/%s/%s" sizes="%sx%s" />`, m, s.File, ss, ss), true

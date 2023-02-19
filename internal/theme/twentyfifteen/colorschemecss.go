@@ -11,7 +11,7 @@ func (h *handle) colorSchemeCss() string {
 	s := slice.Filter([]string{h.calColorSchemeCss(), h.calSidebarTextColorCss(), h.calHeaderBackgroundColorCss()}, func(s string) bool {
 		return s != ""
 	})
-	return fmt.Sprintf(`<style id='%s-inline-css'%s>\n%s\n</style>\n`, "twentyfifteen-style", "", strings.Join(s, "\n"))
+	return fmt.Sprintf(`<style id='%s-inline-css'%s>\n%s\n</style>`, "twentyfifteen-style", "", strings.Join(s, "\n"))
 }
 func (h *handle) calColorSchemeCss() (r string) {
 	color := h.getColorScheme()
