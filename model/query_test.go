@@ -105,7 +105,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	InitDB(NewSqlxQuery(db))
+	InitDB(NewSqlxQuery(db, NewUniversalDb(nil, nil)))
 }
 func TestFind(t *testing.T) {
 	type args struct {

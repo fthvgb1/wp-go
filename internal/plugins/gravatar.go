@@ -25,7 +25,7 @@ func Gravatar(email string, isTls bool) (u string) {
 	q := url.Values{}
 	q.Add("s", "112")
 	q.Add("d", "mm")
-	q.Add("r", strings.ToLower(wpconfig.Options.Value("avatar_rating")))
+	q.Add("r", strings.ToLower(wpconfig.GetOption("avatar_rating")))
 	u = fmt.Sprintf("%s?%s", u, q.Encode())
 	return
 }

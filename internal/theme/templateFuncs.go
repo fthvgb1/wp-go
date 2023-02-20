@@ -14,7 +14,7 @@ var comFn = template.FuncMap{
 		return t.Format("2006年 01月 02日")
 	},
 	"getOption": func(k string) string {
-		return wpconfig.Options.Value(k)
+		return wpconfig.GetOption(k)
 	},
 	"getLang": wpconfig.GetLang,
 }

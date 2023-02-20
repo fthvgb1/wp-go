@@ -89,15 +89,15 @@ func (i *IndexParams) getSearchKey() string {
 }
 
 func NewIndexParams(ctx *gin.Context) *IndexParams {
-	blogName := wpconfig.Options.Value("blogname")
-	size := str.ToInteger(wpconfig.Options.Value("posts_per_page"), 10)
+	blogName := wpconfig.GetOption("blogname")
+	size := str.ToInteger(wpconfig.GetOption("posts_per_page"), 10)
 	i := &IndexParams{
 		Ctx:            ctx,
 		Page:           1,
 		PageSize:       size,
 		PaginationStep: number.Max(1, config.GetConfig().PaginationStep),
 		TitleL:         blogName,
-		TitleR:         wpconfig.Options.Value("blogdescription"),
+		TitleR:         wpconfig.GetOption("blogdescription"),
 		Where: model.SqlBuilder{
 			{"post_type", "in", ""},
 			{"post_status", "in", ""},
@@ -106,7 +106,7 @@ func NewIndexParams(ctx *gin.Context) *IndexParams {
 		Join:       model.SqlBuilder{},
 		PostType:   []any{"post"},
 		PostStatus: []any{"publish"},
-		BlogName:   wpconfig.Options.Value("blogname"),
+		BlogName:   wpconfig.GetOption("blogname"),
 	}
 	i.ParseSearch = i.parseSearch
 	i.ParseArchive = i.parseArchive

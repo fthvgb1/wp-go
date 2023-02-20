@@ -11,7 +11,7 @@ import (
 func (h *Handle) CalCustomLogo() (r string) {
 	id := uint64(h.ThemeMods.CustomLogo)
 	if id < 1 {
-		id = str.ToInteger[uint64](wpconfig.Options.Value("site_logo"), 0)
+		id = str.ToInteger[uint64](wpconfig.GetOption("site_logo"), 0)
 		if id < 1 {
 			return
 		}
@@ -22,7 +22,7 @@ func (h *Handle) CalCustomLogo() (r string) {
 	}
 	siz := "full"
 	meta, _ := cache.GetPostMetaByPostId(h.C, id)
-	alt := maps.WithDefaultVal(meta, "_wp_attachment_image_alt", any(wpconfig.Options.Value("blogname")))
+	alt := maps.WithDefaultVal(meta, "_wp_attachment_image_alt", any(wpconfig.GetOption("blogname")))
 	desc := alt.(string)
 	imgx := map[string]string{
 		"class":    "custom-logo",

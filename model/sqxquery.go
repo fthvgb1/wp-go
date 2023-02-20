@@ -4,32 +4,127 @@ import (
 	"context"
 	"fmt"
 	"github.com/jmoiron/sqlx"
-	"log"
-	"os"
 	"strconv"
 	"strings"
 )
 
 type SqlxQuery struct {
 	sqlx *sqlx.DB
+	UniversalDb
 }
 
-func NewSqlxQuery(sqlx *sqlx.DB) SqlxQuery {
-	return SqlxQuery{sqlx: sqlx}
+func NewSqlxQuery(sqlx *sqlx.DB, u UniversalDb) *SqlxQuery {
+
+	s := &SqlxQuery{sqlx: sqlx, UniversalDb: u}
+	if u.selects == nil {
+		s.UniversalDb.selects = s.Selects
+	}
+	if u.gets == nil {
+		s.UniversalDb.gets = s.Gets
+	}
+	return s
 }
 
-func (r SqlxQuery) Select(ctx context.Context, dest any, sql string, params ...any) error {
-	if os.Getenv("SHOW_SQL") == "true" {
-		go log.Println(FormatSql(sql, params...))
+func SetSelect(db *SqlxQuery, fn func(context.Context, any, string, ...any) error) {
+	db.selects = fn
+}
+func SetGet(db *SqlxQuery, fn func(context.Context, any, string, ...any) error) {
+	db.gets = fn
+}
+
+func (r *SqlxQuery) Selects(ctx context.Context, dest any, sql string, params ...any) error {
+	v := ctx.Value("toMap")
+	if v != nil {
+		vv, ok := v.(bool)
+		if ok && vv {
+			d, ok := dest.(*[]map[string]any)
+			if ok {
+				return r.toMapSlice(d, sql, params...)
+			}
+		}
 	}
 	return r.sqlx.Select(dest, sql, params...)
 }
 
-func (r SqlxQuery) Get(ctx context.Context, dest any, sql string, params ...any) error {
-	if os.Getenv("SHOW_SQL") == "true" {
-		go log.Println(FormatSql(sql, params...))
+func (r *SqlxQuery) Gets(ctx context.Context, dest any, sql string, params ...any) error {
+	v := ctx.Value("toMap")
+	if v != nil {
+		vv, ok := v.(bool)
+		if ok && vv {
+			d, ok := dest.(*map[string]any)
+			if ok {
+				return r.toMap(d, sql, params...)
+			}
+		}
 	}
 	return r.sqlx.Get(dest, sql, params...)
+}
+
+func (r *SqlxQuery) toMap(dest *map[string]any, sql string, params ...any) (err error) {
+	rows := r.sqlx.QueryRowx(sql, params...)
+	columns, err := rows.Columns()
+	if err != nil {
+		return err
+	}
+	columnLen := len(columns)
+	c := make([]any, columnLen)
+	for i, _ := range c {
+		var a any
+		c[i] = &a
+	}
+	err = rows.Scan(c...)
+	if err != nil {
+		return
+	}
+	v := make(map[string]any)
+	for i, data := range c {
+		s, ok := data.(*any)
+		if ok {
+			ss, ok := (*s).([]uint8)
+			if ok {
+				data = string(ss)
+			}
+		}
+		v[columns[i]] = data
+	}
+	*dest = v
+	return
+}
+
+func (r *SqlxQuery) toMapSlice(dest *[]map[string]any, sql string, params ...any) (err error) {
+	rows, err := r.sqlx.Query(sql, params...)
+	columns, err := rows.Columns()
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	columnLen := len(columns)
+	c := make([]any, columnLen)
+	for i, _ := range c {
+		var a any
+		c[i] = &a
+	}
+	var m []map[string]any
+	for rows.Next() {
+		err = rows.Scan(c...)
+		if err != nil {
+			return
+		}
+		v := make(map[string]any)
+		for i, data := range c {
+			s, ok := data.(*any)
+			if ok {
+				ss, ok := (*s).([]uint8)
+				if ok {
+					data = string(ss)
+				}
+			}
+			v[columns[i]] = data
+		}
+		m = append(m, v)
+	}
+	*dest = m
+	return
 }
 
 func FormatSql(sql string, params ...any) string {

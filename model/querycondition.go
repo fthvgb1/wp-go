@@ -3,7 +3,9 @@ package model
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
+	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	"strings"
 )
@@ -25,43 +27,10 @@ func FindFromDB[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r 
 }
 
 func finds[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r []T, err error) {
-	var rr T
-	w := ""
-	var args []any
-	if q.where != nil {
-		w, args, err = q.where.ParseWhere(&q.in)
-		if err != nil {
-			return r, err
-		}
+	sq, args, err := FindRawSql[T](q)
+	if err != nil {
+		return
 	}
-	h := ""
-	if q.having != nil {
-		hh, arg, err := q.having.ParseWhere(&q.in)
-		if err != nil {
-			return r, err
-		}
-		args = append(args, arg...)
-		h = strings.Replace(hh, " where", " having", 1)
-	}
-
-	j := q.join.parseJoin()
-	groupBy := ""
-	if q.group != "" {
-		g := strings.Builder{}
-		g.WriteString(" group by ")
-		g.WriteString(q.group)
-		groupBy = g.String()
-	}
-	tp := "select %s from %s %s %s %s %s %s %s"
-	l := ""
-
-	if q.limit > 0 {
-		l = fmt.Sprintf(" limit %d", q.limit)
-	}
-	if q.offset > 0 {
-		l = fmt.Sprintf(" %s offset %d", l, q.offset)
-	}
-	sq := fmt.Sprintf(tp, q.fields, rr.Table(), j, w, groupBy, h, q.order.parseOrderBy(), l)
 	err = db.Select(ctx, &r, sq, args...)
 	return
 }
@@ -184,5 +153,94 @@ func column[V Model, T any](db dbQuery, ctx context.Context, fn func(V) (T, bool
 		return nil, err
 	}
 	r = slice.FilterAndMap(res, fn)
+	return
+}
+
+func GetField[T Model, V any](ctx context.Context, field string, q *QueryCondition) (r V, err error) {
+	r, err = getField[T, V](globalBb, ctx, field, q)
+	return
+}
+func getField[T Model, V any](db dbQuery, ctx context.Context, field string, q *QueryCondition) (r V, err error) {
+	res, err := getToAnyMap[T](globalBb, ctx, q)
+	if err != nil {
+		return
+	}
+	r, ok := maps.GetStrAnyVal[V](res, field)
+	if !ok {
+		err = errors.New("not exists")
+	}
+	return
+}
+func GetFieldFromDB[T Model, V any](db dbQuery, ctx context.Context, field string, q *QueryCondition) (r V, err error) {
+	return getField[T, V](db, ctx, field, q)
+}
+
+func findToAnyMap[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r []map[string]any, err error) {
+	rawSql, in, err := FindRawSql[T](q)
+	if err != nil {
+		return nil, err
+	}
+	ctx = context.WithValue(ctx, "toMap", true)
+	err = db.Select(ctx, &r, rawSql, in...)
+	return
+}
+
+func FindToAnyMap[T Model](ctx context.Context, q *QueryCondition) (r []map[string]any, err error) {
+	r, err = findToAnyMap[T](globalBb, ctx, q)
+	return
+}
+
+func FindToAnyMapFromDB[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r []map[string]any, err error) {
+	r, err = findToAnyMap[T](db, ctx, q)
+	return
+}
+func getToAnyMap[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r map[string]any, err error) {
+	rawSql, in, err := FindRawSql[T](q)
+	if err != nil {
+		return nil, err
+	}
+	ctx = context.WithValue(ctx, "toMap", true)
+	err = db.Get(ctx, &r, rawSql, in...)
+	return
+}
+
+func FindRawSql[T Model](q *QueryCondition) (r string, args []any, err error) {
+	var rr T
+	w := ""
+	if q.where != nil {
+		w, args, err = q.where.ParseWhere(&q.in)
+		if err != nil {
+			return
+		}
+	}
+	h := ""
+	if q.having != nil {
+		hh, arg, er := q.having.ParseWhere(&q.in)
+		if er != nil {
+			err = er
+			return
+		}
+		args = append(args, arg...)
+		h = strings.Replace(hh, " where", " having", 1)
+	}
+
+	j := q.join.parseJoin()
+	groupBy := ""
+	if q.group != "" {
+		g := strings.Builder{}
+		g.WriteString(" group by ")
+		g.WriteString(q.group)
+		groupBy = g.String()
+	}
+	tp := "select %s from %s %s %s %s %s %s %s"
+	l := ""
+
+	if q.limit > 0 {
+		l = fmt.Sprintf(" limit %d", q.limit)
+	}
+	if q.offset > 0 {
+		l = fmt.Sprintf(" %s offset %d", l, q.offset)
+	}
+	r = fmt.Sprintf(tp, q.fields, rr.Table(), j, w, groupBy, h, q.order.parseOrderBy(), l)
 	return
 }

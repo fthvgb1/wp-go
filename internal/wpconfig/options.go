@@ -8,10 +8,15 @@ import (
 	"strings"
 )
 
-var Options safety.Map[string, string]
+var options safety.Map[string, string]
+
+var ctx context.Context
 
 func InitOptions() error {
-	ctx := context.Background()
+	options.Flush()
+	if ctx == nil {
+		ctx = context.Background()
+	}
 	ops, err := model.SimpleFind[models.Options](ctx, model.SqlBuilder{{"autoload", "yes"}}, "option_name, option_value")
 	if err != nil {
 		return err
@@ -22,14 +27,27 @@ func InitOptions() error {
 			return err
 		}
 	}
-	for _, options := range ops {
-		Options.Store(options.OptionName, options.OptionValue)
+	for _, option := range ops {
+		options.Store(option.OptionName, option.OptionValue)
 	}
 	return nil
 }
 
+func GetOption(k string) string {
+	v, ok := options.Load(k)
+	if ok {
+		return v
+	}
+	vv, err := model.GetField[models.Options, string](ctx, "option_value", model.Conditions(model.Where(model.SqlBuilder{{"option_name", k}})))
+	options.Store(k, vv)
+	if err != nil {
+		return ""
+	}
+	return vv
+}
+
 func GetLang() string {
-	s, ok := Options.Load("WPLANG")
+	s, ok := options.Load("WPLANG")
 	if !ok {
 		s = "zh-CN"
 	}

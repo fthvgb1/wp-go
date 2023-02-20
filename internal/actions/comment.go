@@ -50,7 +50,7 @@ func PostComment(c *gin.Context) {
 	}
 	defer req.Body.Close()
 	req.Header = c.Request.Header.Clone()
-	home, err := url.Parse(wpconfig.Options.Value("siteurl"))
+	home, err := url.Parse(wpconfig.GetOption("siteurl"))
 	if err != nil {
 		return
 	}
@@ -102,7 +102,7 @@ func PostComment(c *gin.Context) {
 				logs.ErrPrintln(err, "获取文档", id)
 				return
 			}
-			su := fmt.Sprintf("%s: %s[%s]发表了评论对文档[%v]的评论", wpconfig.Options.Value("siteurl"), author, m, post.PostTitle)
+			su := fmt.Sprintf("%s: %s[%s]发表了评论对文档[%v]的评论", wpconfig.GetOption("siteurl"), author, m, post.PostTitle)
 			err = mail.SendMail([]string{conf.Mail.User}, su, comment)
 			logs.ErrPrintln(err, "发送邮件", conf.Mail.User, su, comment)
 		}()

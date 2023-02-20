@@ -7,6 +7,7 @@ import (
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/phphelper"
+	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/safety"
 	"path/filepath"
@@ -19,6 +20,7 @@ func SetTemplateFs(fs embed.FS) {
 	templateFs = fs
 }
 
+// ThemeMods 只有部分公共的参数，其它的参数调用 GetThemeModsVal 函数获取
 type ThemeMods struct {
 	CustomCssPostId       int            `json:"custom_css_post_id,omitempty"`
 	NavMenuLocations      map[string]int `json:"nav_menu_locations,omitempty"`
@@ -36,6 +38,8 @@ type ThemeMods struct {
 	SidebarTextcolor      string         `json:"sidebar_textcolor,omitempty"`
 	HeaderBackgroundColor string         `json:"header_background_color,omitempty"`
 	HeaderTextcolor       string         `json:"header_textcolor,omitempty"`
+	HeaderVideo           int            `json:"header_video,omitempty"`
+	ExternalHeaderVideo   string         `json:"external_header_video,omitempty"`
 	HeaderImagData        ImageData      `json:"header_image_data,omitempty"`
 	SidebarsWidgets       Sidebars       `json:"sidebars_widgets,omitempty"`
 	ThemeSupport          ThemeSupport
@@ -106,23 +110,47 @@ func Thumbnail(metadata models.WpAttachmentMetadata, Type, host string, except .
 
 var themeModes = func() *safety.Map[string, ThemeMods] {
 	m := safety.NewMap[string, ThemeMods]()
+	themeModsRaw = safety.NewMap[string, map[string]any]()
 	reload.Push(func() {
 		m.Flush()
+		themeModsRaw.Flush()
 	})
+
 	return m
 }()
+
+var themeModsRaw *safety.Map[string, map[string]any]
+
+func GetThemeModsVal[T any](theme, k string, defaults T) (r T) {
+	m, ok := themeModsRaw.Load(theme)
+	if !ok {
+		r = defaults
+		return
+	}
+	r = maps.GetStrAnyValWithDefaults(m, k, defaults)
+	return
+}
 
 func GetThemeMods(theme string) (r ThemeMods, err error) {
 	r, ok := themeModes.Load(theme)
 	if ok {
 		return
 	}
-	mods, ok := Options.Load(fmt.Sprintf("theme_mods_%s", theme))
-	if !ok || mods == "" {
+	mods := GetOption(fmt.Sprintf("theme_mods_%s", theme))
+	if mods == "" {
 		return
 	}
+	m, err := phphelper.UnPHPSerializeToAnyMap(mods)
+	if err != nil {
+		return
+	}
+	themeModsRaw.Store(theme, m)
 	//这里在的err可以不用处理，因为php的默认值和有设置过的类型可能不一样，直接按有设置的类型处理就行
-	r, err = phphelper.UnPHPSerialize[ThemeMods](mods)
+	r, err = maps.StrAnyMapToStruct[ThemeMods](m)
+	if err != nil {
+		logs.ErrPrintln(err, "解析thememods错误")
+		err = nil
+	}
 	r.setThemeSupport(theme)
 	themeModes.Store(theme, r)
 	return

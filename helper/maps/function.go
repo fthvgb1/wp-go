@@ -2,14 +2,14 @@ package maps
 
 import "strings"
 
-func GetStrMapAnyVal[T any](m map[string]any, key string) (r T, o bool) {
+func GetStrAnyVal[T any](m map[string]any, key string) (r T, o bool) {
 	k := strings.Split(key, ".")
 	if len(k) > 1 {
 		val, ok := m[k[0]]
 		if ok {
 			vx, ok := val.(map[string]any)
 			if ok {
-				r, o = GetStrMapAnyVal[T](vx, strings.Join(k[1:], "."))
+				r, o = GetStrAnyVal[T](vx, strings.Join(k[1:], "."))
 			}
 		}
 	} else {
@@ -25,6 +25,17 @@ func GetStrMapAnyVal[T any](m map[string]any, key string) (r T, o bool) {
 	return
 }
 
+func GetStrAnyValWithDefaults[T any](m map[string]any, key string, defaults T) (r T) {
+	r = defaults
+	v, ok := GetStrAnyVal[T](m, key)
+	if !ok {
+		return
+	}
+	r = v
+	return
+}
+
+// GetStrMapAnyValWithAny 使用"." 分隔层级
 func GetStrMapAnyValWithAny(key string, v map[string]any) (r any, o bool) {
 	k := strings.Split(key, ".")
 	if len(k) > 1 {

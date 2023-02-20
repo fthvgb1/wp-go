@@ -34,22 +34,22 @@ func InitDb() (*sqlx.DB, error) {
 	return db, err
 }
 
-func QueryDb(db *sqlx.DB) model.UniversalDb {
-	query := model.NewUniversalDb(
+func QueryDb(db *sqlx.DB) *model.SqlxQuery {
+	query := model.NewSqlxQuery(db, model.NewUniversalDb(
+		nil,
+		nil))
 
-		func(ctx context.Context, a any, s string, args ...any) error {
-			if config.GetConfig().ShowQuerySql {
-				go log.Println(model.FormatSql(s, args...))
-			}
-			return db.Select(a, s, args...)
-		},
-
-		func(ctx context.Context, a any, s string, args ...any) error {
-			if config.GetConfig().ShowQuerySql {
-				go log.Println(model.FormatSql(s, args...))
-			}
-			return db.Get(a, s, args...)
-		})
-
+	model.SetSelect(query, func(ctx context.Context, a any, s string, args ...any) error {
+		if config.GetConfig().ShowQuerySql {
+			go log.Println(model.FormatSql(s, args...))
+		}
+		return query.Selects(ctx, a, s, args...)
+	})
+	model.SetGet(query, func(ctx context.Context, a any, s string, args ...any) error {
+		if config.GetConfig().ShowQuerySql {
+			go log.Println(model.FormatSql(s, args...))
+		}
+		return query.Gets(ctx, a, s, args...)
+	})
 	return query
 }

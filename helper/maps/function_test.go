@@ -54,12 +54,12 @@ func TestGetStrMapAnyVal(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotR, gotO := GetStrMapAnyVal[int](tt.args.v, tt.args.key)
+			gotR, gotO := GetStrAnyVal[int](tt.args.v, tt.args.key)
 			if !reflect.DeepEqual(gotR, tt.wantR) {
-				t.Errorf("GetStrMapAnyVal() gotR = %v, want %v", gotR, tt.wantR)
+				t.Errorf("GetStrAnyVal() gotR = %v, want %v", gotR, tt.wantR)
 			}
 			if gotO != tt.wantO {
-				t.Errorf("GetStrMapAnyVal() gotO = %v, want %v", gotO, tt.wantO)
+				t.Errorf("GetStrAnyVal() gotO = %v, want %v", gotO, tt.wantO)
 			}
 		})
 	}

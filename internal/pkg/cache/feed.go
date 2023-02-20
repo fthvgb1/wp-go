@@ -21,14 +21,14 @@ var templateRss rss2.Rss2
 
 func InitFeed() {
 	templateRss = rss2.Rss2{
-		Title:           wpconfig.Options.Value("blogname"),
-		AtomLink:        fmt.Sprintf("%s/feed", wpconfig.Options.Value("home")),
-		Link:            wpconfig.Options.Value("siteurl"),
-		Description:     wpconfig.Options.Value("blogdescription"),
+		Title:           wpconfig.GetOption("blogname"),
+		AtomLink:        fmt.Sprintf("%s/feed", wpconfig.GetOption("home")),
+		Link:            wpconfig.GetOption("siteurl"),
+		Description:     wpconfig.GetOption("blogdescription"),
 		Language:        wpconfig.GetLang(),
 		UpdatePeriod:    "hourly",
 		UpdateFrequency: 1,
-		Generator:       wpconfig.Options.Value("home"),
+		Generator:       wpconfig.GetOption("home"),
 	}
 }
 
@@ -54,7 +54,7 @@ func feed(arg ...any) (xml []string, err error) {
 	if err != nil {
 		return
 	}
-	site := wpconfig.Options.Value("siteurl")
+	site := wpconfig.GetOption("siteurl")
 	rs := templateRss
 	rs.LastBuildDate = time.Now().Format(timeFormat)
 	rs.Items = slice.Map(posts, func(t models.Posts) rss2.Item {
@@ -109,7 +109,7 @@ func postFeed(arg ...any) (x string, err error) {
 		return
 	}
 	rs := templateRss
-	site := wpconfig.Options.Value("siteurl")
+	site := wpconfig.GetOption("siteurl")
 
 	rs.Title = fmt.Sprintf("《%s》的评论", post.PostTitle)
 	rs.AtomLink = fmt.Sprintf("%s/p/%d/feed", site, post.Id)
@@ -153,9 +153,9 @@ func commentsFeed(args ...any) (r []string, err error) {
 	c := args[0].(*gin.Context)
 	commens := RecentComments(c, 10)
 	rs := templateRss
-	rs.Title = fmt.Sprintf("\"%s\"的评论", wpconfig.Options.Value("blogname"))
+	rs.Title = fmt.Sprintf("\"%s\"的评论", wpconfig.GetOption("blogname"))
 	rs.LastBuildDate = time.Now().Format(timeFormat)
-	site := wpconfig.Options.Value("siteurl")
+	site := wpconfig.GetOption("siteurl")
 	rs.AtomLink = fmt.Sprintf("%s/comments/feed", site)
 	com, err := GetCommentByIds(c, slice.Map(commens, func(t models.Comments) uint64 {
 		return t.CommentId

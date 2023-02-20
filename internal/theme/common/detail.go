@@ -24,7 +24,7 @@ func NewDetailHandle(handle *Handle) *DetailHandle {
 }
 
 func (d *DetailHandle) BuildDetailData() (err error) {
-	d.GinH["title"] = wpconfig.Options.Value("blogname")
+	d.GinH["title"] = wpconfig.GetOption("blogname")
 	err = d.CheckAndGetPost()
 	if err != nil {
 		return
@@ -51,7 +51,7 @@ func (d *DetailHandle) CheckAndGetPost() (err error) {
 	d.GinH["post"] = post
 	d.Post = post
 	d.GinH["user"] = cache.GetUserById(d.C, post.PostAuthor)
-	d.GinH["title"] = fmt.Sprintf("%s-%s", post.PostTitle, wpconfig.Options.Value("blogname"))
+	d.GinH["title"] = fmt.Sprintf("%s-%s", post.PostTitle, wpconfig.GetOption("blogname"))
 	return
 }
 
@@ -80,7 +80,7 @@ func (d *DetailHandle) RenderComment() {
 	}
 	d.GinH["showComment"] = ableComment
 	if len(d.Comments) > 0 && ableComment {
-		dep := str.ToInteger(wpconfig.Options.Value("thread_comments_depth"), 5)
+		dep := str.ToInteger(wpconfig.GetOption("thread_comments_depth"), 5)
 		d.GinH["comments"] = plugins.FormatComments(d.C, d.CommentRender, d.Comments, dep)
 	}
 }

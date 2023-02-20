@@ -273,3 +273,56 @@ func TestColumn(t *testing.T) {
 		})
 	}
 }
+
+func TestGetField(t *testing.T) {
+	type args struct {
+		ctx   context.Context
+		field string
+		q     *QueryCondition
+	}
+	type testCase[V any] struct {
+		name    string
+		args    args
+		wantR   V
+		wantErr bool
+	}
+	tests := []testCase[string]{
+		{
+			name: "t1",
+			args: args{
+				ctx:   ctx,
+				field: "option_value",
+				q:     Conditions(Where(SqlBuilder{{"option_name", "blogname"}})),
+			},
+			wantR:   "记录并见证自己的成长",
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotR, err := GetField[options, string](tt.args.ctx, tt.args.field, tt.args.q)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("GetField() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(gotR, tt.wantR) {
+				t.Errorf("GetField() gotR = %v, want %v", gotR, tt.wantR)
+			}
+		})
+	}
+}
+
+type options struct {
+	OptionId    uint64 `gorm:"column:option_id" db:"option_id" json:"option_id" form:"option_id"`
+	OptionName  string `gorm:"column:option_name" db:"option_name" json:"option_name" form:"option_name"`
+	OptionValue string `gorm:"column:option_value" db:"option_value" json:"option_value" form:"option_value"`
+	Autoload    string `gorm:"column:autoload" db:"autoload" json:"autoload" form:"autoload"`
+}
+
+func (w options) PrimaryKey() string {
+	return "option_id"
+}
+
+func (w options) Table() string {
+	return "wp_options"
+}
