@@ -26,7 +26,7 @@ func FindFromDB[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r 
 }
 
 func finds[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r []T, err error) {
-	sq, args, err := FindRawSql[T](q)
+	sq, args, err := BuildQuerySql[T](q)
 	if err != nil {
 		return
 	}
@@ -179,11 +179,11 @@ func GetFieldFromDB[T Model](db dbQuery, ctx context.Context, field string, q *Q
 }
 
 func getToStringMap[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r map[string]string, err error) {
-	rawSql, in, err := FindRawSql[T](q)
+	rawSql, in, err := BuildQuerySql[T](q)
 	if err != nil {
 		return nil, err
 	}
-	ctx = context.WithValue(ctx, "toMap", "string")
+	ctx = context.WithValue(ctx, "handle=>", "string")
 	err = db.Get(ctx, &r, rawSql, in...)
 	return
 }
@@ -193,11 +193,11 @@ func GetToStringMap[T Model](ctx context.Context, q *QueryCondition) (r map[stri
 }
 
 func findToStringMap[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r []map[string]string, err error) {
-	rawSql, in, err := FindRawSql[T](q)
+	rawSql, in, err := BuildQuerySql[T](q)
 	if err != nil {
 		return nil, err
 	}
-	ctx = context.WithValue(ctx, "toMap", "string")
+	ctx = context.WithValue(ctx, "handle=>", "string")
 	err = db.Select(ctx, &r, rawSql, in...)
 	return
 }
@@ -217,7 +217,7 @@ func GetToStringMapFromDB[T Model](db dbQuery, ctx context.Context, q *QueryCond
 	return
 }
 
-func FindRawSql[T Model](q *QueryCondition) (r string, args []any, err error) {
+func BuildQuerySql[T Model](q *QueryCondition) (r string, args []any, err error) {
 	var rr T
 	w := ""
 	if q.where != nil {
@@ -255,5 +255,19 @@ func FindRawSql[T Model](q *QueryCondition) (r string, args []any, err error) {
 		l = fmt.Sprintf(" %s offset %d", l, q.offset)
 	}
 	r = fmt.Sprintf(tp, q.fields, rr.Table(), j, w, groupBy, h, q.order.parseOrderBy(), l)
+	return
+}
+
+func findScanner[T Model](db dbQuery, ctx context.Context, fn func(T), q *QueryCondition) (err error) {
+	s, args, err := BuildQuerySql[T](q)
+	if err != nil {
+		return
+	}
+	ctx = context.WithValue(ctx, "handle=>", "scanner")
+	var v T
+	ctx = context.WithValue(ctx, "fn", func(v any) {
+		fn(*(v.(*T)))
+	})
+	err = db.Select(ctx, &v, s, args...)
 	return
 }

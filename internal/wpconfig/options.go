@@ -19,13 +19,13 @@ func InitOptions() error {
 	}
 	ops, err := model.FindToStringMap[models.Options](ctx, model.Conditions(
 		model.Where(model.SqlBuilder{{"autoload", "yes"}}),
-		model.Fields("option_name, option_value"),
+		model.Fields("option_name k, option_value v"),
 	))
 	if err != nil {
 		return err
 	}
 	for _, option := range ops {
-		options.Store(option["option_name"], option["option_value"])
+		options.Store(option["k"], option["v"])
 	}
 	return nil
 }

@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"github.com/fthvgb1/wp-go/helper/number"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	"reflect"
@@ -471,6 +472,36 @@ func Test_findToStringMap(t *testing.T) {
 			}
 			if !reflect.DeepEqual(gotR, tt.wantR) {
 				t.Errorf("findToStringMap() gotR = %v, want %v", gotR, tt.wantR)
+			}
+		})
+	}
+}
+
+func Test_findScanner(t *testing.T) {
+	type args[T Model] struct {
+		db  dbQuery
+		ctx context.Context
+		fn  func(T)
+		q   *QueryCondition
+	}
+	type testCase[T Model] struct {
+		name    string
+		args    args[T]
+		wantErr bool
+	}
+	tests := []testCase[options]{
+		{
+			name: "t1",
+			args: args[options]{glob, ctx, func(t options) {
+				fmt.Println(t)
+			}, Conditions(Where(SqlBuilder{{"option_id", "<", "10", "int"}}))},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := findScanner[options](tt.args.db, tt.args.ctx, tt.args.fn, tt.args.q); (err != nil) != tt.wantErr {
+				t.Errorf("findScanner() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
