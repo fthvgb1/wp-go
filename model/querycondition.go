@@ -279,3 +279,19 @@ func FindScannerFromDB[T Model](db dbQuery, ctx context.Context, fn func(T), q *
 func FindScanner[T Model](ctx context.Context, fn func(T), q *QueryCondition) error {
 	return findScanner[T](globalBb, ctx, fn, q)
 }
+
+func Gets[T Model](ctx context.Context, q *QueryCondition) (T, error) {
+	return gets[T](globalBb, ctx, q)
+}
+func GetsFromDB[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (T, error) {
+	return gets[T](db, ctx, q)
+}
+
+func gets[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r T, err error) {
+	s, args, err := BuildQuerySql[T](q)
+	if err != nil {
+		return
+	}
+	err = db.Get(ctx, &r, s, args...)
+	return
+}

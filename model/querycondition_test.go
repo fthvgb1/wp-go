@@ -531,3 +531,41 @@ func BenchmarkFindsXX(b *testing.B) {
 		}
 	}
 }
+
+func Test_gets(t *testing.T) {
+	type args struct {
+		db  dbQuery
+		ctx context.Context
+		q   *QueryCondition
+	}
+	type testCase[T Model] struct {
+		name    string
+		args    args
+		wantR   T
+		wantErr bool
+	}
+	tests := []testCase[options]{
+		{
+			name: "t1",
+			args: args{
+				db:  glob,
+				ctx: ctx,
+				q:   Conditions(Where(SqlBuilder{{"option_name", "blogname"}})),
+			},
+			wantR:   options{3, "blogname", "记录并见证自己的成长", "yes"},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotR, err := gets[options](tt.args.db, tt.args.ctx, tt.args.q)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("gets() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(gotR, tt.wantR) {
+				t.Errorf("gets() gotR = %v, want %v", gotR, tt.wantR)
+			}
+		})
+	}
+}
