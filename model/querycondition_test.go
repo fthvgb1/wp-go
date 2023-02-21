@@ -274,44 +274,6 @@ func TestColumn(t *testing.T) {
 	}
 }
 
-func TestGetField(t *testing.T) {
-	type args struct {
-		ctx   context.Context
-		field string
-		q     *QueryCondition
-	}
-	type testCase[V any] struct {
-		name    string
-		args    args
-		wantR   V
-		wantErr bool
-	}
-	tests := []testCase[string]{
-		{
-			name: "t1",
-			args: args{
-				ctx:   ctx,
-				field: "option_value",
-				q:     Conditions(Where(SqlBuilder{{"option_name", "blogname"}})),
-			},
-			wantR:   "记录并见证自己的成长",
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gotR, err := GetField[options, string](tt.args.ctx, tt.args.field, tt.args.q)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("GetField() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(gotR, tt.wantR) {
-				t.Errorf("GetField() gotR = %v, want %v", gotR, tt.wantR)
-			}
-		})
-	}
-}
-
 type options struct {
 	OptionId    uint64 `gorm:"column:option_id" db:"option_id" json:"option_id" form:"option_id"`
 	OptionName  string `gorm:"column:option_name" db:"option_name" json:"option_name" form:"option_name"`
@@ -325,4 +287,191 @@ func (w options) PrimaryKey() string {
 
 func (w options) Table() string {
 	return "wp_options"
+}
+
+func Test_getField(t *testing.T) {
+	{
+		name := "string"
+		db := glob
+		field := "option_value"
+		q := Conditions(Where(SqlBuilder{{"option_name", "blogname"}}))
+		wantR := "记录并见证自己的成长"
+		wantErr := false
+		t.Run(name, func(t *testing.T) {
+			gotR, err := getField[options](db, ctx, field, q)
+			if (err != nil) != wantErr {
+				t.Errorf("getField() error = %v, wantErr %v", err, wantErr)
+				return
+			}
+			if !reflect.DeepEqual(gotR, wantR) {
+				t.Errorf("getField() gotR = %v, want %v", gotR, wantR)
+			}
+		})
+	}
+
+	{
+		name := "t2"
+		db := glob
+		field := "option_id"
+		q := Conditions(Where(SqlBuilder{{"option_name", "blogname"}}))
+		wantR := "3"
+		wantErr := false
+		t.Run(name, func(t *testing.T) {
+			gotR, err := getField[options](db, ctx, field, q)
+			if (err != nil) != wantErr {
+				t.Errorf("getField() error = %v, wantErr %v", err, wantErr)
+				return
+			}
+			if !reflect.DeepEqual(gotR, wantR) {
+				t.Errorf("getField() gotR = %v, want %v", gotR, wantR)
+			}
+		})
+	}
+	{
+		name := "count(*)"
+		db := glob
+		field := "count(*)"
+		q := Conditions()
+		wantR := "386"
+		wantErr := false
+		t.Run(name, func(t *testing.T) {
+			gotR, err := getField[options](db, ctx, field, q)
+			if (err != nil) != wantErr {
+				t.Errorf("getField() error = %v, wantErr %v", err, wantErr)
+				return
+			}
+			if !reflect.DeepEqual(gotR, wantR) {
+				t.Errorf("getField() gotR = %v, want %v", gotR, wantR)
+			}
+		})
+	}
+}
+
+func Test_getToStringMap(t *testing.T) {
+	type args struct {
+		db  dbQuery
+		ctx context.Context
+		q   *QueryCondition
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantR   map[string]string
+		wantErr bool
+	}{
+		{
+			name: "t1",
+			args: args{
+				db:  glob,
+				ctx: ctx,
+				q:   Conditions(Where(SqlBuilder{{"option_name", "users_can_register"}})),
+			},
+			wantR: map[string]string{
+				"option_id":    "5",
+				"option_value": "0",
+				"option_name":  "users_can_register",
+				"autoload":     "yes",
+			},
+		},
+		{
+			name: "t2",
+			args: args{
+				db:  glob,
+				ctx: ctx,
+				q: Conditions(
+					Where(SqlBuilder{{"option_name", "users_can_register"}}),
+					Fields("option_id id"),
+				),
+			},
+			wantR: map[string]string{
+				"id": "5",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotR, err := getToStringMap[options](tt.args.db, tt.args.ctx, tt.args.q)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("getToStringMap() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(gotR, tt.wantR) {
+				t.Errorf("getToStringMap() gotR = %v, want %v", gotR, tt.wantR)
+			}
+		})
+	}
+}
+
+func Test_findToStringMap(t *testing.T) {
+	type args struct {
+		db  dbQuery
+		ctx context.Context
+		q   *QueryCondition
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantR   []map[string]string
+		wantErr bool
+	}{
+		{
+			name: "t1",
+			args: args{
+				db:  glob,
+				ctx: ctx,
+				q:   Conditions(Where(SqlBuilder{{"option_id", "5"}})),
+			},
+			wantR: []map[string]string{{
+				"option_id":    "5",
+				"option_value": "0",
+				"option_name":  "users_can_register",
+				"autoload":     "yes",
+			}},
+			wantErr: false,
+		},
+		{
+			name: "t2",
+			args: args{
+				db:  glob,
+				ctx: ctx,
+				q: Conditions(
+					Where(SqlBuilder{{"option_id", "5"}}),
+					Fields("option_value,option_name"),
+				),
+			},
+			wantR: []map[string]string{{
+				"option_value": "0",
+				"option_name":  "users_can_register",
+			}},
+			wantErr: false,
+		},
+		{
+			name: "t3",
+			args: args{
+				db:  glob,
+				ctx: ctx,
+				q: Conditions(
+					Where(SqlBuilder{{"option_id", "5"}}),
+					Fields("option_value v,option_name k"),
+				),
+			},
+			wantR: []map[string]string{{
+				"v": "0",
+				"k": "users_can_register",
+			}},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotR, err := findToStringMap[options](tt.args.db, tt.args.ctx, tt.args.q)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("findToStringMap() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(gotR, tt.wantR) {
+				t.Errorf("findToStringMap() gotR = %v, want %v", gotR, tt.wantR)
+			}
+		})
+	}
 }

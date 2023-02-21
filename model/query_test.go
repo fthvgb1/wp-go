@@ -100,12 +100,15 @@ func (p post) Table() string {
 
 var ctx = context.Background()
 
+var glob *SqlxQuery
+
 func init() {
 	db, err := sqlx.Open("mysql", "root:root@tcp(192.168.66.47:3306)/wordpress?charset=utf8mb4&parseTime=True&loc=Local")
 	if err != nil {
 		panic(err)
 	}
-	InitDB(NewSqlxQuery(db, NewUniversalDb(nil, nil)))
+	glob = NewSqlxQuery(db, NewUniversalDb(nil, nil))
+	InitDB(glob)
 }
 func TestFind(t *testing.T) {
 	type args struct {

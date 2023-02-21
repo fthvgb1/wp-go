@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	"strings"
 )
@@ -156,51 +155,65 @@ func column[V Model, T any](db dbQuery, ctx context.Context, fn func(V) (T, bool
 	return
 }
 
-func GetField[T Model, V any](ctx context.Context, field string, q *QueryCondition) (r V, err error) {
-	r, err = getField[T, V](globalBb, ctx, field, q)
+func GetField[T Model](ctx context.Context, field string, q *QueryCondition) (r string, err error) {
+	r, err = getField[T](globalBb, ctx, field, q)
 	return
 }
-func getField[T Model, V any](db dbQuery, ctx context.Context, field string, q *QueryCondition) (r V, err error) {
-	res, err := getToAnyMap[T](globalBb, ctx, q)
+func getField[T Model](db dbQuery, ctx context.Context, field string, q *QueryCondition) (r string, err error) {
+	if q.fields == "" || q.fields == "*" {
+		q.fields = field
+	}
+	res, err := getToStringMap[T](db, ctx, q)
 	if err != nil {
 		return
 	}
-	r, ok := maps.GetStrAnyVal[V](res, field)
+	f := strings.Split(field, " ")
+	r, ok := res[f[len(f)-1]]
 	if !ok {
 		err = errors.New("not exists")
 	}
 	return
 }
-func GetFieldFromDB[T Model, V any](db dbQuery, ctx context.Context, field string, q *QueryCondition) (r V, err error) {
-	return getField[T, V](db, ctx, field, q)
+func GetFieldFromDB[T Model](db dbQuery, ctx context.Context, field string, q *QueryCondition) (r string, err error) {
+	return getField[T](db, ctx, field, q)
 }
 
-func findToAnyMap[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r []map[string]any, err error) {
+func getToStringMap[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r map[string]string, err error) {
 	rawSql, in, err := FindRawSql[T](q)
 	if err != nil {
 		return nil, err
 	}
-	ctx = context.WithValue(ctx, "toMap", true)
+	ctx = context.WithValue(ctx, "toMap", "string")
+	err = db.Get(ctx, &r, rawSql, in...)
+	return
+}
+func GetToStringMap[T Model](ctx context.Context, q *QueryCondition) (r map[string]string, err error) {
+	r, err = getToStringMap[T](globalBb, ctx, q)
+	return
+}
+
+func findToStringMap[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r []map[string]string, err error) {
+	rawSql, in, err := FindRawSql[T](q)
+	if err != nil {
+		return nil, err
+	}
+	ctx = context.WithValue(ctx, "toMap", "string")
 	err = db.Select(ctx, &r, rawSql, in...)
 	return
 }
 
-func FindToAnyMap[T Model](ctx context.Context, q *QueryCondition) (r []map[string]any, err error) {
-	r, err = findToAnyMap[T](globalBb, ctx, q)
+func FindToStringMap[T Model](ctx context.Context, q *QueryCondition) (r []map[string]string, err error) {
+	r, err = findToStringMap[T](globalBb, ctx, q)
 	return
 }
 
-func FindToAnyMapFromDB[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r []map[string]any, err error) {
-	r, err = findToAnyMap[T](db, ctx, q)
+func FindToStringMapFromDB[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r []map[string]string, err error) {
+	r, err = findToStringMap[T](db, ctx, q)
 	return
 }
-func getToAnyMap[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r map[string]any, err error) {
-	rawSql, in, err := FindRawSql[T](q)
-	if err != nil {
-		return nil, err
-	}
-	ctx = context.WithValue(ctx, "toMap", true)
-	err = db.Get(ctx, &r, rawSql, in...)
+
+func GetToStringMapFromDB[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r map[string]string, err error) {
+	r, err = getToStringMap[T](db, ctx, q)
 	return
 }
 

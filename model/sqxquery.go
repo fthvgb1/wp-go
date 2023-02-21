@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"fmt"
+	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/jmoiron/sqlx"
 	"strconv"
 	"strings"
@@ -35,11 +36,11 @@ func SetGet(db *SqlxQuery, fn func(context.Context, any, string, ...any) error) 
 func (r *SqlxQuery) Selects(ctx context.Context, dest any, sql string, params ...any) error {
 	v := ctx.Value("toMap")
 	if v != nil {
-		vv, ok := v.(bool)
-		if ok && vv {
-			d, ok := dest.(*[]map[string]any)
-			if ok {
-				return r.toMapSlice(d, sql, params...)
+		vv, ok := v.(string)
+		if ok && vv != "" {
+			switch vv {
+			case "string":
+				return ToMapSlice(r.sqlx, dest.(*[]map[string]string), sql, params...)
 			}
 		}
 	}
@@ -49,81 +50,67 @@ func (r *SqlxQuery) Selects(ctx context.Context, dest any, sql string, params ..
 func (r *SqlxQuery) Gets(ctx context.Context, dest any, sql string, params ...any) error {
 	v := ctx.Value("toMap")
 	if v != nil {
-		vv, ok := v.(bool)
-		if ok && vv {
-			d, ok := dest.(*map[string]any)
-			if ok {
-				return r.toMap(d, sql, params...)
+		vv, ok := v.(string)
+		if ok && vv != "" {
+			switch vv {
+			case "string":
+				return GetToMap(r.sqlx, dest.(*map[string]string), sql, params...)
 			}
 		}
 	}
 	return r.sqlx.Get(dest, sql, params...)
 }
 
-func (r *SqlxQuery) toMap(dest *map[string]any, sql string, params ...any) (err error) {
-	rows := r.sqlx.QueryRowx(sql, params...)
-	columns, err := rows.Columns()
-	if err != nil {
-		return err
-	}
-	columnLen := len(columns)
-	c := make([]any, columnLen)
-	for i, _ := range c {
-		var a any
-		c[i] = &a
-	}
-	err = rows.Scan(c...)
-	if err != nil {
-		return
-	}
-	v := make(map[string]any)
-	for i, data := range c {
-		s, ok := data.(*any)
-		if ok {
-			ss, ok := (*s).([]uint8)
-			if ok {
-				data = string(ss)
-			}
-		}
-		v[columns[i]] = data
-	}
-	*dest = v
-	return
-}
-
-func (r *SqlxQuery) toMapSlice(dest *[]map[string]any, sql string, params ...any) (err error) {
-	rows, err := r.sqlx.Query(sql, params...)
+func ToMapSlice[V any](db *sqlx.DB, dest *[]map[string]V, sql string, params ...any) (err error) {
+	rows, err := db.Query(sql, params...)
 	columns, err := rows.Columns()
 	if err != nil {
 		return err
 	}
 	defer rows.Close()
 	columnLen := len(columns)
-	c := make([]any, columnLen)
+	c := make([]*V, columnLen)
 	for i, _ := range c {
-		var a any
+		var a V
 		c[i] = &a
 	}
-	var m []map[string]any
+	var m []map[string]V
 	for rows.Next() {
-		err = rows.Scan(c...)
+		err = rows.Scan(slice.ToAnySlice(c)...)
 		if err != nil {
 			return
 		}
-		v := make(map[string]any)
+		v := make(map[string]V)
 		for i, data := range c {
-			s, ok := data.(*any)
-			if ok {
-				ss, ok := (*s).([]uint8)
-				if ok {
-					data = string(ss)
-				}
-			}
-			v[columns[i]] = data
+			v[columns[i]] = *data
 		}
 		m = append(m, v)
 	}
 	*dest = m
+	return
+}
+
+func GetToMap[V any](db *sqlx.DB, dest *map[string]V, sql string, params ...any) (err error) {
+	rows := db.QueryRowx(sql, params...)
+	columns, err := rows.Columns()
+	if err != nil {
+		return err
+	}
+	columnLen := len(columns)
+	c := make([]*V, columnLen)
+	for i, _ := range c {
+		var a V
+		c[i] = &a
+	}
+	err = rows.Scan(slice.ToAnySlice(c)...)
+	if err != nil {
+		return
+	}
+	v := make(map[string]V)
+	for i, data := range c {
+		v[columns[i]] = *data
+	}
+	*dest = v
 	return
 }
 

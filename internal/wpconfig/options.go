@@ -17,18 +17,15 @@ func InitOptions() error {
 	if ctx == nil {
 		ctx = context.Background()
 	}
-	ops, err := model.SimpleFind[models.Options](ctx, model.SqlBuilder{{"autoload", "yes"}}, "option_name, option_value")
+	ops, err := model.FindToStringMap[models.Options](ctx, model.Conditions(
+		model.Where(model.SqlBuilder{{"autoload", "yes"}}),
+		model.Fields("option_name, option_value"),
+	))
 	if err != nil {
 		return err
 	}
-	if len(ops) == 0 {
-		ops, err = model.SimpleFind[models.Options](ctx, nil, "option_name, option_value")
-		if err != nil {
-			return err
-		}
-	}
 	for _, option := range ops {
-		options.Store(option.OptionName, option.OptionValue)
+		options.Store(option["option_name"], option["option_value"])
 	}
 	return nil
 }
@@ -38,7 +35,7 @@ func GetOption(k string) string {
 	if ok {
 		return v
 	}
-	vv, err := model.GetField[models.Options, string](ctx, "option_value", model.Conditions(model.Where(model.SqlBuilder{{"option_name", k}})))
+	vv, err := model.GetField[models.Options](ctx, "option_value", model.Conditions(model.Where(model.SqlBuilder{{"option_name", k}})))
 	options.Store(k, vv)
 	if err != nil {
 		return ""
