@@ -506,3 +506,28 @@ func Test_findScanner(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkScannerXX(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		err := findScanner[options](glob, ctx, func(t options) {
+			_ = t
+			//fmt.Println(t)
+		}, Conditions(Where(SqlBuilder{{"option_id", "<", "100", "int"}})))
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+func BenchmarkFindsXX(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		r, err := finds[options](glob, ctx, Conditions(Where(SqlBuilder{{"option_id", "<", "100", "int"}})))
+		if err != nil {
+			panic(err)
+		}
+		for _, o := range r {
+			_ = o
+			//fmt.Println(o)
+		}
+	}
+}
