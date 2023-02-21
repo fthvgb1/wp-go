@@ -100,24 +100,19 @@ func FindOneById[T Model, I constraints.Integer](ctx context.Context, id I) (T, 
 	return r, nil
 }
 
-func FirstOne[T Model](ctx context.Context, where ParseWhere, fields string, order SqlBuilder, in ...[]any) (T, error) {
-	var r T
-	var w string
-	var args []any
-	var err error
-	if where != nil {
-		w, args, err = where.ParseWhere(&in)
-		if err != nil {
-			return r, err
-		}
-	}
-	tp := "select %s from %s %s %s"
-	sq := fmt.Sprintf(tp, fields, r.Table(), w, order.parseOrderBy())
-	err = globalBb.Get(ctx, &r, sq, args...)
+func FirstOne[T Model](ctx context.Context, where ParseWhere, fields string, order SqlBuilder, in ...[]any) (r T, err error) {
+	s, args, err := BuildQuerySql[T](&QueryCondition{
+		where:  where,
+		fields: fields,
+		order:  order,
+		in:     in,
+		limit:  1,
+	})
 	if err != nil {
-		return r, err
+		return
 	}
-	return r, nil
+	err = globalBb.Get(ctx, &r, s, args...)
+	return
 }
 
 func LastOne[T Model](ctx context.Context, where ParseWhere, fields string, in ...[]any) (T, error) {
@@ -140,24 +135,16 @@ func LastOne[T Model](ctx context.Context, where ParseWhere, fields string, in .
 	return r, nil
 }
 
-func SimpleFind[T Model](ctx context.Context, where ParseWhere, fields string, in ...[]any) ([]T, error) {
-	var r []T
-	var rr T
-	var err error
-	var args []any
-	var w string
-	if where != nil {
-		w, args, err = where.ParseWhere(&in)
-		if err != nil {
-			return r, err
-		}
-	}
-	tp := "select %s from %s %s"
-	sq := fmt.Sprintf(tp, fields, rr.Table(), w)
-	err = globalBb.Select(ctx, &r, sq, args...)
+func SimpleFind[T Model](ctx context.Context, where ParseWhere, fields string, in ...[]any) (r []T, err error) {
+	s, args, err := BuildQuerySql[T](&QueryCondition{
+		where:  where,
+		fields: fields,
+		in:     in,
+	})
 	if err != nil {
-		return r, err
+		return
 	}
+	err = globalBb.Select(ctx, &r, s, args...)
 	return r, nil
 }
 
@@ -173,40 +160,21 @@ func Select[T Model](ctx context.Context, sql string, params ...any) ([]T, error
 }
 
 func Find[T Model](ctx context.Context, where ParseWhere, fields, group string, order SqlBuilder, join SqlBuilder, having SqlBuilder, limit int, in ...[]any) (r []T, err error) {
-	var rr T
-	w := ""
-	var args []any
-	if where != nil {
-		w, args, err = where.ParseWhere(&in)
-		if err != nil {
-			return r, err
-		}
+	q := QueryCondition{
+		where:  where,
+		fields: fields,
+		group:  group,
+		order:  order,
+		join:   join,
+		having: having,
+		limit:  limit,
+		in:     in,
 	}
-	h := ""
-	if having != nil {
-		hh, arg, err := having.ParseWhere(&in)
-		if err != nil {
-			return r, err
-		}
-		args = append(args, arg...)
-		h = strings.Replace(hh, " where", " having", 1)
+	s, args, err := BuildQuerySql[T](&q)
+	if err != nil {
+		return
 	}
-
-	j := join.parseJoin()
-	groupBy := ""
-	if group != "" {
-		g := strings.Builder{}
-		g.WriteString(" group by ")
-		g.WriteString(group)
-		groupBy = g.String()
-	}
-	tp := "select %s from %s %s %s %s %s %s %s"
-	l := ""
-	if limit > 0 {
-		l = fmt.Sprintf(" limit %d", limit)
-	}
-	sq := fmt.Sprintf(tp, fields, rr.Table(), j, w, groupBy, h, order.parseOrderBy(), l)
-	err = globalBb.Select(ctx, &r, sq, args...)
+	err = globalBb.Select(ctx, &r, s, args...)
 	return
 }
 
