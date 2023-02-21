@@ -271,3 +271,11 @@ func findScanner[T Model](db dbQuery, ctx context.Context, fn func(T), q *QueryC
 	err = db.Select(ctx, &v, s, args...)
 	return
 }
+
+func FindScannerFromDB[T Model](db dbQuery, ctx context.Context, fn func(T), q *QueryCondition) error {
+	return findScanner[T](db, ctx, fn, q)
+}
+
+func FindScanner[T Model](ctx context.Context, fn func(T), q *QueryCondition) error {
+	return findScanner[T](globalBb, ctx, fn, q)
+}
