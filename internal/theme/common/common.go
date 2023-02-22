@@ -1,17 +1,10 @@
 package common
 
 import (
-	"context"
-	"errors"
-	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
-	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/cmd/reload"
-	"github.com/fthvgb1/wp-go/internal/pkg/config"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
-	"github.com/fthvgb1/wp-go/internal/pkg/models"
-	"github.com/fthvgb1/wp-go/internal/plugins"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -30,6 +23,7 @@ type Handle struct {
 	Templ     string
 	Class     []string
 	ThemeMods wpconfig.ThemeMods
+	Plugins   []HandlePluginFn[*Handle]
 }
 
 func NewHandle(c *gin.Context, scene int, theme string) *Handle {
@@ -47,13 +41,6 @@ func NewHandle(c *gin.Context, scene int, theme string) *Handle {
 	}
 }
 
-func (h *Handle) GetPassword() {
-	pw := h.Session.Get("post_password")
-	if pw != nil {
-		h.Password = pw.(string)
-	}
-}
-
 func (h *Handle) AutoCal(name string, fn func() string) {
 	v, ok := reload.GetStr(name)
 	if !ok {
@@ -63,63 +50,30 @@ func (h *Handle) AutoCal(name string, fn func() string) {
 	h.GinH[name] = v
 }
 
-func (i *IndexHandle) ExecListPagePlugin(m map[string]Plugin[models.Posts, *Handle], calls ...func(*models.Posts)) {
-
-	pluginConf := config.GetConfig().ListPagePlugins
-
-	plugin := GetListPostPlugins(pluginConf, m)
-
-	i.GinH["posts"] = slice.Map(i.Posts, PluginFn[models.Posts, *Handle](plugin, i.Handle, Defaults(calls...)))
-
-}
-
-func ListPostPlugins() map[string]Plugin[models.Posts, *Handle] {
-	return maps.Copy(pluginFns)
-}
-
-func Defaults(call ...func(*models.Posts)) Fn[models.Posts] {
-	return func(posts models.Posts) models.Posts {
-		for _, fn := range call {
-			fn(&posts)
-		}
-		return posts
-	}
-}
-
 func Default[T any](t T) T {
 	return t
 }
 
-func ProjectTitle(t models.Posts) models.Posts {
-	if t.PostPassword != "" {
-		plugins.PasswordProjectTitle(&t)
+func (h *Handle) GetPassword() {
+	pw := h.Session.Get("post_password")
+	if pw != nil {
+		h.Password = pw.(string)
 	}
-	return t
 }
 
-func GetListPostPlugins(name []string, m map[string]Plugin[models.Posts, *Handle]) []Plugin[models.Posts, *Handle] {
-	return slice.FilterAndMap(name, func(t string) (Plugin[models.Posts, *Handle], bool) {
-		v, ok := m[t]
-		if ok {
-			return v, true
-		}
-		logs.ErrPrintln(errors.New(str.Join("插件", t, "不存在")), "")
-		return nil, false
-	})
+func (h *Handle) ExecHandlePlugin() {
+	if len(h.Plugins) > 0 {
+		HandlePlugin(h.Plugins, h)
+	}
 }
 
-func DigestsAndOthers(ctx context.Context, calls ...func(*models.Posts)) Fn[models.Posts] {
-	return func(post models.Posts) models.Posts {
-		if post.PostExcerpt != "" {
-			plugins.PostExcerpt(&post)
-		} else {
-			plugins.Digest(ctx, &post, config.GetConfig().DigestWordCount)
-		}
-		if len(calls) > 0 {
-			for _, call := range calls {
-				call(&post)
-			}
-		}
-		return post
-	}
+type HandleFn[T any] func(T)
+
+type HandlePluginFn[T any] func(HandleFn[T], T) HandleFn[T]
+
+// HandlePlugin 方便把功能写在其它包里
+func HandlePlugin[T any](fns []HandlePluginFn[T], h T) HandleFn[T] {
+	return slice.ReverseReduce(fns, func(t HandlePluginFn[T], r HandleFn[T]) HandleFn[T] {
+		return t(r, h)
+	}, func(t T) {})
 }

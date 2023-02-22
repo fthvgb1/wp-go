@@ -117,5 +117,6 @@ func (d *DetailHandle) Details() {
 		d.C.HTML(d.Code, d.Templ, d.GinH)
 		return
 	}
+	d.ExecHandlePlugin()
 	d.Render()
 }

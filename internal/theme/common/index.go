@@ -130,5 +130,6 @@ func (i *IndexHandle) Indexs() {
 		i.C.HTML(i.Code, i.Templ, i.GinH)
 		return
 	}
+	i.ExecHandlePlugin()
 	i.Render()
 }
