@@ -569,3 +569,67 @@ func Test_gets(t *testing.T) {
 		})
 	}
 }
+
+func Test_finds(t *testing.T) {
+	type args struct {
+		db  dbQuery
+		ctx context.Context
+		q   *QueryCondition
+	}
+	type testCase[T Model] struct {
+		name    string
+		args    args
+		wantR   []T
+		wantErr bool
+	}
+	var u user
+	tests := []testCase[options]{
+		{
+			name: "sub query",
+			args: args{db: glob, ctx: ctx, q: Conditions(
+				From("(select * from wp_options where option_id <100) a"),
+				Where(SqlBuilder{{"option_id", ">", "50", "int"}}),
+			)},
+			wantR: func() []options {
+				r, err := Select[options](ctx, "select * from (select * from wp_options where option_id <100) a where option_id>50")
+				if err != nil {
+					panic(err)
+				}
+				return r
+			}(),
+			wantErr: false,
+		},
+		{
+			name: "mixed query",
+			args: args{db: glob, ctx: ctx, q: Conditions(
+				From("(select * from wp_options where option_id <100) a"),
+				Where(SqlBuilder{
+					{"u.ID", "<", "50", "int"}}),
+				Join(SqlBuilder{
+					{"left join", user.Table(u) + " u", "a.option_id=u.ID"},
+				}),
+				Fields("u.user_login autoload,option_name,option_value"),
+			)},
+			wantR: func() []options {
+				r, err := Select[options](ctx, "select u.user_login autoload,option_name,option_value from (select * from wp_options where option_id <100) a  left join  wp_users u  on a.option_id=u.ID   where `u`.`ID`<50")
+				if err != nil {
+					panic(err)
+				}
+				return r
+			}(),
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotR, err := finds[options](tt.args.db, tt.args.ctx, tt.args.q)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("finds() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(gotR, tt.wantR) {
+				t.Errorf("finds() gotR = %v, want %v", gotR, tt.wantR)
+			}
+		})
+	}
+}

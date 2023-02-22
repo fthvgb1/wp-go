@@ -247,14 +247,17 @@ func BuildQuerySql[T Model](q *QueryCondition) (r string, args []any, err error)
 	}
 	tp := "select %s from %s %s %s %s %s %s %s"
 	l := ""
-
+	table := rr.Table()
+	if q.from != "" {
+		table = q.from
+	}
 	if q.limit > 0 {
 		l = fmt.Sprintf(" limit %d", q.limit)
 	}
 	if q.offset > 0 {
 		l = fmt.Sprintf(" %s offset %d", l, q.offset)
 	}
-	r = fmt.Sprintf(tp, q.fields, rr.Table(), j, w, groupBy, h, q.order.parseOrderBy(), l)
+	r = fmt.Sprintf(tp, q.fields, table, j, w, groupBy, h, q.order.parseOrderBy(), l)
 	return
 }
 
