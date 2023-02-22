@@ -2,6 +2,7 @@ package model
 
 type QueryCondition struct {
 	where  ParseWhere
+	from   string
 	fields string
 	group  string
 	order  SqlBuilder
@@ -34,6 +35,12 @@ func Where(where ParseWhere) Condition {
 func Fields(fields string) Condition {
 	return func(c *QueryCondition) {
 		c.fields = fields
+	}
+}
+
+func From(from string) Condition {
+	return func(c *QueryCondition) {
+		c.from = from
 	}
 }
 

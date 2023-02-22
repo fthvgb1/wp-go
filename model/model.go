@@ -5,13 +5,14 @@ import (
 )
 
 var _ ParseWhere = SqlBuilder{}
-var globalBb dbQuery
+var globalBb dbQuery[Model]
 
-func InitDB(db dbQuery) {
+func InitDB(db dbQuery[Model]) {
 	globalBb = db
 }
 
-type QueryFn func(context.Context, any, string, ...any) error
+type QuerySelect[T any] func(context.Context, string, ...any) ([]T, error)
+type QueryGet[T any] func(context.Context, string, ...any) (T, error)
 
 type Model interface {
 	PrimaryKey() string
@@ -22,9 +23,9 @@ type ParseWhere interface {
 	ParseWhere(*[][]any) (string, []any, error)
 }
 
-type dbQuery interface {
-	Select(context.Context, any, string, ...any) error
-	Get(context.Context, any, string, ...any) error
+type dbQuery[T any] interface {
+	Select(context.Context, string, ...any) ([]T, error)
+	Get(context.Context, string, ...any) (T, error)
 }
 
 type SqlBuilder [][]string

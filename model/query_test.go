@@ -2,517 +2,136 @@ package model
 
 import (
 	"context"
-	"database/sql"
-	"github.com/fthvgb1/wp-go/helper/number"
-	"github.com/fthvgb1/wp-go/helper/slice"
+	"github.com/fthvgb1/wp-go/safety"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"reflect"
+	"sync"
 	"testing"
-	"time"
 )
-
-type post struct {
-	Id                  uint64    `gorm:"column:ID" db:"ID" json:"ID" form:"ID"`
-	PostAuthor          uint64    `gorm:"column:post_author" db:"post_author" json:"post_author" form:"post_author"`
-	PostDate            time.Time `gorm:"column:post_date" db:"post_date" json:"post_date" form:"post_date"`
-	PostDateGmt         time.Time `gorm:"column:post_date_gmt" db:"post_date_gmt" json:"post_date_gmt" form:"post_date_gmt"`
-	PostContent         string    `gorm:"column:post_content" db:"post_content" json:"post_content" form:"post_content"`
-	PostTitle           string    `gorm:"column:post_title" db:"post_title" json:"post_title" form:"post_title"`
-	PostExcerpt         string    `gorm:"column:post_excerpt" db:"post_excerpt" json:"post_excerpt" form:"post_excerpt"`
-	PostStatus          string    `gorm:"column:post_status" db:"post_status" json:"post_status" form:"post_status"`
-	CommentStatus       string    `gorm:"column:comment_status" db:"comment_status" json:"comment_status" form:"comment_status"`
-	PingStatus          string    `gorm:"column:ping_status" db:"ping_status" json:"ping_status" form:"ping_status"`
-	PostPassword        string    `gorm:"column:post_password" db:"post_password" json:"post_password" form:"post_password"`
-	PostName            string    `gorm:"column:post_name" db:"post_name" json:"post_name" form:"post_name"`
-	ToPing              string    `gorm:"column:to_ping" db:"to_ping" json:"to_ping" form:"to_ping"`
-	Pinged              string    `gorm:"column:pinged" db:"pinged" json:"pinged" form:"pinged"`
-	PostModified        time.Time `gorm:"column:post_modified" db:"post_modified" json:"post_modified" form:"post_modified"`
-	PostModifiedGmt     time.Time `gorm:"column:post_modified_gmt" db:"post_modified_gmt" json:"post_modified_gmt" form:"post_modified_gmt"`
-	PostContentFiltered string    `gorm:"column:post_content_filtered" db:"post_content_filtered" json:"post_content_filtered" form:"post_content_filtered"`
-	PostParent          uint64    `gorm:"column:post_parent" db:"post_parent" json:"post_parent" form:"post_parent"`
-	Guid                string    `gorm:"column:guid" db:"guid" json:"guid" form:"guid"`
-	MenuOrder           int       `gorm:"column:menu_order" db:"menu_order" json:"menu_order" form:"menu_order"`
-	PostType            string    `gorm:"column:post_type" db:"post_type" json:"post_type" form:"post_type"`
-	PostMimeType        string    `gorm:"column:post_mime_type" db:"post_mime_type" json:"post_mime_type" form:"post_mime_type"`
-	CommentCount        int64     `gorm:"column:comment_count" db:"comment_count" json:"comment_count" form:"comment_count"`
-}
-
-type user struct {
-	Id                uint64    `gorm:"column:ID" db:"ID" json:"ID"`
-	UserLogin         string    `gorm:"column:user_login" db:"user_login" json:"user_login"`
-	UserPass          string    `gorm:"column:user_pass" db:"user_pass" json:"user_pass"`
-	UserNicename      string    `gorm:"column:user_nicename" db:"user_nicename" json:"user_nicename"`
-	UserEmail         string    `gorm:"column:user_email" db:"user_email" json:"user_email"`
-	UserUrl           string    `gorm:"column:user_url" db:"user_url" json:"user_url"`
-	UserRegistered    time.Time `gorm:"column:user_registered" db:"user_registered" json:"user_registered"`
-	UserActivationKey string    `gorm:"column:user_activation_key" db:"user_activation_key" json:"user_activation_key"`
-	UserStatus        int       `gorm:"column:user_status" db:"user_status" json:"user_status"`
-	DisplayName       string    `gorm:"column:display_name" db:"display_name" json:"display_name"`
-}
-
-type termTaxonomy struct {
-	TermTaxonomyId uint64 `gorm:"column:term_taxonomy_id" db:"term_taxonomy_id" json:"term_taxonomy_id" form:"term_taxonomy_id"`
-	TermId         uint64 `gorm:"column:term_id" db:"term_id" json:"term_id" form:"term_id"`
-	Taxonomy       string `gorm:"column:taxonomy" db:"taxonomy" json:"taxonomy" form:"taxonomy"`
-	Description    string `gorm:"column:description" db:"description" json:"description" form:"description"`
-	Parent         uint64 `gorm:"column:parent" db:"parent" json:"parent" form:"parent"`
-	Count          int64  `gorm:"column:count" db:"count" json:"count" form:"count"`
-}
-
-type terms struct {
-	TermId    uint64 `gorm:"column:term_id" db:"term_id" json:"term_id" form:"term_id"`
-	Name      string `gorm:"column:name" db:"name" json:"name" form:"name"`
-	Slug      string `gorm:"column:slug" db:"slug" json:"slug" form:"slug"`
-	TermGroup int64  `gorm:"column:term_group" db:"term_group" json:"term_group" form:"term_group"`
-}
-
-func (t terms) PrimaryKey() string {
-	return "term_id"
-}
-func (t terms) Table() string {
-	return "wp_terms"
-}
-
-func (w termTaxonomy) PrimaryKey() string {
-	return "term_taxonomy_id"
-}
-
-func (w termTaxonomy) Table() string {
-	return "wp_term_taxonomy"
-}
-
-func (u user) Table() string {
-	return "wp_users"
-}
-
-func (u user) PrimaryKey() string {
-	return "ID"
-}
-
-func (p post) PrimaryKey() string {
-	return "ID"
-}
-
-func (p post) Table() string {
-	return "wp_posts"
-}
 
 var ctx = context.Background()
 
-var glob *SqlxQuery
+var glob = safety.NewMap[string, dbQuery[Model]]()
+var dbMap = sync.Map{}
+
+var sq *sqlx.DB
+
+func anyDb[T Model]() *SqlxQuery[T] {
+	var a T
+	db, ok := dbMap.Load(a.Table())
+	if ok {
+		return db.(*SqlxQuery[T])
+	}
+	dbb := NewSqlxQuery[T](sq, UniversalDb[T]{nil, nil})
+	dbMap.Store(a.Table(), dbb)
+	return dbb
+}
 
 func init() {
 	db, err := sqlx.Open("mysql", "root:root@tcp(192.168.66.47:3306)/wordpress?charset=utf8mb4&parseTime=True&loc=Local")
 	if err != nil {
 		panic(err)
 	}
-	glob = NewSqlxQuery(db, NewUniversalDb(nil, nil))
-	InitDB(glob)
-}
-func TestFind(t *testing.T) {
-	type args struct {
-		where  ParseWhere
-		fields string
-		group  string
-		order  SqlBuilder
-		join   SqlBuilder
-		having SqlBuilder
-		limit  int
-		in     [][]any
-	}
-	type posts struct {
-		post
-		N int `db:"n"`
-	}
-	tests := []struct {
-		name    string
-		args    args
-		wantR   []posts
-		wantErr bool
-	}{
-		{
-			name: "in,orderBy",
-			args: args{
-				where: SqlBuilder{{
-					"post_status", "publish",
-				}, {"ID", "in", ""}},
-				fields: "*",
-				group:  "",
-				order:  SqlBuilder{{"ID", "desc"}},
-				join:   nil,
-				having: nil,
-				limit:  0,
-				in:     [][]any{{1, 2, 3, 4}},
-			},
-			wantR: func() []posts {
-				r, err := Select[posts](ctx, "select * from "+posts{}.Table()+" where post_status='publish' and ID in (1,2,3,4) order by ID desc")
-				if err != nil {
-					panic(err)
-				}
-				return r
-			}(),
-			wantErr: false,
-		},
-		{
-			name: "or",
-			args: args{
-				where: SqlBuilder{{
-					"and", "ID", "=", "1", "int",
-				}, {"or", "ID", "=", "2", "int"}},
-				fields: "*",
-				group:  "",
-				order:  nil,
-				join:   nil,
-				having: nil,
-				limit:  0,
-				in:     nil,
-			},
-			wantR: func() []posts {
-				r, err := Select[posts](ctx, "select * from "+posts{}.Table()+" where (ID=1 or ID=2)")
-				if err != nil {
-					panic(err)
-				}
-				return r
-			}(),
-		},
-		{
-			name: "group,having",
-			args: args{
-				where: SqlBuilder{
-					{"ID", "<", "1000", "int"},
-				},
-				fields: "post_status,count(*) n",
-				group:  "post_status",
-				order:  nil,
-				join:   nil,
-				having: SqlBuilder{
-					{"n", ">", "1"},
-				},
-				limit: 0,
-				in:    nil,
-			},
-			wantR: func() []posts {
-				r, err := Select[posts](ctx, "select post_status,count(*) n from "+post{}.Table()+" where ID<1000 group by post_status having n>1")
-				if err != nil {
-					panic(err)
-				}
-				return r
-			}(),
-		},
-		{
-			name: "or、多个in",
-			args: args{
-				where: SqlBuilder{
-					{"and", "ID", "in", "", "", "or", "ID", "in", "", ""},
-					{"or", "post_status", "=", "publish", "", "and", "post_status", "=", "closed", ""},
-				},
-				fields: "*",
-				group:  "",
-				order:  nil,
-				join:   nil,
-				having: nil,
-				limit:  0,
-				in:     [][]any{{1, 2, 3}, {4, 5, 6}},
-			},
-			wantR: func() []posts {
-				r, err := Select[posts](ctx, "select * from "+posts{}.Table()+" where (ID in (1,2,3) or ID in (4,5,6)) or (post_status='publish' and post_status='closed')")
-				if err != nil {
-					panic(err)
-				}
-				return r
-			}(),
-		},
-		{
-			name: "all",
-			args: args{
-				where: SqlBuilder{
-					{"b.user_login", "in", ""},
-					{"and", "a.post_type", "=", "post", "", "or", "a.post_type", "=", "page", ""},
-					{"a.comment_count", ">", "0", "int"},
-					{"a.post_status", "publish"},
-					{"e.name", "in", ""},
-					{"d.taxonomy", "category"},
-				},
-				fields: "post_author,count(*) n",
-				group:  "a.post_author",
-				order:  SqlBuilder{{"n", "desc"}},
-				join: SqlBuilder{
-					{"a", "left join", user{}.Table() + " b", "a.post_author=b.ID"},
-					{"left join", "wp_term_relationships c", "a.Id=c.object_id"},
-					{"left join", termTaxonomy{}.Table() + " d", "c.term_taxonomy_id=d.term_taxonomy_id"},
-					{"left join", terms{}.Table() + " e", "d.term_id=e.term_id"},
-				},
-				having: SqlBuilder{{"n", ">", "0", "int"}},
-				limit:  10,
-				in:     [][]any{{"test", "test2"}, {"web", "golang", "php"}},
-			},
-			wantR: func() []posts {
-				r, err := Select[posts](ctx, "select post_author,count(*) n from wp_posts a left join wp_users b on a.post_author=b.ID left join  wp_term_relationships c  on a.Id=c.object_id  left join  wp_term_taxonomy d  on c.term_taxonomy_id=d.term_taxonomy_id  left join  wp_terms e on d.term_id=e.term_id where b.user_login in ('test','test2') and b.user_status=0 and (a.post_type='post' or a.post_type='page') and a.comment_count>0 and a.post_status='publish' and e.name in ('web','golang','php') and d.taxonomy='category' group by post_author having n > 0 order by n desc limit 10")
-				if err != nil {
-					panic(err)
-				}
-				return r
-			}(),
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gotR, err := Find[posts](ctx, tt.args.where, tt.args.fields, tt.args.group, tt.args.order, tt.args.join, tt.args.having, tt.args.limit, tt.args.in...)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("Find() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(gotR, tt.wantR) {
-				t.Errorf("Find() gotR = %v, want %v", gotR, tt.wantR)
-			}
-		})
-	}
+	sq = db
+	//glob = NewSqlxQuery(db, NewUniversalDb(nil, nil))
+
 }
 
-func TestFindOneById(t *testing.T) {
-	type args struct {
-		id int
+func Test_selects(t *testing.T) {
+	type args[T Model] struct {
+		db  dbQuery[T]
+		ctx context.Context
+		q   *QueryCondition
 	}
-
-	tests := []struct {
+	type testCase[T Model] struct {
 		name    string
-		args    args
-		want    post
+		args    args[T]
+		want    []T
 		wantErr bool
-	}{
+	}
+	tests := []testCase[options]{
 		{
 			name: "t1",
-			args: args{
-				1,
+			args: args[options]{
+				anyDb[options](),
+				ctx,
+				Conditions(Where(SqlBuilder{{"option_name", "blogname"}})),
 			},
-			want: func() post {
-				r, err := Get[post](ctx, "select * from "+post{}.Table()+" where ID=?", 1)
-				if err != nil && err != sql.ErrNoRows {
-					panic(err)
-				} else if err == sql.ErrNoRows {
-					err = nil
-				}
-				return r
-			}(),
-			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := FindOneById[post](ctx, tt.args.id)
-			if err == sql.ErrNoRows {
-				err = nil
-			}
+			got, err := finds[options](tt.args.db, tt.args.ctx, tt.args.q)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("FindOneById() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("finds() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("FindOneById() got = %v, want %v", got, tt.want)
+				t.Errorf("finds() got = %v, want %v", got, tt.want)
 			}
 		})
 	}
 }
 
-func TestFirstOne(t *testing.T) {
-	type args struct {
-		where  ParseWhere
-		fields string
-		order  SqlBuilder
-		in     [][]any
+func BenchmarkSelectXX(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_, err := finds[options](anyDb[options](), ctx, Conditions())
+		if err != nil {
+			panic(err)
+		}
 	}
-	tests := []struct {
+}
+func BenchmarkScannerXX(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+
+		_, err := scanners[options](anyDb[options](), ctx, Conditions())
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
+type options struct {
+	OptionId    uint64 `gorm:"column:option_id" db:"option_id" json:"option_id" form:"option_id"`
+	OptionName  string `gorm:"column:option_name" db:"option_name" json:"option_name" form:"option_name"`
+	OptionValue string `gorm:"column:option_value" db:"option_value" json:"option_value" form:"option_value"`
+	Autoload    string `gorm:"column:autoload" db:"autoload" json:"autoload" form:"autoload"`
+}
+
+func (w options) PrimaryKey() string {
+	return "option_id"
+}
+
+func (w options) Table() string {
+	return "wp_options"
+}
+
+func Test_scanners(t *testing.T) {
+	type args[T Model] struct {
+		db  dbQuery[T]
+		ctx context.Context
+		q   *QueryCondition
+	}
+	type testCase[T Model] struct {
 		name    string
-		args    args
-		want    post
+		args    args[T]
 		wantErr bool
-	}{
+	}
+	tests := []testCase[options]{
 		{
 			name: "t1",
-			args: args{
-				where:  SqlBuilder{{"post_status", "publish"}},
-				fields: "*",
-				order:  SqlBuilder{{"ID", "desc"}},
-				in:     nil,
+			args: args[options]{
+				anyDb[options](),
+				ctx,
+				Conditions(Where(SqlBuilder{{"option_name", "blogname"}})),
 			},
-			wantErr: false,
-			want: func() post {
-				r, err := Get[post](ctx, "select * from "+post{}.Table()+" where post_status='publish' order by ID desc limit 1")
-				if err != nil && err != sql.ErrNoRows {
-					panic(err)
-				} else if err == sql.ErrNoRows {
-					err = nil
-				}
-				return r
-			}(),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := FirstOne[post](ctx, tt.args.where, tt.args.fields, tt.args.order, tt.args.in...)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("FirstOne() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("FirstOne() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestLastOne(t *testing.T) {
-	type args struct {
-		where  ParseWhere
-		fields string
-		in     [][]any
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    post
-		wantErr bool
-	}{
-		{
-			name: "t1",
-			args: args{
-				where: SqlBuilder{{
-					"post_status", "publish",
-				}},
-				fields: "*",
-				in:     nil,
-			},
-			want: func() post {
-				r, err := Get[post](ctx, "select * from "+post{}.Table()+" where post_status='publish' order by  "+post{}.PrimaryKey()+" desc limit 1")
-				if err != nil {
-					panic(err)
-				}
-				return r
-			}(),
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := LastOne[post](ctx, tt.args.where, tt.args.fields, tt.args.in...)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("LastOne() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("LastOne() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestSimpleFind(t *testing.T) {
-	type args struct {
-		where  ParseWhere
-		fields string
-		in     [][]any
-	}
-	tests := []struct {
-		name    string
-		args    args
-		want    []post
-		wantErr bool
-	}{
-		{
-			name: "t1",
-			args: args{
-				where: SqlBuilder{
-					{"ID", "in", ""},
-				},
-				fields: "*",
-				in:     [][]any{{1, 2}},
-			},
-			want: func() (r []post) {
-				r, err := Select[post](ctx, "select * from "+post{}.Table()+" where ID in (?,?)", 1, 2)
-				if err != nil && err != sql.ErrNoRows {
-					panic(err)
-				} else if err == sql.ErrNoRows {
-					err = nil
-				}
-				return
-			}(),
-			wantErr: false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			got, err := SimpleFind[post](ctx, tt.args.where, tt.args.fields, tt.args.in...)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("SimpleFind() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("SimpleFind() got = %v, want %v", got, tt.want)
-			}
-		})
-	}
-}
-
-func TestSimplePagination(t *testing.T) {
-	type args struct {
-		where    ParseWhere
-		fields   string
-		group    string
-		page     int
-		pageSize int
-		order    SqlBuilder
-		join     SqlBuilder
-		having   SqlBuilder
-		in       [][]any
-	}
-	tests := []struct {
-		name      string
-		args      args
-		wantR     []post
-		wantTotal int
-		wantErr   bool
-	}{
-		{
-			name: "t1",
-			args: args{
-				where: SqlBuilder{
-					{"ID", "in", ""},
-				},
-				fields:   "*",
-				group:    "",
-				page:     1,
-				pageSize: 5,
-				order:    nil,
-				join:     nil,
-				having:   nil,
-				in:       [][]any{slice.ToAnySlice(number.Range(431, 440, 1))},
-			},
-			wantR: func() (r []post) {
-				r, err := Select[post](ctx, "select * from "+post{}.Table()+" where ID in (?,?,?,?,?)", slice.ToAnySlice(number.Range(431, 435, 1))...)
-				if err != nil && err != sql.ErrNoRows {
-					panic(err)
-				} else if err == sql.ErrNoRows {
-					err = nil
-				}
-				return
-			}(),
-			wantTotal: 10,
-			wantErr:   false,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gotR, gotTotal, err := SimplePagination[post](ctx, tt.args.where, tt.args.fields, tt.args.group, tt.args.page, tt.args.pageSize, tt.args.order, tt.args.join, tt.args.having, tt.args.in...)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("SimplePagination() error = %v, wantErr %v", err, tt.wantErr)
-				return
-			}
-			if !reflect.DeepEqual(gotR, tt.wantR) {
-				t.Errorf("SimplePagination() gotR = %v, want %v", gotR, tt.wantR)
-			}
-			if gotTotal != tt.wantTotal {
-				t.Errorf("SimplePagination() gotTotal = %v, want %v", gotTotal, tt.wantTotal)
+			if _, err := scanners[options](tt.args.db, tt.args.ctx, tt.args.q); (err != nil) != tt.wantErr {
+				t.Errorf("scanners() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

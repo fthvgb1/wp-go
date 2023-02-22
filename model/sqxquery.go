@@ -9,14 +9,14 @@ import (
 	"strings"
 )
 
-type SqlxQuery struct {
+type SqlxQuery[T any] struct {
 	sqlx *sqlx.DB
-	UniversalDb
+	UniversalDb[T]
 }
 
-func NewSqlxQuery(sqlx *sqlx.DB, u UniversalDb) *SqlxQuery {
+func NewSqlxQuery[T any](sqlx *sqlx.DB, u UniversalDb[T]) *SqlxQuery[T] {
 
-	s := &SqlxQuery{sqlx: sqlx, UniversalDb: u}
+	s := &SqlxQuery[T]{sqlx: sqlx, UniversalDb: u}
 	if u.selects == nil {
 		s.UniversalDb.selects = s.Selects
 	}
@@ -26,52 +26,56 @@ func NewSqlxQuery(sqlx *sqlx.DB, u UniversalDb) *SqlxQuery {
 	return s
 }
 
-func SetSelect(db *SqlxQuery, fn func(context.Context, any, string, ...any) error) {
+func SetSelect[T any](db *SqlxQuery[T], fn QuerySelect[T]) {
 	db.selects = fn
 }
-func SetGet(db *SqlxQuery, fn func(context.Context, any, string, ...any) error) {
+func SetGet[T any](db *SqlxQuery[T], fn QueryGet[T]) {
 	db.gets = fn
 }
 
-func (r *SqlxQuery) Selects(ctx context.Context, dest any, sql string, params ...any) error {
+func (s *SqlxQuery[T]) Selects(ctx context.Context, sql string, params ...any) (r []T, err error) {
 	v := ctx.Value("handle=>")
 	if v != nil {
 		vv, ok := v.(string)
 		if ok && vv != "" {
 			switch vv {
 			case "string":
-				return ToMapSlice(r.sqlx, dest.(*[]map[string]string), sql, params...)
+				//return ToMapSlice(r.sqlx, dest.(*[]map[string]string), sql, params...)
 			case "scanner":
 				fn := ctx.Value("fn")
-				return Scanner[any](r.sqlx, dest, sql, params...)(fn.(func(any)))
+				return nil, Scanner[T](s.sqlx, sql, params...)(fn.(func(T)))
 			}
 		}
 	}
-	return r.sqlx.Select(dest, sql, params...)
+	//var a T
+	err = s.sqlx.Select(&r, sql, params...)
+	return
 }
 
-func (r *SqlxQuery) Gets(ctx context.Context, dest any, sql string, params ...any) error {
+func (s *SqlxQuery[T]) Gets(ctx context.Context, sql string, params ...any) (r T, err error) {
 	v := ctx.Value("handle=>")
 	if v != nil {
 		vv, ok := v.(string)
 		if ok && vv != "" {
 			switch vv {
 			case "string":
-				return GetToMap(r.sqlx, dest.(*map[string]string), sql, params...)
+				//return GetToMap(r.sqlx, dest.(*map[string]string), sql, params...)
 			}
 		}
 	}
-	return r.sqlx.Get(dest, sql, params...)
+	err = s.sqlx.Get(&r, sql, params...)
+	return
 }
 
-func Scanner[T any](db *sqlx.DB, v T, s string, params ...any) func(func(T)) error {
+func Scanner[T any](db *sqlx.DB, s string, params ...any) func(func(T)) error {
+	var v T
 	return func(fn func(T)) error {
 		rows, err := db.Queryx(s, params...)
 		if err != nil {
 			return err
 		}
 		for rows.Next() {
-			err = rows.StructScan(v)
+			err = rows.StructScan(&v)
 			if err != nil {
 				return err
 			}
