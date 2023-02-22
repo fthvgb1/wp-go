@@ -95,3 +95,34 @@ func TestBuilder_WriteString(t *testing.T) {
 		})
 	}
 }
+
+func BenchmarkBuilder_SprintfXX(b *testing.B) {
+	s := NewBuilder()
+	for i := 0; i < b.N; i++ {
+		s.Sprintf("%s %s %s", "a", "b", "c")
+		_ = s.String()
+	}
+}
+
+func BenchmarkSPrintfXX(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		_ = fmt.Sprintf("%s %s %s", "a", "b", "c")
+	}
+}
+
+func BenchmarkStrJoinXX(b *testing.B) {
+	s := strings.Builder{}
+	for i := 0; i < b.N; i++ {
+		s.WriteString("a ")
+		s.WriteString("b ")
+		s.WriteString("c ")
+		_ = s.String()
+	}
+}
+func BenchmarkBuilderJoinXX(b *testing.B) {
+	s := NewBuilder()
+	for i := 0; i < b.N; i++ {
+		s.WriteString("a ", "b ", "c")
+		_ = s.String()
+	}
+}

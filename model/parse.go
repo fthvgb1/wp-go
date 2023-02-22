@@ -1,7 +1,6 @@
 package model
 
 import (
-	"fmt"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	"strconv"
 	"strings"
@@ -108,7 +107,9 @@ func (w SqlBuilder) ParseWhere(in *[][]any) (string, []any, error) {
 					st = strings.TrimRight(st, "and ")
 					s.Reset()
 					s.WriteString(st)
-					s.WriteString(fmt.Sprintf(" %s ", ss[start]))
+					s.WriteString(" ")
+					s.WriteString(ss[start])
+					s.WriteString(" ")
 				}
 				if i == 0 {
 					s.WriteString("( ")
