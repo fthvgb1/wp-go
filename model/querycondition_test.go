@@ -507,10 +507,21 @@ func Test_findScanner(t *testing.T) {
 	}
 }
 
+func BenchmarkSqlxQueryXX(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		var r []options
+		err := ddb.Select(&r, "select * from wp_options where option_id<100")
+		if err != nil {
+			panic(err)
+		}
+	}
+}
+
 func BenchmarkScannerXX(b *testing.B) {
 	for i := 0; i < b.N; i++ {
+		var r []options
 		err := findScanner[options](glob, ctx, func(t options) {
-			_ = t
+			r = append(r, t)
 			//fmt.Println(t)
 		}, Conditions(Where(SqlBuilder{{"option_id", "<", "100", "int"}})))
 		if err != nil {
@@ -521,13 +532,9 @@ func BenchmarkScannerXX(b *testing.B) {
 
 func BenchmarkFindsXX(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		r, err := finds[options](glob, ctx, Conditions(Where(SqlBuilder{{"option_id", "<", "100", "int"}})))
+		_, err := finds[options](glob, ctx, Conditions(Where(SqlBuilder{{"option_id", "<", "100", "int"}})))
 		if err != nil {
 			panic(err)
-		}
-		for _, o := range r {
-			_ = o
-			//fmt.Println(o)
 		}
 	}
 }
