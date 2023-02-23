@@ -11,10 +11,8 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/config"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/dao"
-	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/fthvgb1/wp-go/model"
-	"github.com/fthvgb1/wp-go/plugin/pagination"
 	"github.com/gin-gonic/gin"
 	"strconv"
 	"strings"
@@ -53,19 +51,6 @@ type IndexParams struct {
 	PaginationStep    int
 	CacheKey          string
 	BlogName          string
-}
-
-type IndexHandle struct {
-	*Handle
-	Param        *IndexParams
-	Posts        []models.Posts
-	PageEle      pagination.Elements
-	TotalRows    int
-	PostsPlugins map[string]Plugin[models.Posts, *Handle]
-}
-
-func NewIndexHandle(handle *Handle) *IndexHandle {
-	return &IndexHandle{Handle: handle}
 }
 
 var months = slice.SimpleToMap(number.Range(1, 12, 1), func(v int) int {

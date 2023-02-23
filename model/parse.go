@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func (w SqlBuilder) parseField(ss []string, s *strings.Builder) {
+func (w SqlBuilder) parseWhereField(ss []string, s *strings.Builder) {
 	if strings.Contains(ss[0], ".") && !strings.Contains(ss[0], "(") {
 		x := slice.Map(strings.Split(ss[0], "."), func(t string) string {
 			return str.Join("`", t, "`")
@@ -81,11 +81,11 @@ func (w SqlBuilder) ParseWhere(in *[][]any) (string, []any, error) {
 			s.WriteString(ss[0])
 			s.WriteString(" and ")
 		case 2:
-			w.parseField(ss, &s)
+			w.parseWhereField(ss, &s)
 			s.WriteString("=? and ")
 			args = append(args, ss[1])
 		case 3, 4:
-			w.parseField(ss, &s)
+			w.parseWhereField(ss, &s)
 			s.WriteString(ss[1])
 			if w.parseIn(ss, &s, &c, &args, in) {
 				s.WriteString(" and ")
@@ -115,7 +115,7 @@ func (w SqlBuilder) ParseWhere(in *[][]any) (string, []any, error) {
 				if i == 0 {
 					s.WriteString("( ")
 				}
-				w.parseField(ss[start+1:end], &s)
+				w.parseWhereField(ss[start+1:end], &s)
 				s.WriteString(ss[start+2])
 				if w.parseIn(ss[start+1:end], &s, &c, &args, in) {
 					s.WriteString(" and ")

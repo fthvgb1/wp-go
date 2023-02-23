@@ -37,15 +37,6 @@ func newHandle(h *common.Handle) *handle {
 	return &handle{Handle: h}
 }
 
-type indexHandle struct {
-	*common.IndexHandle
-	h *handle
-}
-
-func newIndexHandle(iHandle *common.IndexHandle) *indexHandle {
-	return &indexHandle{IndexHandle: iHandle, h: newHandle(iHandle.Handle)}
-}
-
 type detailHandle struct {
 	*common.DetailHandle
 	h *handle
@@ -63,7 +54,7 @@ func Hook(h *common.Handle) {
 		newDetailHandle(common.NewDetailHandle(h)).Detail()
 		return
 	}
-	newIndexHandle(common.NewIndexHandle(h)).Index()
+	common.NewIndexHandle(h).Pipe(index)
 }
 
 var pluginFns = func() map[string]common.Plugin[models.Posts, *common.Handle] {
@@ -72,19 +63,18 @@ var pluginFns = func() map[string]common.Plugin[models.Posts, *common.Handle] {
 	})
 }()
 
-func (i *indexHandle) Index() {
-	i.Templ = "twentyseventeen/posts/index.gohtml"
+func index(next common.HandleFn[*common.IndexHandle], i *common.IndexHandle) {
 	err := i.BuildIndexData(common.NewIndexParams(i.C))
 	if err != nil {
 		i.Stats = constraints.Error404
 		i.Code = http.StatusNotFound
-		i.GinH["bodyClass"] = i.h.bodyClass()
+		i.CalBodyClass()
 		i.C.HTML(i.Code, i.Templ, i.GinH)
 		return
 	}
 	i.PostsPlugins = pluginFns
 	i.PageEle = paginate
-	i.Render()
+	next(i)
 }
 
 func (d *detailHandle) Detail() {

@@ -2,6 +2,7 @@ package common
 
 import (
 	"github.com/fthvgb1/wp-go/helper/slice"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
@@ -23,7 +24,7 @@ type Handle struct {
 	Templ     string
 	Class     []string
 	ThemeMods wpconfig.ThemeMods
-	Plugins   []HandlePluginFn[*Handle]
+	HandleFns []func(*Handle)
 }
 
 func NewHandle(c *gin.Context, scene int, theme string) *Handle {
@@ -61,19 +62,32 @@ func (h *Handle) GetPassword() {
 	}
 }
 
-func (h *Handle) ExecHandlePlugin() {
-	if len(h.Plugins) > 0 {
-		HandlePlugin(h.Plugins, h)
+func (h *Handle) Render() {
+	if h.Templ == "" {
+		h.Templ = str.Join(h.Theme, "/posts/index.gohtml")
+		if h.Scene == constraints.Detail {
+			h.Templ = str.Join(h.Theme, "/posts/detail.gohtml")
+		}
 	}
+	h.AutoCal("siteIcon", h.CalSiteIcon)
+	h.AutoCal("customLogo", h.CalCustomLogo)
+	h.AutoCal("customCss", h.CalCustomCss)
+	h.CalBodyClass()
+	for _, fn := range h.HandleFns {
+		fn(h)
+	}
+	h.C.HTML(h.Code, h.Templ, h.GinH)
 }
 
 type HandleFn[T any] func(T)
 
-type HandlePluginFn[T any] func(HandleFn[T], T) HandleFn[T]
+type HandlePipeFn[T any] func(HandleFn[T], T)
 
-// HandlePlugin 方便把功能写在其它包里
-func HandlePlugin[T any](fns []HandlePluginFn[T], h T) HandleFn[T] {
-	return slice.ReverseReduce(fns, func(t HandlePluginFn[T], r HandleFn[T]) HandleFn[T] {
-		return t(r, h)
-	}, func(t T) {})
+// HandlePipe  方便把功能写在其它包里
+func HandlePipe[T any](fns []HandlePipeFn[T], initial func(T)) HandleFn[T] {
+	return slice.ReverseReduce(fns, func(next HandlePipeFn[T], f func(t T)) func(t T) {
+		return func(t T) {
+			next(f, t)
+		}
+	}, initial)
 }

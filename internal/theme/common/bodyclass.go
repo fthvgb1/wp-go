@@ -21,10 +21,10 @@ var commonClass = map[int]string{
 }
 
 func (h *Handle) CalBodyClass() {
-	h.GinH["bodyClass"] = h.bodyClass(h.Class...)
+	h.GinH["bodyClass"] = h.BodyClass(h.Class...)
 }
 
-func (h *Handle) bodyClass(class ...string) string {
+func (h *Handle) BodyClass(class ...string) string {
 	s := ""
 	if constraints.Ok != h.Stats {
 		return "error404"

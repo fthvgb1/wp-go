@@ -15,6 +15,26 @@ import (
 	"net/http"
 )
 
+type IndexHandle struct {
+	*Handle
+	Param        *IndexParams
+	Posts        []models.Posts
+	PageEle      pagination.Elements
+	TotalRows    int
+	PostsPlugins map[string]Plugin[models.Posts, *Handle]
+	Pipes        []HandlePipeFn[*IndexHandle]
+}
+
+func NewIndexHandle(handle *Handle) *IndexHandle {
+	return &IndexHandle{Handle: handle}
+}
+
+func (i *IndexHandle) Pipe(calls ...HandlePipeFn[*IndexHandle]) {
+	HandlePipe[*IndexHandle](append(calls, i.Pipes...), func(i *IndexHandle) {
+		i.Render()
+	})(i)
+}
+
 func (i *IndexHandle) ParseIndex(parm *IndexParams) (err error) {
 	i.Param = parm
 	switch i.Scene {
@@ -64,6 +84,9 @@ func (i *IndexHandle) GetIndexData() (posts []models.Posts, totalRaw int, err er
 }
 
 func (i *IndexHandle) Pagination() {
+	if i.PageEle == nil {
+		i.PageEle = plugins.TwentyFifteenPagination()
+	}
 	q := i.C.Request.URL.Query().Encode()
 	if q != "" {
 		q = fmt.Sprintf("?%s", q)
@@ -108,18 +131,8 @@ func (i *IndexHandle) ExecPostsPlugin(calls ...func(*models.Posts)) {
 
 func (i *IndexHandle) Render() {
 	i.ExecPostsPlugin()
-	if i.PageEle == nil {
-		i.PageEle = plugins.TwentyFifteenPagination()
-	}
 	i.Pagination()
-	i.AutoCal("siteIcon", i.CalSiteIcon)
-	i.AutoCal("customLogo", i.CalCustomLogo)
-	i.AutoCal("customCss", i.CalCustomCss)
-	i.CalBodyClass()
-	if i.Templ == "" {
-		i.Templ = fmt.Sprintf("%s/posts/index.gohtml", i.Theme)
-	}
-	i.C.HTML(i.Code, i.Templ, i.GinH)
+	i.Handle.Render()
 }
 
 func (i *IndexHandle) Indexs() {
@@ -130,6 +143,5 @@ func (i *IndexHandle) Indexs() {
 		i.C.HTML(i.Code, i.Templ, i.GinH)
 		return
 	}
-	i.ExecHandlePlugin()
 	i.Render()
 }
