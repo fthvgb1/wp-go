@@ -2,18 +2,17 @@ package model
 
 import (
 	"github.com/fthvgb1/wp-go/helper/slice"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"strconv"
 	"strings"
 )
 
 func (w SqlBuilder) parseField(ss []string, s *strings.Builder) {
 	if strings.Contains(ss[0], ".") && !strings.Contains(ss[0], "(") {
-		s.WriteString("`")
-		sx := strings.Split(ss[0], ".")
-		s.WriteString(sx[0])
-		s.WriteString("`.`")
-		s.WriteString(sx[1])
-		s.WriteString("`")
+		x := slice.Map(strings.Split(ss[0], "."), func(t string) string {
+			return str.Join("`", t, "`")
+		})
+		s.WriteString(strings.Join(x, "."))
 	} else if !strings.Contains(ss[0], ".") && !strings.Contains(ss[0], "(") {
 		s.WriteString("`")
 		s.WriteString(ss[0])
@@ -26,13 +25,9 @@ func (w SqlBuilder) parseField(ss []string, s *strings.Builder) {
 func (w SqlBuilder) parseIn(ss []string, s *strings.Builder, c *int, args *[]any, in *[][]any) (t bool) {
 	if slice.IsContained(ss[1], []string{"in", "not in"}) && len(*in) > 0 {
 		s.WriteString(" (")
-		for _, p := range (*in)[*c] {
-			s.WriteString("?,")
-			*args = append(*args, p)
-		}
-		sx := s.String()
-		s.Reset()
-		s.WriteString(strings.TrimRight(sx, ","))
+		x := strings.TrimRight(strings.Repeat("?,", len((*in)[*c])), ",")
+		s.WriteString(x)
+		*args = append(*args, (*in)[*c]...)
 		s.WriteString(")")
 		*c++
 		t = true
@@ -81,11 +76,15 @@ func (w SqlBuilder) ParseWhere(in *[][]any) (string, []any, error) {
 	args := make([]any, 0, len(w))
 	c := 0
 	for _, ss := range w {
-		if len(ss) == 2 {
+		switch len(ss) {
+		case 1:
+			s.WriteString(ss[0])
+			s.WriteString(" and ")
+		case 2:
 			w.parseField(ss, &s)
 			s.WriteString("=? and ")
 			args = append(args, ss[1])
-		} else if len(ss) >= 3 && len(ss) < 5 {
+		case 3, 4:
 			w.parseField(ss, &s)
 			s.WriteString(ss[1])
 			if w.parseIn(ss, &s, &c, &args, in) {
@@ -97,7 +96,9 @@ func (w SqlBuilder) ParseWhere(in *[][]any) (string, []any, error) {
 			if err != nil {
 				return "", nil, err
 			}
-		} else if len(ss) >= 5 && len(ss)%5 == 0 {
+		}
+
+		if len(ss) >= 5 && len(ss)%5 == 0 {
 			j := len(ss) / 5
 			for i := 0; i < j; i++ {
 				start := i * 5
@@ -149,7 +150,7 @@ func (w SqlBuilder) ParseWhere(in *[][]any) (string, []any, error) {
 func (w SqlBuilder) parseOrderBy() string {
 	s := strings.Builder{}
 	for _, ss := range w {
-		if len(ss) == 2 && ss[0] != "" && slice.IsContained(ss[1], []string{"asc", "desc"}) {
+		if len(ss) == 2 && ss[0] != "" && slice.IsContained(strings.ToLower(ss[1]), []string{"asc", "desc"}) {
 			s.WriteString(" ")
 			s.WriteString(ss[0])
 			s.WriteString(" ")
