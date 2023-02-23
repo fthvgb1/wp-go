@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
-	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
@@ -29,29 +28,13 @@ var paginate = func() plugins.PageEle {
 	return p
 }()
 
-type handle struct {
-	*common.Handle
-}
-
-func newHandle(h *common.Handle) *handle {
-	return &handle{Handle: h}
-}
-
-type detailHandle struct {
-	*common.DetailHandle
-	h *handle
-}
-
-func newDetailHandle(dHandle *common.DetailHandle) *detailHandle {
-	return &detailHandle{DetailHandle: dHandle, h: newHandle(dHandle.Handle)}
-}
-
 func Hook(h *common.Handle) {
 	h.WidgetAreaData()
 	h.GetPassword()
+	h.HandleFns = append(h.HandleFns, calClass)
 	h.GinH["HeaderImage"] = getHeaderImage(h.C)
 	if h.Scene == constraints.Detail {
-		newDetailHandle(common.NewDetailHandle(h)).Detail()
+		common.NewDetailHandle(h).Pipe(detail)
 		return
 	}
 	common.NewIndexHandle(h).Pipe(index)
@@ -77,16 +60,15 @@ func index(next common.HandleFn[*common.IndexHandle], i *common.IndexHandle) {
 	next(i)
 }
 
-func (d *detailHandle) Detail() {
+func detail(next common.HandleFn[*common.DetailHandle], d *common.DetailHandle) {
 	err := d.BuildDetailData()
 	if err != nil {
 		d.Code = http.StatusNotFound
 		d.Stats = constraints.Error404
-		d.GinH["bodyClass"] = d.h.bodyClass()
+		d.GinH["bodyClass"] = d.BodyClass()
 		d.C.HTML(d.Code, d.Templ, d.GinH)
 		return
 	}
-	d.GinH["bodyClass"] = d.h.bodyClass()
 	img := wpconfig.Thumbnail(d.Post.Thumbnail.OriginAttachmentData, "thumbnail", "", "thumbnail", "post-thumbnail")
 	img.Width = img.OriginAttachmentData.Width
 	img.Height = img.OriginAttachmentData.Height
@@ -95,8 +77,8 @@ func (d *detailHandle) Detail() {
 	d.Post.Thumbnail = img
 	d.CommentRender = commentFormat
 	d.GinH["post"] = d.Post
-	d.Render()
 
+	next(d)
 }
 
 var commentFormat = comment{}
@@ -138,46 +120,21 @@ func getHeaderImage(c *gin.Context) (r models.PostThumbnail) {
 		logs.ErrPrintln(err, "获取页眉背景图失败")
 	} else if len(hs) > 0 && err == nil {
 		_, r = slice.Rand(hs)
-
 	}
 	r.Sizes = "100vw"
 	return
 }
 
-func (i *handle) bodyClass() string {
-	s := ""
-	if constraints.Ok != i.Stats {
-		return "error404"
+func calClass(h *common.Handle) {
+	u := wpconfig.GetThemeModsVal(h.Theme, "header_image", h.ThemeMods.ThemeSupport.CustomHeader.DefaultImage)
+	if u != "" && u != "remove-header" {
+		h.Class = append(h.Class, "has-header-image")
 	}
-	switch i.Scene {
-	case constraints.Search:
-		s = "search-no-results"
-		if len(i.GinH["posts"].([]models.Posts)) > 0 {
-			s = "search-results"
+	if h.Scene == constraints.Archive {
+		if "one-column" == wpconfig.GetThemeModsVal(h.Theme, "page_layout", "") {
+			h.Class = append(h.Class, "page-one-column")
+		} else {
+			h.Class = append(h.Class, "page-two-column")
 		}
-	case constraints.Category, constraints.Tag:
-		cat := i.C.Param("category")
-		if cat == "" {
-			cat = i.C.Param("tag")
-		}
-		_, cate := slice.SearchFirst(cache.CategoriesTags(i.C, i.Scene), func(my models.TermsMy) bool {
-			return my.Name == cat
-		})
-		if cate.Slug[0] != '%' {
-			s = cate.Slug
-		}
-		s = fmt.Sprintf("category-%d %v", cate.Terms.TermId, s)
-	case constraints.Detail:
-		s = fmt.Sprintf("postid-%d", i.GinH["post"].(models.Posts).Id)
 	}
-	return str.Join(class[i.Scene], s)
-}
-
-var class = map[int]string{
-	constraints.Home:     "home blog ",
-	constraints.Archive:  "archive date page-two-column",
-	constraints.Category: "archive category page-two-column",
-	constraints.Tag:      "archive category page-two-column ",
-	constraints.Search:   "search ",
-	constraints.Detail:   "post-template-default single single-post single-format-standard ",
 }

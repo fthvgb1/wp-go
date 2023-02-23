@@ -69,13 +69,14 @@ func (h *Handle) Render() {
 			h.Templ = str.Join(h.Theme, "/posts/detail.gohtml")
 		}
 	}
+	for _, fn := range h.HandleFns {
+		fn(h)
+	}
 	h.AutoCal("siteIcon", h.CalSiteIcon)
 	h.AutoCal("customLogo", h.CalCustomLogo)
 	h.AutoCal("customCss", h.CalCustomCss)
 	h.CalBodyClass()
-	for _, fn := range h.HandleFns {
-		fn(h)
-	}
+
 	h.C.HTML(h.Code, h.Templ, h.GinH)
 }
 

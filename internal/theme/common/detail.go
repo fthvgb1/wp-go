@@ -17,10 +17,17 @@ type DetailHandle struct {
 	CommentRender plugins.CommentHtml
 	Comments      []models.Comments
 	Post          models.Posts
+	Pipes         []HandlePipeFn[*DetailHandle]
 }
 
 func NewDetailHandle(handle *Handle) *DetailHandle {
 	return &DetailHandle{Handle: handle}
+}
+
+func (d *DetailHandle) Pipe(calls ...HandlePipeFn[*DetailHandle]) {
+	HandlePipe[*DetailHandle](append(calls, d.Pipes...), func(d *DetailHandle) {
+		d.Render()
+	})(d)
 }
 
 func (d *DetailHandle) BuildDetailData() (err error) {
@@ -29,8 +36,6 @@ func (d *DetailHandle) BuildDetailData() (err error) {
 	if err != nil {
 		return
 	}
-	d.WidgetAreaData()
-	d.GetPassword()
 	d.Comment()
 	d.ContextPost()
 	return
@@ -73,6 +78,9 @@ func (d *DetailHandle) Comment() {
 }
 
 func (d *DetailHandle) RenderComment() {
+	if d.CommentRender == nil {
+		d.CommentRender = plugins.CommentRender()
+	}
 	ableComment := true
 	if d.Post.CommentStatus != "open" ||
 		(d.Post.PostPassword != "" && d.Password != d.Post.PostPassword) {
@@ -94,19 +102,8 @@ func (d *DetailHandle) ContextPost() {
 
 func (d *DetailHandle) Render() {
 	d.PasswordProject()
-	if d.CommentRender == nil {
-		d.CommentRender = plugins.CommentRender()
-	}
-	d.CalBodyClass()
-	d.AutoCal("siteIcon", d.CalSiteIcon)
-	d.AutoCal("customLogo", d.CalCustomLogo)
-	d.AutoCal("customCss", d.CalCustomCss)
 	d.RenderComment()
-	d.CalBodyClass()
-	if d.Templ == "" {
-		d.Templ = fmt.Sprintf("%s/posts/detail.gohtml", d.Theme)
-	}
-	d.C.HTML(d.Code, d.Templ, d.GinH)
+	d.Handle.Render()
 }
 
 func (d *DetailHandle) Details() {
@@ -117,6 +114,5 @@ func (d *DetailHandle) Details() {
 		d.C.HTML(d.Code, d.Templ, d.GinH)
 		return
 	}
-	d.ExecHandlePlugin()
 	d.Render()
 }

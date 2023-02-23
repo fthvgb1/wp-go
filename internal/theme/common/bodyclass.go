@@ -12,11 +12,11 @@ import (
 )
 
 var commonClass = map[int]string{
-	constraints.Home:     "home blog",
-	constraints.Archive:  "archive date",
+	constraints.Home:     "home blog ",
+	constraints.Archive:  "archive date ",
 	constraints.Category: "archive category ",
 	constraints.Tag:      "archive category ",
-	constraints.Search:   "search",
+	constraints.Search:   "search ",
 	constraints.Detail:   "post-template-default single single-post ",
 }
 

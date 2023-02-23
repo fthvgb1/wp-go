@@ -1,7 +1,7 @@
 {{template "layout/base" .}}
 
 {{define "content"}}
-    {{ if .post.PostContent}}
+    {{ if  gt .post.Id 0}}
         {{if .post.Thumbnail.Path}}
             <div class="single-featured-image-header">
                 <img width="{{.post.Thumbnail.OriginAttachmentData.Width}}" height="{{.post.Thumbnail.OriginAttachmentData.Height}}" src="{{.post.Thumbnail.Path}}" class="attachment-twentyseventeen-featured-image size-twentyseventeen-featured-image wp-post-image" alt="{{.post.PostTitle}}" decoding="async" loading="lazy" srcset="{{.post.Thumbnail.Srcset}}" sizes="{{.post.Thumbnail.Sizes}}">
