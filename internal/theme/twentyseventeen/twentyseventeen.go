@@ -2,11 +2,10 @@ package twentyseventeen
 
 import (
 	"fmt"
+	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/helper/maps"
-	"github.com/fthvgb1/wp-go/helper/slice"
-	"github.com/fthvgb1/wp-go/internal/pkg/cache"
+	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
-	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
 	"github.com/fthvgb1/wp-go/internal/theme/common"
@@ -38,16 +37,17 @@ var indexPipe = common.HandlePipe(func(i *common.IndexHandle) {
 func Hook(h *common.Handle) {
 	h.WidgetAreaData()
 	h.GetPassword()
-	h.HandleFns = append(h.HandleFns, calClass)
-	h.GinH["HeaderImage"] = getHeaderImage(h.C)
-	if h.Scene == constraints.Detail {
+	h.PushHandleFn(calClass)
+	h.GinH["HeaderImage"] = getHeaderImage(h)
+	switch h.Scene {
+	case constraints.Detail:
 		detailPipe(common.NewDetailHandle(h))
-		return
+	default:
+		indexPipe(common.NewIndexHandle(h))
 	}
-	indexPipe(common.NewIndexHandle(h))
 }
 
-var pluginFns = func() map[string]common.Plugin[models.Posts, *common.Handle] {
+var listPostsPlugins = func() map[string]common.Plugin[models.Posts, *common.Handle] {
 	return maps.Merge(common.ListPostPlugins(), map[string]common.Plugin[models.Posts, *common.Handle]{
 		"twentyseventeen_postThumbnail": postThumbnail,
 	})
@@ -62,7 +62,7 @@ func index(next common.HandleFn[*common.IndexHandle], i *common.IndexHandle) {
 		i.C.HTML(i.Code, i.Templ, i.GinH)
 		return
 	}
-	i.PostsPlugins = pluginFns
+	i.PostsPlugins = listPostsPlugins
 	i.PageEle = paginate
 	next(i)
 }
@@ -118,16 +118,29 @@ func postThumbnail(next common.Fn[models.Posts], h *common.Handle, t models.Post
 	return next(t)
 }
 
-func getHeaderImage(c *gin.Context) (r models.PostThumbnail) {
-	r.Path = "/wp-content/themes/twentyseventeen/assets/images/header.jpg"
-	r.Width = 2000
-	r.Height = 1200
-	hs, err := cache.GetHeaderImages(c, ThemeName)
-	if err != nil {
-		logs.ErrPrintln(err, "获取页眉背景图失败")
-	} else if len(hs) > 0 && err == nil {
-		_, r = slice.Rand(hs)
+var header = reload.Vars(models.PostThumbnail{})
+
+func getHeaderImage(h *common.Handle) (r models.PostThumbnail) {
+	img := header.Load()
+	r.Sizes = "100vw"
+	if img.Path == "" {
+		image, rand := h.GetCustomHeader()
+		if !rand {
+			if image.Path == "" {
+				r.Path = helper.CutUrlHost(h.ThemeMods.ThemeSupport.CustomHeader.DefaultImage)
+				r.Width = 2000
+				r.Height = 1200
+				header.Store(r)
+				return
+			}
+			r = image
+			r.Sizes = "100vw"
+			header.Store(r)
+			return
+		}
+		img = image
 	}
+	r = img
 	r.Sizes = "100vw"
 	return
 }

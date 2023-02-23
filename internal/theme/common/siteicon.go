@@ -11,7 +11,7 @@ import (
 
 var sizes = []string{"site_icon-270", "site_icon-32", "site_icon-192", "site_icon-180"}
 
-func (h *Handle) CalSiteIcon() (r string) {
+func CalSiteIcon(h *Handle) (r string) {
 	id := str.ToInteger[uint64](wpconfig.GetOption("site_icon"), 0)
 	if id < 1 {
 		return

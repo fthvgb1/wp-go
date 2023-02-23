@@ -3,12 +3,13 @@ package twentyfifteen
 import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper/slice"
+	"github.com/fthvgb1/wp-go/internal/theme/common"
 	"strconv"
 	"strings"
 )
 
-func (h *handle) colorSchemeCss() string {
-	s := slice.Filter([]string{h.calColorSchemeCss(), h.calSidebarTextColorCss(), h.calHeaderBackgroundColorCss()}, func(s string) bool {
+func colorSchemeCss(h *common.Handle) string {
+	s := slice.Filter([]string{calColorSchemeCss(h), calSidebarTextColorCss(h), calHeaderBackgroundColorCss(h)}, func(s string) bool {
 		return s != ""
 	})
 	if len(s) < 1 {
@@ -16,9 +17,9 @@ func (h *handle) colorSchemeCss() string {
 	}
 	return fmt.Sprintf(`<style id='%s-inline-css'%s>\n%s\n</style>`, "twentyfifteen-style", "", strings.Join(s, "\n"))
 }
-func (h *handle) calColorSchemeCss() (r string) {
-	color := h.getColorScheme()
-	if "default" == h.IndexHandle.ThemeMods.ColorScheme || len(color) < 1 {
+func calColorSchemeCss(h *common.Handle) (r string) {
+	color := getColorScheme(h)
+	if "default" == h.ThemeMods.ColorScheme || len(color) < 1 {
 		return
 	}
 	textColorRgb := slice.ToAnySlice(Hex2RgbUint8(color[3]))
@@ -45,31 +46,31 @@ func (h *handle) calColorSchemeCss() (r string) {
 	return
 }
 
-func (h *handle) calSidebarTextColorCss() (r string) {
-	colors := h.getColorScheme()
-	if h.IndexHandle.ThemeMods.SidebarTextcolor == "" || h.IndexHandle.ThemeMods.SidebarTextcolor == colors[4] {
+func calSidebarTextColorCss(h *common.Handle) (r string) {
+	colors := getColorScheme(h)
+	if h.ThemeMods.SidebarTextcolor == "" || h.ThemeMods.SidebarTextcolor == colors[4] {
 		return
 	}
-	linkColorRgb := Hex2RgbUint8(h.IndexHandle.ThemeMods.SidebarTextcolor)
+	linkColorRgb := Hex2RgbUint8(h.ThemeMods.SidebarTextcolor)
 	color := slice.ToAnySlice(linkColorRgb)
 	textColor := fmt.Sprintf(`rgba( %[1]v, %[2]v, %[3]v, 0.7)`, color...)
 	borderColor := fmt.Sprintf(`rgba( %[1]v, %[2]v, %[3]v, 0.1)`, color...)
 	borderFocusColor := fmt.Sprintf(`rgba( %[1]v, %[2]v, %[3]v, 0.3)`, color...)
-	r = fmt.Sprintf(sidebarTextColorTemplate, h.IndexHandle.ThemeMods.SidebarTextcolor, textColor, borderColor, borderFocusColor)
+	r = fmt.Sprintf(sidebarTextColorTemplate, h.ThemeMods.SidebarTextcolor, textColor, borderColor, borderFocusColor)
 	return
 }
 
-func (h *handle) calHeaderBackgroundColorCss() (r string) {
-	colors := h.getColorScheme()
-	if h.IndexHandle.ThemeMods.HeaderBackgroundColor == "" || h.IndexHandle.ThemeMods.HeaderBackgroundColor == colors[1] {
+func calHeaderBackgroundColorCss(h *common.Handle) (r string) {
+	colors := getColorScheme(h)
+	if h.ThemeMods.HeaderBackgroundColor == "" || h.ThemeMods.HeaderBackgroundColor == colors[1] {
 		return
 	}
-	r = fmt.Sprintf(headerBackgroundColorCssTemplate, h.IndexHandle.ThemeMods.HeaderBackgroundColor, h.IndexHandle.ThemeMods.HeaderBackgroundColor)
+	r = fmt.Sprintf(headerBackgroundColorCssTemplate, h.ThemeMods.HeaderBackgroundColor, h.ThemeMods.HeaderBackgroundColor)
 	return
 }
 
-func (h *handle) getColorScheme() (r []string) {
-	x, ok := colorscheme[h.IndexHandle.ThemeMods.ColorScheme]
+func getColorScheme(h *common.Handle) (r []string) {
+	x, ok := colorscheme[h.ThemeMods.ColorScheme]
 	if ok {
 		r = x.Colors
 	}

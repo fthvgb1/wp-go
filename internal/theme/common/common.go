@@ -42,10 +42,14 @@ func NewHandle(c *gin.Context, scene int, theme string) *Handle {
 	}
 }
 
-func (h *Handle) AutoCal(name string, fn func() string) {
+func (h *Handle) PushHandleFn(fns ...func(*Handle)) {
+	h.HandleFns = append(h.HandleFns, fns...)
+}
+
+func (h *Handle) AutoCal(name string, fn func(*Handle) string) {
 	v, ok := reload.GetStr(name)
 	if !ok {
-		v = fn()
+		v = fn(h)
 		reload.SetStr(name, v)
 	}
 	h.GinH[name] = v
@@ -72,9 +76,9 @@ func (h *Handle) Render() {
 	for _, fn := range h.HandleFns {
 		fn(h)
 	}
-	h.AutoCal("siteIcon", h.CalSiteIcon)
-	h.AutoCal("customLogo", h.CalCustomLogo)
-	h.AutoCal("customCss", h.CalCustomCss)
+	h.AutoCal("siteIcon", CalSiteIcon)
+	h.AutoCal("customLogo", CalCustomLogo)
+	h.AutoCal("customCss", CalCustomCss)
 	h.CalBodyClass()
 
 	h.C.HTML(h.Code, h.Templ, h.GinH)

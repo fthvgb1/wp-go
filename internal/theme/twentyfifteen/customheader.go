@@ -4,6 +4,7 @@ import (
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
+	"github.com/fthvgb1/wp-go/internal/theme/common"
 )
 
 var style = `<style type="text/css" id="twentyfifteen-header-css">`
@@ -82,20 +83,20 @@ var imgStyle = `.site-header {
 
 var header = reload.Vars(constraints.Defaults)
 
-func (h *handle) CalCustomHeader() (r string, rand bool) {
-	img, rand := h.IndexHandle.GetCustomHeader()
-	if img.Path == "" && h.IndexHandle.DisplayHeaderText() {
+func calCustomHeader(h *common.Handle) (r string, rand bool) {
+	img, rand := h.GetCustomHeader()
+	if img.Path == "" && h.DisplayHeaderText() {
 		return
 	}
 	ss := str.NewBuilder()
 	ss.WriteString(style)
-	if img.Path == "" && !h.IndexHandle.DisplayHeaderText() {
+	if img.Path == "" && !h.DisplayHeaderText() {
 		ss.WriteString(defaultTextStyle)
 	}
 	if img.Path != "" {
 		ss.Sprintf(imgStyle, img.Path, img.Path)
 	}
-	if !h.IndexHandle.DisplayHeaderText() {
+	if !h.DisplayHeaderText() {
 		ss.WriteString(`.site-title,
 		.site-description {
 			clip: rect(1px, 1px, 1px, 1px);
@@ -107,15 +108,15 @@ func (h *handle) CalCustomHeader() (r string, rand bool) {
 	return
 }
 
-func (h *handle) CustomHeader() {
+func customHeader(h *common.Handle) {
 	headers := header.Load()
 	if headers == constraints.Defaults {
-		headerss, rand := h.CalCustomHeader()
+		headerss, rand := calCustomHeader(h)
 		headers = headerss
 		if !rand {
 			header.Store(headers)
 		}
 	}
-	h.IndexHandle.GinH["customHeader"] = headers
+	h.GinH["customHeader"] = headers
 	return
 }

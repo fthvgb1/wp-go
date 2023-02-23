@@ -8,7 +8,7 @@ import (
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 )
 
-func (h *Handle) CalCustomLogo() (r string) {
+func CalCustomLogo(h *Handle) (r string) {
 	id := uint64(h.ThemeMods.CustomLogo)
 	if id < 1 {
 		id = str.ToInteger[uint64](wpconfig.GetOption("site_logo"), 0)

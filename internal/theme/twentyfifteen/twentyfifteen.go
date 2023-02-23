@@ -28,36 +28,31 @@ func Init(fs embed.FS) {
 	logs.ErrPrintln(err, "解析colorscheme失败")
 }
 
-type handle struct {
-	*common.IndexHandle
-	*common.DetailHandle
-}
-
-func newHandle(iHandle *common.IndexHandle, dHandle *common.DetailHandle) *handle {
-	return &handle{iHandle, dHandle}
-}
+var detailPipe = common.HandlePipe(func(d *common.DetailHandle) {
+	d.Render()
+}, detail)
+var indexPipe = common.HandlePipe(func(i *common.IndexHandle) {
+	i.Render()
+}, index)
 
 func Hook(h *common.Handle) {
 	h.WidgetAreaData()
 	h.GetPassword()
-	handle := newHandle(common.NewIndexHandle(h), common.NewDetailHandle(h))
-	if h.Scene == constraints.Detail {
-		handle.Detail()
-		return
+	h.AutoCal("colorScheme", colorSchemeCss)
+	h.AutoCal("customBackground", CalCustomBackGround)
+	h.PushHandleFn(customHeader)
+	switch h.Scene {
+	case constraints.Detail:
+		detailPipe(common.NewDetailHandle(h))
+	default:
+		indexPipe(common.NewIndexHandle(h))
 	}
-	handle.Index()
 }
 
-func (h *handle) Index() {
-	h.CustomHeader()
-	h.IndexHandle.AutoCal("colorScheme", h.colorSchemeCss)
-	h.IndexHandle.AutoCal("customBackground", h.CalCustomBackGround)
-	h.Indexs()
+func index(next common.HandleFn[*common.IndexHandle], i *common.IndexHandle) {
+	i.Indexs()
 }
 
-func (h *handle) Detail() {
-	h.CustomHeader()
-	h.IndexHandle.AutoCal("colorScheme", h.colorSchemeCss)
-	h.IndexHandle.AutoCal("customBackground", h.CalCustomBackGround)
-	h.Details()
+func detail(fn common.HandleFn[*common.DetailHandle], d *common.DetailHandle) {
+	d.Details()
 }

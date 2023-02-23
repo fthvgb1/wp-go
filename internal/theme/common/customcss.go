@@ -6,7 +6,7 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 )
 
-func (h *Handle) CalCustomCss() (r string) {
+func CalCustomCss(h *Handle) (r string) {
 	if h.ThemeMods.CustomCssPostId < 1 {
 		return
 	}

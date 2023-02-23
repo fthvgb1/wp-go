@@ -1,7 +1,7 @@
 {{template "layout/base" .}}
 
 {{define "content"}}
-    {{ if .post.PostContent}}
+    {{ if gt .post.Id 0}}
         <div id="primary" class="content-area">
             <main id="main" class="site-main">
                 <article id="post-{{.post.Id}}"
