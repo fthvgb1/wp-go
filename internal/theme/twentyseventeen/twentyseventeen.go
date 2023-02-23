@@ -28,16 +28,23 @@ var paginate = func() plugins.PageEle {
 	return p
 }()
 
+var detailPipe = common.HandlePipe(func(d *common.DetailHandle) {
+	d.Render()
+}, detail)
+var indexPipe = common.HandlePipe(func(i *common.IndexHandle) {
+	i.Render()
+}, index)
+
 func Hook(h *common.Handle) {
 	h.WidgetAreaData()
 	h.GetPassword()
 	h.HandleFns = append(h.HandleFns, calClass)
 	h.GinH["HeaderImage"] = getHeaderImage(h.C)
 	if h.Scene == constraints.Detail {
-		common.NewDetailHandle(h).Pipe(detail)
+		detailPipe(common.NewDetailHandle(h))
 		return
 	}
-	common.NewIndexHandle(h).Pipe(index)
+	indexPipe(common.NewIndexHandle(h))
 }
 
 var pluginFns = func() map[string]common.Plugin[models.Posts, *common.Handle] {

@@ -22,17 +22,10 @@ type IndexHandle struct {
 	PageEle      pagination.Elements
 	TotalRows    int
 	PostsPlugins map[string]Plugin[models.Posts, *Handle]
-	Pipes        []HandlePipeFn[*IndexHandle]
 }
 
 func NewIndexHandle(handle *Handle) *IndexHandle {
 	return &IndexHandle{Handle: handle}
-}
-
-func (i *IndexHandle) Pipe(calls ...HandlePipeFn[*IndexHandle]) {
-	HandlePipe[*IndexHandle](append(calls, i.Pipes...), func(i *IndexHandle) {
-		i.Render()
-	})(i)
 }
 
 func (i *IndexHandle) ParseIndex(parm *IndexParams) (err error) {

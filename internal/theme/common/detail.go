@@ -17,17 +17,10 @@ type DetailHandle struct {
 	CommentRender plugins.CommentHtml
 	Comments      []models.Comments
 	Post          models.Posts
-	Pipes         []HandlePipeFn[*DetailHandle]
 }
 
 func NewDetailHandle(handle *Handle) *DetailHandle {
 	return &DetailHandle{Handle: handle}
-}
-
-func (d *DetailHandle) Pipe(calls ...HandlePipeFn[*DetailHandle]) {
-	HandlePipe[*DetailHandle](append(calls, d.Pipes...), func(d *DetailHandle) {
-		d.Render()
-	})(d)
 }
 
 func (d *DetailHandle) BuildDetailData() (err error) {

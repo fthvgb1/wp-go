@@ -85,7 +85,7 @@ type HandleFn[T any] func(T)
 type HandlePipeFn[T any] func(HandleFn[T], T)
 
 // HandlePipe  方便把功能写在其它包里
-func HandlePipe[T any](fns []HandlePipeFn[T], initial func(T)) HandleFn[T] {
+func HandlePipe[T any](initial func(T), fns ...HandlePipeFn[T]) HandleFn[T] {
 	return slice.ReverseReduce(fns, func(next HandlePipeFn[T], f func(t T)) func(t T) {
 		return func(t T) {
 			next(f, t)
