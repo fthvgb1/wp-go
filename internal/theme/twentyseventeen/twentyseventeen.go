@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/helper/maps"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
@@ -37,6 +38,7 @@ func dispatch(next common.HandleFn[*common.Handle], h *common.Handle) {
 	h.WidgetAreaData()
 	h.GetPassword()
 	h.PushHandleFn(calClass)
+	h.PushHeadScript(constraints.HeadScript, colorScheme)
 	h.GinH["HeaderImage"] = getHeaderImage(h)
 	switch h.Scene {
 	case constraints.Detail:
@@ -121,26 +123,23 @@ var header = reload.Vars(models.PostThumbnail{})
 
 func getHeaderImage(h *common.Handle) (r models.PostThumbnail) {
 	img := header.Load()
-	r.Sizes = "100vw"
-	if img.Path == "" {
-		image, rand := h.GetCustomHeader()
-		if !rand {
-			if image.Path == "" {
-				r.Path = helper.CutUrlHost(h.ThemeMods.ThemeSupport.CustomHeader.DefaultImage)
-				r.Width = 2000
-				r.Height = 1200
-				header.Store(r)
-				return
-			}
-			r = image
-			r.Sizes = "100vw"
-			header.Store(r)
-			return
-		}
-		img = image
+	if img.Path != "" {
+		return r
 	}
-	r = img
+	image, rand := h.GetCustomHeader()
+	if image.Path != "" {
+		r = image
+		r.Sizes = "100vw"
+		if !rand {
+			header.Store(r)
+		}
+		return
+	}
+	r.Path = helper.CutUrlHost(h.ThemeMods.ThemeSupport.CustomHeader.DefaultImage)
+	r.Width = 2000
+	r.Height = 1200
 	r.Sizes = "100vw"
+	header.Store(r)
 	return
 }
 
@@ -149,6 +148,14 @@ func calClass(h *common.Handle) {
 	if u != "" && u != "remove-header" {
 		h.Class = append(h.Class, "has-header-image")
 	}
+	if len(h.ThemeMods.SidebarsWidgets.Data.Sidebar1) > 0 {
+		h.Class = append(h.Class, "has-sidebar")
+	}
+	if h.ThemeMods.HeaderTextcolor == "blank" {
+		h.Class = append(h.Class, "title-tagline-hidden")
+	}
+	h.Class = append(h.Class, "hfeed")
+	h.Class = append(h.Class, str.Join("colors-", wpconfig.GetThemeModsVal(h.Theme, "colorscheme", "light")))
 	if h.Scene == constraints.Archive {
 		if "one-column" == wpconfig.GetThemeModsVal(h.Theme, "page_layout", "") {
 			h.Class = append(h.Class, "page-one-column")

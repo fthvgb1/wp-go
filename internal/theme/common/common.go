@@ -10,6 +10,7 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strings"
 )
 
 type Handle struct {
@@ -25,6 +26,7 @@ type Handle struct {
 	Stats     int
 	Templ     string
 	Class     []string
+	Scripts   map[string][]func(*Handle) string
 	ThemeMods wpconfig.ThemeMods
 	HandleFns []func(*Handle)
 }
@@ -41,6 +43,7 @@ func NewHandle(c *gin.Context, scene int, theme string) *Handle {
 		Code:      http.StatusOK,
 		Stats:     constraints.Ok,
 		ThemeMods: mods,
+		Scripts:   make(map[string][]func(*Handle) string),
 	}
 }
 
@@ -55,6 +58,10 @@ func (h *Handle) AutoCal(name string, fn func(*Handle) string) {
 		reload.SetStr(name, v)
 	}
 	h.GinH[name] = v
+}
+
+func (h *Handle) PushHeadScript(name string, fn ...func(*Handle) string) {
+	h.Scripts[name] = append(h.Scripts[name], fn...)
 }
 
 func Default[T any](t T) T {
@@ -78,12 +85,26 @@ func (h *Handle) Render() {
 	for _, fn := range h.HandleFns {
 		fn(h)
 	}
-	h.AutoCal("siteIcon", CalSiteIcon)
+	h.PushHeadScript(constraints.HeadScript, CalSiteIcon, CalCustomCss)
 	h.AutoCal("customLogo", CalCustomLogo)
-	h.AutoCal("customCss", CalCustomCss)
+	h.CalMultipleScript()
 	h.CalBodyClass()
 
 	h.C.HTML(h.Code, h.Templ, h.GinH)
+}
+
+func (h *Handle) CalMultipleScript() {
+	for k, ss := range h.Scripts {
+		v, ok := reload.GetStr(k)
+		if !ok {
+			v = strings.Join(slice.FilterAndMap(ss, func(t func(*Handle) string) (string, bool) {
+				s := t(h)
+				return s, s != ""
+			}), "\n")
+			reload.SetStr(k, v)
+		}
+		h.GinH[k] = v
+	}
 }
 
 type HandleFn[T any] func(T)

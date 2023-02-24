@@ -3,12 +3,10 @@
         {{.customHeader|unescaped}}
     {{end}}
 
-    {{if .siteIcon}}
-        {{.siteIcon|unescaped}}
+    {{if .headScript}}
+        {{.headScript|unescaped}}
     {{end}}
-    {{if .customCss}}
-        {{.customCss|unescaped}}
-    {{end}}
+
     {{if .externHead}}
         {{.externHead|unescaped}}
     {{end}}

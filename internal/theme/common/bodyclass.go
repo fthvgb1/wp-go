@@ -53,17 +53,19 @@ func (h *Handle) BodyClass(class ...string) string {
 			s = str.Join(s, " single-format-standard")
 		}
 	}
-	class = append(class, s)
+	if s != "" {
+		class = append(class, s)
+	}
 
 	if wpconfig.IsCustomBackground(h.Theme) {
 		class = append(class, "custom-background")
 	}
-	if h.ThemeMods.CustomLogo > 0 {
+	if h.ThemeMods.CustomLogo > 0 || str.ToInteger(wpconfig.GetOption("site_logo"), 0) > 0 {
 		class = append(class, "wp-custom-logo")
 	}
 	if h.ThemeMods.ThemeSupport.ResponsiveEmbeds {
 		class = append(class, "wp-embed-responsive")
 	}
-
-	return str.Join(commonClass[h.Scene], strings.Join(class, " "))
+	class = append(class, strings.Fields(commonClass[h.Scene])...)
+	return strings.Join(slice.Reverse(class), " ")
 }

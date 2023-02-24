@@ -82,3 +82,8 @@ func (b *Builder) Sprintf(format string, a ...any) int {
 	i, _ := fmt.Fprintf(b, format, a...)
 	return i
 }
+
+// CutSpecialDuplicate '\t', '\n', '\v', '\f', '\r', ' ', U+0085 (NEL), U+00A0 (NBSP)
+func CutSpecialDuplicate(s, char string) string {
+	return strings.Join(strings.Fields(s), char)
+}

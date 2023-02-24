@@ -126,3 +126,33 @@ func BenchmarkBuilderJoinXX(b *testing.B) {
 		_ = s.String()
 	}
 }
+
+func TestCutSpecialDuplicate(t *testing.T) {
+	type args struct {
+		s    string
+		char string
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		{
+			name: "t1",
+			args: args{s: "1     2      3", char: " "},
+			want: "1 2 3",
+		},
+		{
+			name: "t2",
+			args: args{s: "1\t\t2\t\t3", char: "\t"},
+			want: "1\t2\t3",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := CutSpecialDuplicate(tt.args.s, tt.args.char); got != tt.want {
+				t.Errorf("CutDuplicate() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

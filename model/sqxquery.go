@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper/slice"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/jmoiron/sqlx"
 	"strconv"
 	"strings"
@@ -150,5 +151,5 @@ func FormatSql(sql string, params ...any) string {
 			sql = strings.Replace(sql, "?", fmt.Sprintf("%f", param.(float64)), 1)
 		}
 	}
-	return sql
+	return str.CutSpecialDuplicate(sql, " ")
 }

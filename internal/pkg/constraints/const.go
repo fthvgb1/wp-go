@@ -15,4 +15,6 @@ const (
 	InternalErr
 
 	Defaults = "default"
+
+	HeadScript = "headScript"
 )

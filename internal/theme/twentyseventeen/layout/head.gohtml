@@ -1,4 +1,5 @@
 {{define "layout/head"}}
+    <head>
     <meta charset="{{"blog_charset"| getOption}}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="profile" href="https://gmpg.org/xfn/11">
@@ -64,7 +65,8 @@
     <link rel="wlwmanifest" type="application/wlwmanifest+xml" href="/wp-includes/wlwmanifest.xml" />
     <meta name="generator" content="WordPress 6.1.1" />
     <style>.recentcomments a{display:inline !important;padding:0 !important;margin:0 !important;}</style>
-
+    {{block "head" .}}
+    {{end}}
     {{template "common/head" .}}
-
+    </head>
 {{end}}
