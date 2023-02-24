@@ -28,14 +28,13 @@ func Init(fs embed.FS) {
 	logs.ErrPrintln(err, "解析colorscheme失败")
 }
 
-var detailPipe = common.HandlePipe(func(d *common.DetailHandle) {
-	d.Render()
-}, detail)
-var indexPipe = common.HandlePipe(func(i *common.IndexHandle) {
-	i.Render()
-}, index)
+var pipe = common.HandlePipe(common.Render, dispatch)
 
 func Hook(h *common.Handle) {
+	pipe(h)
+}
+
+func dispatch(next common.HandleFn[*common.Handle], h *common.Handle) {
 	h.WidgetAreaData()
 	h.GetPassword()
 	h.AutoCal("colorScheme", colorSchemeCss)
@@ -43,16 +42,16 @@ func Hook(h *common.Handle) {
 	h.PushHandleFn(customHeader)
 	switch h.Scene {
 	case constraints.Detail:
-		detailPipe(common.NewDetailHandle(h))
+		detail(next, h.Detail)
 	default:
-		indexPipe(common.NewIndexHandle(h))
+		index(next, h.Index)
 	}
 }
 
-func index(next common.HandleFn[*common.IndexHandle], i *common.IndexHandle) {
+func index(next common.HandleFn[*common.Handle], i *common.IndexHandle) {
 	i.Indexs()
 }
 
-func detail(fn common.HandleFn[*common.DetailHandle], d *common.DetailHandle) {
+func detail(fn common.HandleFn[*common.Handle], d *common.DetailHandle) {
 	d.Details()
 }
