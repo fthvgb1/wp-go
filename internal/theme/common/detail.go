@@ -46,7 +46,6 @@ func (d *DetailHandle) CheckAndGetPost() (err error) {
 		return
 	}
 
-	d.GinH["post"] = post
 	d.Post = post
 	d.GinH["user"] = cache.GetUserById(d.C, post.PostAuthor)
 	d.GinH["title"] = fmt.Sprintf("%s-%s", post.PostTitle, wpconfig.GetOption("blogname"))
@@ -96,6 +95,7 @@ func (d *DetailHandle) ContextPost() {
 func (d *DetailHandle) Render() {
 	d.PasswordProject()
 	d.RenderComment()
+	d.GinH["post"] = d.Post
 	d.Handle.Render()
 }
 

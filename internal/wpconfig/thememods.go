@@ -72,7 +72,7 @@ type ImageData struct {
 
 func Thumbnail(metadata models.WpAttachmentMetadata, Type, host string, except ...string) (r models.PostThumbnail) {
 	up := strings.Split(metadata.File, "/")
-	if Type == "full" {
+	if metadata.File != "" && Type == "full" {
 		metadata.Sizes["full"] = models.MetaDataFileSize{
 			File:     filepath.Base(metadata.File),
 			Width:    metadata.Width,

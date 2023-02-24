@@ -27,23 +27,22 @@ var paginate = func() plugins.PageEle {
 	return p
 }()
 
-var detailPipe = common.HandlePipe(func(d *common.DetailHandle) {
-	d.Render()
-}, detail)
-var indexPipe = common.HandlePipe(func(i *common.IndexHandle) {
-	i.Render()
-}, index)
+var pipe = common.HandlePipe(common.Render, dispatch)
 
 func Hook(h *common.Handle) {
+	pipe(h)
+}
+
+func dispatch(next common.HandleFn[*common.Handle], h *common.Handle) {
 	h.WidgetAreaData()
 	h.GetPassword()
 	h.PushHandleFn(calClass)
 	h.GinH["HeaderImage"] = getHeaderImage(h)
 	switch h.Scene {
 	case constraints.Detail:
-		detailPipe(common.NewDetailHandle(h))
+		detail(next, h.Detail)
 	default:
-		indexPipe(common.NewIndexHandle(h))
+		index(next, h.Index)
 	}
 }
 
@@ -53,7 +52,7 @@ var listPostsPlugins = func() map[string]common.Plugin[models.Posts, *common.Han
 	})
 }()
 
-func index(next common.HandleFn[*common.IndexHandle], i *common.IndexHandle) {
+func index(next common.HandleFn[*common.Handle], i *common.IndexHandle) {
 	err := i.BuildIndexData(common.NewIndexParams(i.C))
 	if err != nil {
 		i.Stats = constraints.Error404
@@ -64,10 +63,10 @@ func index(next common.HandleFn[*common.IndexHandle], i *common.IndexHandle) {
 	}
 	i.PostsPlugins = listPostsPlugins
 	i.PageEle = paginate
-	next(i)
+	next(i.Handle)
 }
 
-func detail(next common.HandleFn[*common.DetailHandle], d *common.DetailHandle) {
+func detail(next common.HandleFn[*common.Handle], d *common.DetailHandle) {
 	err := d.BuildDetailData()
 	if err != nil {
 		d.Code = http.StatusNotFound
@@ -76,16 +75,16 @@ func detail(next common.HandleFn[*common.DetailHandle], d *common.DetailHandle) 
 		d.C.HTML(d.Code, d.Templ, d.GinH)
 		return
 	}
-	img := wpconfig.Thumbnail(d.Post.Thumbnail.OriginAttachmentData, "thumbnail", "", "thumbnail", "post-thumbnail")
-	img.Width = img.OriginAttachmentData.Width
-	img.Height = img.OriginAttachmentData.Height
-	img.Sizes = "100vw"
-	img.Srcset = fmt.Sprintf("%s %dw, %s", img.Path, img.Width, img.Srcset)
-	d.Post.Thumbnail = img
-	d.CommentRender = commentFormat
-	d.GinH["post"] = d.Post
+	if d.Post.Thumbnail.Path != "" {
+		img := wpconfig.Thumbnail(d.Post.Thumbnail.OriginAttachmentData, "full", "", "thumbnail", "post-thumbnail")
+		img.Sizes = "100vw"
+		img.Srcset = fmt.Sprintf("%s %dw, %s", img.Path, img.Width, img.Srcset)
+		d.Post.Thumbnail = img
+	}
 
-	next(d)
+	d.CommentRender = commentFormat
+
+	next(d.Handle)
 }
 
 var commentFormat = comment{}

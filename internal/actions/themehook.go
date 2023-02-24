@@ -9,6 +9,9 @@ import (
 func ThemeHook(scene int) func(*gin.Context) {
 	return func(ctx *gin.Context) {
 		t := theme.GetTemplateName()
-		theme.Hook(t, common.NewHandle(ctx, scene, t))
+		h := common.NewHandle(ctx, scene, t)
+		h.Index = common.NewIndexHandle(h)
+		h.Detail = common.NewDetailHandle(h)
+		theme.Hook(t, h)
 	}
 }

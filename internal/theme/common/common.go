@@ -13,6 +13,8 @@ import (
 )
 
 type Handle struct {
+	Index     *IndexHandle
+	Detail    *DetailHandle
 	C         *gin.Context
 	Theme     string
 	Session   sessions.Session
@@ -95,4 +97,13 @@ func HandlePipe[T any](initial func(T), fns ...HandlePipeFn[T]) HandleFn[T] {
 			next(f, t)
 		}
 	}, initial)
+}
+
+func Render(h *Handle) {
+	switch h.Scene {
+	case constraints.Detail:
+		h.Detail.Render()
+	default:
+		h.Index.Render()
+	}
 }

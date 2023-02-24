@@ -5,7 +5,7 @@ import (
 	"github.com/fthvgb1/wp-go/internal/theme/twentyfifteen"
 )
 
-var themeMap = map[string]func(handle *common.Handle){}
+var themeMap = map[string]func(*common.Handle){}
 
 func addThemeHookFunc(name string, fn func(handle *common.Handle)) {
 	if _, ok := themeMap[name]; ok {
