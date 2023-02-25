@@ -46,8 +46,6 @@ var allUsernameCache *cache.VarCache[map[string]struct{}]
 
 var headerImagesCache *cache.MapCache[string, []models.PostThumbnail]
 
-var ctx context.Context
-
 func InitActionsCommonCache() {
 	c := config.GetConfig()
 	archivesCaches = &Arch{
@@ -94,8 +92,6 @@ func InitActionsCommonCache() {
 	commentsFeedCache = cache.NewVarCache(commentsFeed, time.Hour)
 
 	newCommentCache = cachemanager.MapCacheBy[string, string](nil, 15*time.Minute)
-
-	ctx = context.Background()
 
 	InitFeed()
 }
