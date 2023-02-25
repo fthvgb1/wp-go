@@ -320,7 +320,9 @@ func (e *entry[V]) delete(px unsafe.Pointer) (value V, ok bool) {
 
 func (m *Map[K, V]) Flush() {
 	m.mu.Lock()
-	m.missLocked()
+	m.dirty = nil
+	m.read.Store(readOnly[K, V]{m: m.dirty})
+	m.misses = 0
 	m.mu.Unlock()
 }
 

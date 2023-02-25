@@ -32,10 +32,12 @@ func TestMap_Load(t *testing.T) {
 	}
 	p := taskPools.NewPools(10)
 	var a0, a1 []int
-	for i := 0; i < 5000; i++ {
-		v := number.Rand(0, 1)
+	for i := 0; i < 15000; i++ {
+		v := number.Rand(0, 2)
 		if 1 == v {
 			a1 = append(a1, 1)
+		} else if 0 == v {
+			m.Flush()
 		} else {
 			a0 = append(a0, 0)
 		}
