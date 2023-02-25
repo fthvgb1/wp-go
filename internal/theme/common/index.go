@@ -56,16 +56,22 @@ func (i *IndexHandle) ParseIndex(parm *IndexParams) (err error) {
 
 func (i *IndexHandle) GetIndexData() (posts []models.Posts, totalRaw int, err error) {
 
+	q := model.QueryCondition{
+		Where: i.Param.Where,
+		Page:  i.Param.Page,
+		Limit: i.Param.PageSize,
+		Order: model.SqlBuilder{{i.Param.OrderBy, i.Param.Order}},
+		Join:  i.Param.Join,
+		In:    [][]any{i.Param.PostType, i.Param.PostStatus},
+	}
 	switch i.Scene {
 	case constraints.Home, constraints.Category, constraints.Tag, constraints.Author:
 
-		posts, totalRaw, err = cache.PostLists(i.C, i.Param.CacheKey, i.C, i.Param.Where, i.Param.Page, i.Param.PageSize,
-			model.SqlBuilder{{i.Param.OrderBy, i.Param.Order}}, i.Param.Join, i.Param.PostType, i.Param.PostStatus)
+		posts, totalRaw, err = cache.PostLists(i.C, i.Param.CacheKey, i.C, q)
 
 	case constraints.Search:
 
-		posts, totalRaw, err = cache.SearchPost(i.C, i.Param.CacheKey, i.C, i.Param.Where, i.Param.Page, i.Param.PageSize,
-			model.SqlBuilder{{i.Param.OrderBy, i.Param.Order}}, i.Param.Join, i.Param.PostType, i.Param.PostStatus)
+		posts, totalRaw, err = cache.SearchPost(i.C, i.Param.CacheKey, i.C, q)
 
 	case constraints.Archive:
 

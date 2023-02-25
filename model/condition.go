@@ -1,26 +1,26 @@
 package model
 
 type QueryCondition struct {
-	where  ParseWhere
-	from   string
-	fields string
-	group  string
-	order  SqlBuilder
-	join   SqlBuilder
-	having SqlBuilder
-	page   int
-	limit  int
-	offset int
-	in     [][]any
+	Where  ParseWhere
+	From   string
+	Fields string
+	Group  string
+	Order  SqlBuilder
+	Join   SqlBuilder
+	Having SqlBuilder
+	Page   int
+	Limit  int
+	Offset int
+	In     [][]any
 }
 
-func Conditions(fns ...Condition) *QueryCondition {
-	r := &QueryCondition{}
+func Conditions(fns ...Condition) QueryCondition {
+	r := QueryCondition{}
 	for _, fn := range fns {
-		fn(r)
+		fn(&r)
 	}
-	if r.fields == "" {
-		r.fields = "*"
+	if r.Fields == "" {
+		r.Fields = "*"
 	}
 	return r
 }
@@ -29,65 +29,65 @@ type Condition func(c *QueryCondition)
 
 func Where(where ParseWhere) Condition {
 	return func(c *QueryCondition) {
-		c.where = where
+		c.Where = where
 	}
 }
 func Fields(fields string) Condition {
 	return func(c *QueryCondition) {
-		c.fields = fields
+		c.Fields = fields
 	}
 }
 
 func From(from string) Condition {
 	return func(c *QueryCondition) {
-		c.from = from
+		c.From = from
 	}
 }
 
 func Group(group string) Condition {
 	return func(c *QueryCondition) {
-		c.group = group
+		c.Group = group
 	}
 }
 
 func Order(order SqlBuilder) Condition {
 	return func(c *QueryCondition) {
-		c.order = order
+		c.Order = order
 	}
 }
 
 func Join(join SqlBuilder) Condition {
 	return func(c *QueryCondition) {
-		c.join = join
+		c.Join = join
 	}
 }
 
 func Having(having SqlBuilder) Condition {
 	return func(c *QueryCondition) {
-		c.having = having
+		c.Having = having
 	}
 }
 
 func Page(page int) Condition {
 	return func(c *QueryCondition) {
-		c.page = page
+		c.Page = page
 	}
 }
 
 func Limit(limit int) Condition {
 	return func(c *QueryCondition) {
-		c.limit = limit
+		c.Limit = limit
 	}
 }
 
 func Offset(offset int) Condition {
 	return func(c *QueryCondition) {
-		c.offset = offset
+		c.Offset = offset
 	}
 }
 
 func In(in ...[]any) Condition {
 	return func(c *QueryCondition) {
-		c.in = append(c.in, in...)
+		c.In = append(c.In, in...)
 	}
 }

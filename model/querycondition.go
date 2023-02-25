@@ -12,7 +12,7 @@ import (
 // Finds  比 Find 多一个offset
 //
 // Conditions 中可用 Where Fields Group Having Join Order Offset Limit In 函数
-func Finds[T Model](ctx context.Context, q *QueryCondition) (r []T, err error) {
+func Finds[T Model](ctx context.Context, q QueryCondition) (r []T, err error) {
 	r, err = finds[T](globalBb, ctx, q)
 	return
 }
@@ -20,12 +20,12 @@ func Finds[T Model](ctx context.Context, q *QueryCondition) (r []T, err error) {
 // FindFromDB  同 Finds 使用指定 db 查询
 //
 // Conditions 中可用 Where Fields Group Having Join Order Offset Limit In 函数
-func FindFromDB[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r []T, err error) {
+func FindFromDB[T Model](db dbQuery, ctx context.Context, q QueryCondition) (r []T, err error) {
 	r, err = finds[T](db, ctx, q)
 	return
 }
 
-func finds[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r []T, err error) {
+func finds[T Model](db dbQuery, ctx context.Context, q QueryCondition) (r []T, err error) {
 	sq, args, err := BuildQuerySql[T](q)
 	if err != nil {
 		return
@@ -34,17 +34,17 @@ func finds[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r []T, 
 	return
 }
 
-func chunkFind[T Model](db dbQuery, ctx context.Context, perLimit int, q *QueryCondition) (r []T, err error) {
+func chunkFind[T Model](db dbQuery, ctx context.Context, perLimit int, q QueryCondition) (r []T, err error) {
 	i := 1
 	var rr []T
 	var total int
 	var offset int
 	for {
 		if 1 == i {
-			rr, total, err = pagination[T](db, ctx, q.where, q.fields, q.group, i, perLimit, q.order, q.join, q.having, q.in...)
+			rr, total, err = pagination[T](db, ctx, q)
 		} else {
-			q.offset = offset
-			q.limit = perLimit
+			q.Offset = offset
+			q.Limit = perLimit
 			rr, err = finds[T](db, ctx, q)
 		}
 		offset += perLimit
@@ -63,7 +63,7 @@ func chunkFind[T Model](db dbQuery, ctx context.Context, perLimit int, q *QueryC
 // ChunkFind 分片查询并直接返回所有结果
 //
 // Conditions 中可用 Where Fields Group Having Join Order Limit In 函数
-func ChunkFind[T Model](ctx context.Context, perLimit int, q *QueryCondition) (r []T, err error) {
+func ChunkFind[T Model](ctx context.Context, perLimit int, q QueryCondition) (r []T, err error) {
 	r, err = chunkFind[T](globalBb, ctx, perLimit, q)
 	return
 }
@@ -71,7 +71,7 @@ func ChunkFind[T Model](ctx context.Context, perLimit int, q *QueryCondition) (r
 // ChunkFindFromDB 同 ChunkFind
 //
 // Conditions 中可用 Where Fields Group Having Join Order Limit In 函数
-func ChunkFindFromDB[T Model](db dbQuery, ctx context.Context, perLimit int, q *QueryCondition) (r []T, err error) {
+func ChunkFindFromDB[T Model](db dbQuery, ctx context.Context, perLimit int, q QueryCondition) (r []T, err error) {
 	r, err = chunkFind[T](db, ctx, perLimit, q)
 	return
 }
@@ -79,7 +79,7 @@ func ChunkFindFromDB[T Model](db dbQuery, ctx context.Context, perLimit int, q *
 // Chunk 分片查询并函数过虑返回新类型的切片
 //
 // Conditions 中可用 Where Fields Group Having Join Order Limit In 函数
-func Chunk[T Model, R any](ctx context.Context, perLimit int, fn func(rows T) (R, bool), q *QueryCondition) (r []R, err error) {
+func Chunk[T Model, R any](ctx context.Context, perLimit int, fn func(rows T) (R, bool), q QueryCondition) (r []R, err error) {
 	r, err = chunk(globalBb, ctx, perLimit, fn, q)
 	return
 }
@@ -87,12 +87,12 @@ func Chunk[T Model, R any](ctx context.Context, perLimit int, fn func(rows T) (R
 // ChunkFromDB 同 Chunk
 //
 // Conditions 中可用 Where Fields Group Having Join Order Limit In 函数
-func ChunkFromDB[T Model, R any](db dbQuery, ctx context.Context, perLimit int, fn func(rows T) (R, bool), q *QueryCondition) (r []R, err error) {
+func ChunkFromDB[T Model, R any](db dbQuery, ctx context.Context, perLimit int, fn func(rows T) (R, bool), q QueryCondition) (r []R, err error) {
 	r, err = chunk(db, ctx, perLimit, fn, q)
 	return
 }
 
-func chunk[T Model, R any](db dbQuery, ctx context.Context, perLimit int, fn func(rows T) (R, bool), q *QueryCondition) (r []R, err error) {
+func chunk[T Model, R any](db dbQuery, ctx context.Context, perLimit int, fn func(rows T) (R, bool), q QueryCondition) (r []R, err error) {
 	i := 1
 	var rr []T
 	var count int
@@ -100,10 +100,10 @@ func chunk[T Model, R any](db dbQuery, ctx context.Context, perLimit int, fn fun
 	var offset int
 	for {
 		if 1 == i {
-			rr, total, err = pagination[T](db, ctx, q.where, q.fields, q.group, i, perLimit, q.order, q.join, q.having, q.in...)
+			rr, total, err = pagination[T](db, ctx, q)
 		} else {
-			q.offset = offset
-			q.limit = perLimit
+			q.Offset = offset
+			q.Limit = perLimit
 			rr, err = finds[T](db, ctx, q)
 		}
 		offset += perLimit
@@ -125,28 +125,28 @@ func chunk[T Model, R any](db dbQuery, ctx context.Context, perLimit int, fn fun
 	return
 }
 
-// Pagination 同 SimplePagination
+// Pagination 同
 //
-// Condition 中可使用 Where Fields Group Having Join Order Page Limit In 函数
-func Pagination[T Model](ctx context.Context, q *QueryCondition) ([]T, int, error) {
-	return SimplePagination[T](ctx, q.where, q.fields, q.group, q.page, q.limit, q.order, q.join, q.having, q.in...)
+// Condition 中可使用 Where Fields From Group Having Join Order Page Limit In 函数
+func Pagination[T Model](ctx context.Context, q QueryCondition) ([]T, int, error) {
+	return pagination[T](globalBb, ctx, q)
 }
 
 // PaginationFromDB 同 Pagination 方便多个db使用
 //
 // Condition 中可使用 Where Fields Group Having Join Order Page Limit In 函数
-func PaginationFromDB[T Model](db dbQuery, ctx context.Context, q *QueryCondition) ([]T, int, error) {
-	return pagination[T](db, ctx, q.where, q.fields, q.group, q.page, q.limit, q.order, q.join, q.having, q.in...)
+func PaginationFromDB[T Model](db dbQuery, ctx context.Context, q QueryCondition) ([]T, int, error) {
+	return pagination[T](db, ctx, q)
 }
 
-func Column[V Model, T any](ctx context.Context, fn func(V) (T, bool), q *QueryCondition) ([]T, error) {
+func Column[V Model, T any](ctx context.Context, fn func(V) (T, bool), q QueryCondition) ([]T, error) {
 	return column[V, T](globalBb, ctx, fn, q)
 }
-func ColumnFromDB[V Model, T any](db dbQuery, ctx context.Context, fn func(V) (T, bool), q *QueryCondition) (r []T, err error) {
+func ColumnFromDB[V Model, T any](db dbQuery, ctx context.Context, fn func(V) (T, bool), q QueryCondition) (r []T, err error) {
 	return column[V, T](db, ctx, fn, q)
 }
 
-func column[V Model, T any](db dbQuery, ctx context.Context, fn func(V) (T, bool), q *QueryCondition) (r []T, err error) {
+func column[V Model, T any](db dbQuery, ctx context.Context, fn func(V) (T, bool), q QueryCondition) (r []T, err error) {
 	res, err := finds[V](db, ctx, q)
 	if err != nil {
 		return nil, err
@@ -155,13 +155,13 @@ func column[V Model, T any](db dbQuery, ctx context.Context, fn func(V) (T, bool
 	return
 }
 
-func GetField[T Model](ctx context.Context, field string, q *QueryCondition) (r string, err error) {
+func GetField[T Model](ctx context.Context, field string, q QueryCondition) (r string, err error) {
 	r, err = getField[T](globalBb, ctx, field, q)
 	return
 }
-func getField[T Model](db dbQuery, ctx context.Context, field string, q *QueryCondition) (r string, err error) {
-	if q.fields == "" || q.fields == "*" {
-		q.fields = field
+func getField[T Model](db dbQuery, ctx context.Context, field string, q QueryCondition) (r string, err error) {
+	if q.Fields == "" || q.Fields == "*" {
+		q.Fields = field
 	}
 	res, err := getToStringMap[T](db, ctx, q)
 	if err != nil {
@@ -174,11 +174,11 @@ func getField[T Model](db dbQuery, ctx context.Context, field string, q *QueryCo
 	}
 	return
 }
-func GetFieldFromDB[T Model](db dbQuery, ctx context.Context, field string, q *QueryCondition) (r string, err error) {
+func GetFieldFromDB[T Model](db dbQuery, ctx context.Context, field string, q QueryCondition) (r string, err error) {
 	return getField[T](db, ctx, field, q)
 }
 
-func getToStringMap[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r map[string]string, err error) {
+func getToStringMap[T Model](db dbQuery, ctx context.Context, q QueryCondition) (r map[string]string, err error) {
 	rawSql, in, err := BuildQuerySql[T](q)
 	if err != nil {
 		return nil, err
@@ -187,12 +187,12 @@ func getToStringMap[T Model](db dbQuery, ctx context.Context, q *QueryCondition)
 	err = db.Get(ctx, &r, rawSql, in...)
 	return
 }
-func GetToStringMap[T Model](ctx context.Context, q *QueryCondition) (r map[string]string, err error) {
+func GetToStringMap[T Model](ctx context.Context, q QueryCondition) (r map[string]string, err error) {
 	r, err = getToStringMap[T](globalBb, ctx, q)
 	return
 }
 
-func findToStringMap[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r []map[string]string, err error) {
+func findToStringMap[T Model](db dbQuery, ctx context.Context, q QueryCondition) (r []map[string]string, err error) {
 	rawSql, in, err := BuildQuerySql[T](q)
 	if err != nil {
 		return nil, err
@@ -202,33 +202,33 @@ func findToStringMap[T Model](db dbQuery, ctx context.Context, q *QueryCondition
 	return
 }
 
-func FindToStringMap[T Model](ctx context.Context, q *QueryCondition) (r []map[string]string, err error) {
+func FindToStringMap[T Model](ctx context.Context, q QueryCondition) (r []map[string]string, err error) {
 	r, err = findToStringMap[T](globalBb, ctx, q)
 	return
 }
 
-func FindToStringMapFromDB[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r []map[string]string, err error) {
+func FindToStringMapFromDB[T Model](db dbQuery, ctx context.Context, q QueryCondition) (r []map[string]string, err error) {
 	r, err = findToStringMap[T](db, ctx, q)
 	return
 }
 
-func GetToStringMapFromDB[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r map[string]string, err error) {
+func GetToStringMapFromDB[T Model](db dbQuery, ctx context.Context, q QueryCondition) (r map[string]string, err error) {
 	r, err = getToStringMap[T](db, ctx, q)
 	return
 }
 
-func BuildQuerySql[T Model](q *QueryCondition) (r string, args []any, err error) {
+func BuildQuerySql[T Model](q QueryCondition) (r string, args []any, err error) {
 	var rr T
 	w := ""
-	if q.where != nil {
-		w, args, err = q.where.ParseWhere(&q.in)
+	if q.Where != nil {
+		w, args, err = q.Where.ParseWhere(&q.In)
 		if err != nil {
 			return
 		}
 	}
 	h := ""
-	if q.having != nil {
-		hh, arg, er := q.having.ParseWhere(&q.in)
+	if q.Having != nil {
+		hh, arg, er := q.Having.ParseWhere(&q.In)
 		if er != nil {
 			err = er
 			return
@@ -236,32 +236,37 @@ func BuildQuerySql[T Model](q *QueryCondition) (r string, args []any, err error)
 		args = append(args, arg...)
 		h = strings.Replace(hh, " where", " having", 1)
 	}
+	if len(args) == 0 && len(q.In) > 0 {
+		for _, antes := range q.In {
+			args = append(args, antes...)
+		}
+	}
 
-	j := q.join.parseJoin()
+	j := q.Join.parseJoin()
 	groupBy := ""
-	if q.group != "" {
+	if q.Group != "" {
 		g := strings.Builder{}
 		g.WriteString(" group by ")
-		g.WriteString(q.group)
+		g.WriteString(q.Group)
 		groupBy = g.String()
 	}
 	tp := "select %s from %s %s %s %s %s %s %s"
 	l := ""
 	table := rr.Table()
-	if q.from != "" {
-		table = q.from
+	if q.From != "" {
+		table = q.From
 	}
-	if q.limit > 0 {
-		l = fmt.Sprintf(" limit %d", q.limit)
+	if q.Limit > 0 {
+		l = fmt.Sprintf(" limit %d", q.Limit)
 	}
-	if q.offset > 0 {
-		l = fmt.Sprintf(" %s offset %d", l, q.offset)
+	if q.Offset > 0 {
+		l = fmt.Sprintf(" %s offset %d", l, q.Offset)
 	}
-	r = fmt.Sprintf(tp, q.fields, table, j, w, groupBy, h, q.order.parseOrderBy(), l)
+	r = fmt.Sprintf(tp, q.Fields, table, j, w, groupBy, h, q.Order.parseOrderBy(), l)
 	return
 }
 
-func findScanner[T Model](db dbQuery, ctx context.Context, fn func(T), q *QueryCondition) (err error) {
+func findScanner[T Model](db dbQuery, ctx context.Context, fn func(T), q QueryCondition) (err error) {
 	s, args, err := BuildQuerySql[T](q)
 	if err != nil {
 		return
@@ -275,22 +280,22 @@ func findScanner[T Model](db dbQuery, ctx context.Context, fn func(T), q *QueryC
 	return
 }
 
-func FindScannerFromDB[T Model](db dbQuery, ctx context.Context, fn func(T), q *QueryCondition) error {
+func FindScannerFromDB[T Model](db dbQuery, ctx context.Context, fn func(T), q QueryCondition) error {
 	return findScanner[T](db, ctx, fn, q)
 }
 
-func FindScanner[T Model](ctx context.Context, fn func(T), q *QueryCondition) error {
+func FindScanner[T Model](ctx context.Context, fn func(T), q QueryCondition) error {
 	return findScanner[T](globalBb, ctx, fn, q)
 }
 
-func Gets[T Model](ctx context.Context, q *QueryCondition) (T, error) {
+func Gets[T Model](ctx context.Context, q QueryCondition) (T, error) {
 	return gets[T](globalBb, ctx, q)
 }
-func GetsFromDB[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (T, error) {
+func GetsFromDB[T Model](db dbQuery, ctx context.Context, q QueryCondition) (T, error) {
 	return gets[T](db, ctx, q)
 }
 
-func gets[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r T, err error) {
+func gets[T Model](db dbQuery, ctx context.Context, q QueryCondition) (r T, err error) {
 	s, args, err := BuildQuerySql[T](q)
 	if err != nil {
 		return

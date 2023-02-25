@@ -3,8 +3,7 @@ package model
 import (
 	"context"
 	"database/sql"
-	"github.com/fthvgb1/wp-go/helper/number"
-	"github.com/fthvgb1/wp-go/helper/slice"
+	"fmt"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"reflect"
@@ -108,7 +107,15 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	glob = NewSqlxQuery(db, NewUniversalDb(nil, nil))
+	glob = NewSqlxQuery(db, NewUniversalDb(func(ctx2 context.Context, a any, s string, a2 ...any) error {
+		x := FormatSql(s, a2...)
+		fmt.Println(x)
+		return glob.Selects(ctx2, a, s, a2...)
+	}, func(ctx2 context.Context, a any, s string, a2 ...any) error {
+		x := FormatSql(s, a2...)
+		fmt.Println(x)
+		return glob.Gets(ctx2, a, s, a2...)
+	}))
 	ddb = db
 	InitDB(glob)
 }
@@ -456,65 +463,55 @@ func TestSimpleFind(t *testing.T) {
 	}
 }
 
-func TestSimplePagination(t *testing.T) {
+func Test_pagination(t *testing.T) {
 	type args struct {
-		where    ParseWhere
-		fields   string
-		group    string
-		page     int
-		pageSize int
-		order    SqlBuilder
-		join     SqlBuilder
-		having   SqlBuilder
-		in       [][]any
+		db  dbQuery
+		ctx context.Context
+		q   QueryCondition
 	}
-	tests := []struct {
+	type testCase[T Model] struct {
 		name      string
 		args      args
-		wantR     []post
+		wantR     []T
 		wantTotal int
 		wantErr   bool
-	}{
+	}
+	tests := []testCase[post]{
 		{
 			name: "t1",
 			args: args{
-				where: SqlBuilder{
-					{"ID", "in", ""},
+				db:  glob,
+				ctx: ctx,
+				q: QueryCondition{
+					Fields: "post_type,count(*) ID",
+					Group:  "post_type",
+					Having: SqlBuilder{{"ID", ">", "1", "int"}},
 				},
-				fields:   "*",
-				group:    "",
-				page:     1,
-				pageSize: 5,
-				order:    nil,
-				join:     nil,
-				having:   nil,
-				in:       [][]any{slice.ToAnySlice(number.Range(431, 440, 1))},
 			},
 			wantR: func() (r []post) {
-				r, err := Select[post](ctx, "select * from "+post{}.Table()+" where ID in (?,?,?,?,?)", slice.ToAnySlice(number.Range(431, 435, 1))...)
-				if err != nil && err != sql.ErrNoRows {
+
+				err := glob.Selects(ctx, &r, "select post_type,count(*) ID from wp_posts group by post_type having `ID`> 1")
+				if err != nil {
 					panic(err)
-				} else if err == sql.ErrNoRows {
-					err = nil
 				}
-				return
+				return r
 			}(),
-			wantTotal: 10,
+			wantTotal: 7,
 			wantErr:   false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotR, gotTotal, err := SimplePagination[post](ctx, tt.args.where, tt.args.fields, tt.args.group, tt.args.page, tt.args.pageSize, tt.args.order, tt.args.join, tt.args.having, tt.args.in...)
+			gotR, gotTotal, err := pagination[post](tt.args.db, tt.args.ctx, tt.args.q)
 			if (err != nil) != tt.wantErr {
-				t.Errorf("SimplePagination() error = %v, wantErr %v", err, tt.wantErr)
+				t.Errorf("pagination() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 			if !reflect.DeepEqual(gotR, tt.wantR) {
-				t.Errorf("SimplePagination() gotR = %v, want %v", gotR, tt.wantR)
+				t.Errorf("pagination() gotR = %v, want %v", gotR, tt.wantR)
 			}
 			if gotTotal != tt.wantTotal {
-				t.Errorf("SimplePagination() gotTotal = %v, want %v", gotTotal, tt.wantTotal)
+				t.Errorf("pagination() gotTotal = %v, want %v", gotTotal, tt.wantTotal)
 			}
 		})
 	}

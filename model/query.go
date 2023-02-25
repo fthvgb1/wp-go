@@ -3,90 +3,58 @@ package model
 import (
 	"context"
 	"fmt"
+	"github.com/fthvgb1/wp-go/helper/number"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"golang.org/x/exp/constraints"
 	"math/rand"
 	"strings"
 )
 
-func pagination[T Model](db dbQuery, ctx context.Context, where ParseWhere, fields, group string, page, pageSize int, order SqlBuilder, join SqlBuilder, having SqlBuilder, in ...[]any) (r []T, total int, err error) {
-	var rr T
-	var w string
-	var args []any
-	if where != nil {
-		w, args, err = where.ParseWhere(&in)
-		if err != nil {
-			return r, total, err
+func pagination[T Model](db dbQuery, ctx context.Context, q QueryCondition) (r []T, total int, err error) {
+	qx := QueryCondition{
+		Where:  q.Where,
+		Having: q.Having,
+		Join:   q.Join,
+		In:     q.In,
+		Group:  q.Group,
+		From:   q.From,
+	}
+	if q.Group != "" {
+		qx.Fields = q.Fields
+		sq, in, er := BuildQuerySql[T](qx)
+		qx.In = [][]any{in}
+		if er != nil {
+			err = er
+			return
+		}
+		qx.From = str.Join("( ", sq, " ) ", "table", number.ToString(rand.Int()))
+		qx = QueryCondition{
+			From: qx.From,
+			In:   qx.In,
 		}
 	}
 
-	h := ""
-	if having != nil {
-		hh, arg, err := having.ParseWhere(&in)
-		if err != nil {
-			return r, total, err
-		}
-		args = append(args, arg...)
-		h = strings.Replace(hh, " where", " having", 1)
-	}
-
-	n := struct {
-		N int `db:"n" json:"n"`
-	}{}
-	groupBy := ""
-	if group != "" {
-		g := strings.Builder{}
-		g.WriteString(" group by ")
-		g.WriteString(group)
-		groupBy = g.String()
-	}
-	if having != nil {
-		tm := map[string]struct{}{}
-		for _, s := range strings.Split(group, ",") {
-			tm[s] = struct{}{}
-		}
-		for _, ss := range having {
-			if _, ok := tm[ss[0]]; !ok {
-				group = fmt.Sprintf("%s,%s", group, ss[0])
-			}
-		}
-		group = strings.Trim(group, ",")
-	}
-	j := join.parseJoin()
-	if group == "" {
-		tpx := "select count(*) n from %s %s %s limit 1"
-		sq := fmt.Sprintf(tpx, rr.Table(), j, w)
-		err = db.Get(ctx, &n, sq, args...)
-	} else {
-		tpx := "select count(*) n from (select %s from %s %s %s %s %s ) %s"
-		sq := fmt.Sprintf(tpx, group, rr.Table(), j, w, groupBy, h, fmt.Sprintf("table%d", rand.Int()))
-		err = db.Get(ctx, &n, sq, args...)
-	}
-
-	if err != nil {
+	n, err := GetField[T](ctx, "count(*)", qx)
+	total = str.ToInt[int](n)
+	if err != nil || total < 1 {
 		return
 	}
-	if n.N == 0 {
-		return
-	}
-	total = n.N
 	offset := 0
-	if page > 1 {
-		offset = (page - 1) * pageSize
+	if q.Page > 1 {
+		offset = (q.Page - 1) * q.Limit
 	}
 	if offset >= total {
 		return
 	}
-	tp := "select %s from %s %s %s %s %s %s limit %d,%d"
-	sq := fmt.Sprintf(tp, fields, rr.Table(), j, w, groupBy, h, order.parseOrderBy(), offset, pageSize)
+	q.Offset = offset
+	sq, args, err := BuildQuerySql[T](q)
+	if err != nil {
+		return
+	}
 	err = db.Select(ctx, &r, sq, args...)
 	if err != nil {
 		return
 	}
-	return
-}
-
-func SimplePagination[T Model](ctx context.Context, where ParseWhere, fields, group string, page, pageSize int, order SqlBuilder, join SqlBuilder, having SqlBuilder, in ...[]any) (r []T, total int, err error) {
-	r, total, err = pagination[T](globalBb, ctx, where, fields, group, page, pageSize, order, join, having, in...)
 	return
 }
 
@@ -101,12 +69,12 @@ func FindOneById[T Model, I constraints.Integer](ctx context.Context, id I) (T, 
 }
 
 func FirstOne[T Model](ctx context.Context, where ParseWhere, fields string, order SqlBuilder, in ...[]any) (r T, err error) {
-	s, args, err := BuildQuerySql[T](&QueryCondition{
-		where:  where,
-		fields: fields,
-		order:  order,
-		in:     in,
-		limit:  1,
+	s, args, err := BuildQuerySql[T](QueryCondition{
+		Where:  where,
+		Fields: fields,
+		Order:  order,
+		In:     in,
+		Limit:  1,
 	})
 	if err != nil {
 		return
@@ -136,10 +104,10 @@ func LastOne[T Model](ctx context.Context, where ParseWhere, fields string, in .
 }
 
 func SimpleFind[T Model](ctx context.Context, where ParseWhere, fields string, in ...[]any) (r []T, err error) {
-	s, args, err := BuildQuerySql[T](&QueryCondition{
-		where:  where,
-		fields: fields,
-		in:     in,
+	s, args, err := BuildQuerySql[T](QueryCondition{
+		Where:  where,
+		Fields: fields,
+		In:     in,
 	})
 	if err != nil {
 		return
@@ -161,16 +129,16 @@ func Select[T Model](ctx context.Context, sql string, params ...any) ([]T, error
 
 func Find[T Model](ctx context.Context, where ParseWhere, fields, group string, order SqlBuilder, join SqlBuilder, having SqlBuilder, limit int, in ...[]any) (r []T, err error) {
 	q := QueryCondition{
-		where:  where,
-		fields: fields,
-		group:  group,
-		order:  order,
-		join:   join,
-		having: having,
-		limit:  limit,
-		in:     in,
+		Where:  where,
+		Fields: fields,
+		Group:  group,
+		Order:  order,
+		Join:   join,
+		Having: having,
+		Limit:  limit,
+		In:     in,
 	}
-	s, args, err := BuildQuerySql[T](&q)
+	s, args, err := BuildQuerySql[T](q)
 	if err != nil {
 		return
 	}
