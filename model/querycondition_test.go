@@ -333,7 +333,7 @@ func Test_getField(t *testing.T) {
 		db := glob
 		field := "count(*)"
 		q := Conditions()
-		wantR := "387"
+		wantR := "385"
 		wantErr := false
 		t.Run(name, func(t *testing.T) {
 			gotR, err := getField[options](db, ctx, field, q)

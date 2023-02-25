@@ -218,7 +218,6 @@ func GetToStringMapFromDB[T Model](db dbQuery, ctx context.Context, q QueryCondi
 }
 
 func BuildQuerySql[T Model](q QueryCondition) (r string, args []any, err error) {
-	var rr T
 	w := ""
 	if q.Where != nil {
 		w, args, err = q.Where.ParseWhere(&q.In)
@@ -252,7 +251,7 @@ func BuildQuerySql[T Model](q QueryCondition) (r string, args []any, err error) 
 	}
 	tp := "select %s from %s %s %s %s %s %s %s"
 	l := ""
-	table := rr.Table()
+	table := Table[T]()
 	if q.From != "" {
 		table = q.From
 	}

@@ -28,3 +28,13 @@ type dbQuery interface {
 }
 
 type SqlBuilder [][]string
+
+func Table[T Model]() string {
+	var r T
+	return r.Table()
+}
+
+func PrimaryKey[T Model]() string {
+	var r T
+	return r.PrimaryKey()
+}
