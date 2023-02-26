@@ -11,16 +11,6 @@ import (
 	"strings"
 )
 
-var commonClass = map[int]string{
-	constraints.Home:     "home blog ",
-	constraints.Archive:  "archive date ",
-	constraints.Category: "archive category ",
-	constraints.Tag:      "archive category ",
-	constraints.Search:   "search ",
-	constraints.Author:   "archive author ",
-	constraints.Detail:   "post-template-default single single-post ",
-}
-
 func (h *Handle) CalBodyClass() {
 	h.GinH["bodyClass"] = h.BodyClass(h.Class...)
 }
@@ -30,13 +20,21 @@ func (h *Handle) BodyClass(class ...string) string {
 		return "error404"
 	}
 	switch h.Scene {
+	case constraints.Home:
+		class = append(class, "home", "blog")
+
+	case constraints.Archive:
+		class = append(class, "archive", "date")
+
 	case constraints.Search:
 		s := "search-no-results"
 		if len(h.Index.Posts) > 0 {
 			s = "search-results"
 		}
-		class = append(class, s)
+		class = append(class, "search", s)
+
 	case constraints.Category, constraints.Tag:
+		class = append(class, "archive", "category")
 		cat := h.Index.Param.Category
 		_, cate := slice.SearchFirst(cache.CategoriesTags(h.C, h.Scene), func(my models.TermsMy) bool {
 			return my.Name == cat
@@ -47,6 +45,7 @@ func (h *Handle) BodyClass(class ...string) string {
 		class = append(class, str.Join("category-", number.ToString(cate.Terms.TermId)))
 
 	case constraints.Author:
+		class = append(class, "archive", "author")
 		author := h.Index.Param.Author
 		user, _ := cache.GetUserByName(h.C, author)
 		class = append(class, str.Join("author-", number.ToString(user.Id)))
@@ -55,6 +54,7 @@ func (h *Handle) BodyClass(class ...string) string {
 		}
 
 	case constraints.Detail:
+		class = append(class, "post-template-default", "single", "single-post")
 		class = append(class, str.Join("postid-", number.ToString(h.Detail.Post.Id)))
 		if len(h.ThemeMods.ThemeSupport.PostFormats) > 0 {
 			class = append(class, "single-format-standard")
@@ -69,6 +69,5 @@ func (h *Handle) BodyClass(class ...string) string {
 	if h.ThemeMods.ThemeSupport.ResponsiveEmbeds {
 		class = append(class, "wp-embed-responsive")
 	}
-	class = append(class, strings.Fields(commonClass[h.Scene])...)
-	return strings.Join(slice.Reverse(class), " ")
+	return strings.Join(class, " ")
 }

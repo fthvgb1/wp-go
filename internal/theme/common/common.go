@@ -28,7 +28,7 @@ type Handle struct {
 	Class     []string
 	Scripts   map[string][]func(*Handle) string
 	ThemeMods wpconfig.ThemeMods
-	HandleFns []func(*Handle)
+	HandleFns []HandleFn[*Handle]
 }
 
 func NewHandle(c *gin.Context, scene int, theme string) *Handle {
@@ -47,11 +47,11 @@ func NewHandle(c *gin.Context, scene int, theme string) *Handle {
 	}
 }
 
-func (h *Handle) PushHandleFn(fns ...func(*Handle)) {
+func (h *Handle) PushHandleFn(fns ...HandleFn[*Handle]) {
 	h.HandleFns = append(h.HandleFns, fns...)
 }
 
-func (h *Handle) AutoCal(name string, fn func(*Handle) string) {
+func (h *Handle) PlushComponent(name string, fn func(*Handle) string) {
 	v, ok := reload.GetStr(name)
 	if !ok {
 		v = fn(h)
@@ -86,7 +86,7 @@ func (h *Handle) Render() {
 		fn(h)
 	}
 	h.PushHeadScript(constraints.HeadScript, CalSiteIcon, CalCustomCss)
-	h.AutoCal("customLogo", CalCustomLogo)
+	h.PlushComponent("customLogo", CalCustomLogo)
 	h.CalMultipleScript()
 	h.CalBodyClass()
 
