@@ -76,16 +76,10 @@ func paginationToMap[T Model](db dbQuery, ctx context.Context, q QueryCondition)
 }
 
 func PaginationToMap[T Model](ctx context.Context, q QueryCondition) (r []map[string]string, total int, err error) {
-	ctx = context.WithValue(ctx, "handle=>", "toMap")
-	ctx = context.WithValue(ctx, "map", &r)
-	_, total, err = pagination[T](globalBb, ctx, q)
-	return
+	return paginationToMap[T](globalBb, ctx, q)
 }
 func PaginationToMapFromDB[T Model](db dbQuery, ctx context.Context, q QueryCondition) (r []map[string]string, total int, err error) {
-	ctx = context.WithValue(ctx, "handle=>", "toMap")
-	ctx = context.WithValue(ctx, "map", &r)
-	_, total, err = pagination[T](db, ctx, q)
-	return
+	return paginationToMap[T](db, ctx, q)
 }
 
 func FindOneById[T Model, I constraints.Integer](ctx context.Context, id I) (T, error) {

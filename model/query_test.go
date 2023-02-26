@@ -563,7 +563,12 @@ func Test_paginationToMap(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotR, gotTotal, err := paginationToMap[post](tt.args.db, tt.args.ctx, tt.args.q)
+			gotR, gotTotal, err := PaginationToMap[post](tt.args.ctx, tt.args.q)
+			fmt.Println(gotR, gotTotal, err)
+			gotR, gotTotal, err = PaginationToMapFromDB[post](tt.args.db, tt.args.ctx, tt.args.q)
+			fmt.Println(gotR, gotTotal, err)
+			gotR, gotTotal, err = paginationToMap[post](tt.args.db, tt.args.ctx, tt.args.q)
+
 			if (err != nil) != tt.wantErr {
 				t.Errorf("paginationToMap() error = %v, wantErr %v", err, tt.wantErr)
 				return
