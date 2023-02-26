@@ -50,21 +50,22 @@ func pagination[T Model](db dbQuery, ctx context.Context, q QueryCondition) (r [
 	}
 	q.Offset = offset
 	m := ctx.Value("handle=>")
-	if m != nil {
-		mm, ok := m.(string)
-		if ok && mm == "toMap" {
-			v := ctx.Value("map")
-			mx, er := findToStringMap[T](db, ctx, q)
-			if er != nil {
-				err = er
-				return
-			}
-			vv := v.(*[]map[string]string)
-			*vv = mx
+	if m == nil {
+		r, err = finds[T](db, ctx, q)
+		return
+	}
+	mm, ok := m.(string)
+	if ok && mm == "toMap" {
+		v := ctx.Value("map")
+		mx, er := findToStringMap[T](db, ctx, q)
+		if er != nil {
+			err = er
 			return
 		}
+		vv := v.(*[]map[string]string)
+		*vv = mx
+		return
 	}
-	r, err = finds[T](db, ctx, q)
 	return
 }
 
