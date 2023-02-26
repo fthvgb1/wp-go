@@ -10,6 +10,9 @@ import (
 )
 
 func pagination[T Model](db dbQuery, ctx context.Context, q QueryCondition) (r []T, total int, err error) {
+	if q.Page < 1 {
+		return
+	}
 	qx := QueryCondition{
 		Where:  q.Where,
 		Having: q.Having,
@@ -46,14 +49,42 @@ func pagination[T Model](db dbQuery, ctx context.Context, q QueryCondition) (r [
 		return
 	}
 	q.Offset = offset
-	sq, args, err := BuildQuerySql[T](q)
-	if err != nil {
-		return
+	m := ctx.Value("handle=>")
+	if m != nil {
+		mm, ok := m.(string)
+		if ok && mm == "toMap" {
+			v := ctx.Value("map")
+			mx, er := findToStringMap[T](db, ctx, q)
+			if er != nil {
+				err = er
+				return
+			}
+			vv := v.(*[]map[string]string)
+			*vv = mx
+			return
+		}
 	}
-	err = db.Select(ctx, &r, sq, args...)
-	if err != nil {
-		return
-	}
+	r, err = finds[T](db, ctx, q)
+	return
+}
+
+func paginationToMap[T Model](db dbQuery, ctx context.Context, q QueryCondition) (r []map[string]string, total int, err error) {
+	ctx = context.WithValue(ctx, "handle=>", "toMap")
+	ctx = context.WithValue(ctx, "map", &r)
+	_, total, err = pagination[T](db, ctx, q)
+	return
+}
+
+func PaginationToMap[T Model](ctx context.Context, q QueryCondition) (r []map[string]string, total int, err error) {
+	ctx = context.WithValue(ctx, "handle=>", "toMap")
+	ctx = context.WithValue(ctx, "map", &r)
+	_, total, err = pagination[T](globalBb, ctx, q)
+	return
+}
+func PaginationToMapFromDB[T Model](db dbQuery, ctx context.Context, q QueryCondition) (r []map[string]string, total int, err error) {
+	ctx = context.WithValue(ctx, "handle=>", "toMap")
+	ctx = context.WithValue(ctx, "map", &r)
+	_, total, err = pagination[T](db, ctx, q)
 	return
 }
 

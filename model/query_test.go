@@ -516,3 +516,64 @@ func Test_pagination(t *testing.T) {
 		})
 	}
 }
+
+func Test_paginationToMap(t *testing.T) {
+	type args struct {
+		db  dbQuery
+		ctx context.Context
+		q   QueryCondition
+	}
+	tests := []struct {
+		name      string
+		args      args
+		wantR     []map[string]string
+		wantTotal int
+		wantErr   bool
+	}{
+		{
+			name: "t1",
+			args: args{
+				db:  glob,
+				ctx: ctx,
+				q: QueryCondition{
+					Fields: "ID",
+					Limit:  2,
+					Page:   1,
+					Where:  SqlBuilder{{"ID < 200"}},
+				},
+			},
+			wantR:     []map[string]string{{"ID": "63"}, {"ID": "64"}},
+			wantTotal: 4,
+		},
+		{
+			name: "t2",
+			args: args{
+				db:  glob,
+				ctx: ctx,
+				q: QueryCondition{
+					Fields: "ID",
+					Limit:  2,
+					Page:   2,
+					Where:  SqlBuilder{{"ID < 200"}},
+				},
+			},
+			wantR:     []map[string]string{{"ID": "190"}, {"ID": "193"}},
+			wantTotal: 4,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotR, gotTotal, err := paginationToMap[post](tt.args.db, tt.args.ctx, tt.args.q)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("paginationToMap() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(gotR, tt.wantR) {
+				t.Errorf("paginationToMap() gotR = %v, want %v", gotR, tt.wantR)
+			}
+			if gotTotal != tt.wantTotal {
+				t.Errorf("paginationToMap() gotTotal = %v, want %v", gotTotal, tt.wantTotal)
+			}
+		})
+	}
+}
