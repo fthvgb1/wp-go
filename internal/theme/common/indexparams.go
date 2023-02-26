@@ -210,6 +210,7 @@ func (i *IndexParams) parseAuthor() (err error) {
 		i.Where = append(i.Where, []string{
 			"post_author", "=", strconv.FormatUint(user.Id, 10), "int",
 		})
+		i.Header = str.Join("作者：", username)
 	}
 	return
 }

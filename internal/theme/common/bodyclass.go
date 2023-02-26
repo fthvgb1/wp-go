@@ -1,7 +1,7 @@
 package common
 
 import (
-	"fmt"
+	"github.com/fthvgb1/wp-go/helper/number"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
@@ -17,6 +17,7 @@ var commonClass = map[int]string{
 	constraints.Category: "archive category ",
 	constraints.Tag:      "archive category ",
 	constraints.Search:   "search ",
+	constraints.Author:   "archive author ",
 	constraints.Detail:   "post-template-default single single-post ",
 }
 
@@ -25,38 +26,40 @@ func (h *Handle) CalBodyClass() {
 }
 
 func (h *Handle) BodyClass(class ...string) string {
-	s := ""
 	if constraints.Ok != h.Stats {
 		return "error404"
 	}
 	switch h.Scene {
 	case constraints.Search:
-		s = "search-no-results"
-		if len(h.GinH["posts"].([]models.Posts)) > 0 {
+		s := "search-no-results"
+		if len(h.Index.Posts) > 0 {
 			s = "search-results"
 		}
+		class = append(class, s)
 	case constraints.Category, constraints.Tag:
-		cat := h.C.Param("category")
-		if cat == "" {
-			cat = h.C.Param("tag")
-		}
+		cat := h.Index.Param.Category
 		_, cate := slice.SearchFirst(cache.CategoriesTags(h.C, h.Scene), func(my models.TermsMy) bool {
 			return my.Name == cat
 		})
 		if cate.Slug[0] != '%' {
-			s = cate.Slug
+			class = append(class, str.Join("category-", cate.Slug))
 		}
-		s = fmt.Sprintf("category-%v category-%v", s, cate.Terms.TermId)
-	case constraints.Detail:
-		s = fmt.Sprintf("postid-%d", h.GinH["post"].(models.Posts).Id)
-		if len(h.ThemeMods.ThemeSupport.PostFormats) > 0 {
-			s = str.Join(s, " single-format-standard")
-		}
-	}
-	if s != "" {
-		class = append(class, s)
-	}
+		class = append(class, str.Join("category-", number.ToString(cate.Terms.TermId)))
 
+	case constraints.Author:
+		author := h.Index.Param.Author
+		user, _ := cache.GetUserByName(h.C, author)
+		class = append(class, str.Join("author-", number.ToString(user.Id)))
+		if user.UserLogin[0] != '%' {
+			class = append(class, str.Join("author-", user.UserLogin))
+		}
+
+	case constraints.Detail:
+		class = append(class, str.Join("postid-", number.ToString(h.Detail.Post.Id)))
+		if len(h.ThemeMods.ThemeSupport.PostFormats) > 0 {
+			class = append(class, "single-format-standard")
+		}
+	}
 	if wpconfig.IsCustomBackground(h.Theme) {
 		class = append(class, "custom-background")
 	}
