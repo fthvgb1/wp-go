@@ -8,7 +8,6 @@ type QueryCondition struct {
 	Order  SqlBuilder
 	Join   SqlBuilder
 	Having SqlBuilder
-	Page   int
 	Limit  int
 	Offset int
 	In     [][]any
@@ -65,12 +64,6 @@ func Join(join SqlBuilder) Condition {
 func Having(having SqlBuilder) Condition {
 	return func(c *QueryCondition) {
 		c.Having = having
-	}
-}
-
-func Page(page int) Condition {
-	return func(c *QueryCondition) {
-		c.Page = page
 	}
 }
 

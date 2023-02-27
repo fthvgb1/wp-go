@@ -465,9 +465,11 @@ func TestSimpleFind(t *testing.T) {
 
 func Test_pagination(t *testing.T) {
 	type args struct {
-		db  dbQuery
-		ctx context.Context
-		q   QueryCondition
+		db       dbQuery
+		ctx      context.Context
+		q        QueryCondition
+		page     int
+		pageSize int
 	}
 	type testCase[T Model] struct {
 		name      string
@@ -487,10 +489,12 @@ func Test_pagination(t *testing.T) {
 					Group:  "post_type",
 					Having: SqlBuilder{{"ID", ">", "1", "int"}},
 				},
+				page:     1,
+				pageSize: 2,
 			},
 			wantR: func() (r []post) {
 
-				err := glob.Selects(ctx, &r, "select post_type,count(*) ID from wp_posts group by post_type having `ID`> 1")
+				err := glob.Selects(ctx, &r, "select post_type,count(*) ID from wp_posts group by post_type having `ID`> 1 limit 2")
 				if err != nil {
 					panic(err)
 				}
@@ -502,7 +506,7 @@ func Test_pagination(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotR, gotTotal, err := pagination[post](tt.args.db, tt.args.ctx, tt.args.q)
+			gotR, gotTotal, err := pagination[post](tt.args.db, tt.args.ctx, tt.args.q, tt.args.page, tt.args.pageSize)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("pagination() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -519,9 +523,11 @@ func Test_pagination(t *testing.T) {
 
 func Test_paginationToMap(t *testing.T) {
 	type args struct {
-		db  dbQuery
-		ctx context.Context
-		q   QueryCondition
+		db       dbQuery
+		ctx      context.Context
+		q        QueryCondition
+		page     int
+		pageSize int
 	}
 	tests := []struct {
 		name      string
@@ -537,10 +543,10 @@ func Test_paginationToMap(t *testing.T) {
 				ctx: ctx,
 				q: QueryCondition{
 					Fields: "ID",
-					Limit:  2,
-					Page:   1,
 					Where:  SqlBuilder{{"ID < 200"}},
 				},
+				page:     1,
+				pageSize: 2,
 			},
 			wantR:     []map[string]string{{"ID": "63"}, {"ID": "64"}},
 			wantTotal: 4,
@@ -552,10 +558,10 @@ func Test_paginationToMap(t *testing.T) {
 				ctx: ctx,
 				q: QueryCondition{
 					Fields: "ID",
-					Limit:  2,
-					Page:   2,
 					Where:  SqlBuilder{{"ID < 200"}},
 				},
+				page:     2,
+				pageSize: 2,
 			},
 			wantR:     []map[string]string{{"ID": "190"}, {"ID": "193"}},
 			wantTotal: 4,
@@ -563,11 +569,11 @@ func Test_paginationToMap(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotR, gotTotal, err := PaginationToMap[post](tt.args.ctx, tt.args.q)
+			gotR, gotTotal, err := PaginationToMap[post](tt.args.ctx, tt.args.q, tt.args.page, tt.args.pageSize)
 			fmt.Println(gotR, gotTotal, err)
-			gotR, gotTotal, err = PaginationToMapFromDB[post](tt.args.db, tt.args.ctx, tt.args.q)
+			gotR, gotTotal, err = PaginationToMapFromDB[post](tt.args.db, tt.args.ctx, tt.args.q, tt.args.page, tt.args.pageSize)
 			fmt.Println(gotR, gotTotal, err)
-			gotR, gotTotal, err = paginationToMap[post](tt.args.db, tt.args.ctx, tt.args.q)
+			gotR, gotTotal, err = paginationToMap[post](tt.args.db, tt.args.ctx, tt.args.q, tt.args.page, tt.args.pageSize)
 
 			if (err != nil) != tt.wantErr {
 				t.Errorf("paginationToMap() error = %v, wantErr %v", err, tt.wantErr)

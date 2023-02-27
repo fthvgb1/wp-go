@@ -92,8 +92,10 @@ func GetPostsByIds(a ...any) (m map[uint64]models.Posts, err error) {
 func SearchPostIds(args ...any) (ids PostIds, err error) {
 	ctx := args[0].(context.Context)
 	q := args[1].(model.QueryCondition)
+	page := args[2].(int)
+	pageSize := args[3].(int)
 	q.Fields = "ID"
-	res, total, err := model.Pagination[models.Posts](ctx, q)
+	res, total, err := model.Pagination[models.Posts](ctx, q, page, pageSize)
 	for _, posts := range res {
 		ids.Ids = append(ids.Ids, posts.Id)
 	}

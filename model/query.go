@@ -9,10 +9,11 @@ import (
 	"strings"
 )
 
-func pagination[T Model](db dbQuery, ctx context.Context, q QueryCondition) (r []T, total int, err error) {
-	if q.Page < 1 {
+func pagination[T Model](db dbQuery, ctx context.Context, q QueryCondition, page, pageSize int) (r []T, total int, err error) {
+	if page < 1 || pageSize < 1 {
 		return
 	}
+	q.Limit = pageSize
 	qx := QueryCondition{
 		Where:  q.Where,
 		Having: q.Having,
@@ -42,45 +43,41 @@ func pagination[T Model](db dbQuery, ctx context.Context, q QueryCondition) (r [
 		return
 	}
 	offset := 0
-	if q.Page > 1 {
-		offset = (q.Page - 1) * q.Limit
+	if page > 1 {
+		offset = (page - 1) * q.Limit
 	}
 	if offset >= total {
 		return
 	}
 	q.Offset = offset
-	m := ctx.Value("handle=>")
+	m := ctx.Value("handle=>toMap")
 	if m == nil {
 		r, err = finds[T](db, ctx, q)
 		return
 	}
-	mm, ok := m.(string)
-	if ok && mm == "toMap" {
-		v := ctx.Value("map")
+	mm, ok := m.(*[]map[string]string)
+	if ok {
 		mx, er := findToStringMap[T](db, ctx, q)
 		if er != nil {
 			err = er
 			return
 		}
-		vv := v.(*[]map[string]string)
-		*vv = mx
-		return
+		*mm = mx
 	}
 	return
 }
 
-func paginationToMap[T Model](db dbQuery, ctx context.Context, q QueryCondition) (r []map[string]string, total int, err error) {
-	ctx = context.WithValue(ctx, "handle=>", "toMap")
-	ctx = context.WithValue(ctx, "map", &r)
-	_, total, err = pagination[T](db, ctx, q)
+func paginationToMap[T Model](db dbQuery, ctx context.Context, q QueryCondition, page, pageSize int) (r []map[string]string, total int, err error) {
+	ctx = context.WithValue(ctx, "handle=>toMap", &r)
+	_, total, err = pagination[T](db, ctx, q, page, pageSize)
 	return
 }
 
-func PaginationToMap[T Model](ctx context.Context, q QueryCondition) (r []map[string]string, total int, err error) {
-	return paginationToMap[T](globalBb, ctx, q)
+func PaginationToMap[T Model](ctx context.Context, q QueryCondition, page, pageSize int) (r []map[string]string, total int, err error) {
+	return paginationToMap[T](globalBb, ctx, q, page, pageSize)
 }
-func PaginationToMapFromDB[T Model](db dbQuery, ctx context.Context, q QueryCondition) (r []map[string]string, total int, err error) {
-	return paginationToMap[T](db, ctx, q)
+func PaginationToMapFromDB[T Model](db dbQuery, ctx context.Context, q QueryCondition, page, pageSize int) (r []map[string]string, total int, err error) {
+	return paginationToMap[T](db, ctx, q, page, pageSize)
 }
 
 func FindOneById[T Model, I constraints.Integer](ctx context.Context, id I) (T, error) {

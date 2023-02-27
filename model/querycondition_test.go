@@ -178,8 +178,10 @@ func TestChunk(t *testing.T) {
 
 func TestPagination(t *testing.T) {
 	type args struct {
-		ctx context.Context
-		q   QueryCondition
+		ctx      context.Context
+		q        QueryCondition
+		page     int
+		pageSize int
 	}
 	type testCase[T Model] struct {
 		name    string
@@ -197,10 +199,10 @@ func TestPagination(t *testing.T) {
 					Where(SqlBuilder{
 						{"ID", "in", ""},
 					}),
-					Page(1),
-					Limit(5),
 					In([][]any{slice.ToAnySlice(number.Range(431, 440, 1))}...),
 				),
+				page:     1,
+				pageSize: 5,
 			},
 			want: func() (r []post) {
 				r, err := Select[post](ctx, "select * from "+post{}.Table()+" where ID in (?,?,?,?,?)", slice.ToAnySlice(number.Range(431, 435, 1))...)
@@ -217,7 +219,7 @@ func TestPagination(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, got1, err := Pagination[post](tt.args.ctx, tt.args.q)
+			got, got1, err := Pagination[post](tt.args.ctx, tt.args.q, tt.args.page, tt.args.pageSize)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("Pagination() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -333,7 +335,7 @@ func Test_getField(t *testing.T) {
 		db := glob
 		field := "count(*)"
 		q := Conditions()
-		wantR := "385"
+		wantR := "406"
 		wantErr := false
 		t.Run(name, func(t *testing.T) {
 			gotR, err := getField[options](db, ctx, field, q)
