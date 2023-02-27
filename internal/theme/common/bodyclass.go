@@ -17,7 +17,7 @@ func (h *Handle) CalBodyClass() {
 
 func (h *Handle) BodyClass(class ...string) string {
 	if constraints.Ok != h.Stats {
-		return "error404"
+		class = append(class, "error404")
 	}
 	switch h.Scene {
 	case constraints.Home:

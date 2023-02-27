@@ -1,6 +1,7 @@
 package common
 
 import (
+	"errors"
 	"fmt"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
@@ -9,7 +10,6 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
-	"net/http"
 )
 
 type DetailHandle struct {
@@ -38,11 +38,19 @@ func (d *DetailHandle) CheckAndGetPost() (err error) {
 	id := str.ToInteger[uint64](d.C.Param("id"), 0)
 	maxId, err := cache.GetMaxPostId(d.C)
 	logs.ErrPrintln(err, "get max post id")
-	if id > maxId || id <= 0 || err != nil {
+	if id > maxId || id <= 0 {
+		d.Stats = constraints.ParamError
+		err = errors.New("无效的文档id")
+		d.Class = append(d.Class, "error404")
+	}
+	if err != nil {
 		return
 	}
 	post, err := cache.GetPostById(d.C, id)
 	if post.Id == 0 || err != nil || post.PostStatus != "publish" {
+		d.Stats = constraints.Error404
+		logs.ErrPrintln(err, "获取id失败")
+		err = errors.New(str.Join("无效的文档id "))
 		return
 	}
 
@@ -100,12 +108,6 @@ func (d *DetailHandle) Render() {
 }
 
 func (d *DetailHandle) Details() {
-	err := d.BuildDetailData()
-	if err != nil {
-		d.Stats = constraints.Error404
-		d.Code = http.StatusNotFound
-		d.C.HTML(d.Code, d.Templ, d.GinH)
-		return
-	}
+	_ = d.BuildDetailData()
 	d.Render()
 }

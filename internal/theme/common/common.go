@@ -40,8 +40,6 @@ func NewHandle(c *gin.Context, scene int, theme string) *Handle {
 		Session:   sessions.Default(c),
 		GinH:      gin.H{},
 		Scene:     scene,
-		Code:      http.StatusOK,
-		Stats:     constraints.Ok,
 		ThemeMods: mods,
 		Scripts:   make(map[string][]func(*Handle) string),
 	}
@@ -75,21 +73,42 @@ func (h *Handle) GetPassword() {
 	}
 }
 
-func (h *Handle) Render() {
+func (h *Handle) ExecHandleFns() {
+	for _, fn := range h.HandleFns {
+		fn(h)
+	}
+}
+
+func (h *Handle) PreTemplate() {
 	if h.Templ == "" {
 		h.Templ = str.Join(h.Theme, "/posts/index.gohtml")
 		if h.Scene == constraints.Detail {
 			h.Templ = str.Join(h.Theme, "/posts/detail.gohtml")
 		}
 	}
-	for _, fn := range h.HandleFns {
-		fn(h)
+}
+func (h *Handle) PreCodeAndStats() {
+	if h.Stats != 0 && h.Code != 0 {
+		return
 	}
+	switch h.Stats {
+	case constraints.Ok:
+		h.Code = http.StatusOK
+	case constraints.ParamError, constraints.Error404:
+		h.Code = http.StatusNotFound
+	case constraints.InternalErr:
+		h.Code = http.StatusInternalServerError
+	}
+}
+
+func (h *Handle) Render() {
+	h.PreCodeAndStats()
+	h.PreTemplate()
+	h.ExecHandleFns()
 	h.PushHeadScript(constraints.HeadScript, CalSiteIcon, CalCustomCss)
 	h.PlushComponent("customLogo", CalCustomLogo)
 	h.CalMultipleScript()
 	h.CalBodyClass()
-
 	h.C.HTML(h.Code, h.Templ, h.GinH)
 }
 

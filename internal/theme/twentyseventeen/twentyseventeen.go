@@ -12,7 +12,6 @@ import (
 	"github.com/fthvgb1/wp-go/internal/theme/common"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/gin-gonic/gin"
-	"net/http"
 	"strings"
 )
 
@@ -57,10 +56,8 @@ var listPostsPlugins = func() map[string]common.Plugin[models.Posts, *common.Han
 func index(next common.HandleFn[*common.Handle], i *common.IndexHandle) {
 	err := i.BuildIndexData(common.NewIndexParams(i.C))
 	if err != nil {
-		i.Stats = constraints.Error404
-		i.Code = http.StatusNotFound
-		i.CalBodyClass()
-		i.C.HTML(i.Code, i.Templ, i.GinH)
+		i.Templ = str.Join(ThemeName, "/posts/error.gohtml")
+		i.Render()
 		return
 	}
 	i.PostsPlugins = listPostsPlugins
@@ -71,10 +68,8 @@ func index(next common.HandleFn[*common.Handle], i *common.IndexHandle) {
 func detail(next common.HandleFn[*common.Handle], d *common.DetailHandle) {
 	err := d.BuildDetailData()
 	if err != nil {
-		d.Code = http.StatusNotFound
-		d.Stats = constraints.Error404
-		d.GinH["bodyClass"] = d.BodyClass()
-		d.C.HTML(d.Code, d.Templ, d.GinH)
+		d.Templ = str.Join(ThemeName, "/posts/error.gohtml")
+		d.Render()
 		return
 	}
 	if d.Post.Thumbnail.Path != "" {

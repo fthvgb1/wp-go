@@ -12,7 +12,6 @@ import (
 	"github.com/fthvgb1/wp-go/internal/plugins"
 	"github.com/fthvgb1/wp-go/model"
 	"github.com/fthvgb1/wp-go/plugin/pagination"
-	"net/http"
 )
 
 type IndexHandle struct {
@@ -58,8 +57,6 @@ func (i *IndexHandle) GetIndexData() (posts []models.Posts, totalRaw int, err er
 
 	q := model.QueryCondition{
 		Where: i.Param.Where,
-		Page:  i.Param.Page,
-		Limit: i.Param.PageSize,
 		Order: model.SqlBuilder{{i.Param.OrderBy, i.Param.Order}},
 		Join:  i.Param.Join,
 		In:    [][]any{i.Param.PostType, i.Param.PostStatus},
@@ -67,11 +64,11 @@ func (i *IndexHandle) GetIndexData() (posts []models.Posts, totalRaw int, err er
 	switch i.Scene {
 	case constraints.Home, constraints.Category, constraints.Tag, constraints.Author:
 
-		posts, totalRaw, err = cache.PostLists(i.C, i.Param.CacheKey, i.C, q)
+		posts, totalRaw, err = cache.PostLists(i.C, i.Param.CacheKey, i.C, q, i.Param.Page, i.Param.PageSize)
 
 	case constraints.Search:
 
-		posts, totalRaw, err = cache.SearchPost(i.C, i.Param.CacheKey, i.C, q)
+		posts, totalRaw, err = cache.SearchPost(i.C, i.Param.CacheKey, i.C, q, i.Param.Page, i.Param.PageSize)
 
 	case constraints.Archive:
 
@@ -91,7 +88,6 @@ func (i *IndexHandle) Pagination() {
 		q = fmt.Sprintf("?%s", q)
 	}
 	paginations := pagination.NewParsePagination(i.TotalRows, i.Param.PageSize, i.Param.Page, i.Param.PaginationStep, q, i.C.Request.URL.Path)
-
 	i.GinH["pagination"] = pagination.Paginate(i.PageEle, paginations)
 
 }
@@ -99,13 +95,14 @@ func (i *IndexHandle) Pagination() {
 func (i *IndexHandle) BuildIndexData(parm *IndexParams) (err error) {
 	err = i.ParseIndex(parm)
 	if err != nil {
+		i.Stats = constraints.ParamError
 		return
 	}
 	posts, totalRows, err := i.GetIndexData()
 	if err != nil && err != sql.ErrNoRows {
+		i.Stats = constraints.Error404
 		return
 	}
-	i.GinH["posts"] = posts
 	i.Posts = posts
 	i.TotalRows = totalRows
 
@@ -135,12 +132,6 @@ func (i *IndexHandle) Render() {
 }
 
 func (i *IndexHandle) Indexs() {
-	err := i.BuildIndexData(NewIndexParams(i.C))
-	if err != nil {
-		i.Stats = constraints.Error404
-		i.Code = http.StatusNotFound
-		i.C.HTML(i.Code, i.Templ, i.GinH)
-		return
-	}
+	_ = i.BuildIndexData(NewIndexParams(i.C))
 	i.Render()
 }
