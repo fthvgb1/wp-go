@@ -43,6 +43,7 @@ func NewHandle(c *gin.Context, scene int, theme string) *Handle {
 		Stats:      constraints.Ok,
 		ThemeMods:  mods,
 		Components: make(map[string][]Components),
+		HandleFns:  make(map[int][]HandleFn[*Handle]),
 	}
 }
 

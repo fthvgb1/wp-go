@@ -27,20 +27,26 @@ var paginate = func() plugins.PageEle {
 	return p
 }()
 
-var pipe = common.HandlePipe(common.Render, dispatch)
+var pipe = common.HandlePipe(common.Render, ready, dispatch)
 
 func Hook(h *common.Handle) {
 	pipe(h)
 }
 
-func dispatch(next common.HandleFn[*common.Handle], h *common.Handle) {
+func ready(next common.HandleFn[*common.Handle], h *common.Handle) {
 	h.WidgetAreaData()
 	h.GetPassword()
 	h.PushHandleFn(constraints.AllStats, calClass)
 	h.PushHeadScript(
 		common.NewComponents(colorScheme, 10),
+		common.NewComponents(customHeader, 10),
 	)
 	h.GinH["HeaderImage"] = getHeaderImage(h)
+	h.GinH["scene"] = h.Scene
+	next(h)
+}
+
+func dispatch(next common.HandleFn[*common.Handle], h *common.Handle) {
 	switch h.Scene {
 	case constraints.Detail:
 		detail(next, h.Detail)
