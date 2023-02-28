@@ -9,7 +9,7 @@ import (
 )
 
 func CalCustomLogo(h *Handle) (r string) {
-	id := uint64(h.ThemeMods.CustomLogo)
+	id := uint64(h.themeMods.CustomLogo)
 	if id < 1 {
 		id = str.ToInteger[uint64](wpconfig.GetOption("site_logo"), 0)
 		if id < 1 {

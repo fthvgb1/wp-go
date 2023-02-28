@@ -41,13 +41,13 @@ func ready(next common.HandleFn[*common.Handle], h *common.Handle) {
 		common.NewComponents(colorScheme, 10),
 		common.NewComponents(customHeader, 10),
 	)
-	h.GinH["HeaderImage"] = getHeaderImage(h)
-	h.GinH["scene"] = h.Scene
+	h.SetData("HeaderImage", getHeaderImage(h))
+	h.SetData("scene", h.Scene())
 	next(h)
 }
 
 func dispatch(next common.HandleFn[*common.Handle], h *common.Handle) {
-	switch h.Scene {
+	switch h.Scene() {
 	case constraints.Detail:
 		detail(next, h.Detail)
 	default:
@@ -64,7 +64,7 @@ var listPostsPlugins = func() map[string]common.Plugin[models.Posts, *common.Han
 func index(next common.HandleFn[*common.Handle], i *common.IndexHandle) {
 	err := i.BuildIndexData(common.NewIndexParams(i.C))
 	if err != nil {
-		i.Templ = str.Join(ThemeName, "/posts/error.gohtml")
+		i.SetTempl(str.Join(ThemeName, "/posts/error.gohtml"))
 		i.Render()
 		return
 	}
@@ -76,7 +76,7 @@ func index(next common.HandleFn[*common.Handle], i *common.IndexHandle) {
 func detail(next common.HandleFn[*common.Handle], d *common.DetailHandle) {
 	err := d.BuildDetailData()
 	if err != nil {
-		d.Templ = str.Join(ThemeName, "/posts/error.gohtml")
+		d.SetTempl(str.Join(ThemeName, "/posts/error.gohtml"))
 		d.Render()
 		return
 	}
@@ -115,7 +115,7 @@ func (c comment) FormatLi(ctx *gin.Context, m models.Comments, depth int, isTls 
 func postThumbnail(next common.Fn[models.Posts], h *common.Handle, t models.Posts) models.Posts {
 	if t.Thumbnail.Path != "" {
 		t.Thumbnail.Sizes = "(max-width: 767px) 89vw, (max-width: 1000px) 54vw, (max-width: 1071px) 543px, 580px"
-		if h.Scene == constraints.Detail {
+		if h.Scene() == constraints.Detail {
 			t.Thumbnail.Sizes = "100vw"
 		}
 	}
@@ -138,7 +138,7 @@ func getHeaderImage(h *common.Handle) (r models.PostThumbnail) {
 		}
 		return
 	}
-	r.Path = helper.CutUrlHost(h.ThemeMods.ThemeSupport.CustomHeader.DefaultImage)
+	r.Path = helper.CutUrlHost(h.CommonThemeMods().ThemeSupport.CustomHeader.DefaultImage)
 	r.Width = 2000
 	r.Height = 1200
 	r.Sizes = "100vw"
@@ -147,23 +147,26 @@ func getHeaderImage(h *common.Handle) (r models.PostThumbnail) {
 }
 
 func calClass(h *common.Handle) {
-	u := wpconfig.GetThemeModsVal(h.Theme, "header_image", h.ThemeMods.ThemeSupport.CustomHeader.DefaultImage)
+	themeMods := h.CommonThemeMods()
+	u := wpconfig.GetThemeModsVal(ThemeName, "header_image", themeMods.ThemeSupport.CustomHeader.DefaultImage)
+	var class []string
 	if u != "" && u != "remove-header" {
-		h.Class = append(h.Class, "has-header-image")
+		class = append(class, "has-header-image")
 	}
-	if len(h.ThemeMods.SidebarsWidgets.Data.Sidebar1) > 0 {
-		h.Class = append(h.Class, "has-sidebar")
+	if len(themeMods.SidebarsWidgets.Data.Sidebar1) > 0 {
+		class = append(class, "has-sidebar")
 	}
-	if h.ThemeMods.HeaderTextcolor == "blank" {
-		h.Class = append(h.Class, "title-tagline-hidden")
+	if themeMods.HeaderTextcolor == "blank" {
+		class = append(class, "title-tagline-hidden")
 	}
-	h.Class = append(h.Class, "hfeed")
-	h.Class = append(h.Class, str.Join("colors-", wpconfig.GetThemeModsVal(h.Theme, "colorscheme", "light")))
-	if h.Scene == constraints.Archive {
-		if "one-column" == wpconfig.GetThemeModsVal(h.Theme, "page_layout", "") {
-			h.Class = append(h.Class, "page-one-column")
+	class = append(class, "hfeed")
+	class = append(class, str.Join("colors-", wpconfig.GetThemeModsVal(ThemeName, "colorscheme", "light")))
+	if h.Scene() == constraints.Archive {
+		if "one-column" == wpconfig.GetThemeModsVal(ThemeName, "page_layout", "") {
+			class = append(class, "page-one-column")
 		} else {
-			h.Class = append(h.Class, "page-two-column")
+			class = append(class, "page-two-column")
 		}
 	}
+	h.PushClass(class...)
 }

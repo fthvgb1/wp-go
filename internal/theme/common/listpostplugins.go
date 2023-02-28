@@ -33,7 +33,7 @@ func PasswordProject(next Fn[models.Posts], h *Handle, post models.Posts) (r mod
 	r = post
 	if post.PostPassword != "" {
 		plugins.PasswordProjectTitle(&r)
-		if h.Password != post.PostPassword {
+		if h.password != post.PostPassword {
 			plugins.PasswdProjectContent(&r)
 			return
 		}
@@ -96,7 +96,7 @@ func (i *IndexHandle) ExecListPagePlugin(m map[string]Plugin[models.Posts, *Hand
 
 	plugin := GetListPostPlugins(pluginConf, m)
 
-	i.GinH["posts"] = slice.Map(i.Posts, PluginFn[models.Posts, *Handle](plugin, i.Handle, Defaults(calls...)))
+	i.ginH["posts"] = slice.Map(i.Posts, PluginFn[models.Posts, *Handle](plugin, i.Handle, Defaults(calls...)))
 
 }
 

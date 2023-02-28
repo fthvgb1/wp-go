@@ -7,10 +7,10 @@ import (
 )
 
 func CalCustomCss(h *Handle) (r string) {
-	if h.ThemeMods.CustomCssPostId < 1 {
+	if h.themeMods.CustomCssPostId < 1 {
 		return
 	}
-	post, err := cache.GetPostById(h.C, uint64(h.ThemeMods.CustomCssPostId))
+	post, err := cache.GetPostById(h.C, uint64(h.themeMods.CustomCssPostId))
 	if err != nil || post.Id < 1 {
 		return
 	}

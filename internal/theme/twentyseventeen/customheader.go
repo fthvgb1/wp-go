@@ -6,8 +6,9 @@ import (
 )
 
 func customHeader(h *common.Handle) (r string) {
-	headerTextColor := h.ThemeMods.HeaderTextcolor
-	if headerTextColor == "" || headerTextColor == h.ThemeMods.ThemeSupport.CustomHeader.DefaultTextColor {
+	themeMods := h.CommonThemeMods()
+	headerTextColor := themeMods.HeaderTextcolor
+	if headerTextColor == "" || headerTextColor == themeMods.ThemeSupport.CustomHeader.DefaultTextColor {
 		return
 	}
 	css := `

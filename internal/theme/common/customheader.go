@@ -8,11 +8,11 @@ import (
 )
 
 func (h *Handle) DisplayHeaderText() bool {
-	return h.ThemeMods.ThemeSupport.CustomHeader.HeaderText && "blank" != h.ThemeMods.HeaderTextcolor
+	return h.themeMods.ThemeSupport.CustomHeader.HeaderText && "blank" != h.themeMods.HeaderTextcolor
 }
 
 func (h *Handle) GetCustomHeader() (r models.PostThumbnail, isRand bool) {
-	hs, err := cache.GetHeaderImages(h.C, h.Theme)
+	hs, err := cache.GetHeaderImages(h.C, h.theme)
 	if err != nil {
 		logs.ErrPrintln(err, "获取页眉背景图失败")
 		return

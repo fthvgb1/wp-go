@@ -117,6 +117,6 @@ func customHeader(h *common.Handle) {
 			header.Store(headers)
 		}
 	}
-	h.GinH["customHeader"] = headers
+	h.SetData("customHeader", headers)
 	return
 }

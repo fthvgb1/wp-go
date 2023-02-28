@@ -10,11 +10,11 @@ import (
 )
 
 func colorScheme(h *common.Handle) (r string) {
-	if "custom" != wpconfig.GetThemeModsVal(h.Theme, "colorscheme", "light") {
+	if "custom" != wpconfig.GetThemeModsVal(ThemeName, "colorscheme", "light") {
 		return
 	}
 	s := str.NewBuilder()
-	hue := number.ToString(wpconfig.GetThemeModsVal[int64](h.Theme, "colorscheme_hue", 250))
+	hue := number.ToString(wpconfig.GetThemeModsVal[int64](ThemeName, "colorscheme_hue", 250))
 	saturation := fmt.Sprintf("%d%%", int(.8*50))
 	css := customCss
 	for k, v := range map[string]string{

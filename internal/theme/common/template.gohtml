@@ -12,6 +12,12 @@
     {{end}}
 {{end}}
 
+{{define "common/footer"}}
+    {{if .footerScript}}
+        {{.footerScript|unescaped}}
+    {{end}}
+{{end}}
+
 {{define "common/customLogo"}}
     {{if .customLogo}}
         {{.customLogo|unescaped}}

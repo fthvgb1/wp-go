@@ -24,7 +24,7 @@ func NewDetailHandle(handle *Handle) *DetailHandle {
 }
 
 func (d *DetailHandle) BuildDetailData() (err error) {
-	d.GinH["title"] = wpconfig.GetOption("blogname")
+	d.ginH["title"] = wpconfig.GetOption("blogname")
 	err = d.CheckAndGetPost()
 	if err != nil {
 		return
@@ -41,7 +41,7 @@ func (d *DetailHandle) CheckAndGetPost() (err error) {
 	if id > maxId || id <= 0 {
 		d.Stats = constraints.ParamError
 		err = errors.New("无效的文档id")
-		d.Class = append(d.Class, "error404")
+		d.class = append(d.class, "error404")
 	}
 	if err != nil {
 		return
@@ -55,24 +55,24 @@ func (d *DetailHandle) CheckAndGetPost() (err error) {
 	}
 
 	d.Post = post
-	d.GinH["user"] = cache.GetUserById(d.C, post.PostAuthor)
-	d.GinH["title"] = fmt.Sprintf("%s-%s", post.PostTitle, wpconfig.GetOption("blogname"))
+	d.ginH["user"] = cache.GetUserById(d.C, post.PostAuthor)
+	d.ginH["title"] = fmt.Sprintf("%s-%s", post.PostTitle, wpconfig.GetOption("blogname"))
 	return
 }
 
 func (d *DetailHandle) PasswordProject() {
 	if d.Post.PostPassword != "" {
 		plugins.PasswordProjectTitle(&d.Post)
-		if d.Password != d.Post.PostPassword {
+		if d.password != d.Post.PostPassword {
 			plugins.PasswdProjectContent(&d.Post)
 		}
-		d.GinH["post"] = d.Post
+		d.ginH["post"] = d.Post
 	}
 }
 func (d *DetailHandle) Comment() {
 	comments, err := cache.PostComments(d.C, d.Post.Id)
 	logs.ErrPrintln(err, "get d.Post comment", d.Post.Id)
-	d.GinH["comments"] = comments
+	d.ginH["comments"] = comments
 	d.Comments = comments
 
 }
@@ -83,27 +83,27 @@ func (d *DetailHandle) RenderComment() {
 	}
 	ableComment := true
 	if d.Post.CommentStatus != "open" ||
-		(d.Post.PostPassword != "" && d.Password != d.Post.PostPassword) {
+		(d.Post.PostPassword != "" && d.password != d.Post.PostPassword) {
 		ableComment = false
 	}
-	d.GinH["showComment"] = ableComment
+	d.ginH["showComment"] = ableComment
 	if len(d.Comments) > 0 && ableComment {
 		dep := str.ToInteger(wpconfig.GetOption("thread_comments_depth"), 5)
-		d.GinH["comments"] = plugins.FormatComments(d.C, d.CommentRender, d.Comments, dep)
+		d.ginH["comments"] = plugins.FormatComments(d.C, d.CommentRender, d.Comments, dep)
 	}
 }
 
 func (d *DetailHandle) ContextPost() {
 	prev, next, err := cache.GetContextPost(d.C, d.Post.Id, d.Post.PostDate)
 	logs.ErrPrintln(err, "get pre and next post", d.Post.Id, d.Post.PostDate)
-	d.GinH["next"] = next
-	d.GinH["prev"] = prev
+	d.ginH["next"] = next
+	d.ginH["prev"] = prev
 }
 
 func (d *DetailHandle) Render() {
 	d.PasswordProject()
 	d.RenderComment()
-	d.GinH["post"] = d.Post
+	d.ginH["post"] = d.Post
 	d.Handle.Render()
 }
 

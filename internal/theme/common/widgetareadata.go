@@ -7,8 +7,8 @@ import (
 )
 
 func (h *Handle) WidgetAreaData() {
-	h.GinH["archives"] = cache.Archives(h.C)
-	h.GinH["recentPosts"] = slice.Map(cache.RecentPosts(h.C, 5), ProjectTitle)
-	h.GinH["categories"] = cache.CategoriesTags(h.C, constraints.Category)
-	h.GinH["recentComments"] = cache.RecentComments(h.C, 5)
+	h.ginH["archives"] = cache.Archives(h.C)
+	h.ginH["recentPosts"] = slice.Map(cache.RecentPosts(h.C, 5), ProjectTitle)
+	h.ginH["categories"] = cache.CategoriesTags(h.C, constraints.Category)
+	h.ginH["recentComments"] = cache.RecentComments(h.C, 5)
 }

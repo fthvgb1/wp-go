@@ -29,7 +29,7 @@ func NewIndexHandle(handle *Handle) *IndexHandle {
 
 func (i *IndexHandle) ParseIndex(parm *IndexParams) (err error) {
 	i.Param = parm
-	switch i.Scene {
+	switch i.scene {
 	case constraints.Home, constraints.Search:
 		i.Param.ParseSearch()
 	case constraints.Category:
@@ -47,9 +47,9 @@ func (i *IndexHandle) ParseIndex(parm *IndexParams) (err error) {
 	}
 	i.Param.ParseParams()
 	i.Param.CacheKey = i.Param.getSearchKey()
-	i.GinH["title"] = i.Param.getTitle()
-	i.GinH["search"] = i.Param.Search
-	i.GinH["header"] = i.Param.Header
+	i.ginH["title"] = i.Param.getTitle()
+	i.ginH["search"] = i.Param.Search
+	i.ginH["header"] = i.Param.Header
 	return
 }
 
@@ -61,7 +61,7 @@ func (i *IndexHandle) GetIndexData() (posts []models.Posts, totalRaw int, err er
 		Join:  i.Param.Join,
 		In:    [][]any{i.Param.PostType, i.Param.PostStatus},
 	}
-	switch i.Scene {
+	switch i.scene {
 	case constraints.Home, constraints.Category, constraints.Tag, constraints.Author:
 
 		posts, totalRaw, err = cache.PostLists(i.C, i.Param.CacheKey, i.C, q, i.Param.Page, i.Param.PageSize)
@@ -88,7 +88,7 @@ func (i *IndexHandle) Pagination() {
 		q = fmt.Sprintf("?%s", q)
 	}
 	paginations := pagination.NewParsePagination(i.TotalRows, i.Param.PageSize, i.Param.Page, i.Param.PaginationStep, q, i.C.Request.URL.Path)
-	i.GinH["pagination"] = pagination.Paginate(i.PageEle, paginations)
+	i.ginH["pagination"] = pagination.Paginate(i.PageEle, paginations)
 
 }
 
@@ -106,7 +106,7 @@ func (i *IndexHandle) BuildIndexData(parm *IndexParams) (err error) {
 	i.Posts = posts
 	i.TotalRows = totalRows
 
-	i.GinH["totalPage"] = number.CalTotalPage(totalRows, i.Param.PageSize)
+	i.ginH["totalPage"] = number.CalTotalPage(totalRows, i.Param.PageSize)
 
 	return
 }
@@ -121,7 +121,7 @@ func (i *IndexHandle) ExecPostsPlugin(calls ...func(*models.Posts)) {
 	}
 	plugin := GetListPostPlugins(pluginConf, postsPlugins)
 
-	i.GinH["posts"] = slice.Map(i.Posts, PluginFn[models.Posts](plugin, i.Handle, Defaults(calls...)))
+	i.ginH["posts"] = slice.Map(i.Posts, PluginFn[models.Posts](plugin, i.Handle, Defaults(calls...)))
 
 }
 

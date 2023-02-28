@@ -1,6 +1,7 @@
 package common
 
 import (
+	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/cmd/reload"
@@ -17,35 +18,23 @@ type Handle struct {
 	Index      *IndexHandle
 	Detail     *DetailHandle
 	C          *gin.Context
-	Theme      string
+	theme      string
 	Session    sessions.Session
-	GinH       gin.H
-	Password   string
-	Scene      int
+	ginH       gin.H
+	password   string
+	scene      int
 	Code       int
 	Stats      int
-	Templ      string
-	Class      []string
-	Components map[string][]Components
-	ThemeMods  wpconfig.ThemeMods
-	HandleFns  map[int][]HandleCall
-	Error      error
+	templ      string
+	class      []string
+	components map[string][]Components
+	themeMods  wpconfig.ThemeMods
+	handleFns  map[int][]HandleCall
+	err        error
 }
 
-func NewHandle(c *gin.Context, scene int, theme string) *Handle {
-	mods, err := wpconfig.GetThemeMods(theme)
-	logs.ErrPrintln(err, "获取mods失败")
-	return &Handle{
-		C:          c,
-		Theme:      theme,
-		Session:    sessions.Default(c),
-		GinH:       gin.H{},
-		Scene:      scene,
-		Stats:      constraints.Ok,
-		ThemeMods:  mods,
-		Components: make(map[string][]Components),
-		HandleFns:  make(map[int][]HandleCall),
-	}
+func (h *Handle) CommonThemeMods() wpconfig.ThemeMods {
+	return h.themeMods
 }
 
 // Components Order 为执行顺序，降序执行
@@ -54,12 +43,68 @@ type Components struct {
 	Order int
 }
 
+type HandleFn[T any] func(T)
+
+type HandlePipeFn[T any] func(HandleFn[T], T)
+
+type HandleCall struct {
+	Fn    HandleFn[*Handle]
+	Order int
+}
+
+func (h *Handle) Err() error {
+	return h.err
+}
+
+func (h *Handle) SetErr(err error) {
+	h.err = err
+}
+
+func (h *Handle) Password() string {
+	return h.password
+}
+
+func (h *Handle) SetTempl(templ string) {
+	h.templ = templ
+}
+
+func (h *Handle) Scene() int {
+	return h.scene
+}
+
+func (h *Handle) SetDatas(GinH gin.H) {
+	maps.Merge(h.ginH, GinH)
+}
+func (h *Handle) SetData(k string, v any) {
+	h.ginH[k] = v
+}
+
+func (h *Handle) PushClass(class ...string) {
+	h.class = append(h.class, class...)
+}
+
+func NewHandle(c *gin.Context, scene int, theme string) *Handle {
+	mods, err := wpconfig.GetThemeMods(theme)
+	logs.ErrPrintln(err, "获取mods失败")
+	return &Handle{
+		C:          c,
+		theme:      theme,
+		Session:    sessions.Default(c),
+		ginH:       gin.H{},
+		scene:      scene,
+		Stats:      constraints.Ok,
+		themeMods:  mods,
+		components: make(map[string][]Components),
+		handleFns:  make(map[int][]HandleCall),
+	}
+}
+
 func NewComponents(fn func(*Handle) string, order int) Components {
 	return Components{Fn: fn, Order: order}
 }
 
 func (h *Handle) PushHandleFn(stats int, fns ...HandleCall) {
-	h.HandleFns[stats] = append(h.HandleFns[stats], fns...)
+	h.handleFns[stats] = append(h.handleFns[stats], fns...)
 }
 
 func (h *Handle) AddComponent(name string, fn func(*Handle) string) {
@@ -68,25 +113,25 @@ func (h *Handle) AddComponent(name string, fn func(*Handle) string) {
 		v = fn(h)
 		reload.SetStr(name, v)
 	}
-	h.GinH[name] = v
+	h.ginH[name] = v
 }
 
 func (h *Handle) PushHeadScript(fn ...Components) {
-	h.Components[constraints.HeadScript] = append(h.Components[constraints.HeadScript], fn...)
+	h.components[constraints.HeadScript] = append(h.components[constraints.HeadScript], fn...)
 }
 func (h *Handle) PushFooterScript(fn ...Components) {
-	h.Components[constraints.FooterScript] = append(h.Components[constraints.FooterScript], fn...)
+	h.components[constraints.FooterScript] = append(h.components[constraints.FooterScript], fn...)
 }
 
 func (h *Handle) GetPassword() {
 	pw := h.Session.Get("post_password")
 	if pw != nil {
-		h.Password = pw.(string)
+		h.password = pw.(string)
 	}
 }
 
 func (h *Handle) ExecHandleFns() {
-	calls, ok := h.HandleFns[h.Stats]
+	calls, ok := h.handleFns[h.Stats]
 	if ok {
 		slice.SortSelf(calls, func(i, j HandleCall) bool {
 			return i.Order > j.Order
@@ -95,7 +140,7 @@ func (h *Handle) ExecHandleFns() {
 			call.Fn(h)
 		}
 	}
-	fns, ok := h.HandleFns[constraints.AllStats]
+	fns, ok := h.handleFns[constraints.AllStats]
 	if ok {
 		for _, fn := range fns {
 			fn.Fn(h)
@@ -105,10 +150,10 @@ func (h *Handle) ExecHandleFns() {
 }
 
 func (h *Handle) PreTemplate() {
-	if h.Templ == "" {
-		h.Templ = str.Join(h.Theme, "/posts/index.gohtml")
-		if h.Scene == constraints.Detail {
-			h.Templ = str.Join(h.Theme, "/posts/detail.gohtml")
+	if h.templ == "" {
+		h.templ = str.Join(h.theme, "/posts/index.gohtml")
+		if h.scene == constraints.Detail {
+			h.templ = str.Join(h.theme, "/posts/detail.gohtml")
 		}
 	}
 }
@@ -134,15 +179,15 @@ func (h *Handle) Render() {
 	h.AddComponent("customLogo", CalCustomLogo)
 	h.CalMultipleComponents()
 	h.CalBodyClass()
-	h.C.HTML(h.Code, h.Templ, h.GinH)
+	h.C.HTML(h.Code, h.templ, h.ginH)
 }
 
 func (h *Handle) PushComponents(name string, components ...Components) {
-	h.Components[name] = append(h.Components[name], components...)
+	h.components[name] = append(h.components[name], components...)
 }
 
 func (h *Handle) CalMultipleComponents() {
-	for k, ss := range h.Components {
+	for k, ss := range h.components {
 		v, ok := reload.GetStr(k)
 		if !ok {
 			slice.SortSelf(ss, func(i, j Components) bool {
@@ -154,17 +199,8 @@ func (h *Handle) CalMultipleComponents() {
 			}), "\n")
 			reload.SetStr(k, v)
 		}
-		h.GinH[k] = v
+		h.ginH[k] = v
 	}
-}
-
-type HandleFn[T any] func(T)
-
-type HandlePipeFn[T any] func(HandleFn[T], T)
-
-type HandleCall struct {
-	Fn    HandleFn[*Handle]
-	Order int
 }
 
 func NewHandleFn(fn HandleFn[*Handle], order int) HandleCall {
@@ -181,7 +217,7 @@ func HandlePipe[T any](initial func(T), fns ...HandlePipeFn[T]) HandleFn[T] {
 }
 
 func Render(h *Handle) {
-	switch h.Scene {
+	switch h.scene {
 	case constraints.Detail:
 		h.Detail.Render()
 	default:

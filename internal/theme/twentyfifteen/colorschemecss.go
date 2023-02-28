@@ -19,7 +19,7 @@ func colorSchemeCss(h *common.Handle) string {
 }
 func calColorSchemeCss(h *common.Handle) (r string) {
 	color := getColorScheme(h)
-	if "default" == h.ThemeMods.ColorScheme || len(color) < 1 {
+	if "default" == h.CommonThemeMods().ColorScheme || len(color) < 1 {
 		return
 	}
 	textColorRgb := slice.ToAnySlice(Hex2RgbUint8(color[3]))
@@ -48,29 +48,31 @@ func calColorSchemeCss(h *common.Handle) (r string) {
 
 func calSidebarTextColorCss(h *common.Handle) (r string) {
 	colors := getColorScheme(h)
-	if h.ThemeMods.SidebarTextcolor == "" || h.ThemeMods.SidebarTextcolor == colors[4] {
+	themeMods := h.CommonThemeMods()
+	if themeMods.SidebarTextcolor == "" || themeMods.SidebarTextcolor == colors[4] {
 		return
 	}
-	linkColorRgb := Hex2RgbUint8(h.ThemeMods.SidebarTextcolor)
+	linkColorRgb := Hex2RgbUint8(themeMods.SidebarTextcolor)
 	color := slice.ToAnySlice(linkColorRgb)
 	textColor := fmt.Sprintf(`rgba( %[1]v, %[2]v, %[3]v, 0.7)`, color...)
 	borderColor := fmt.Sprintf(`rgba( %[1]v, %[2]v, %[3]v, 0.1)`, color...)
 	borderFocusColor := fmt.Sprintf(`rgba( %[1]v, %[2]v, %[3]v, 0.3)`, color...)
-	r = fmt.Sprintf(sidebarTextColorTemplate, h.ThemeMods.SidebarTextcolor, textColor, borderColor, borderFocusColor)
+	r = fmt.Sprintf(sidebarTextColorTemplate, themeMods.SidebarTextcolor, textColor, borderColor, borderFocusColor)
 	return
 }
 
 func calHeaderBackgroundColorCss(h *common.Handle) (r string) {
 	colors := getColorScheme(h)
-	if h.ThemeMods.HeaderBackgroundColor == "" || h.ThemeMods.HeaderBackgroundColor == colors[1] {
+	themeMods := h.CommonThemeMods()
+	if themeMods.HeaderBackgroundColor == "" || themeMods.HeaderBackgroundColor == colors[1] {
 		return
 	}
-	r = fmt.Sprintf(headerBackgroundColorCssTemplate, h.ThemeMods.HeaderBackgroundColor, h.ThemeMods.HeaderBackgroundColor)
+	r = fmt.Sprintf(headerBackgroundColorCssTemplate, themeMods.HeaderBackgroundColor, themeMods.HeaderBackgroundColor)
 	return
 }
 
 func getColorScheme(h *common.Handle) (r []string) {
-	x, ok := colorscheme[h.ThemeMods.ColorScheme]
+	x, ok := colorscheme[h.CommonThemeMods().ColorScheme]
 	if ok {
 		r = x.Colors
 	}

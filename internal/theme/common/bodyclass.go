@@ -12,14 +12,14 @@ import (
 )
 
 func (h *Handle) CalBodyClass() {
-	h.GinH["bodyClass"] = h.BodyClass(h.Class...)
+	h.ginH["bodyClass"] = h.BodyClass(h.class...)
 }
 
 func (h *Handle) BodyClass(class ...string) string {
 	if constraints.Ok != h.Stats {
 		class = append(class, "error404")
 	}
-	switch h.Scene {
+	switch h.scene {
 	case constraints.Home:
 		class = append(class, "home", "blog")
 
@@ -36,7 +36,7 @@ func (h *Handle) BodyClass(class ...string) string {
 	case constraints.Category, constraints.Tag:
 		class = append(class, "archive", "category")
 		cat := h.Index.Param.Category
-		_, cate := slice.SearchFirst(cache.CategoriesTags(h.C, h.Scene), func(my models.TermsMy) bool {
+		_, cate := slice.SearchFirst(cache.CategoriesTags(h.C, h.scene), func(my models.TermsMy) bool {
 			return my.Name == cat
 		})
 		if cate.Slug[0] != '%' {
@@ -56,17 +56,17 @@ func (h *Handle) BodyClass(class ...string) string {
 	case constraints.Detail:
 		class = append(class, "post-template-default", "single", "single-post")
 		class = append(class, str.Join("postid-", number.ToString(h.Detail.Post.Id)))
-		if len(h.ThemeMods.ThemeSupport.PostFormats) > 0 {
+		if len(h.themeMods.ThemeSupport.PostFormats) > 0 {
 			class = append(class, "single-format-standard")
 		}
 	}
-	if wpconfig.IsCustomBackground(h.Theme) {
+	if wpconfig.IsCustomBackground(h.theme) {
 		class = append(class, "custom-background")
 	}
-	if h.ThemeMods.CustomLogo > 0 || str.ToInteger(wpconfig.GetOption("site_logo"), 0) > 0 {
+	if h.themeMods.CustomLogo > 0 || str.ToInteger(wpconfig.GetOption("site_logo"), 0) > 0 {
 		class = append(class, "wp-custom-logo")
 	}
-	if h.ThemeMods.ThemeSupport.ResponsiveEmbeds {
+	if h.themeMods.ThemeSupport.ResponsiveEmbeds {
 		class = append(class, "wp-embed-responsive")
 	}
 	return strings.Join(class, " ")
