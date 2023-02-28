@@ -28,7 +28,7 @@ type Handle struct {
 	Class      []string
 	Components map[string][]Components
 	ThemeMods  wpconfig.ThemeMods
-	HandleFns  map[int][]HandleFn[*Handle]
+	HandleFns  map[int][]HandleCall
 	Error      error
 }
 
@@ -44,7 +44,7 @@ func NewHandle(c *gin.Context, scene int, theme string) *Handle {
 		Stats:      constraints.Ok,
 		ThemeMods:  mods,
 		Components: make(map[string][]Components),
-		HandleFns:  make(map[int][]HandleFn[*Handle]),
+		HandleFns:  make(map[int][]HandleCall),
 	}
 }
 
@@ -58,7 +58,7 @@ func NewComponents(fn func(*Handle) string, order int) Components {
 	return Components{Fn: fn, Order: order}
 }
 
-func (h *Handle) PushHandleFn(stats int, fns ...HandleFn[*Handle]) {
+func (h *Handle) PushHandleFn(stats int, fns ...HandleCall) {
 	h.HandleFns[stats] = append(h.HandleFns[stats], fns...)
 }
 
@@ -88,13 +88,20 @@ func (h *Handle) GetPassword() {
 func (h *Handle) ExecHandleFns() {
 	calls, ok := h.HandleFns[h.Stats]
 	if ok {
+		slice.SortSelf(calls, func(i, j HandleCall) bool {
+			return i.Order > j.Order
+		})
 		for _, call := range calls {
-			call(h)
+			call.Fn(h)
 		}
 	}
-	for _, fn := range h.HandleFns[constraints.AllStats] {
-		fn(h)
+	fns, ok := h.HandleFns[constraints.AllStats]
+	if ok {
+		for _, fn := range fns {
+			fn.Fn(h)
+		}
 	}
+
 }
 
 func (h *Handle) PreTemplate() {
@@ -154,6 +161,15 @@ func (h *Handle) CalMultipleComponents() {
 type HandleFn[T any] func(T)
 
 type HandlePipeFn[T any] func(HandleFn[T], T)
+
+type HandleCall struct {
+	Fn    HandleFn[*Handle]
+	Order int
+}
+
+func NewHandleFn(fn HandleFn[*Handle], order int) HandleCall {
+	return HandleCall{Fn: fn, Order: order}
+}
 
 // HandlePipe  方便把功能写在其它包里
 func HandlePipe[T any](initial func(T), fns ...HandlePipeFn[T]) HandleFn[T] {
