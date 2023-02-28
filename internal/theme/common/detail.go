@@ -101,9 +101,12 @@ func (d *DetailHandle) ContextPost() {
 }
 
 func (d *DetailHandle) Render() {
-	d.PasswordProject()
-	d.RenderComment()
-	d.ginH["post"] = d.Post
+	d.PushHandleFn(constraints.Ok, NewHandleFn(func(h *Handle) {
+		d.PasswordProject()
+		d.RenderComment()
+		d.ginH["post"] = d.Post
+	}, 10))
+
 	d.Handle.Render()
 }
 

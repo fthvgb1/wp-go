@@ -18,9 +18,25 @@ type IndexHandle struct {
 	*Handle
 	Param        *IndexParams
 	Posts        []models.Posts
-	PageEle      pagination.Elements
+	pageEle      pagination.Elements
 	TotalRows    int
-	PostsPlugins map[string]Plugin[models.Posts, *Handle]
+	postsPlugins map[string]Plugin[models.Posts, *Handle]
+}
+
+func (i *IndexHandle) PageEle() pagination.Elements {
+	return i.pageEle
+}
+
+func (i *IndexHandle) SetPageEle(pageEle pagination.Elements) {
+	i.pageEle = pageEle
+}
+
+func (i *IndexHandle) PostsPlugins() map[string]Plugin[models.Posts, *Handle] {
+	return i.postsPlugins
+}
+
+func (i *IndexHandle) SetPostsPlugins(postsPlugins map[string]Plugin[models.Posts, *Handle]) {
+	i.postsPlugins = postsPlugins
 }
 
 func NewIndexHandle(handle *Handle) *IndexHandle {
@@ -80,15 +96,15 @@ func (i *IndexHandle) GetIndexData() (posts []models.Posts, totalRaw int, err er
 }
 
 func (i *IndexHandle) Pagination() {
-	if i.PageEle == nil {
-		i.PageEle = plugins.TwentyFifteenPagination()
+	if i.pageEle == nil {
+		i.pageEle = plugins.TwentyFifteenPagination()
 	}
 	q := i.C.Request.URL.Query().Encode()
 	if q != "" {
 		q = fmt.Sprintf("?%s", q)
 	}
 	paginations := pagination.NewParsePagination(i.TotalRows, i.Param.PageSize, i.Param.Page, i.Param.PaginationStep, q, i.C.Request.URL.Path)
-	i.ginH["pagination"] = pagination.Paginate(i.PageEle, paginations)
+	i.ginH["pagination"] = pagination.Paginate(i.pageEle, paginations)
 
 }
 
@@ -115,7 +131,7 @@ func (i *IndexHandle) ExecPostsPlugin(calls ...func(*models.Posts)) {
 
 	pluginConf := config.GetConfig().ListPagePlugins
 
-	postsPlugins := i.PostsPlugins
+	postsPlugins := i.postsPlugins
 	if postsPlugins == nil {
 		postsPlugins = pluginFns
 	}
@@ -126,8 +142,10 @@ func (i *IndexHandle) ExecPostsPlugin(calls ...func(*models.Posts)) {
 }
 
 func (i *IndexHandle) Render() {
-	i.ExecPostsPlugin()
-	i.Pagination()
+	i.PushHandleFn(constraints.Ok, NewHandleFn(func(h *Handle) {
+		i.ExecPostsPlugin()
+		i.Pagination()
+	}, 10))
 	i.Handle.Render()
 }
 

@@ -36,7 +36,7 @@ func Hook(h *common.Handle) {
 func ready(next common.HandleFn[*common.Handle], h *common.Handle) {
 	h.WidgetAreaData()
 	h.GetPassword()
-	h.PushHandleFn(constraints.AllStats, common.NewHandleFn(calClass, 10))
+	h.PushHandleFn(constraints.AllStats, common.NewHandleFn(calClass, 15))
 	h.PushHeadScript(
 		common.NewComponents(colorScheme, 10),
 		common.NewComponents(customHeader, 10),
@@ -68,8 +68,8 @@ func index(next common.HandleFn[*common.Handle], i *common.IndexHandle) {
 		i.Render()
 		return
 	}
-	i.PostsPlugins = listPostsPlugins
-	i.PageEle = paginate
+	i.SetPageEle(paginate)
+	i.SetPostsPlugins(listPostsPlugins)
 	next(i.Handle)
 }
 

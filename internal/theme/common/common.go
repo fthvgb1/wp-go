@@ -174,11 +174,17 @@ func (h *Handle) PreCodeAndStats() {
 func (h *Handle) Render() {
 	h.PreCodeAndStats()
 	h.PreTemplate()
-	h.ExecHandleFns()
-	h.PushHeadScript(Components{CalSiteIcon, 10}, Components{CalCustomCss, -1})
 	h.AddComponent("customLogo", CalCustomLogo)
-	h.CalMultipleComponents()
-	h.CalBodyClass()
+
+	h.PushHeadScript(Components{CalSiteIcon, 100}, Components{CalCustomCss, 0})
+
+	h.PushHandleFn(constraints.AllStats, NewHandleFn(func(h *Handle) {
+		h.CalMultipleComponents()
+		h.CalBodyClass()
+	}, 5))
+
+	h.ExecHandleFns()
+
 	h.C.HTML(h.Code, h.templ, h.ginH)
 }
 
