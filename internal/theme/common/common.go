@@ -29,6 +29,7 @@ type Handle struct {
 	Components map[string][]Components
 	ThemeMods  wpconfig.ThemeMods
 	HandleFns  map[int][]HandleFn[*Handle]
+	Error      error
 }
 
 func NewHandle(c *gin.Context, scene int, theme string) *Handle {
