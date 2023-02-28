@@ -13,6 +13,7 @@ const (
 	Error404
 	ParamError
 	InternalErr
+	AllStats
 
 	Defaults = "default"
 

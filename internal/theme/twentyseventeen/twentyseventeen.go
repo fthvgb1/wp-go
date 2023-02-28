@@ -36,7 +36,7 @@ func Hook(h *common.Handle) {
 func dispatch(next common.HandleFn[*common.Handle], h *common.Handle) {
 	h.WidgetAreaData()
 	h.GetPassword()
-	h.PushHandleFn(calClass)
+	h.PushHandleFn(constraints.AllStats, calClass)
 	h.PushHeadScript(
 		common.NewComponents(colorScheme, 10),
 	)

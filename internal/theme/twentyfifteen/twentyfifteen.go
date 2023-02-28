@@ -41,7 +41,7 @@ func dispatch(next common.HandleFn[*common.Handle], h *common.Handle) {
 		common.NewComponents(CalCustomBackGround, 10),
 		common.NewComponents(colorSchemeCss, 10),
 	)
-	h.PushHandleFn(customHeader)
+	h.PushHandleFn(constraints.AllStats, customHeader)
 	switch h.Scene {
 	case constraints.Detail:
 		detail(next, h.Detail)

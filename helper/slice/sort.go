@@ -1,6 +1,14 @@
 package slice
 
-import "sort"
+import (
+	"golang.org/x/exp/constraints"
+	"sort"
+)
+
+const (
+	ASC = iota
+	DESC
+)
 
 type anyArr[T any] struct {
 	data []T
@@ -28,6 +36,7 @@ func SortSelf[T any](arr []T, fn func(i, j T) bool) {
 	return
 }
 
+// Sort fn 中i>j 为降序，反之为升序
 func Sort[T any](arr []T, fn func(i, j T) bool) (r []T) {
 	r = make([]T, len(arr))
 	copy(r, arr)
@@ -37,4 +46,17 @@ func Sort[T any](arr []T, fn func(i, j T) bool) (r []T) {
 	}
 	sort.Sort(slice)
 	return
+}
+
+func Sorts[T constraints.Ordered](a []T, order int) {
+	slice := anyArr[T]{
+		data: a,
+		fn: func(i, j T) bool {
+			if order == DESC {
+				return i > j
+			}
+			return i < j
+		},
+	}
+	sort.Sort(slice)
 }

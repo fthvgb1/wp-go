@@ -1,6 +1,8 @@
 package slice
 
 import (
+	"fmt"
+	"golang.org/x/exp/constraints"
 	"reflect"
 	"testing"
 )
@@ -107,6 +109,39 @@ func TestSort(t *testing.T) {
 			if gotR := Sort[xy](tt.args.arr, tt.args.fn); !reflect.DeepEqual(gotR, tt.wantR) {
 				t.Errorf("SimpleSortR() = %v, want %v", gotR, tt.wantR)
 			}
+		})
+	}
+}
+
+func TestSorts(t *testing.T) {
+	type args[T constraints.Ordered] struct {
+		a     []T
+		order int
+	}
+	type testCase[T constraints.Ordered] struct {
+		name string
+		args args[T]
+	}
+	tests := []testCase[int]{
+		{
+			name: "asc",
+			args: args[int]{
+				a:     []int{1, -3, 6, 10, 3, 2, 8},
+				order: ASC,
+			}, //[-3 1 2 3 6 8 10]
+		},
+		{
+			name: "desc",
+			args: args[int]{
+				a:     []int{1, -3, 6, 10, 3, 2, 8},
+				order: DESC,
+			}, //[10 8 6 3 2 1 -3]
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			Sorts(tt.args.a, tt.args.order)
+			fmt.Println(tt.args.a)
 		})
 	}
 }

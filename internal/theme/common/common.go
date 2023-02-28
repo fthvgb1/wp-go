@@ -28,7 +28,7 @@ type Handle struct {
 	Class      []string
 	Components map[string][]Components
 	ThemeMods  wpconfig.ThemeMods
-	HandleFns  []HandleFn[*Handle]
+	HandleFns  map[int][]HandleFn[*Handle]
 }
 
 func NewHandle(c *gin.Context, scene int, theme string) *Handle {
@@ -56,8 +56,8 @@ func NewComponents(fn func(*Handle) string, order int) Components {
 	return Components{Fn: fn, Order: order}
 }
 
-func (h *Handle) PushHandleFn(fns ...HandleFn[*Handle]) {
-	h.HandleFns = append(h.HandleFns, fns...)
+func (h *Handle) PushHandleFn(stats int, fns ...HandleFn[*Handle]) {
+	h.HandleFns[stats] = append(h.HandleFns[stats], fns...)
 }
 
 func (h *Handle) AddComponent(name string, fn func(*Handle) string) {
@@ -84,7 +84,13 @@ func (h *Handle) GetPassword() {
 }
 
 func (h *Handle) ExecHandleFns() {
-	for _, fn := range h.HandleFns {
+	calls, ok := h.HandleFns[h.Stats]
+	if ok {
+		for _, call := range calls {
+			call(h)
+		}
+	}
+	for _, fn := range h.HandleFns[constraints.AllStats] {
 		fn(h)
 	}
 }
