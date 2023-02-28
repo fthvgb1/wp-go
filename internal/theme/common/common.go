@@ -14,42 +14,53 @@ import (
 )
 
 type Handle struct {
-	Index     *IndexHandle
-	Detail    *DetailHandle
-	C         *gin.Context
-	Theme     string
-	Session   sessions.Session
-	GinH      gin.H
-	Password  string
-	Scene     int
-	Code      int
-	Stats     int
-	Templ     string
-	Class     []string
-	Scripts   map[string][]func(*Handle) string
-	ThemeMods wpconfig.ThemeMods
-	HandleFns []HandleFn[*Handle]
+	Index      *IndexHandle
+	Detail     *DetailHandle
+	C          *gin.Context
+	Theme      string
+	Session    sessions.Session
+	GinH       gin.H
+	Password   string
+	Scene      int
+	Code       int
+	Stats      int
+	Templ      string
+	Class      []string
+	Components map[string][]Components
+	ThemeMods  wpconfig.ThemeMods
+	HandleFns  []HandleFn[*Handle]
 }
 
 func NewHandle(c *gin.Context, scene int, theme string) *Handle {
 	mods, err := wpconfig.GetThemeMods(theme)
 	logs.ErrPrintln(err, "获取mods失败")
 	return &Handle{
-		C:         c,
-		Theme:     theme,
-		Session:   sessions.Default(c),
-		GinH:      gin.H{},
-		Scene:     scene,
-		ThemeMods: mods,
-		Scripts:   make(map[string][]func(*Handle) string),
+		C:          c,
+		Theme:      theme,
+		Session:    sessions.Default(c),
+		GinH:       gin.H{},
+		Scene:      scene,
+		Stats:      constraints.Ok,
+		ThemeMods:  mods,
+		Components: make(map[string][]Components),
 	}
+}
+
+// Components Order 为执行顺序，降序执行
+type Components struct {
+	Fn    func(*Handle) string
+	Order int
+}
+
+func NewComponents(fn func(*Handle) string, order int) Components {
+	return Components{Fn: fn, Order: order}
 }
 
 func (h *Handle) PushHandleFn(fns ...HandleFn[*Handle]) {
 	h.HandleFns = append(h.HandleFns, fns...)
 }
 
-func (h *Handle) PlushComponent(name string, fn func(*Handle) string) {
+func (h *Handle) AddComponent(name string, fn func(*Handle) string) {
 	v, ok := reload.GetStr(name)
 	if !ok {
 		v = fn(h)
@@ -58,12 +69,11 @@ func (h *Handle) PlushComponent(name string, fn func(*Handle) string) {
 	h.GinH[name] = v
 }
 
-func (h *Handle) PushHeadScript(name string, fn ...func(*Handle) string) {
-	h.Scripts[name] = append(h.Scripts[name], fn...)
+func (h *Handle) PushHeadScript(fn ...Components) {
+	h.Components[constraints.HeadScript] = append(h.Components[constraints.HeadScript], fn...)
 }
-
-func Default[T any](t T) T {
-	return t
+func (h *Handle) PushFooterScript(fn ...Components) {
+	h.Components[constraints.FooterScript] = append(h.Components[constraints.FooterScript], fn...)
 }
 
 func (h *Handle) GetPassword() {
@@ -105,19 +115,26 @@ func (h *Handle) Render() {
 	h.PreCodeAndStats()
 	h.PreTemplate()
 	h.ExecHandleFns()
-	h.PushHeadScript(constraints.HeadScript, CalSiteIcon, CalCustomCss)
-	h.PlushComponent("customLogo", CalCustomLogo)
-	h.CalMultipleScript()
+	h.PushHeadScript(Components{CalSiteIcon, 10}, Components{CalCustomCss, -1})
+	h.AddComponent("customLogo", CalCustomLogo)
+	h.CalMultipleComponents()
 	h.CalBodyClass()
 	h.C.HTML(h.Code, h.Templ, h.GinH)
 }
 
-func (h *Handle) CalMultipleScript() {
-	for k, ss := range h.Scripts {
+func (h *Handle) PushComponents(name string, components ...Components) {
+	h.Components[name] = append(h.Components[name], components...)
+}
+
+func (h *Handle) CalMultipleComponents() {
+	for k, ss := range h.Components {
 		v, ok := reload.GetStr(k)
 		if !ok {
-			v = strings.Join(slice.FilterAndMap(ss, func(t func(*Handle) string) (string, bool) {
-				s := t(h)
+			slice.SortSelf(ss, func(i, j Components) bool {
+				return i.Order > j.Order
+			})
+			v = strings.Join(slice.FilterAndMap(ss, func(t Components) (string, bool) {
+				s := t.Fn(h)
 				return s, s != ""
 			}), "\n")
 			reload.SetStr(k, v)

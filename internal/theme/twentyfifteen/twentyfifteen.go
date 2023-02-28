@@ -37,7 +37,10 @@ func Hook(h *common.Handle) {
 func dispatch(next common.HandleFn[*common.Handle], h *common.Handle) {
 	h.WidgetAreaData()
 	h.GetPassword()
-	h.PushHeadScript(constraints.HeadScript, CalCustomBackGround, colorSchemeCss)
+	h.PushHeadScript(
+		common.NewComponents(CalCustomBackGround, 10),
+		common.NewComponents(colorSchemeCss, 10),
+	)
 	h.PushHandleFn(customHeader)
 	switch h.Scene {
 	case constraints.Detail:

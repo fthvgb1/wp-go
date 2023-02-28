@@ -44,21 +44,20 @@ func (m *MapCache[K, V]) setCacheFn(fn func(...any) (map[K]V, error)) {
 	m.cacheFunc = func(a ...any) (V, error) {
 		var err error
 		var r map[K]V
-		var id K
+		var k K
 		ctx, ok := a[0].(context.Context)
 		if ok {
-			id = a[1].(K)
-			r, err = fn(ctx, []K{id})
-		} else {
-			id = a[0].(K)
-			r, err = fn([]K{id})
+			k, ok = a[1].(K)
+			if ok {
+				r, err = fn(ctx, []K{k})
+			}
 		}
 
 		if err != nil {
 			var rr V
 			return rr, err
 		}
-		return r[id], err
+		return r[k], err
 	}
 }
 

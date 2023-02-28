@@ -37,7 +37,9 @@ func dispatch(next common.HandleFn[*common.Handle], h *common.Handle) {
 	h.WidgetAreaData()
 	h.GetPassword()
 	h.PushHandleFn(calClass)
-	h.PushHeadScript(constraints.HeadScript, colorScheme)
+	h.PushHeadScript(
+		common.NewComponents(colorScheme, 10),
+	)
 	h.GinH["HeaderImage"] = getHeaderImage(h)
 	switch h.Scene {
 	case constraints.Detail:
