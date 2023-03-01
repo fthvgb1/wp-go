@@ -1,6 +1,8 @@
 package twentyseventeen
 
 import (
+	"embed"
+	"encoding/json"
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/helper/maps"
@@ -16,6 +18,14 @@ import (
 )
 
 const ThemeName = "twentyseventeen"
+
+func Init(fs embed.FS) {
+	b, err := fs.ReadFile(str.Join(ThemeName, "/themesupport.json"))
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(b, &themesupport)
+}
 
 var paginate = func() plugins.PageEle {
 	p := plugins.TwentyFifteenPagination()
@@ -41,6 +51,11 @@ func ready(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
 		wp.NewComponents(colorScheme, 10),
 		wp.NewComponents(customHeader, 10),
 	)
+	if "dark" == wpconfig.GetThemeModsVal(ThemeName, "colorscheme", "light") {
+		h.PushHeadScript(wp.NewComponents(func(h *wp.Handle) string {
+			return ` <link rel="stylesheet" id="twentyseventeen-colors-dark-css" href="/wp-content/themes/twentyseventeen/assets/css/colors-dark.css?ver=20191025" media="all">`
+		}, 10))
+	}
 	h.SetData("HeaderImage", getHeaderImage(h))
 	h.SetData("scene", h.Scene())
 	next(h)

@@ -15,13 +15,15 @@ func colorScheme(h *wp.Handle) (r string) {
 	}
 	s := str.NewBuilder()
 	hue := number.ToString(wpconfig.GetThemeModsVal[int64](ThemeName, "colorscheme_hue", 250))
-	saturation := fmt.Sprintf("%d%%", int(.8*50))
+	reducedSaturation := fmt.Sprintf("%d%%", int(.8*50))
+	saturation := fmt.Sprintf("%d%%", 50)
 	css := customCss
 	for k, v := range map[string]string{
 		"' . $hue . '":                    hue,
 		"' . esc_attr( $hue ) . '":        hue,
 		"' . $saturation . '":             saturation,
 		"' . esc_attr( $saturation ) .' ": saturation,
+		"' . $reduced_saturation . '":     reducedSaturation,
 	} {
 		css = strings.ReplaceAll(css, k, v)
 	}
