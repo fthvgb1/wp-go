@@ -4,12 +4,12 @@ import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper/number"
 	str "github.com/fthvgb1/wp-go/helper/strings"
-	"github.com/fthvgb1/wp-go/internal/theme/common"
+	"github.com/fthvgb1/wp-go/internal/theme/wp"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"strings"
 )
 
-func colorScheme(h *common.Handle) (r string) {
+func colorScheme(h *wp.Handle) (r string) {
 	if "custom" != wpconfig.GetThemeModsVal(ThemeName, "colorscheme", "light") {
 		return
 	}

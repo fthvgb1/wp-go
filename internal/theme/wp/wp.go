@@ -1,4 +1,4 @@
-package common
+package wp
 
 import (
 	"github.com/fthvgb1/wp-go/helper/maps"
@@ -31,6 +31,11 @@ type Handle struct {
 	themeMods  wpconfig.ThemeMods
 	handleFns  map[int][]HandleCall
 	err        error
+	abort      bool
+}
+
+func (h *Handle) Abort() {
+	h.abort = true
 }
 
 func (h *Handle) CommonThemeMods() wpconfig.ThemeMods {
@@ -132,21 +137,23 @@ func (h *Handle) GetPassword() {
 
 func (h *Handle) ExecHandleFns() {
 	calls, ok := h.handleFns[h.Stats]
+	var fns []HandleCall
 	if ok {
-		slice.SortSelf(calls, func(i, j HandleCall) bool {
-			return i.Order > j.Order
-		})
-		for _, call := range calls {
-			call.Fn(h)
+		fns = append(fns, calls...)
+	}
+	call, ok := h.handleFns[constraints.AllStats]
+	if ok {
+		fns = append(fns, call...)
+	}
+	slice.SortSelf(fns, func(i, j HandleCall) bool {
+		return i.Order > j.Order
+	})
+	for _, fn := range fns {
+		fn.Fn(h)
+		if h.abort {
+			break
 		}
 	}
-	fns, ok := h.handleFns[constraints.AllStats]
-	if ok {
-		for _, fn := range fns {
-			fn.Fn(h)
-		}
-	}
-
 }
 
 func (h *Handle) PreTemplate() {
@@ -181,11 +188,12 @@ func (h *Handle) Render() {
 	h.PushHandleFn(constraints.AllStats, NewHandleFn(func(h *Handle) {
 		h.CalMultipleComponents()
 		h.CalBodyClass()
-	}, 5))
+	}, 5), NewHandleFn(func(h *Handle) {
+		h.C.HTML(h.Code, h.templ, h.ginH)
+	}, 0))
 
 	h.ExecHandleFns()
 
-	h.C.HTML(h.Code, h.templ, h.ginH)
 }
 
 func (h *Handle) PushComponents(name string, components ...Components) {

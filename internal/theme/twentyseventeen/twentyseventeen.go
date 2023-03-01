@@ -9,7 +9,7 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
-	"github.com/fthvgb1/wp-go/internal/theme/common"
+	"github.com/fthvgb1/wp-go/internal/theme/wp"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/gin-gonic/gin"
 	"strings"
@@ -27,26 +27,26 @@ var paginate = func() plugins.PageEle {
 	return p
 }()
 
-var pipe = common.HandlePipe(common.Render, ready, dispatch)
+var pipe = wp.HandlePipe(wp.Render, ready, dispatch)
 
-func Hook(h *common.Handle) {
+func Hook(h *wp.Handle) {
 	pipe(h)
 }
 
-func ready(next common.HandleFn[*common.Handle], h *common.Handle) {
+func ready(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
 	h.WidgetAreaData()
 	h.GetPassword()
-	h.PushHandleFn(constraints.AllStats, common.NewHandleFn(calClass, 15))
+	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(calClass, 15))
 	h.PushHeadScript(
-		common.NewComponents(colorScheme, 10),
-		common.NewComponents(customHeader, 10),
+		wp.NewComponents(colorScheme, 10),
+		wp.NewComponents(customHeader, 10),
 	)
 	h.SetData("HeaderImage", getHeaderImage(h))
 	h.SetData("scene", h.Scene())
 	next(h)
 }
 
-func dispatch(next common.HandleFn[*common.Handle], h *common.Handle) {
+func dispatch(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
 	switch h.Scene() {
 	case constraints.Detail:
 		detail(next, h.Detail)
@@ -55,14 +55,14 @@ func dispatch(next common.HandleFn[*common.Handle], h *common.Handle) {
 	}
 }
 
-var listPostsPlugins = func() map[string]common.Plugin[models.Posts, *common.Handle] {
-	return maps.Merge(common.ListPostPlugins(), map[string]common.Plugin[models.Posts, *common.Handle]{
+var listPostsPlugins = func() map[string]wp.Plugin[models.Posts, *wp.Handle] {
+	return maps.Merge(wp.ListPostPlugins(), map[string]wp.Plugin[models.Posts, *wp.Handle]{
 		"twentyseventeen_postThumbnail": postThumbnail,
 	})
 }()
 
-func index(next common.HandleFn[*common.Handle], i *common.IndexHandle) {
-	err := i.BuildIndexData(common.NewIndexParams(i.C))
+func index(next wp.HandleFn[*wp.Handle], i *wp.IndexHandle) {
+	err := i.BuildIndexData(wp.NewIndexParams(i.C))
 	if err != nil {
 		i.SetTempl(str.Join(ThemeName, "/posts/error.gohtml"))
 		i.Render()
@@ -73,7 +73,7 @@ func index(next common.HandleFn[*common.Handle], i *common.IndexHandle) {
 	next(i.Handle)
 }
 
-func detail(next common.HandleFn[*common.Handle], d *common.DetailHandle) {
+func detail(next wp.HandleFn[*wp.Handle], d *wp.DetailHandle) {
 	err := d.BuildDetailData()
 	if err != nil {
 		d.SetTempl(str.Join(ThemeName, "/posts/error.gohtml"))
@@ -112,7 +112,7 @@ func (c comment) FormatLi(ctx *gin.Context, m models.Comments, depth int, isTls 
 	return plugins.FormatLi(templ, ctx, m, depth, isTls, eo, parent)
 }
 
-func postThumbnail(next common.Fn[models.Posts], h *common.Handle, t models.Posts) models.Posts {
+func postThumbnail(next wp.Fn[models.Posts], h *wp.Handle, t models.Posts) models.Posts {
 	if t.Thumbnail.Path != "" {
 		t.Thumbnail.Sizes = "(max-width: 767px) 89vw, (max-width: 1000px) 54vw, (max-width: 1071px) 543px, 580px"
 		if h.Scene() == constraints.Detail {
@@ -124,7 +124,7 @@ func postThumbnail(next common.Fn[models.Posts], h *common.Handle, t models.Post
 
 var header = reload.Vars(models.PostThumbnail{})
 
-func getHeaderImage(h *common.Handle) (r models.PostThumbnail) {
+func getHeaderImage(h *wp.Handle) (r models.PostThumbnail) {
 	img := header.Load()
 	if img.Path != "" {
 		return r
@@ -146,7 +146,7 @@ func getHeaderImage(h *common.Handle) (r models.PostThumbnail) {
 	return
 }
 
-func calClass(h *common.Handle) {
+func calClass(h *wp.Handle) {
 	themeMods := h.CommonThemeMods()
 	u := wpconfig.GetThemeModsVal(ThemeName, "header_image", themeMods.ThemeSupport.CustomHeader.DefaultImage)
 	var class []string

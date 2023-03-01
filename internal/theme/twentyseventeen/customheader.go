@@ -2,10 +2,10 @@ package twentyseventeen
 
 import (
 	"fmt"
-	"github.com/fthvgb1/wp-go/internal/theme/common"
+	"github.com/fthvgb1/wp-go/internal/theme/wp"
 )
 
-func customHeader(h *common.Handle) (r string) {
+func customHeader(h *wp.Handle) (r string) {
 	themeMods := h.CommonThemeMods()
 	headerTextColor := themeMods.HeaderTextcolor
 	if headerTextColor == "" || headerTextColor == themeMods.ThemeSupport.CustomHeader.DefaultTextColor {

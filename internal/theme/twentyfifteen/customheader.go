@@ -4,7 +4,7 @@ import (
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
-	"github.com/fthvgb1/wp-go/internal/theme/common"
+	"github.com/fthvgb1/wp-go/internal/theme/wp"
 )
 
 var style = `<style type="text/css" id="twentyfifteen-header-css">`
@@ -83,7 +83,7 @@ var imgStyle = `.site-header {
 
 var header = reload.Vars(constraints.Defaults)
 
-func calCustomHeader(h *common.Handle) (r string, rand bool) {
+func calCustomHeader(h *wp.Handle) (r string, rand bool) {
 	img, rand := h.GetCustomHeader()
 	if img.Path == "" && h.DisplayHeaderText() {
 		return
@@ -108,7 +108,7 @@ func calCustomHeader(h *common.Handle) (r string, rand bool) {
 	return
 }
 
-func customHeader(h *common.Handle) {
+func customHeader(h *wp.Handle) {
 	headers := header.Load()
 	if headers == constraints.Defaults {
 		headerss, rand := calCustomHeader(h)

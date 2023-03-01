@@ -3,12 +3,12 @@ package twentyfifteen
 import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper/slice"
-	"github.com/fthvgb1/wp-go/internal/theme/common"
+	"github.com/fthvgb1/wp-go/internal/theme/wp"
 	"strconv"
 	"strings"
 )
 
-func colorSchemeCss(h *common.Handle) string {
+func colorSchemeCss(h *wp.Handle) string {
 	s := slice.Filter([]string{calColorSchemeCss(h), calSidebarTextColorCss(h), calHeaderBackgroundColorCss(h)}, func(s string) bool {
 		return s != ""
 	})
@@ -17,7 +17,7 @@ func colorSchemeCss(h *common.Handle) string {
 	}
 	return fmt.Sprintf(`<style id='%s-inline-css'%s>\n%s\n</style>`, "twentyfifteen-style", "", strings.Join(s, "\n"))
 }
-func calColorSchemeCss(h *common.Handle) (r string) {
+func calColorSchemeCss(h *wp.Handle) (r string) {
 	color := getColorScheme(h)
 	if "default" == h.CommonThemeMods().ColorScheme || len(color) < 1 {
 		return
@@ -46,7 +46,7 @@ func calColorSchemeCss(h *common.Handle) (r string) {
 	return
 }
 
-func calSidebarTextColorCss(h *common.Handle) (r string) {
+func calSidebarTextColorCss(h *wp.Handle) (r string) {
 	colors := getColorScheme(h)
 	themeMods := h.CommonThemeMods()
 	if themeMods.SidebarTextcolor == "" || themeMods.SidebarTextcolor == colors[4] {
@@ -61,7 +61,7 @@ func calSidebarTextColorCss(h *common.Handle) (r string) {
 	return
 }
 
-func calHeaderBackgroundColorCss(h *common.Handle) (r string) {
+func calHeaderBackgroundColorCss(h *wp.Handle) (r string) {
 	colors := getColorScheme(h)
 	themeMods := h.CommonThemeMods()
 	if themeMods.HeaderBackgroundColor == "" || themeMods.HeaderBackgroundColor == colors[1] {
@@ -71,7 +71,7 @@ func calHeaderBackgroundColorCss(h *common.Handle) (r string) {
 	return
 }
 
-func getColorScheme(h *common.Handle) (r []string) {
+func getColorScheme(h *wp.Handle) (r []string) {
 	x, ok := colorscheme[h.CommonThemeMods().ColorScheme]
 	if ok {
 		r = x.Colors

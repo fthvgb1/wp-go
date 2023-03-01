@@ -1,4 +1,4 @@
-package common
+package wp
 
 import (
 	"github.com/fthvgb1/wp-go/helper/number"

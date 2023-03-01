@@ -1,20 +1,20 @@
 package theme
 
 import (
-	"github.com/fthvgb1/wp-go/internal/theme/common"
 	"github.com/fthvgb1/wp-go/internal/theme/twentyfifteen"
+	"github.com/fthvgb1/wp-go/internal/theme/wp"
 )
 
-var themeMap = map[string]func(*common.Handle){}
+var themeMap = map[string]func(*wp.Handle){}
 
-func addThemeHookFunc(name string, fn func(handle *common.Handle)) {
+func addThemeHookFunc(name string, fn func(handle *wp.Handle)) {
 	if _, ok := themeMap[name]; ok {
 		panic("exists same name theme")
 	}
 	themeMap[name] = fn
 }
 
-func Hook(themeName string, handle *common.Handle) {
+func Hook(themeName string, handle *wp.Handle) {
 	fn, ok := themeMap[themeName]
 	if ok && fn != nil {
 		fn(handle)

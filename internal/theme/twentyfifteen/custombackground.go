@@ -5,7 +5,7 @@ import (
 	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/helper/maps"
 	str "github.com/fthvgb1/wp-go/helper/strings"
-	"github.com/fthvgb1/wp-go/internal/theme/common"
+	"github.com/fthvgb1/wp-go/internal/theme/wp"
 )
 
 var postx = map[string]string{
@@ -30,7 +30,7 @@ var repeat = map[string]string{
 	"no-repeat": "no-repeat",
 }
 
-func CalCustomBackGround(h *common.Handle) (r string) {
+func CalCustomBackGround(h *wp.Handle) (r string) {
 	themeMods := h.CommonThemeMods()
 	if themeMods.BackgroundImage == "" && themeMods.BackgroundColor == themesupport.CustomBackground.DefaultColor {
 		return

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
-	"github.com/fthvgb1/wp-go/internal/theme/common"
+	"github.com/fthvgb1/wp-go/internal/theme/wp"
 )
 
 const ThemeName = "twentyfifteen"
@@ -28,20 +28,20 @@ func Init(fs embed.FS) {
 	logs.ErrPrintln(err, "解析colorscheme失败")
 }
 
-var pipe = common.HandlePipe(common.Render, dispatch)
+var pipe = wp.HandlePipe(wp.Render, dispatch)
 
-func Hook(h *common.Handle) {
+func Hook(h *wp.Handle) {
 	pipe(h)
 }
 
-func dispatch(next common.HandleFn[*common.Handle], h *common.Handle) {
+func dispatch(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
 	h.WidgetAreaData()
 	h.GetPassword()
 	h.PushHeadScript(
-		common.NewComponents(CalCustomBackGround, 10),
-		common.NewComponents(colorSchemeCss, 10),
+		wp.NewComponents(CalCustomBackGround, 10),
+		wp.NewComponents(colorSchemeCss, 10),
 	)
-	h.PushHandleFn(constraints.AllStats, common.NewHandleFn(customHeader, 10))
+	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(customHeader, 10))
 	switch h.Scene() {
 	case constraints.Detail:
 		detail(next, h.Detail)
@@ -50,10 +50,10 @@ func dispatch(next common.HandleFn[*common.Handle], h *common.Handle) {
 	}
 }
 
-func index(next common.HandleFn[*common.Handle], i *common.IndexHandle) {
+func index(next wp.HandleFn[*wp.Handle], i *wp.IndexHandle) {
 	i.Indexs()
 }
 
-func detail(fn common.HandleFn[*common.Handle], d *common.DetailHandle) {
+func detail(fn wp.HandleFn[*wp.Handle], d *wp.DetailHandle) {
 	d.Details()
 }
