@@ -142,7 +142,7 @@ var header = reload.Vars(models.PostThumbnail{})
 func getHeaderImage(h *wp.Handle) (r models.PostThumbnail) {
 	img := header.Load()
 	if img.Path != "" {
-		return r
+		return img
 	}
 	image, rand := h.GetCustomHeader()
 	if image.Path != "" {
@@ -156,7 +156,6 @@ func getHeaderImage(h *wp.Handle) (r models.PostThumbnail) {
 	r.Path = helper.CutUrlHost(h.CommonThemeMods().ThemeSupport.CustomHeader.DefaultImage)
 	r.Width = 2000
 	r.Height = 1200
-	r.Sizes = "100vw"
 	header.Store(r)
 	return
 }
