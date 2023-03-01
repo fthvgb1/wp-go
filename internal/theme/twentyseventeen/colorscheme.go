@@ -6,7 +6,6 @@ import (
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/theme/wp"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
-	"strings"
 )
 
 func colorScheme(h *wp.Handle) (r string) {
@@ -17,16 +16,13 @@ func colorScheme(h *wp.Handle) (r string) {
 	hue := number.ToString(wpconfig.GetThemeModsVal[int64](ThemeName, "colorscheme_hue", 250))
 	reducedSaturation := fmt.Sprintf("%d%%", int(.8*50))
 	saturation := fmt.Sprintf("%d%%", 50)
-	css := customCss
-	for k, v := range map[string]string{
+	css := str.Replace(customCss, map[string]string{
 		"' . $hue . '":                    hue,
 		"' . esc_attr( $hue ) . '":        hue,
 		"' . $saturation . '":             saturation,
 		"' . esc_attr( $saturation ) .' ": saturation,
 		"' . $reduced_saturation . '":     reducedSaturation,
-	} {
-		css = strings.ReplaceAll(css, k, v)
-	}
+	})
 	s.Sprintf(`<style type="text/css" id="custom-theme-colors">%s</style>`, css)
 	r = s.String()
 	return

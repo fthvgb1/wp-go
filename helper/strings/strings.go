@@ -78,6 +78,13 @@ func (b *Builder) WriteString(s ...string) (count int) {
 	}
 	return
 }
+
+func Replace(s string, replace map[string]string) string {
+	for k, v := range replace {
+		s = strings.ReplaceAll(s, k, v)
+	}
+	return s
+}
 func (b *Builder) Sprintf(format string, a ...any) int {
 	i, _ := fmt.Fprintf(b, format, a...)
 	return i
