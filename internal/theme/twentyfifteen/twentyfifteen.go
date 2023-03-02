@@ -37,10 +37,7 @@ func Hook(h *wp.Handle) {
 func dispatch(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
 	h.WidgetAreaData()
 	h.GetPassword()
-	h.PushHeadScript(
-		wp.NewComponents(CalCustomBackGround, 10),
-		wp.NewComponents(colorSchemeCss, 10),
-	)
+	h.PushGroupHeadScript(10, CalCustomBackGround, colorSchemeCss)
 	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(customHeader, 10))
 	switch h.Scene() {
 	case constraints.Detail:

@@ -202,12 +202,12 @@ func (h *Handle) Render() {
 	h.PreTemplate()
 	h.AddComponent("customLogo", CalCustomLogo)
 
-	h.PushHeadScript(Components{CalSiteIcon, 100}, Components{CalCustomCss, 0})
+	h.PushGroupHeadScript(0, CalSiteIcon, CalCustomCss)
 
 	h.PushHandleFn(constraints.AllStats, NewHandleFn(func(h *Handle) {
 		h.CalMultipleComponents()
 		h.CalBodyClass()
-	}, 5), NewHandleFn(func(h *Handle) {
+	}, 10), NewHandleFn(func(h *Handle) {
 		h.C.HTML(h.Code, h.templ, h.ginH)
 	}, 0))
 

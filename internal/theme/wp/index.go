@@ -137,7 +137,7 @@ func (i *IndexHandle) ExecPostsPlugin(calls ...func(*models.Posts)) {
 	}
 	plugin := GetListPostPlugins(pluginConf, postsPlugins)
 
-	i.ginH["posts"] = slice.Map(i.Posts, PluginFn[models.Posts](plugin, i.Handle, Defaults(calls...)))
+	i.Posts = slice.Map(i.Posts, PluginFn[models.Posts](plugin, i.Handle, Defaults(calls...)))
 
 }
 
@@ -146,6 +146,7 @@ func (i *IndexHandle) Render() {
 		i.ExecPostsPlugin()
 		i.Pagination()
 	}, 10))
+	i.ginH["posts"] = i.Posts
 	i.Handle.Render()
 }
 

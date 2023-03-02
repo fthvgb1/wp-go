@@ -47,7 +47,7 @@ func Hook(h *wp.Handle) {
 func ready(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
 	h.WidgetAreaData()
 	h.GetPassword()
-	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(calClass, 15))
+	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(calClass, 20))
 	errHandle := wp.NewHandleFn(errorsHandle, 100)
 	h.PushHandleFn(constraints.Error404, errHandle)
 	h.PushHandleFn(constraints.ParamError, errHandle)
