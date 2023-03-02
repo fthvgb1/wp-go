@@ -145,8 +145,8 @@ func (i *IndexHandle) Render() {
 	i.PushHandleFn(constraints.Ok, NewHandleFn(func(h *Handle) {
 		i.ExecPostsPlugin()
 		i.Pagination()
+		i.ginH["posts"] = i.Posts
 	}, 10))
-	i.ginH["posts"] = i.Posts
 	i.Handle.Render()
 }
 

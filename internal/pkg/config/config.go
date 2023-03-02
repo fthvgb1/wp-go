@@ -34,6 +34,7 @@ type Config struct {
 	ListPagePlugins    []string  `yaml:"listPagePlugins"`
 	PaginationStep     int       `yaml:"paginationStep"`
 	ShowQuerySql       bool      `yaml:"showQuerySql"`
+	Plugins            []string  `yaml:"plugins"`
 }
 
 type CacheTime struct {

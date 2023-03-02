@@ -3,8 +3,10 @@ package twentyfifteen
 import (
 	"embed"
 	"encoding/json"
+	"github.com/fthvgb1/wp-go/internal/pkg/config"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
+	"github.com/fthvgb1/wp-go/internal/plugins/wphandle"
 	"github.com/fthvgb1/wp-go/internal/theme/wp"
 )
 
@@ -37,6 +39,8 @@ func Hook(h *wp.Handle) {
 func dispatch(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
 	h.WidgetAreaData()
 	h.GetPassword()
+	wphandle.RegisterPlugins(h, config.GetConfig().Plugins...)
+
 	h.PushGroupHeadScript(10, CalCustomBackGround, colorSchemeCss)
 	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(customHeader, 10))
 	switch h.Scene() {

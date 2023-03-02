@@ -9,6 +9,7 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
+	"github.com/fthvgb1/wp-go/internal/plugins/wpposts"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 )
 
@@ -61,9 +62,9 @@ func (d *DetailHandle) CheckAndGetPost() (err error) {
 
 func (d *DetailHandle) PasswordProject() {
 	if d.Post.PostPassword != "" {
-		plugins.PasswordProjectTitle(&d.Post)
+		wpposts.PasswordProjectTitle(&d.Post)
 		if d.password != d.Post.PostPassword {
-			plugins.PasswdProjectContent(&d.Post)
+			wpposts.PasswdProjectContent(&d.Post)
 		}
 		d.ginH["post"] = d.Post
 	}

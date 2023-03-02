@@ -34,13 +34,7 @@ type Handle struct {
 	abort      bool
 }
 
-func (h *Handle) Abort() {
-	h.abort = true
-}
-
-func (h *Handle) CommonThemeMods() wpconfig.ThemeMods {
-	return h.themeMods
-}
+type HandlePlugins map[string]HandleFn[*Handle]
 
 // Components Order 为执行顺序，降序执行
 type Components struct {
@@ -55,6 +49,14 @@ type HandlePipeFn[T any] func(HandleFn[T], T)
 type HandleCall struct {
 	Fn    HandleFn[*Handle]
 	Order int
+}
+
+func (h *Handle) Abort() {
+	h.abort = true
+}
+
+func (h *Handle) CommonThemeMods() wpconfig.ThemeMods {
+	return h.themeMods
 }
 
 func (h *Handle) Err() error {

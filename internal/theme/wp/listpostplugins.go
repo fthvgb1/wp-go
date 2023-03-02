@@ -10,6 +10,7 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
+	"github.com/fthvgb1/wp-go/internal/plugins/wpposts"
 )
 
 type Fn[T any] func(T) T
@@ -32,9 +33,9 @@ var pluginFns = map[string]Plugin[models.Posts, *Handle]{
 func PasswordProject(next Fn[models.Posts], h *Handle, post models.Posts) (r models.Posts) {
 	r = post
 	if post.PostPassword != "" {
-		plugins.PasswordProjectTitle(&r)
+		wpposts.PasswordProjectTitle(&r)
 		if h.password != post.PostPassword {
-			plugins.PasswdProjectContent(&r)
+			wpposts.PasswdProjectContent(&r)
 			return
 		}
 	}
@@ -58,7 +59,7 @@ func ListPostPlugins() map[string]Plugin[models.Posts, *Handle] {
 
 func ProjectTitle(t models.Posts) models.Posts {
 	if t.PostPassword != "" {
-		plugins.PasswordProjectTitle(&t)
+		wpposts.PasswordProjectTitle(&t)
 	}
 	return t
 }

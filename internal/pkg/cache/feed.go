@@ -7,7 +7,7 @@ import (
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
-	"github.com/fthvgb1/wp-go/internal/plugins"
+	"github.com/fthvgb1/wp-go/internal/plugins/wpposts"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/fthvgb1/wp-go/plugin/digest"
 	"github.com/fthvgb1/wp-go/rss2"
@@ -60,8 +60,8 @@ func feed(arg ...any) (xml []string, err error) {
 	rs.Items = slice.Map(posts, func(t models.Posts) rss2.Item {
 		desc := "无法提供摘要。这是一篇受保护的文章。"
 		if t.PostPassword != "" {
-			plugins.PasswordProjectTitle(&t)
-			plugins.PasswdProjectContent(&t)
+			wpposts.PasswordProjectTitle(&t)
+			wpposts.PasswdProjectContent(&t)
 		} else {
 			desc = digest.Raw(t.PostContent, 55, fmt.Sprintf("/p/%d", t.Id))
 		}
@@ -116,8 +116,8 @@ func postFeed(arg ...any) (x string, err error) {
 	rs.Link = fmt.Sprintf("%s/p/%d", site, post.Id)
 	rs.LastBuildDate = time.Now().Format(timeFormat)
 	if post.PostPassword != "" {
-		plugins.PasswordProjectTitle(&post)
-		plugins.PasswdProjectContent(&post)
+		wpposts.PasswordProjectTitle(&post)
+		wpposts.PasswdProjectContent(&post)
 		if len(comments) > 0 {
 			t := comments[len(comments)-1]
 			rs.Items = []rss2.Item{
@@ -168,8 +168,8 @@ func commentsFeed(args ...any) (r []string, err error) {
 		desc := "评论受保护：要查看请输入密码。"
 		content := t.CommentContent
 		if post.PostPassword != "" {
-			plugins.PasswordProjectTitle(&post)
-			plugins.PasswdProjectContent(&post)
+			wpposts.PasswordProjectTitle(&post)
+			wpposts.PasswdProjectContent(&post)
 			content = post.PostContent
 		} else {
 			desc = digest.ClearHtml(t.CommentContent)
