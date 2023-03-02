@@ -55,7 +55,7 @@ func (d CommentHandler) formatComment(comments []*Comments, isTop bool) (html st
 	if d.depth > d.maxDepth {
 		comments = d.findComments(comments)
 	}
-	slice.SortSelf(comments, d.i.Sort)
+	slice.Sort(comments, d.i.Sort)
 	for i, comment := range comments {
 		eo := "even"
 		if (i+1)%2 == 0 {

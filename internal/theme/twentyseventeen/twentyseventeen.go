@@ -9,6 +9,7 @@ import (
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
+	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
 	"github.com/fthvgb1/wp-go/internal/theme/wp"
@@ -47,10 +48,12 @@ func ready(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
 	h.WidgetAreaData()
 	h.GetPassword()
 	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(calClass, 15))
-	h.PushHeadScript(
-		wp.NewComponents(colorScheme, 10),
-		wp.NewComponents(customHeader, 10),
-	)
+	errHandle := wp.NewHandleFn(errorsHandle, 100)
+	h.PushHandleFn(constraints.Error404, errHandle)
+	h.PushHandleFn(constraints.ParamError, errHandle)
+	h.PushHandleFn(constraints.InternalErr, errHandle)
+	h.PushGroupHeadScript(10, colorScheme, customHeader)
+
 	if "dark" == wpconfig.GetThemeModsVal(ThemeName, "colorscheme", "light") {
 		h.PushHeadScript(wp.NewComponents(func(h *wp.Handle) string {
 			return ` <link rel="stylesheet" id="twentyseventeen-colors-dark-css" href="/wp-content/themes/twentyseventeen/assets/css/colors-dark.css?ver=20191025" media="all">`
@@ -76,12 +79,18 @@ var listPostsPlugins = func() map[string]wp.Plugin[models.Posts, *wp.Handle] {
 	})
 }()
 
+func errorsHandle(h *wp.Handle) {
+	h.SetTempl("twentyseventeen/posts/error.gohtml")
+	switch h.Stats {
+	case constraints.Error404, constraints.InternalErr:
+		logs.ErrPrintln(h.Err(), "报错：")
+	}
+}
+
 func index(next wp.HandleFn[*wp.Handle], i *wp.IndexHandle) {
 	err := i.BuildIndexData(wp.NewIndexParams(i.C))
 	if err != nil {
-		i.SetTempl(str.Join(ThemeName, "/posts/error.gohtml"))
-		i.Render()
-		return
+		i.SetErr(err)
 	}
 	i.SetPageEle(paginate)
 	i.SetPostsPlugins(listPostsPlugins)
@@ -91,9 +100,7 @@ func index(next wp.HandleFn[*wp.Handle], i *wp.IndexHandle) {
 func detail(next wp.HandleFn[*wp.Handle], d *wp.DetailHandle) {
 	err := d.BuildDetailData()
 	if err != nil {
-		d.SetTempl(str.Join(ThemeName, "/posts/error.gohtml"))
-		d.Render()
-		return
+		d.SetErr(err)
 	}
 	if d.Post.Thumbnail.Path != "" {
 		img := wpconfig.Thumbnail(d.Post.Thumbnail.OriginAttachmentData, "full", "", "thumbnail", "post-thumbnail")

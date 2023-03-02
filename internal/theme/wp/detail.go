@@ -41,7 +41,6 @@ func (d *DetailHandle) CheckAndGetPost() (err error) {
 	if id > maxId || id <= 0 {
 		d.Stats = constraints.ParamError
 		err = errors.New("无效的文档id")
-		d.class = append(d.class, "error404")
 	}
 	if err != nil {
 		return

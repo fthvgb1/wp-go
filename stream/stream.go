@@ -104,7 +104,7 @@ func (r Stream[T]) Reduce(fn func(v, r T) T, init T) T {
 }
 
 func (r Stream[T]) Sort(fn func(i, j T) bool) Stream[T] {
-	slice.SortSelf(r.arr, fn)
+	slice.Sort(r.arr, fn)
 	return r
 }
 

@@ -108,8 +108,16 @@ func NewComponents(fn func(*Handle) string, order int) Components {
 	return Components{Fn: fn, Order: order}
 }
 
-func (h *Handle) PushHandleFn(stats int, fns ...HandleCall) {
-	h.handleFns[stats] = append(h.handleFns[stats], fns...)
+func (h *Handle) PushHandleFn(statsOrScene int, fns ...HandleCall) {
+	h.handleFns[statsOrScene] = append(h.handleFns[statsOrScene], fns...)
+}
+
+func (h *Handle) PushGroupHandleFn(statsOrScene, order int, fns ...HandleFn[*Handle]) {
+	var calls []HandleCall
+	for _, fn := range fns {
+		calls = append(calls, HandleCall{fn, order})
+	}
+	h.handleFns[statsOrScene] = append(h.handleFns[statsOrScene], calls...)
 }
 
 func (h *Handle) AddComponent(name string, fn func(*Handle) string) {
@@ -122,10 +130,17 @@ func (h *Handle) AddComponent(name string, fn func(*Handle) string) {
 }
 
 func (h *Handle) PushHeadScript(fn ...Components) {
-	h.components[constraints.HeadScript] = append(h.components[constraints.HeadScript], fn...)
+	h.PushComponents(constraints.HeadScript, fn...)
+}
+func (h *Handle) PushGroupHeadScript(order int, fns ...func(*Handle) string) {
+	h.PushGroupComponents(constraints.HeadScript, order, fns...)
 }
 func (h *Handle) PushFooterScript(fn ...Components) {
-	h.components[constraints.FooterScript] = append(h.components[constraints.FooterScript], fn...)
+	h.PushComponents(constraints.FooterScript, fn...)
+}
+
+func (h *Handle) PushGroupFooterScript(order int, fns ...func(*Handle) string) {
+	h.PushGroupComponents(constraints.FooterScript, order, fns...)
 }
 
 func (h *Handle) GetPassword() {
@@ -141,11 +156,15 @@ func (h *Handle) ExecHandleFns() {
 	if ok {
 		fns = append(fns, calls...)
 	}
-	call, ok := h.handleFns[constraints.AllStats]
+	calls, ok = h.handleFns[h.scene]
 	if ok {
-		fns = append(fns, call...)
+		fns = append(fns, calls...)
 	}
-	slice.SortSelf(fns, func(i, j HandleCall) bool {
+	calls, ok = h.handleFns[constraints.AllStats]
+	if ok {
+		fns = append(fns, calls...)
+	}
+	slice.Sort(fns, func(i, j HandleCall) bool {
 		return i.Order > j.Order
 	})
 	for _, fn := range fns {
@@ -200,11 +219,19 @@ func (h *Handle) PushComponents(name string, components ...Components) {
 	h.components[name] = append(h.components[name], components...)
 }
 
+func (h *Handle) PushGroupComponents(name string, order int, fns ...func(*Handle) string) {
+	var calls []Components
+	for _, fn := range fns {
+		calls = append(calls, Components{fn, order})
+	}
+	h.components[name] = append(h.components[name], calls...)
+}
+
 func (h *Handle) CalMultipleComponents() {
 	for k, ss := range h.components {
 		v, ok := reload.GetStr(k)
 		if !ok {
-			slice.SortSelf(ss, func(i, j Components) bool {
+			slice.Sort(ss, func(i, j Components) bool {
 				return i.Order > j.Order
 			})
 			v = strings.Join(slice.FilterAndMap(ss, func(t Components) (string, bool) {
