@@ -1,6 +1,7 @@
 package wp
 
 import (
+	"fmt"
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
@@ -218,7 +219,8 @@ func (h *Handle) Render() {
 }
 
 func (h *Handle) PushComponents(name string, components ...Components) {
-	h.components[name] = append(h.components[name], components...)
+	k := h.componentKey(name)
+	h.components[k] = append(h.components[k], components...)
 }
 
 func (h *Handle) PushGroupComponents(name string, order int, fns ...func(*Handle) string) {
@@ -226,7 +228,12 @@ func (h *Handle) PushGroupComponents(name string, order int, fns ...func(*Handle
 	for _, fn := range fns {
 		calls = append(calls, Components{fn, order})
 	}
-	h.components[name] = append(h.components[name], calls...)
+	k := h.componentKey(name)
+	h.components[k] = append(h.components[k], calls...)
+}
+
+func (h *Handle) componentKey(name string) string {
+	return fmt.Sprintf("%d_%s", h.scene, name)
 }
 
 func (h *Handle) CalMultipleComponents() {
@@ -242,7 +249,8 @@ func (h *Handle) CalMultipleComponents() {
 			}), "\n")
 			reload.SetStr(k, v)
 		}
-		h.ginH[k] = v
+		key := strings.Split(k, "_")[1]
+		h.ginH[key] = v
 	}
 }
 
