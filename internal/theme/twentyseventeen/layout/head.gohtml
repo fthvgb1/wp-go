@@ -4,9 +4,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="profile" href="https://gmpg.org/xfn/11">
     <link rel="pingback" href="/xmlrpc.php">
-    <!--[if lt IE 9]>
-    <script src="/wp-content/themes/twentyfifteen/js/html5.js?ver=3.7.0"></script>
-    <![endif]-->
     <script>(function(html){html.className = html.className.replace(/\bno-js\b/,'js')})(document.documentElement);</script>
     <title>{{ .title }}</title>
     <meta name='robots' content='max-image-preview:large' />
@@ -48,24 +45,8 @@
         .wp-block-pullquote{font-size: 1.5em;line-height: 1.6;}
     </style>
 
-    <link rel='stylesheet' id='twentyseventeen-style-css' href='/wp-content/themes/twentyseventeen/style.css?ver=20221101' media='all' />
-    <link rel='stylesheet' id='twentyseventeen-block-style-css' href='/wp-content/themes/twentyseventeen/assets/css/blocks.css?ver=20220912' media='all' />
-    <!--[if lt IE 9]>
-    <link rel='stylesheet' id='twentyseventeen-ie8-css' href='/wp-content/themes/twentyseventeen/assets/css/ie8.css?ver=20161202' media='all' />
-    <![endif]-->
-    <!--[if lt IE 9]>
-    <script src='/wp-content/themes/twentyseventeen/assets/js/html5.js?ver=20161020' id='html5-js'></script>
-    <![endif]-->
-
-        
-    <script src='/wp-includes/js/jquery/jquery.min.js?ver=3.6.0' id='jquery-core-js'></script>
-    <script src='/wp-includes/js/jquery/jquery-migrate.min.js?ver=3.3.2' id='jquery-migrate-js'></script>
-    <link rel="https://api.w.org/" href="/wp-json/" /><link rel="EditURI" type="application/rsd+xml" title="RSD" href="/xmlrpc.php?rsd" />
-    <link rel="wlwmanifest" type="application/wlwmanifest+xml" href="/wp-includes/wlwmanifest.xml" />
-    <meta name="generator" content="WordPress 6.1.1" />
-    <style>.recentcomments a{display:inline !important;padding:0 !important;margin:0 !important;}</style>
+    {{template "common/head" .}}
     {{block "head" .}}
     {{end}}
-    {{template "common/head" .}}
     </head>
 {{end}}

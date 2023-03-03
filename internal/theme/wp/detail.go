@@ -101,8 +101,10 @@ func (d *DetailHandle) ContextPost() {
 }
 
 func (d *DetailHandle) Render() {
+	d.PreCodeAndStats()
+	d.PreTemplate()
 	if d.Post.CommentStatus == "open" && wpconfig.GetOption("thread_comments") == "1" {
-		d.PushGroupFooterScript(30, func(h *Handle) string {
+		d.PushGroupFooterScript(10, func(h *Handle) string {
 			return `<script src='/wp-includes/js/comment-reply.min.js' id='comment-reply-js'></script>`
 		})
 	}

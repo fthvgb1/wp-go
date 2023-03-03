@@ -56,7 +56,7 @@
                         </ol>
 
                         {{end}}
-                        {{if eq .post.CommentStatus "open"}}
+                        {{if and (eq .post.CommentStatus "open") (eq ( "thread_comments" |getOption ) "1")}}
                             <div id="respond" class="comment-respond">
                                 <h3 id="reply-title" class="comment-reply-title">发表回复
                                     <small>

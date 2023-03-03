@@ -142,11 +142,14 @@ func (i *IndexHandle) ExecPostsPlugin(calls ...func(*models.Posts)) {
 }
 
 func (i *IndexHandle) Render() {
+	i.PreCodeAndStats()
+	i.PreTemplate()
 	i.PushHandleFn(constraints.Ok, NewHandleFn(func(h *Handle) {
 		i.ExecPostsPlugin()
 		i.Pagination()
 		i.ginH["posts"] = i.Posts
 	}, 10))
+
 	i.Handle.Render()
 }
 

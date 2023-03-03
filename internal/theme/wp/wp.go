@@ -201,21 +201,19 @@ func (h *Handle) PreCodeAndStats() {
 }
 
 func (h *Handle) Render() {
-	h.PreCodeAndStats()
-	h.PreTemplate()
+	h.CommonComponents()
+	h.ExecHandleFns()
+}
+
+func (h *Handle) CommonComponents() {
 	h.AddComponent("customLogo", CalCustomLogo)
-
 	h.PushGroupHeadScript(0, CalSiteIcon, CalCustomCss)
-
 	h.PushHandleFn(constraints.AllStats, NewHandleFn(func(h *Handle) {
 		h.CalMultipleComponents()
 		h.CalBodyClass()
 	}, 10), NewHandleFn(func(h *Handle) {
 		h.C.HTML(h.Code, h.templ, h.ginH)
 	}, 0))
-
-	h.ExecHandleFns()
-
 }
 
 func (h *Handle) PushComponents(name string, components ...Components) {

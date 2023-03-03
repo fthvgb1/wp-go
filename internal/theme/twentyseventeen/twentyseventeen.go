@@ -56,12 +56,8 @@ func ready(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
 	h.PushHandleFn(constraints.ParamError, errHandle)
 	h.PushHandleFn(constraints.InternalErr, errHandle)
 	h.PushGroupHeadScript(10, colorScheme, customHeader)
-
-	if "dark" == wpconfig.GetThemeModsVal(ThemeName, "colorscheme", "light") {
-		h.PushHeadScript(wp.NewComponents(func(h *wp.Handle) string {
-			return ` <link rel="stylesheet" id="twentyseventeen-colors-dark-css" href="/wp-content/themes/twentyseventeen/assets/css/colors-dark.css?ver=20191025" media="all">`
-		}, 10))
-	}
+	pushHeadScripts(h)
+	pushFooterScripts(h)
 	h.SetData("HeaderImage", getHeaderImage(h))
 	h.SetData("scene", h.Scene())
 	next(h)
