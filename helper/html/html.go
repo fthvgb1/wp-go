@@ -120,7 +120,7 @@ func StripTagsX(str, allowable string) string {
 }
 
 var tagx = regexp.MustCompile(`(</?[a-z0-9]+?)( |>)`)
-var selfCloseTags = map[string]string{"area": "", "base": "", "basefont": "", "br": "", "col": "", "command": "", "embed": "", "frame": "", "hr": "", "img": "", "input": "", "isindex": "", "link": "", "meta": "", "param": "", "source": "", "track": "", "wbr": ""}
+var selfCloseTags = map[string]string{"area": "", "base": "", "basefont": "", "br": "", "col": "", "command": "", "fecolormatrix": "", "embed": "", "frame": "", "hr": "", "img": "", "input": "", "isindex": "", "link": "", "fecomposite": "", "fefuncr": "", "fefuncg": "", "fefuncb": "", "fefunca": "", "meta": "", "param": "", "!doctype": "", "source": "", "track": "", "wbr": ""}
 
 func CloseTag(str string) string {
 	tags := tag.FindAllString(str, -1)
@@ -129,14 +129,18 @@ func CloseTag(str string) string {
 	}
 	var tagss = make([]string, 0, len(tags))
 	for _, s := range tags {
-		ss := strings.TrimSpace(tagx.FindString(s))
-		if ss[len(ss)-1] != '>' {
-			ss = fmt.Sprintf("%s>", ss)
-			if _, ok := selfCloseTags[ss]; ok {
-				continue
-			}
+		ss := strings.Split(s, " ")
+		sss := strings.ReplaceAll(ss[0], "\\", "")
+		if strings.Contains(sss, "<!") {
+			continue
 		}
-		tagss = append(tagss, ss)
+		if sss[len(sss)-1] != '>' {
+			sss = fmt.Sprintf("%s>", sss)
+		}
+		if _, ok := selfCloseTags[strings.Trim(strings.ToLower(sss), "\\/<>")]; ok {
+			continue
+		}
+		tagss = append(tagss, sss)
 	}
 	r := slice.Map(slice.Reverse(UnClosedTag(tagss)), func(s string) string {
 		return fmt.Sprintf("</%s>", strings.Trim(s, "<>"))

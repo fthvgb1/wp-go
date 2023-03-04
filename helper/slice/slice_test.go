@@ -93,7 +93,7 @@ func TestReduce(t *testing.T) {
 func TestFilter(t *testing.T) {
 	type args struct {
 		arr []int
-		fn  func(int) bool
+		fn  func(int, int) bool
 	}
 	tests := []struct {
 		name string
@@ -102,7 +102,7 @@ func TestFilter(t *testing.T) {
 	}{
 		{
 			name: "t1",
-			args: args{arr: number.Range(1, 10, 1), fn: func(i int) bool {
+			args: args{arr: number.Range(1, 10, 1), fn: func(i, index int) bool {
 				return i > 4
 			}},
 			want: number.Range(5, 10, 1),

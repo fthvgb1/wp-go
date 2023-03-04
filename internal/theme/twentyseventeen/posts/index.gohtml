@@ -17,8 +17,7 @@
                     <div id="primary" class="content-area">
                         <main id="main" class="site-main">
                             {{ range $k,$v:=.posts}}
-                                <article id="post-{{$v.Id}}"
-                                         class="post-{{$v.Id}} post {{if $v.Thumbnail.Path}}has-post-thumbnail{{end}} type-post status-publish format-standard hentry category">
+                                <article id="post-{{$v.Id}}" class="post-{{$v.Id}} post {{if $v.Thumbnail.Path}}has-post-thumbnail{{end}} type-post status-publish format-standard hentry category">
 
                                     <header class="entry-header">
                                         <div class="entry-meta">

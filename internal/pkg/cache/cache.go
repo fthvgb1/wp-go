@@ -128,7 +128,7 @@ func CategoriesTags(ctx context.Context, t ...int) []models.TermsMy {
 	r, err := categoryAndTagsCaches.GetCache(ctx, time.Second, ctx)
 	logs.ErrPrintln(err, "get category err")
 	if len(t) > 0 {
-		return slice.Filter(r, func(my models.TermsMy) bool {
+		return slice.Filter(r, func(my models.TermsMy, i int) bool {
 			return helper.Or(t[0] == constraints.Tag, "post_tag", "category") == my.Taxonomy
 		})
 	}

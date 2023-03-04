@@ -9,7 +9,7 @@ import (
 )
 
 func colorSchemeCss(h *wp.Handle) string {
-	s := slice.Filter([]string{calColorSchemeCss(h), calSidebarTextColorCss(h), calHeaderBackgroundColorCss(h)}, func(s string) bool {
+	s := slice.Filter([]string{calColorSchemeCss(h), calSidebarTextColorCss(h), calHeaderBackgroundColorCss(h)}, func(s string, i int) bool {
 		return s != ""
 	})
 	if len(s) < 1 {

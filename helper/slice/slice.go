@@ -49,10 +49,10 @@ func SearchLast[T any](arr []T, fn func(T) bool) (int, T) {
 	return -1, r
 }
 
-func Filter[T any](arr []T, fn func(T) bool) []T {
+func Filter[T any](arr []T, fn func(T, int) bool) []T {
 	var r []T
-	for _, t := range arr {
-		if fn(t) {
+	for i, t := range arr {
+		if fn(t, i) {
 			r = append(r, t)
 		}
 	}
@@ -270,4 +270,13 @@ func Shift[T any](a *[]T) (T, int) {
 	}
 	var r T
 	return r, 0
+}
+
+func IndexOf[T comparable](a []T, v T) int {
+	for i, t := range a {
+		if t == v {
+			return i
+		}
+	}
+	return -1
 }
