@@ -41,7 +41,7 @@ func dispatch(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
 	h.GetPassword()
 	wphandle.RegisterPlugins(h, config.GetConfig().Plugins...)
 
-	h.PushGroupHeadScript(10, CalCustomBackGround, colorSchemeCss)
+	h.PushCacheGroupHeadScript("CalCustomBackGround", 10, CalCustomBackGround, colorSchemeCss)
 	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(customHeader, 10))
 	switch h.Scene() {
 	case constraints.Detail:

@@ -103,11 +103,11 @@ func (d *DetailHandle) ContextPost() {
 func (d *DetailHandle) Render() {
 	d.PreCodeAndStats()
 	d.PreTemplate()
+	reply := ""
 	if d.Post.CommentStatus == "open" && wpconfig.GetOption("thread_comments") == "1" {
-		d.PushGroupFooterScript(10, func(h *Handle) string {
-			return `<script src='/wp-includes/js/comment-reply.min.js' id='comment-reply-js'></script>`
-		})
+		reply = `<script src='/wp-includes/js/comment-reply.min.js' id='comment-reply-js'></script>`
 	}
+	d.PushGroupFooterScript(10, reply)
 
 	d.PushHandleFn(constraints.Ok, NewHandleFn(func(h *Handle) {
 		d.PasswordProject()

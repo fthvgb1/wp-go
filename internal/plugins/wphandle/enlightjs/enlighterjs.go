@@ -6,13 +6,9 @@ import (
 )
 
 func EnlighterJS(h *wp.Handle) {
-	h.PushGroupHeadScript(20, func(h *wp.Handle) string {
-		return `<link rel='stylesheet' id='enlighterjs-css'  href='/wp-content/plugins/enlighter/cache/enlighterjs.min.css' media='all' />`
-	})
+	h.PushGroupHeadScript(20, `<link rel='stylesheet' id='enlighterjs-css'  href='/wp-content/plugins/enlighter/cache/enlighterjs.min.css' media='all' />`)
 
-	h.PushGroupFooterScript(10, func(h *wp.Handle) string {
-		return str.Join(`<script src='/wp-content/plugins/enlighter/cache/enlighterjs.min.js?ver=0A0B0C' id='enlighterjs-js'></script>`, "\n", enlighterjs)
-	})
+	h.PushGroupFooterScript(10, str.Join(`<script src='/wp-content/plugins/enlighter/cache/enlighterjs.min.js?ver=0A0B0C' id='enlighterjs-js'></script>`, "\n", enlighterjs))
 }
 
 var enlighterjs = `<script id='enlighterjs-js-after'>

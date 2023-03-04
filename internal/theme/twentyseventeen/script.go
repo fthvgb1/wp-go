@@ -6,21 +6,16 @@ import (
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 )
 
-func pushHeadScripts(h *wp.Handle) {
-	var head = headScript
-	h.PushGroupHeadScript(30, func(h *wp.Handle) string {
+func pushScripts(h *wp.Handle) {
+	h.PushCacheGroupFooterScript("head", 30, func(h *wp.Handle) string {
+		head := headScript
+		if "dark" == wpconfig.GetThemeModsVal(ThemeName, "colorscheme", "light") {
+			head = fmt.Sprintf("%s\n%s", headScript, ` <link rel="stylesheet" id="twentyseventeen-colors-dark-css" href="/wp-content/themes/twentyseventeen/assets/css/colors-dark.css?ver=20191025" media="all">`)
+		}
 		return head
 	})
-}
+	h.PushGroupFooterScript(20, footerScript)
 
-func pushFooterScripts(h *wp.Handle) {
-	var footer = footerScript
-	h.PushGroupFooterScript(20, func(h *wp.Handle) string {
-		if "dark" == wpconfig.GetThemeModsVal(ThemeName, "colorscheme", "light") {
-			footer = fmt.Sprintf("%s\n%s", footerScript, ` <link rel="stylesheet" id="twentyseventeen-colors-dark-css" href="/wp-content/themes/twentyseventeen/assets/css/colors-dark.css?ver=20191025" media="all">`)
-		}
-		return footer
-	})
 }
 
 var headScript = `<link rel='stylesheet' id='twentyseventeen-style-css' href='/wp-content/themes/twentyseventeen/style.css?ver=20221101' media='all' />

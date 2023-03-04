@@ -39,7 +39,7 @@ type HandlePlugins map[string]HandleFn[*Handle]
 
 // Components Order 为执行顺序，降序执行
 type Components struct {
-	Fn    func(*Handle) string
+	str   string
 	Order int
 }
 
@@ -107,8 +107,8 @@ func NewHandle(c *gin.Context, scene int, theme string) *Handle {
 	}
 }
 
-func NewComponents(fn func(*Handle) string, order int) Components {
-	return Components{Fn: fn, Order: order}
+func (h *Handle) NewCacheComponent(name string, order int, fn func(handle *Handle) string) Components {
+	return Components{str: h.CacheStr(name, fn), Order: order}
 }
 
 func (h *Handle) PushHandleFn(statsOrScene int, fns ...HandleCall) {
@@ -123,27 +123,47 @@ func (h *Handle) PushGroupHandleFn(statsOrScene, order int, fns ...HandleFn[*Han
 	h.handleFns[statsOrScene] = append(h.handleFns[statsOrScene], calls...)
 }
 
-func (h *Handle) AddComponent(name string, fn func(*Handle) string) {
+func (h *Handle) AddCacheComponent(name string, fn func(*Handle) string) {
+	h.ginH[name] = h.CacheStr(name, fn)
+}
+
+func (h *Handle) CacheStr(name string, fn func(*Handle) string) string {
 	v, ok := reload.GetStr(name)
 	if !ok {
 		v = fn(h)
 		reload.SetStr(name, v)
 	}
-	h.ginH[name] = v
+	return v
 }
 
 func (h *Handle) PushHeadScript(fn ...Components) {
 	h.PushComponents(constraints.HeadScript, fn...)
 }
-func (h *Handle) PushGroupHeadScript(order int, fns ...func(*Handle) string) {
-	h.PushGroupComponents(constraints.HeadScript, order, fns...)
+func (h *Handle) PushGroupHeadScript(order int, str ...string) {
+	h.PushGroupComponents(constraints.HeadScript, order, str...)
 }
+func (h *Handle) PushCacheGroupHeadScript(key string, order int, fns ...func(*Handle) string) {
+	h.PushGroupCacheScript(constraints.HeadScript, key, order, fns...)
+}
+
 func (h *Handle) PushFooterScript(fn ...Components) {
 	h.PushComponents(constraints.FooterScript, fn...)
 }
 
-func (h *Handle) PushGroupFooterScript(order int, fns ...func(*Handle) string) {
+func (h *Handle) PushGroupFooterScript(order int, fns ...string) {
 	h.PushGroupComponents(constraints.FooterScript, order, fns...)
+}
+
+func (h *Handle) componentKey(name string) string {
+	return fmt.Sprintf("theme_%d_%s", h.scene, name)
+}
+
+func (h *Handle) PushCacheGroupFooterScript(key string, order int, fns ...func(*Handle) string) {
+	h.PushGroupCacheScript(constraints.FooterScript, key, order, fns...)
+}
+func (h *Handle) PushGroupCacheScript(name, key string, order int, fns ...func(*Handle) string) {
+	v := reload.GetStrBy(key, "\n", h, fns...)
+	h.PushGroupComponents(name, order, v)
 }
 
 func (h *Handle) GetPassword() {
@@ -206,8 +226,8 @@ func (h *Handle) Render() {
 }
 
 func (h *Handle) CommonComponents() {
-	h.AddComponent("customLogo", CalCustomLogo)
-	h.PushGroupHeadScript(0, CalSiteIcon, CalCustomCss)
+	h.AddCacheComponent("customLogo", CalCustomLogo)
+	h.PushCacheGroupHeadScript("siteIconAndCustomCss", 0, CalSiteIcon, CalCustomCss)
 	h.PushHandleFn(constraints.AllStats, NewHandleFn(func(h *Handle) {
 		h.CalMultipleComponents()
 		h.CalBodyClass()
@@ -221,7 +241,7 @@ func (h *Handle) PushComponents(name string, components ...Components) {
 	h.components[k] = append(h.components[k], components...)
 }
 
-func (h *Handle) PushGroupComponents(name string, order int, fns ...func(*Handle) string) {
+func (h *Handle) PushGroupComponents(name string, order int, fns ...string) {
 	var calls []Components
 	for _, fn := range fns {
 		calls = append(calls, Components{fn, order})
@@ -230,24 +250,17 @@ func (h *Handle) PushGroupComponents(name string, order int, fns ...func(*Handle
 	h.components[k] = append(h.components[k], calls...)
 }
 
-func (h *Handle) componentKey(name string) string {
-	return fmt.Sprintf("%d_%s", h.scene, name)
-}
-
 func (h *Handle) CalMultipleComponents() {
 	for k, ss := range h.components {
-		v, ok := reload.GetStr(k)
-		if !ok {
-			slice.Sort(ss, func(i, j Components) bool {
-				return i.Order > j.Order
-			})
-			v = strings.Join(slice.FilterAndMap(ss, func(t Components) (string, bool) {
-				s := t.Fn(h)
-				return s, s != ""
-			}), "\n")
-			reload.SetStr(k, v)
-		}
-		key := strings.Split(k, "_")[1]
+		slice.Sort(ss, func(i, j Components) bool {
+			return i.Order > j.Order
+		})
+		v := strings.Join(slice.FilterAndMap(ss, func(t Components) (string, bool) {
+			s := t.str
+			return s, s != ""
+		}), "\n")
+		kk := strings.Split(k, "_")
+		key := kk[len(kk)-1]
 		h.ginH[key] = v
 	}
 }
