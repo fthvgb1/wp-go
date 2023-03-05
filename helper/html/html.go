@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/dlclark/regexp2"
 	"github.com/fthvgb1/wp-go/helper/slice"
+	strings2 "github.com/fthvgb1/wp-go/helper/strings"
 	"html/template"
 	"regexp"
 	"strings"
@@ -95,7 +96,7 @@ func StripTags(str, allowable string) string {
 	return html
 }
 
-var tag = regexp.MustCompile(`<(.*?)>`)
+var tag = regexp.MustCompile(`(?is:<(.*?)>)`) //使用忽略大小写和包含换行符模式
 
 func StripTagsX(str, allowable string) string {
 	if allowable == "" {
@@ -119,7 +120,6 @@ func StripTagsX(str, allowable string) string {
 	return html
 }
 
-var tagx = regexp.MustCompile(`(</?[a-z0-9]+?)( |>)`)
 var selfCloseTags = map[string]string{"area": "", "base": "", "basefont": "", "br": "", "col": "", "command": "", "fecolormatrix": "", "embed": "", "frame": "", "hr": "", "img": "", "input": "", "isindex": "", "link": "", "fecomposite": "", "fefuncr": "", "fefuncg": "", "fefuncb": "", "fefunca": "", "meta": "", "param": "", "!doctype": "", "source": "", "track": "", "wbr": ""}
 
 func CloseTag(str string) string {
@@ -130,7 +130,11 @@ func CloseTag(str string) string {
 	var tagss = make([]string, 0, len(tags))
 	for _, s := range tags {
 		ss := strings.Split(s, " ")
-		sss := strings.ReplaceAll(ss[0], "\\", "")
+		sss := strings2.Replace(ss[0], map[string]string{
+			"\\":  "",
+			"\n":  "",
+			"\\/": "/",
+		})
 		if strings.Contains(sss, "<!") {
 			continue
 		}
