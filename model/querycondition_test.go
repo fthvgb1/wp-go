@@ -644,3 +644,54 @@ func Test_finds(t *testing.T) {
 		})
 	}
 }
+
+func TestGets(t *testing.T) {
+	type args struct {
+		ctx context.Context
+		q   QueryCondition
+	}
+	type testCase[T Model] struct {
+		name    string
+		args    args
+		want    T
+		wantErr bool
+	}
+	tests := []testCase[options]{
+		{
+			name: "t1",
+			args: args{
+				ctx: ctx,
+				q: Conditions(Where(SqlBuilder{
+					{"option_id", "11"},
+				})),
+			},
+			want: options{
+				OptionId:    11,
+				OptionName:  "comments_notify",
+				OptionValue: "1",
+				Autoload:    "yes",
+			},
+			wantErr: false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := Gets[options](tt.args.ctx, tt.args.q)
+			gots, _ := gets[options](glob, tt.args.ctx, tt.args.q)
+			gotss, _ := GetsFromDB[options](glob, tt.args.ctx, tt.args.q)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Gets() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, gots) {
+				t.Errorf("Gets() got = %v, want %v", got, tt.want)
+			}
+			if !reflect.DeepEqual(got, gotss) {
+				t.Errorf("Gets() got = %v, want %v", got, tt.want)
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Gets() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}

@@ -4,6 +4,7 @@ import (
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
+	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/gin-gonic/gin"
 	"net/url"
 	"strconv"
@@ -137,7 +138,11 @@ type CommonCommentFormat struct {
 }
 
 func (c CommonCommentFormat) Sort(i, j *Comments) bool {
-	return i.CommentDate.UnixNano() < j.CommentDate.UnixNano()
+	order := wpconfig.GetOption("comment_order")
+	if order == "asc" {
+		return i.CommentDate.UnixNano() < j.CommentDate.UnixNano()
+	}
+	return i.CommentDate.UnixNano() > j.CommentDate.UnixNano()
 }
 
 func (c CommonCommentFormat) FormatLi(ctx *gin.Context, m models.Comments, depth int, isTls bool, eo, parent string) string {
