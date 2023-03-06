@@ -2,6 +2,8 @@ package wpconfig
 
 import (
 	"context"
+	"github.com/fthvgb1/wp-go/helper/maps"
+	"github.com/fthvgb1/wp-go/internal/phphelper"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/model"
 	"github.com/fthvgb1/wp-go/safety"
@@ -9,11 +11,13 @@ import (
 )
 
 var options safety.Map[string, string]
+var phpArr safety.Map[string, map[any]any]
 
 var ctx context.Context
 
 func InitOptions() error {
 	options.Flush()
+	phpArr.Flush()
 	if ctx == nil {
 		ctx = context.Background()
 	}
@@ -49,4 +53,21 @@ func GetLang() string {
 		s = "zh-CN"
 	}
 	return strings.Replace(s, "_", "-", 1)
+}
+
+func GetPHPArrayValWithDefaults[T any](optionName string, defaults T, key ...any) T {
+	op, ok := phpArr.Load(optionName)
+	if ok {
+		return maps.GetAnyAnyValWithDefaults(op, defaults, key...)
+	}
+	v := GetOption(optionName)
+	if v == "" {
+		return defaults
+	}
+	arr, err := phphelper.UnPHPSerializeToAnyAnyMap(v)
+	if err != nil {
+		return defaults
+	}
+	phpArr.Store(optionName, arr)
+	return maps.GetAnyAnyValWithDefaults(arr, defaults, key...)
 }

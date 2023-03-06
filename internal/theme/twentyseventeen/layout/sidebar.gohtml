@@ -37,18 +37,7 @@
             </ul>
         </nav>
     </section>
-    <section id="archives-2" class="widget widget_archive">
-        <h2 class="widget-title">归档</h2>
-        <nav aria-label="归档">
-            <ul>
-                {{range $k,$v := .archives}}
-                    <li><a href="/p/date/{{$v.Year}}/{{$v.Month|printf "%02s"}}">{{$v.Year}}年{{$v.Month}}月</a>
-                    </li>
-                {{end}}
-            </ul>
-
-        </nav>
-    </section>
+    {{template "common/archives" .}}
     <section id="categories-2" class="widget widget_categories">
         <h2 class="widget-title">分类</h2>
         <nav aria-label="分类">

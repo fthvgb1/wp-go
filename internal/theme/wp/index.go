@@ -12,6 +12,7 @@ import (
 	"github.com/fthvgb1/wp-go/internal/plugins"
 	"github.com/fthvgb1/wp-go/model"
 	"github.com/fthvgb1/wp-go/plugin/pagination"
+	"strings"
 )
 
 type IndexHandle struct {
@@ -87,7 +88,8 @@ func (i *IndexHandle) GetIndexData() (posts []models.Posts, totalRaw int, err er
 		posts, totalRaw, err = cache.SearchPost(i.C, i.Param.CacheKey, i.C, q, i.Param.Page, i.Param.PageSize)
 
 	case constraints.Archive:
-
+		i.ginH["archiveYear"] = i.Param.Year
+		i.ginH["archiveMonth"] = strings.TrimLeft(i.Param.Month, "0")
 		posts, totalRaw, err = cache.GetMonthPostIds(i.C, i.Param.Year, i.Param.Month, i.Param.Page, i.Param.PageSize, i.Param.Order)
 
 	}

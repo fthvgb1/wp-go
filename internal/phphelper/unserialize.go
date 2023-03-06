@@ -16,7 +16,7 @@ func UnPHPSerializeToStruct[T any](s string) (r T, err error) {
 	return
 }
 
-func UnPHPSerializeToAnyMap(s string) (map[string]any, error) {
+func UnPHPSerializeToStrAnyMap(s string) (map[string]any, error) {
 	m := map[string]any{}
 	var r map[any]any
 	err := phpserialize.Unmarshal([]byte(s), &r)
@@ -26,4 +26,12 @@ func UnPHPSerializeToAnyMap(s string) (map[string]any, error) {
 
 	m = maps.AnyAnyToStrAny(r)
 	return m, err
+}
+func UnPHPSerializeToAnyAnyMap(s string) (map[any]any, error) {
+	var r map[any]any
+	err := phpserialize.Unmarshal([]byte(s), &r)
+	if err != nil {
+		return nil, err
+	}
+	return r, err
 }

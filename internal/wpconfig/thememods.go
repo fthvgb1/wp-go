@@ -140,7 +140,7 @@ func GetThemeMods(theme string) (r ThemeMods, err error) {
 	if mods == "" {
 		return
 	}
-	m, err := phphelper.UnPHPSerializeToAnyMap(mods)
+	m, err := phphelper.UnPHPSerializeToStrAnyMap(mods)
 	if err != nil {
 		return
 	}
