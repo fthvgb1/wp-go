@@ -129,8 +129,8 @@ func RecentPosts(a ...any) (r []models.Posts, err error) {
 			{"post_type", "post"},
 			{"post_status", "publish"},
 		}),
-		model.Fields("ID,post_title,post_password"),
-		model.Order(model.SqlBuilder{{"post_date", "desc"}}),
+		model.Fields("ID,post_title,post_password,post_date_gmt"),
+		model.Order([][]string{{"post_date", "desc"}}),
 		model.Limit(num),
 	))
 	return

@@ -55,7 +55,7 @@ func GetLang() string {
 	return strings.Replace(s, "_", "-", 1)
 }
 
-func GetPHPArrayValWithDefaults[T any](optionName string, defaults T, key ...any) T {
+func GetPHPArrayVal[T any](optionName string, defaults T, key ...any) T {
 	op, ok := phpArr.Load(optionName)
 	if ok {
 		return maps.GetAnyAnyValWithDefaults(op, defaults, key...)

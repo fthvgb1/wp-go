@@ -49,21 +49,21 @@ func Group(group string) Condition {
 	}
 }
 
-func Order(order SqlBuilder) Condition {
+func Order[T ~[][]string](order T) Condition {
 	return func(c *QueryCondition) {
-		c.Order = order
+		c.Order = SqlBuilder(order)
 	}
 }
 
-func Join(join SqlBuilder) Condition {
+func Join[T ~[][]string](join T) Condition {
 	return func(c *QueryCondition) {
-		c.Join = join
+		c.Join = SqlBuilder(join)
 	}
 }
 
-func Having(having SqlBuilder) Condition {
+func Having[T ~[][]string](having T) Condition {
 	return func(c *QueryCondition) {
-		c.Having = having
+		c.Having = SqlBuilder(having)
 	}
 }
 

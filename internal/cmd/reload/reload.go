@@ -10,11 +10,16 @@ var calls []func()
 
 var str = safety.NewMap[string, string]()
 
-func GetStr(name string) (string, bool) {
-	return str.Load(name)
-}
-func SetStr(name, val string) {
-	str.Store(name, val)
+var anyMap = safety.NewMap[string, any]()
+
+func GetAnyValBy[T any](k string, fn func() T) T {
+	v, ok := anyMap.Load(k)
+	if ok {
+		return v.(T)
+	}
+	vv := fn()
+	anyMap.Store(k, vv)
+	return vv
 }
 
 func GetStrBy[T any](key, delimiter string, t T, fn ...func(T) string) string {
@@ -52,5 +57,6 @@ func Reload() {
 	for _, call := range calls {
 		call()
 	}
+	anyMap.Flush()
 	str.Flush()
 }

@@ -3,9 +3,12 @@ package cache
 import (
 	"context"
 	"fmt"
+	"github.com/fthvgb1/wp-go/helper/number"
 	"github.com/fthvgb1/wp-go/helper/slice"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
+	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/gin-gonic/gin"
 	"time"
 )
@@ -44,9 +47,8 @@ func GetMaxPostId(ctx *gin.Context) (uint64, error) {
 
 func RecentPosts(ctx context.Context, n int) (r []models.Posts) {
 	nn := n
-	if nn <= 5 {
-		nn = 10
-	}
+	feedNum := str.ToInteger(wpconfig.GetOption("posts_per_rss"), 10)
+	nn = number.Max(n, feedNum)
 	r, err := recentPostsCaches.GetCache(ctx, time.Second, ctx, nn)
 	if n < len(r) {
 		r = r[:n]

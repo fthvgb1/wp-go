@@ -128,12 +128,9 @@ func (h *Handle) AddCacheComponent(name string, fn func(*Handle) string) {
 }
 
 func (h *Handle) CacheStr(name string, fn func(*Handle) string) string {
-	v, ok := reload.GetStr(name)
-	if !ok {
-		v = fn(h)
-		reload.SetStr(name, v)
-	}
-	return v
+	return reload.GetAnyValBy(name, func() string {
+		return fn(h)
+	})
 }
 
 func (h *Handle) PushHeadScript(fn ...Components) {

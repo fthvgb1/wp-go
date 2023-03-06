@@ -9,19 +9,7 @@
                 <input type="submit" class="search-submit screen-reader-text" value="搜索">
             </form>
         </aside>
-        <aside id="recent-posts-2" class="widget widget_recent_entries">
-            <h2 class="widget-title">近期文章</h2>
-            <nav aria-label="近期文章">
-                <ul>
-                    {{range $k,$v:=.recentPosts}}
-                        <li>
-                            <a href="/p/{{$v.Id}}">{{$v.PostTitle}}</a>
-                        </li>
-                    {{end}}
-                </ul>
-
-            </nav>
-        </aside>
+        {{template "common/recent-posts" .}}
         <aside id="recent-comments-2" class="widget widget_recent_comments">
             <h2 class="widget-title">近期评论</h2>
             <nav aria-label="近期评论">
