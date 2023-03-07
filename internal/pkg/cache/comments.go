@@ -3,16 +3,14 @@ package cache
 import (
 	"context"
 	"github.com/fthvgb1/wp-go/cache"
+	"github.com/fthvgb1/wp-go/helper/number"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"time"
 )
 
 func RecentComments(ctx context.Context, n int) (r []models.Comments) {
-	nn := n
-	if nn <= 5 {
-		nn = 10
-	}
+	nn := number.Max(n, 10)
 	r, err := recentCommentsCaches.GetCache(ctx, time.Second, ctx, nn)
 	if len(r) > n {
 		r = r[0:n]

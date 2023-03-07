@@ -1,0 +1,14 @@
+{{define "common/recent-comments"}}
+    <aside id="recent-comments-2" class="widget widget_recent_comments">
+        <h2 class="widget-title">{{.recentCommentsConfig.title}}</h2>
+        <nav aria-label="近期评论">
+            <ul id="recentcomments">
+                {{ range $i,$v := .recentComments}}
+                    <li class="recentcomments">
+                        <span class="comment-author-link">{{$v.CommentAuthor}}</span>发表在《<a class="wp-block-latest-comments__comment-link" href="/p/{{$v.CommentPostId}}#comment-{{$v.CommentId}}">{{$v.PostTitle}}</a>》
+                    </li>
+                {{end}}
+            </ul>
+        </nav>
+    </aside>
+{{end}}
