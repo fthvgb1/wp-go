@@ -48,6 +48,10 @@ func (i *IndexHandle) ParseIndex(parm *IndexParams) (err error) {
 	i.Param = parm
 	switch i.scene {
 	case constraints.Home, constraints.Search:
+		s := i.C.Query("s")
+		if s != "" && strings.Replace(s, " ", "", -1) != "" {
+			i.scene = constraints.Search
+		}
 		i.Param.ParseSearch()
 	case constraints.Category:
 		err = i.Param.ParseCategory()

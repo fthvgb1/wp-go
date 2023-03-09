@@ -23,7 +23,7 @@ func (w SqlBuilder) parseWhereField(ss []string, s *strings.Builder) {
 }
 
 func (w SqlBuilder) parseIn(ss []string, s *strings.Builder, c *int, args *[]any, in *[][]any) (t bool) {
-	if slice.IsContained(ss[1], []string{"in", "not in"}) && len(*in) > 0 {
+	if slice.IsContained([]string{"in", "not in"}, strings.ToLower(ss[1])) && len(*in) > 0 {
 		s.WriteString(" (")
 		x := strings.TrimRight(strings.Repeat("?,", len((*in)[*c])), ",")
 		s.WriteString(x)
@@ -152,7 +152,7 @@ func (w SqlBuilder) ParseWhere(in *[][]any) (string, []any, error) {
 func (w SqlBuilder) parseOrderBy() string {
 	s := strings.Builder{}
 	for _, ss := range w {
-		if len(ss) == 2 && ss[0] != "" && slice.IsContained(strings.ToLower(ss[1]), []string{"asc", "desc"}) {
+		if len(ss) == 2 && ss[0] != "" && slice.IsContained([]string{"asc", "desc"}, strings.ToLower(ss[1])) {
 			s.WriteString(" ")
 			s.WriteString(ss[0])
 			s.WriteString(" ")

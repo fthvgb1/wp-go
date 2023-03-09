@@ -31,7 +31,11 @@ const (
 	EntSpace    = 8
 )
 
-func htmlSpecialChars(text string, flags int) string {
+func SpecialChars(text string, flag ...int) string {
+	flags := EntQuotes
+	if len(flag) > 0 {
+		flags = flag[0]
+	}
 	r, ok := unEntitlesMap[flags]
 	e := entitlesMap[flags]
 	if !ok {
@@ -48,7 +52,11 @@ func htmlSpecialChars(text string, flags int) string {
 	}
 	return text
 }
-func htmlSpecialCharsDecode(text string, flags int) string {
+func SpecialCharsDecode(text string, flag ...int) string {
+	flags := EntQuotes
+	if len(flag) > 0 {
+		flags = flag[0]
+	}
 	r, ok := entitlesMap[flags]
 	u := unEntitlesMap[flags]
 	if !ok {

@@ -14,7 +14,7 @@ func InitTheme() {
 	twentyseventeen.Init(TemplateFs)
 }
 
-func GetTemplateName() string {
+func GetCurrentTemplateName() string {
 	tmlp := config.GetConfig().Theme
 	if tmlp == "" {
 		tmlp = wpconfig.GetOption("template")

@@ -105,7 +105,7 @@ func NewIndexParams(ctx *gin.Context) *IndexParams {
 
 func (i *IndexParams) parseSearch() {
 	s := i.Ctx.Query("s")
-	if s != "" && strings.Replace(s, " ", "", -1) != "" {
+	if s != "" {
 		q := str.Join("%", s, "%")
 		i.Where = append(i.Where, []string{
 			"and", "post_title", "like", q, "",

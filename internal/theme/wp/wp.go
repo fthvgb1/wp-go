@@ -16,23 +16,24 @@ import (
 )
 
 type Handle struct {
-	Index      *IndexHandle
-	Detail     *DetailHandle
-	C          *gin.Context
-	theme      string
-	Session    sessions.Session
-	ginH       gin.H
-	password   string
-	scene      int
-	Code       int
-	Stats      int
-	templ      string
-	class      []string
-	components map[string][]Components
-	themeMods  wpconfig.ThemeMods
-	handleFns  map[int][]HandleCall
-	err        error
-	abort      bool
+	Index          *IndexHandle
+	Detail         *DetailHandle
+	C              *gin.Context
+	theme          string
+	Session        sessions.Session
+	ginH           gin.H
+	password       string
+	scene          int
+	Code           int
+	Stats          int
+	templ          string
+	class          []string
+	components     map[string][]Components
+	themeMods      wpconfig.ThemeMods
+	handleFns      map[int][]HandleCall
+	err            error
+	abort          bool
+	componentsArgs map[string]any
 }
 
 type HandlePlugins map[string]HandleFn[*Handle]
@@ -91,19 +92,75 @@ func (h *Handle) PushClass(class ...string) {
 	h.class = append(h.class, class...)
 }
 
+func GetComponentsArgs[T any](h *Handle, k string, defaults T) T {
+	v, ok := h.componentsArgs[k]
+	if ok {
+		vv, ok := v.(T)
+		if ok {
+			return vv
+		}
+	}
+	return defaults
+}
+
+func PushComponentsArgsForSlice[T any](h *Handle, name string, v ...T) {
+	val, ok := h.componentsArgs[name]
+	if !ok {
+		var vv []T
+		vv = append(vv, v...)
+		h.componentsArgs[name] = vv
+		return
+	}
+	vv, ok := val.([]T)
+	if ok {
+		vv = append(vv, v...)
+		h.componentsArgs[name] = vv
+	}
+}
+func SetComponentsArgsForMap[K comparable, V any](h *Handle, name string, key K, v V) {
+	val, ok := h.componentsArgs[name]
+	if !ok {
+		vv := make(map[K]V)
+		vv[key] = v
+		h.componentsArgs[name] = vv
+		return
+	}
+	vv, ok := val.(map[K]V)
+	if ok {
+		vv[key] = v
+		h.componentsArgs[name] = vv
+	}
+}
+func MergeComponentsArgsForMap[K comparable, V any](h *Handle, name string, m map[K]V) {
+	val, ok := h.componentsArgs[name]
+	if !ok {
+		h.componentsArgs[name] = m
+		return
+	}
+	vv, ok := val.(map[K]V)
+	if ok {
+		h.componentsArgs[name] = maps.Merge(vv, m)
+	}
+}
+
+func (h *Handle) SetComponentsArgs(key string, value any) {
+	h.componentsArgs[key] = value
+}
+
 func NewHandle(c *gin.Context, scene int, theme string) *Handle {
 	mods, err := wpconfig.GetThemeMods(theme)
 	logs.ErrPrintln(err, "获取mods失败")
 	return &Handle{
-		C:          c,
-		theme:      theme,
-		Session:    sessions.Default(c),
-		ginH:       gin.H{},
-		scene:      scene,
-		Stats:      constraints.Ok,
-		themeMods:  mods,
-		components: make(map[string][]Components),
-		handleFns:  make(map[int][]HandleCall),
+		C:              c,
+		theme:          theme,
+		Session:        sessions.Default(c),
+		ginH:           gin.H{},
+		scene:          scene,
+		Stats:          constraints.Ok,
+		themeMods:      mods,
+		components:     make(map[string][]Components),
+		handleFns:      make(map[int][]HandleCall),
+		componentsArgs: make(map[string]any),
 	}
 }
 

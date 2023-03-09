@@ -8,7 +8,7 @@ import (
 
 func ThemeHook(scene int) func(*gin.Context) {
 	return func(ctx *gin.Context) {
-		t := theme.GetTemplateName()
+		t := theme.GetCurrentTemplateName()
 		h := wp.NewHandle(ctx, scene, t)
 		h.Index = wp.NewIndexHandle(h)
 		h.Detail = wp.NewDetailHandle(h)

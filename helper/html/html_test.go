@@ -32,8 +32,8 @@ func Test_htmlSpecialChars(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := htmlSpecialChars(tt.args.text, tt.args.flags); got != tt.want {
-				t.Errorf("htmlSpecialChars() = %v, want %v", got, tt.want)
+			if got := SpecialChars(tt.args.text, tt.args.flags); got != tt.want {
+				t.Errorf("SpecialChars() = %v, want %v", got, tt.want)
 			}
 		})
 	}
@@ -88,8 +88,8 @@ func Test_htmlSpecialCharsDecode(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := htmlSpecialCharsDecode(tt.args.text, tt.args.flags); got != tt.want {
-				t.Errorf("htmlSpecialCharsDecode() = %v, want %v", got, tt.want)
+			if got := SpecialCharsDecode(tt.args.text, tt.args.flags); got != tt.want {
+				t.Errorf("SpecialCharsDecode() = %v, want %v", got, tt.want)
 			}
 		})
 	}

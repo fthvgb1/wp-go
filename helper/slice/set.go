@@ -1,6 +1,6 @@
 package slice
 
-func IsContained[T comparable](a T, arr []T) bool {
+func IsContained[T comparable](arr []T, a T) bool {
 	for _, v := range arr {
 		if a == v {
 			return true
@@ -23,7 +23,7 @@ func Diff[T comparable](a []T, b ...[]T) (r []T) {
 	for _, t := range a {
 		f := false
 		for _, ts := range b {
-			if IsContained(t, ts) {
+			if IsContained(ts, t) {
 				f = true
 				break
 			}
@@ -74,7 +74,7 @@ func Intersect[T comparable](a []T, b ...[]T) (r []T) {
 	for _, t := range a {
 		f := false
 		for _, ts := range b {
-			if !IsContained(t, ts) {
+			if !IsContained(ts, t) {
 				f = true
 				break
 			}

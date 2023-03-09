@@ -14,7 +14,7 @@ var TemplateFs embed.FS
 
 var templates map[string]*template.Template //方便外部获取模板render后的字符串，不然在gin中获取不了
 
-func GetTemplate() *multipTemplate.MultipleFsTemplate {
+func Template() *multipTemplate.MultipleFsTemplate {
 	t := multipTemplate.NewFsTemplate(TemplateFs)
 	templates = t.Template
 	t.FuncMap = FuncMap()
@@ -22,6 +22,11 @@ func GetTemplate() *multipTemplate.MultipleFsTemplate {
 	/*t.AddTemplate("twentyfifteen/*[^layout]/*.gohtml", FuncMap(), "twentyfifteen/layout/*.gohtml"). //单个主题设置
 	AddTemplate("twentyseventeen/*[^layout]/*.gohtml", FuncMap(), "twentyseventeen/layout/*.gohtml")*/
 	return t
+}
+
+func GetTemplate(name string) (*template.Template, bool) {
+	t, ok := templates[name]
+	return t, ok
 }
 
 // 所有主题模板通用设置
