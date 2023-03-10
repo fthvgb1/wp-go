@@ -3,7 +3,6 @@ package wp
 import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper/maps"
-	"github.com/fthvgb1/wp-go/helper/number"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
@@ -66,9 +65,9 @@ func RecentPosts(h *Handle) string {
 			ariaCurrent = ` aria-current="page"`
 		}
 		return fmt.Sprintf(`	<li>
-		<a href="%s"%s>%s</a>
+		<a href="/p/%v"%s>%s</a>
 		%s
-	</li>`, str.Join("/p/", number.ToString(t.Id)), ariaCurrent, t.PostTitle, date)
+	</li>`, t.Id, ariaCurrent, t.PostTitle, date)
 	})
 	s := strings.ReplaceAll(recentPostsTemplate, "{$li}", strings.Join(posts, "\n"))
 	return str.Replace(s, args)
