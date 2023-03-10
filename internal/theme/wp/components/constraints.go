@@ -1,5 +1,6 @@
 package components
 
 const (
-	SearchFormArgs = "SearchFormArgs"
+	SearchFormArgs  = "SearchFormArgs"
+	RecentPostsArgs = "RecentPostsArgs"
 )
