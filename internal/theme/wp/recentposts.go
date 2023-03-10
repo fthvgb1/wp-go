@@ -23,10 +23,12 @@ var recentPostsArgs = map[string]string{
 	"{$after_sidebar}":  "",
 	"{$nav}":            "",
 	"{$navCloser}":      "",
+	"{$title}":          "",
 }
 
 var recentPostsTemplate = `{$before_widget}
 {$nav}
+{$title}
 <ul>
 	{$li}
 </ul>
@@ -44,13 +46,14 @@ func RecentPosts(h *Handle) string {
 	args := GetComponentsArgs(h, components.RecentPostsArgs, recentPostsArgs)
 	args = maps.Merge(recentPostsArgs, args)
 	conf := wpconfig.GetPHPArrayVal[map[any]any]("widget_recent-posts", recentConf, int64(2))
+	args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
 	if slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
 		args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, conf["title"])
 		args["{$navCloser}"] = "</nav>"
 	}
 	currentPostId := uint64(0)
 	if h.Scene() == constraints.Detail {
-		currentPostId = h.Detail.Post.Id
+		currentPostId = str.ToInteger(h.C.Param("id"), uint64(0))
 	}
 	posts := slice.Map(cache.RecentPosts(h.C, int(conf["number"].(int64))), func(t models.Posts) string {
 		t = ProjectTitle(t)
@@ -62,10 +65,10 @@ func RecentPosts(h *Handle) string {
 		if currentPostId == t.Id {
 			ariaCurrent = ` aria-current="page"`
 		}
-		return fmt.Sprintf(`<li>
-	<a href="%s"%s>%s</a>
-	%s
-</li>`, str.Join("/p/", number.ToString(t.Id)), ariaCurrent, t.PostTitle, date)
+		return fmt.Sprintf(`	<li>
+		<a href="%s"%s>%s</a>
+		%s
+	</li>`, str.Join("/p/", number.ToString(t.Id)), ariaCurrent, t.PostTitle, date)
 	})
 	s := strings.ReplaceAll(recentPostsTemplate, "{$li}", strings.Join(posts, "\n"))
 	return str.Replace(s, args)
