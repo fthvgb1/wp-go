@@ -17,6 +17,7 @@ const (
 
 	Defaults = "default"
 
-	HeadScript   = "headScript"
-	FooterScript = "footerScript"
+	HeadScript      = "headScript"
+	FooterScript    = "footerScript"
+	SidebarsWidgets = "sidebarsWidgets"
 )

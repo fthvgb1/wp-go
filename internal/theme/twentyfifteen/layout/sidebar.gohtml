@@ -1,20 +1,7 @@
 {{define "layout/sidebar" }}
     <div id="widget-area" class="widget-area" role="complementary">
-        <aside id="search-2" class="widget widget_search">
-            {{if .searchConf}}
-                <h2 class="widget-title">{{.searchConf}}</h2>
-            {{end}}
-            <form role="search" method="get" class="search-form" action="/">
-                <label>
-                    <span class="screen-reader-text">搜索：</span>
-                    <input type="search" class="search-field" placeholder="搜索…" value="{{.search}}" name="s">
-                </label>
-                <input type="submit" class="search-submit screen-reader-text" value="搜索">
-            </form>
-        </aside>
-        {{template "common/recent-posts" .}}
-        {{template "common/recent-comments" .}}
-        {{template "common/archives" .}}
+        {{template "common/sidebarWidget" .}}
+
         <aside id="categories-2" class="widget widget_categories">
             <h2 class="widget-title">分类</h2>
             <nav aria-label="分类">

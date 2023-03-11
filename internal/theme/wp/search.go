@@ -5,7 +5,7 @@ import (
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
-	"github.com/fthvgb1/wp-go/internal/theme/wp/components"
+	"github.com/fthvgb1/wp-go/internal/pkg/constraints/components"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"strings"
 )
@@ -17,6 +17,7 @@ var searchTemplate = `{$before_widget}
 
 var searchArgs = map[string]string{
 	"{$before_widget}": `<aside id="search-2" class="widget widget_search">`,
+	"{$after_widget}":  `</aside>`,
 	"{$aria_label}":    "",
 	"{$title}":         "",
 	"{$before_title}":  `<h2 class="widget-title">`,
@@ -41,7 +42,7 @@ var xmlSearchForm = `<form role="search" {$aria_label} method="get" id="searchfo
 				</div>
 			</form>`
 
-func GetSearchForm(h *Handle) string {
+func SearchForm(h *Handle) string {
 	args := GetComponentsArgs(h, components.SearchFormArgs, searchArgs)
 	args = maps.Merge(searchArgs, args)
 	if args["{$title}"] == "" {
@@ -56,5 +57,5 @@ func GetSearchForm(h *Handle) string {
 		form = xmlSearchForm
 	}
 	s := strings.ReplaceAll(searchTemplate, "{$form}", form)
-	return str.Replace(s, args)
+	return h.ComponentFilterFnHook(components.SearchFormArgs, str.Replace(s, args))
 }

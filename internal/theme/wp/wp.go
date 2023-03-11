@@ -16,24 +16,25 @@ import (
 )
 
 type Handle struct {
-	Index          *IndexHandle
-	Detail         *DetailHandle
-	C              *gin.Context
-	theme          string
-	Session        sessions.Session
-	ginH           gin.H
-	password       string
-	scene          int
-	Code           int
-	Stats          int
-	templ          string
-	class          []string
-	components     map[string][]Components
-	themeMods      wpconfig.ThemeMods
-	handleFns      map[int][]HandleCall
-	err            error
-	abort          bool
-	componentsArgs map[string]any
+	Index             *IndexHandle
+	Detail            *DetailHandle
+	C                 *gin.Context
+	theme             string
+	Session           sessions.Session
+	ginH              gin.H
+	password          string
+	scene             int
+	Code              int
+	Stats             int
+	templ             string
+	class             []string
+	components        map[string][]Components
+	themeMods         wpconfig.ThemeMods
+	handleFns         map[int][]HandleCall
+	err               error
+	abort             bool
+	componentsArgs    map[string]any
+	componentFilterFn map[string][]func(*Handle, string) string
 }
 
 type HandlePlugins map[string]HandleFn[*Handle]
@@ -51,6 +52,23 @@ type HandlePipeFn[T any] func(HandleFn[T], T)
 type HandleCall struct {
 	Fn    HandleFn[*Handle]
 	Order int
+}
+
+func (h *Handle) ComponentFilterFn(name string) []func(*Handle, string) string {
+	return h.componentFilterFn[name]
+}
+
+func (h *Handle) PushComponentFilterFn(name string, fns ...func(*Handle, string) string) {
+	h.componentFilterFn[name] = append(h.componentFilterFn[name], fns...)
+}
+func (h *Handle) ComponentFilterFnHook(name, s string) string {
+	calls, ok := h.componentFilterFn[name]
+	if ok {
+		return slice.Reduce(calls, func(fn func(*Handle, string) string, r string) string {
+			return fn(h, r)
+		}, s)
+	}
+	return s
 }
 
 func (h *Handle) Abort() {
@@ -151,16 +169,17 @@ func NewHandle(c *gin.Context, scene int, theme string) *Handle {
 	mods, err := wpconfig.GetThemeMods(theme)
 	logs.ErrPrintln(err, "获取mods失败")
 	return &Handle{
-		C:              c,
-		theme:          theme,
-		Session:        sessions.Default(c),
-		ginH:           gin.H{},
-		scene:          scene,
-		Stats:          constraints.Ok,
-		themeMods:      mods,
-		components:     make(map[string][]Components),
-		handleFns:      make(map[int][]HandleCall),
-		componentsArgs: make(map[string]any),
+		C:                 c,
+		theme:             theme,
+		Session:           sessions.Default(c),
+		ginH:              gin.H{},
+		scene:             scene,
+		Stats:             constraints.Ok,
+		themeMods:         mods,
+		components:        make(map[string][]Components),
+		handleFns:         make(map[int][]HandleCall),
+		componentsArgs:    make(map[string]any),
+		componentFilterFn: make(map[string][]func(*Handle, string) string),
 	}
 }
 
@@ -197,7 +216,7 @@ func (h *Handle) PushGroupHeadScript(order int, str ...string) {
 	h.PushGroupComponents(constraints.HeadScript, order, str...)
 }
 func (h *Handle) PushCacheGroupHeadScript(key string, order int, fns ...func(*Handle) string) {
-	h.PushGroupCacheScript(constraints.HeadScript, key, order, fns...)
+	h.PushGroupCacheComponentFn(constraints.HeadScript, key, order, fns...)
 }
 
 func (h *Handle) PushFooterScript(fn ...Components) {
@@ -213,9 +232,9 @@ func (h *Handle) componentKey(name string) string {
 }
 
 func (h *Handle) PushCacheGroupFooterScript(key string, order int, fns ...func(*Handle) string) {
-	h.PushGroupCacheScript(constraints.FooterScript, key, order, fns...)
+	h.PushGroupCacheComponentFn(constraints.FooterScript, key, order, fns...)
 }
-func (h *Handle) PushGroupCacheScript(name, key string, order int, fns ...func(*Handle) string) {
+func (h *Handle) PushGroupCacheComponentFn(name, key string, order int, fns ...func(*Handle) string) {
 	v := reload.GetStrBy(key, "\n", h, fns...)
 	h.PushGroupComponents(name, order, v)
 }

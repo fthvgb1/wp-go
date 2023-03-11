@@ -6,8 +6,8 @@ import (
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
+	"github.com/fthvgb1/wp-go/internal/pkg/constraints/components"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
-	"github.com/fthvgb1/wp-go/internal/theme/wp/components"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"strings"
 )
@@ -57,5 +57,5 @@ func RecentComments(h *Handle) string {
 	</li>`, t.CommentAuthor, t.CommentId, t.CommentPostId, t.PostTitle)
 	})
 	s := strings.ReplaceAll(recentCommentsTemplate, "{$li}", strings.Join(comments, "\n"))
-	return str.Replace(s, args)
+	return h.ComponentFilterFnHook(components.RecentCommentsArgs, str.Replace(s, args))
 }

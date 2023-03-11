@@ -23,3 +23,9 @@
         {{.customLogo|unescaped}}
     {{end}}
 {{end}}
+
+{{define "common/sidebarWidget"}}
+    {{if .sidebarsWidgets}}
+        {{.sidebarsWidgets|unescaped}}
+    {{end}}
+{{end}}

@@ -280,3 +280,9 @@ func IndexOf[T comparable](a []T, v T) int {
 	}
 	return -1
 }
+
+func ForEach[T any](a []T, fn func(i int, v T)) {
+	for i, t := range a {
+		fn(i, t)
+	}
+}

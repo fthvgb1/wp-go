@@ -47,7 +47,7 @@ func Hook(h *wp.Handle) {
 }
 
 func ready(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
-	h.WidgetAreaData()
+	h.WidgetArea()
 	h.GetPassword()
 	wphandle.RegisterPlugins(h, config.GetConfig().Plugins...)
 	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(calClass, 20))

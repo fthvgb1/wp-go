@@ -5,9 +5,11 @@ import (
 	"encoding/json"
 	"github.com/fthvgb1/wp-go/internal/pkg/config"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
+	"github.com/fthvgb1/wp-go/internal/pkg/constraints/components"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/plugins/wphandle"
 	"github.com/fthvgb1/wp-go/internal/theme/wp"
+	"strings"
 )
 
 const ThemeName = "twentyfifteen"
@@ -37,8 +39,11 @@ func Hook(h *wp.Handle) {
 }
 
 func dispatch(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
-	h.WidgetAreaData()
+	h.WidgetArea()
 	h.GetPassword()
+	h.PushComponentFilterFn(components.SearchFormArgs, func(h *wp.Handle, s string) string {
+		return strings.ReplaceAll(s, `class="search-submit"`, `class="search-submit screen-reader-text"`)
+	})
 	wphandle.RegisterPlugins(h, config.GetConfig().Plugins...)
 
 	h.PushCacheGroupHeadScript("CalCustomBackGround", 10, CalCustomBackGround, colorSchemeCss)

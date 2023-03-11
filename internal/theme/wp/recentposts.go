@@ -7,8 +7,8 @@ import (
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
+	"github.com/fthvgb1/wp-go/internal/pkg/constraints/components"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
-	"github.com/fthvgb1/wp-go/internal/theme/wp/components"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"strings"
 )
@@ -70,5 +70,5 @@ func RecentPosts(h *Handle) string {
 	</li>`, t.Id, ariaCurrent, t.PostTitle, date)
 	})
 	s := strings.ReplaceAll(recentPostsTemplate, "{$li}", strings.Join(posts, "\n"))
-	return str.Replace(s, args)
+	return h.ComponentFilterFnHook(components.RecentPostsArgs, str.Replace(s, args))
 }
