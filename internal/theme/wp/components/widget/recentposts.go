@@ -1,4 +1,4 @@
-package wp
+package widget
 
 import (
 	"fmt"
@@ -7,8 +7,9 @@ import (
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
-	"github.com/fthvgb1/wp-go/internal/pkg/constraints/components"
+	"github.com/fthvgb1/wp-go/internal/pkg/constraints/widgets"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
+	"github.com/fthvgb1/wp-go/internal/theme/wp"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/fthvgb1/wp-go/safety"
 	"strings"
@@ -48,8 +49,8 @@ var recentConf = func() safety.Var[map[any]any] {
 	return v
 }()
 
-func RecentPosts(h *Handle) string {
-	args := GetComponentsArgs(h, components.RecentPostsArgs, recentPostsArgs.Load())
+func RecentPosts(h *wp.Handle) string {
+	args := wp.GetComponentsArgs(h, widgets.RecentPostsArgs, recentPostsArgs.Load())
 	args = maps.FilterZeroMerge(recentPostsArgs.Load(), args)
 	conf := wpconfig.GetPHPArrayVal[map[any]any]("widget_recent-posts", recentConf.Load(), int64(2))
 	conf = maps.FilterZeroMerge(recentConf.Load(), conf)
@@ -63,7 +64,7 @@ func RecentPosts(h *Handle) string {
 		currentPostId = str.ToInteger(h.C.Param("id"), uint64(0))
 	}
 	posts := slice.Map(cache.RecentPosts(h.C, int(conf["number"].(int64))), func(t models.Posts) string {
-		t = ProjectTitle(t)
+		t = wp.ProjectTitle(t)
 		date := ""
 		if v, ok := conf["show_date"].(bool); ok && v {
 			date = fmt.Sprintf(`<span class="post-date">%s</span>`, t.PostDateGmt.Format("2006年01月02日"))
@@ -78,5 +79,5 @@ func RecentPosts(h *Handle) string {
 	</li>`, t.Id, ariaCurrent, t.PostTitle, date)
 	})
 	s := strings.ReplaceAll(recentPostsTemplate, "{$li}", strings.Join(posts, "\n"))
-	return h.ComponentFilterFnHook(components.RecentPostsArgs, str.Replace(s, args))
+	return h.ComponentFilterFnHook(widgets.RecentPostsArgs, str.Replace(s, args))
 }

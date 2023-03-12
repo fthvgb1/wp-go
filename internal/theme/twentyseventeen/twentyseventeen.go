@@ -15,6 +15,7 @@ import (
 	"github.com/fthvgb1/wp-go/internal/plugins"
 	"github.com/fthvgb1/wp-go/internal/plugins/wphandle"
 	"github.com/fthvgb1/wp-go/internal/theme/wp"
+	"github.com/fthvgb1/wp-go/internal/theme/wp/components"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/gin-gonic/gin"
 	"strings"
@@ -47,7 +48,7 @@ func Hook(h *wp.Handle) {
 }
 
 func ready(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
-	h.WidgetArea()
+	components.WidgetArea(h)
 	h.GetPassword()
 	wphandle.RegisterPlugins(h, config.GetConfig().Plugins...)
 	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(calClass, 20))

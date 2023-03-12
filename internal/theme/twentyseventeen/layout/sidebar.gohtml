@@ -1,21 +1,5 @@
 {{define "layout/sidebar" }}
-    <section id="search-2" class="widget widget_search">
-        <form role="search" method="get" class="search-form" action="/">
-            <label for="search-form-1">
-                <span class="screen-reader-text">搜索：</span>
-            </label>
-            <input type="search" id="search-form-1" class="search-field" placeholder="搜索…" value="{{.search}}" name="s">
-            <button type="submit" class="search-submit">
-                <svg class="icon icon-search" aria-hidden="true" role="img">
-                    <use href="#icon-search" xlink:href="#icon-search"></use>
-                </svg>
-                <span class="screen-reader-text">搜索</span>
-            </button>
-        </form>
-    </section>
-    {{template "common/recent-posts" .}}
-    {{template "common/recent-comments" .}}
-    {{template "common/archives" .}}
+    {{template "common/sidebarWidget" .}}
     <section id="categories-2" class="widget widget_categories">
         <h2 class="widget-title">分类</h2>
         <nav aria-label="分类">

@@ -1,4 +1,4 @@
-package wp
+package widget
 
 import (
 	"fmt"
@@ -6,8 +6,9 @@ import (
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
-	"github.com/fthvgb1/wp-go/internal/pkg/constraints/components"
+	"github.com/fthvgb1/wp-go/internal/pkg/constraints/widgets"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
+	"github.com/fthvgb1/wp-go/internal/theme/wp"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/fthvgb1/wp-go/safety"
 	"strings"
@@ -46,8 +47,8 @@ var recentCommentsTemplate = `{$before_widget}
 {$after_widget}
 `
 
-func RecentComments(h *Handle) string {
-	args := GetComponentsArgs(h, components.RecentCommentsArgs, recentCommentsArgs.Load())
+func RecentComments(h *wp.Handle) string {
+	args := wp.GetComponentsArgs(h, widgets.RecentCommentsArgs, recentCommentsArgs.Load())
 	args = maps.FilterZeroMerge(recentCommentsArgs.Load(), args)
 	conf := wpconfig.GetPHPArrayVal("widget_recent-comments", recentCommentConf.Load(), int64(2))
 	conf = maps.FilterZeroMerge(recentCommentConf.Load(), conf)
@@ -64,5 +65,5 @@ func RecentComments(h *Handle) string {
 	</li>`, t.CommentAuthor, t.CommentId, t.CommentPostId, t.PostTitle)
 	})
 	s := strings.ReplaceAll(recentCommentsTemplate, "{$li}", strings.Join(comments, "\n"))
-	return h.ComponentFilterFnHook(components.RecentCommentsArgs, str.Replace(s, args))
+	return h.ComponentFilterFnHook(widgets.RecentCommentsArgs, str.Replace(s, args))
 }

@@ -1,4 +1,4 @@
-package wp
+package widget
 
 import (
 	"fmt"
@@ -6,8 +6,9 @@ import (
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
-	"github.com/fthvgb1/wp-go/internal/pkg/constraints/components"
+	"github.com/fthvgb1/wp-go/internal/pkg/constraints/widgets"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
+	"github.com/fthvgb1/wp-go/internal/theme/wp"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/fthvgb1/wp-go/safety"
 	"strings"
@@ -47,8 +48,8 @@ var archiveTemplate = `{$before_widget}
 {$after_widget}
 `
 
-func Archive(h *Handle) string {
-	args := GetComponentsArgs(h, components.ArchiveArgs, archiveArgs.Load())
+func Archive(h *wp.Handle) string {
+	args := wp.GetComponentsArgs(h, widgets.ArchiveArgs, archiveArgs.Load())
 	args = maps.FilterZeroMerge(archiveArgs.Load(), args)
 	conf := wpconfig.GetPHPArrayVal("widget_archives", archivesConfig.Load(), int64(2))
 	args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
@@ -58,7 +59,7 @@ func Archive(h *Handle) string {
 	} else {
 		s = strings.ReplaceAll(s, "{$html}", archiveUl(h, conf, args, cache.Archives(h.C)))
 	}
-	return h.ComponentFilterFnHook(components.ArchiveArgs, str.Replace(s, args))
+	return h.ComponentFilterFnHook(widgets.ArchiveArgs, str.Replace(s, args))
 }
 
 var dropdownScript = `
@@ -76,7 +77,7 @@ var dropdownScript = `
             /* ]]> */
         </script>`
 
-func archiveDropDown(h *Handle, conf map[any]any, args map[string]string, archives []models.PostArchive) string {
+func archiveDropDown(h *wp.Handle, conf map[any]any, args map[string]string, archives []models.PostArchive) string {
 	option := str.NewBuilder()
 	option.Sprintf(`<option value="">%s</option>`, args["{$dropdown_label}"])
 	month := strings.TrimLeft(h.Index.Param.Month, "0")
@@ -100,7 +101,7 @@ func archiveDropDown(h *Handle, conf map[any]any, args map[string]string, archiv
 	return s.String()
 }
 
-func archiveUl(h *Handle, conf map[any]any, args map[string]string, archives []models.PostArchive) string {
+func archiveUl(h *wp.Handle, conf map[any]any, args map[string]string, archives []models.PostArchive) string {
 	if slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
 		args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, conf["title"].(string))
 		args["{$navCloser}"] = "</nav>"

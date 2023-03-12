@@ -1,4 +1,4 @@
-package wp
+package widget
 
 import (
 	"github.com/fthvgb1/wp-go/helper/html"
@@ -6,7 +6,8 @@ import (
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
-	"github.com/fthvgb1/wp-go/internal/pkg/constraints/components"
+	"github.com/fthvgb1/wp-go/internal/pkg/constraints/widgets"
+	"github.com/fthvgb1/wp-go/internal/theme/wp"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/fthvgb1/wp-go/safety"
 	"strings"
@@ -48,8 +49,8 @@ var xmlSearchForm = `<form role="search" {$aria_label} method="get" id="searchfo
 				</div>
 			</form>`
 
-func SearchForm(h *Handle) string {
-	args := GetComponentsArgs(h, components.SearchFormArgs, searchArgs.Load())
+func SearchForm(h *wp.Handle) string {
+	args := wp.GetComponentsArgs(h, widgets.SearchFormArgs, searchArgs.Load())
 	args = maps.FilterZeroMerge(searchArgs.Load(), args)
 	if args["{$title}"] == "" {
 		args["{$title}"] = wpconfig.GetPHPArrayVal("widget_search", "", int64(2), "title")
@@ -66,5 +67,5 @@ func SearchForm(h *Handle) string {
 		form = xmlSearchForm
 	}
 	s := strings.ReplaceAll(searchTemplate, "{$form}", form)
-	return h.ComponentFilterFnHook(components.SearchFormArgs, str.Replace(s, args))
+	return h.ComponentFilterFnHook(widgets.SearchFormArgs, str.Replace(s, args))
 }
