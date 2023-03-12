@@ -1,8 +1,11 @@
 package helper
 
 import (
+	"fmt"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"net/url"
 	"reflect"
+	"strconv"
 	"strings"
 )
 
@@ -57,4 +60,37 @@ func DefaultVal[T any](v, defaults T) T {
 		return defaults
 	}
 	return v
+}
+
+func IsZero[T comparable](t T) bool {
+	var vv T
+	return vv != t
+}
+func IsZeros(v any) bool {
+	switch v.(type) {
+	case int64, int, int8, int16, int32, uint64, uint, uint8, uint16, uint32:
+		i := fmt.Sprintf("%d", v)
+		return str.ToInt[int](i) == 0
+	case float32, float64:
+		f := fmt.Sprintf("%v", v)
+		ff, _ := strconv.ParseFloat(f, 64)
+		return ff == float64(0)
+	case bool:
+		return v.(bool) == false
+	case string:
+		s := v.(string)
+		return s == ""
+	}
+	return false
+}
+
+func ToBool[T comparable](t T) bool {
+	v := any(t)
+	switch v.(type) {
+	case string:
+		s := v.(string)
+		return s != "" && s != "0"
+	}
+	var vv T
+	return vv != t
 }

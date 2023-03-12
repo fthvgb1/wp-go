@@ -8,6 +8,7 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints/components"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
+	"github.com/fthvgb1/wp-go/safety"
 	"strings"
 )
 
@@ -16,17 +17,21 @@ var searchTemplate = `{$before_widget}
 {$form}
 {$after_widget}`
 
-var searchArgs = map[string]string{
-	"{$before_widget}": `<aside id="search-2" class="widget widget_search">`,
-	"{$after_widget}":  `</aside>`,
-	"{$aria_label}":    "",
-	"{$title}":         "",
-	"{$before_title}":  `<h2 class="widget-title">`,
-	"{$after_title}":   `</h2>`,
-	"{$button}":        "搜索",
-	"{$placeholder}":   "搜索&hellip;",
-	"{$label}":         "搜索：",
-}
+var searchArgs = func() safety.Var[map[string]string] {
+	v := safety.Var[map[string]string]{}
+	v.Store(map[string]string{
+		"{$before_widget}": `<aside id="search-2" class="widget widget_search">`,
+		"{$after_widget}":  `</aside>`,
+		"{$aria_label}":    "",
+		"{$title}":         "",
+		"{$before_title}":  `<h2 class="widget-title">`,
+		"{$after_title}":   `</h2>`,
+		"{$button}":        "搜索",
+		"{$placeholder}":   "搜索&hellip;",
+		"{$label}":         "搜索：",
+	})
+	return v
+}()
 
 var html5SearchForm = `<form role="search" {$aria_label} method="get" class="search-form" action="/">
 				<label>
@@ -44,8 +49,8 @@ var xmlSearchForm = `<form role="search" {$aria_label} method="get" id="searchfo
 			</form>`
 
 func SearchForm(h *Handle) string {
-	args := GetComponentsArgs(h, components.SearchFormArgs, searchArgs)
-	args = maps.Merge(searchArgs, args)
+	args := GetComponentsArgs(h, components.SearchFormArgs, searchArgs.Load())
+	args = maps.FilterZeroMerge(searchArgs.Load(), args)
 	if args["{$title}"] == "" {
 		args["{$title}"] = wpconfig.GetPHPArrayVal("widget_search", "", int64(2), "title")
 	}

@@ -2,6 +2,7 @@ package maps
 
 import (
 	"encoding/json"
+	"github.com/fthvgb1/wp-go/helper"
 )
 
 func StrAnyMapToStruct[T any, M any](m M) (r T, err error) {
@@ -103,6 +104,24 @@ func Merge[K comparable, V any](m ...map[K]V) map[K]V {
 	mm := m[0]
 	for _, m2 := range m[1:] {
 		for k, v := range m2 {
+			mm[k] = v
+		}
+	}
+	return mm
+}
+
+func FilterZeroMerge[K comparable, V any](m ...map[K]V) map[K]V {
+	if len(m) < 1 {
+		panic("no map")
+	} else if len(m) < 2 {
+		return m[0]
+	}
+	mm := m[0]
+	for _, m2 := range m[1:] {
+		for k, v := range m2 {
+			if helper.IsZeros(v) {
+				continue
+			}
 			mm[k] = v
 		}
 	}

@@ -144,3 +144,76 @@ func TestDefaults(t *testing.T) {
 		})
 	}
 }
+
+func TestToBool(t *testing.T) {
+	{
+		name := "bool"
+		args := true
+		want := true
+		t.Run(name, func(t *testing.T) {
+			if got := ToBool(args); got != want {
+				t.Errorf("ToBool() = %v, want %v", got, want)
+			}
+		})
+	}
+	{
+		name := "int"
+		args := 0
+		want := false
+		t.Run(name, func(t *testing.T) {
+			if got := ToBool(args); got != want {
+				t.Errorf("ToBool() = %v, want %v", got, want)
+			}
+		})
+	}
+	{
+		name := "int"
+		args := 1
+		want := true
+		t.Run(name, func(t *testing.T) {
+			if got := ToBool(args); got != want {
+				t.Errorf("ToBool() = %v, want %v", got, want)
+			}
+		})
+	}
+	{
+		name := "string"
+		args := "1"
+		want := true
+		t.Run(name, func(t *testing.T) {
+			if got := ToBool(args); got != want {
+				t.Errorf("ToBool() = %v, want %v", got, want)
+			}
+		})
+	}
+	{
+		name := "string"
+		args := "0"
+		want := false
+		t.Run(name, func(t *testing.T) {
+			if got := ToBool(args); got != want {
+				t.Errorf("ToBool() = %v, want %v", got, want)
+			}
+		})
+	}
+	{
+		name := "string"
+		args := ""
+		want := false
+		t.Run(name, func(t *testing.T) {
+			if got := ToBool(args); got != want {
+				t.Errorf("ToBool() = %v, want %v", got, want)
+			}
+		})
+	}
+	{
+		name := "float"
+		args := 0.2
+		want := true
+		t.Run(name, func(t *testing.T) {
+			if got := ToBool(args); got != want {
+				t.Errorf("ToBool() = %v, want %v", got, want)
+			}
+		})
+	}
+}

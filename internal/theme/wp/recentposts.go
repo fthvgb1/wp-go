@@ -10,20 +10,11 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints/components"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
+	"github.com/fthvgb1/wp-go/safety"
 	"strings"
 )
 
-var recentPostsArgs = map[string]string{
-	"{$before_widget}":  `<aside id="recent-posts-2" class="widget widget_recent_entries">`,
-	"{$after_widget}":   "</aside>",
-	"{$before_title}":   `<h2 class="widget-title">`,
-	"{$after_title}":    "</h2>",
-	"{$before_sidebar}": "",
-	"{$after_sidebar}":  "",
-	"{$nav}":            "",
-	"{$navCloser}":      "",
-	"{$title}":          "",
-}
+var recentPostsArgs = safety.Var[map[string]string]{}
 
 var recentPostsTemplate = `{$before_widget}
 {$nav}
@@ -35,16 +26,33 @@ var recentPostsTemplate = `{$before_widget}
 {$after_widget}
 `
 
-var recentConf = map[any]any{
-	"number":    int64(5),
-	"show_date": false,
-	"title":     "近期文章",
-}
+var recentConf = func() safety.Var[map[any]any] {
+
+	recentPostsArgs.Store(map[string]string{
+		"{$before_widget}":  `<aside id="recent-posts-2" class="widget widget_recent_entries">`,
+		"{$after_widget}":   "</aside>",
+		"{$before_title}":   `<h2 class="widget-title">`,
+		"{$after_title}":    "</h2>",
+		"{$before_sidebar}": "",
+		"{$after_sidebar}":  "",
+		"{$nav}":            "",
+		"{$navCloser}":      "",
+		"{$title}":          "",
+	})
+	v := safety.Var[map[any]any]{}
+	v.Store(map[any]any{
+		"number":    int64(5),
+		"show_date": false,
+		"title":     "近期文章",
+	})
+	return v
+}()
 
 func RecentPosts(h *Handle) string {
-	args := GetComponentsArgs(h, components.RecentPostsArgs, recentPostsArgs)
-	args = maps.Merge(recentPostsArgs, args)
-	conf := wpconfig.GetPHPArrayVal[map[any]any]("widget_recent-posts", recentConf, int64(2))
+	args := GetComponentsArgs(h, components.RecentPostsArgs, recentPostsArgs.Load())
+	args = maps.FilterZeroMerge(recentPostsArgs.Load(), args)
+	conf := wpconfig.GetPHPArrayVal[map[any]any]("widget_recent-posts", recentConf.Load(), int64(2))
+	conf = maps.FilterZeroMerge(recentConf.Load(), conf)
 	args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
 	if slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
 		args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, conf["title"])

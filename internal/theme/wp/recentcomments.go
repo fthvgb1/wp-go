@@ -9,26 +9,32 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints/components"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
+	"github.com/fthvgb1/wp-go/safety"
 	"strings"
 )
 
-var recentCommentsArgs = map[string]string{
-	"{$before_widget}":      `<aside id="recent-comments-2" class="widget widget_recent_comments">`,
-	"{$after_widget}":       "</aside>",
-	"{$before_title}":       `<h2 class="widget-title">`,
-	"{$after_title}":        "</h2>",
-	"{$before_sidebar}":     "",
-	"{$after_sidebar}":      "",
-	"{$nav}":                "",
-	"{$navCloser}":          "",
-	"{$title}":              "",
-	"{$recent_comments_id}": "recentcomments",
-}
+var recentCommentsArgs = func() safety.Var[map[string]string] {
+	v := safety.Var[map[string]string]{}
+	v.Store(map[string]string{
+		"{$before_widget}":      `<aside id="recent-comments-2" class="widget widget_recent_comments">`,
+		"{$after_widget}":       "</aside>",
+		"{$before_title}":       `<h2 class="widget-title">`,
+		"{$after_title}":        "</h2>",
+		"{$before_sidebar}":     "",
+		"{$after_sidebar}":      "",
+		"{$nav}":                "",
+		"{$navCloser}":          "",
+		"{$title}":              "",
+		"{$recent_comments_id}": "recentcomments",
+	})
+	recentCommentConf.Store(map[any]any{
+		"number": int64(5),
+		"title":  "近期评论",
+	})
+	return v
+}()
 
-var recentCommentConf = map[any]any{
-	"number": int64(5),
-	"title":  "近期评论",
-}
+var recentCommentConf = safety.Var[map[any]any]{}
 
 var recentCommentsTemplate = `{$before_widget}
 {$nav}
@@ -41,9 +47,10 @@ var recentCommentsTemplate = `{$before_widget}
 `
 
 func RecentComments(h *Handle) string {
-	args := GetComponentsArgs(h, components.RecentCommentsArgs, recentCommentsArgs)
-	args = maps.Merge(recentCommentsArgs, args)
-	conf := wpconfig.GetPHPArrayVal[map[any]any]("widget_recent-comments", recentCommentConf, int64(2))
+	args := GetComponentsArgs(h, components.RecentCommentsArgs, recentCommentsArgs.Load())
+	args = maps.FilterZeroMerge(recentCommentsArgs.Load(), args)
+	conf := wpconfig.GetPHPArrayVal("widget_recent-comments", recentCommentConf.Load(), int64(2))
+	conf = maps.FilterZeroMerge(recentCommentConf.Load(), conf)
 	args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
 	if slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
 		args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, conf["title"])
