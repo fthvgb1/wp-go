@@ -25,7 +25,7 @@ func (h *Handle) WidgetArea() {
 		return nil, false
 	})
 	h.PushHandleFn(constraints.Ok, NewHandleFn(func(h *Handle) {
-		h.PushGroupCacheComponentFn(constraints.SidebarsWidgets, constraints.SidebarsWidgets, 10, sidebar...)
+		h.PushGroupComponentFns(constraints.SidebarsWidgets, 10, sidebar...)
 	}, 30))
 	h.ginH["categories"] = cache.CategoriesTags(h.C, constraints.Category)
 }

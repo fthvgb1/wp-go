@@ -57,7 +57,7 @@ func RecentPosts(h *Handle) string {
 	posts := slice.Map(cache.RecentPosts(h.C, int(conf["number"].(int64))), func(t models.Posts) string {
 		t = ProjectTitle(t)
 		date := ""
-		if conf["show_date"].(bool) {
+		if v, ok := conf["show_date"].(bool); ok && v {
 			date = fmt.Sprintf(`<span class="post-date">%s</span>`, t.PostDateGmt.Format("2006年01月02日"))
 		}
 		ariaCurrent := ""

@@ -5,6 +5,7 @@ import (
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
+	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints/components"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"strings"
@@ -51,7 +52,10 @@ func SearchForm(h *Handle) string {
 	if args["{$title}"] != "" {
 		args["{$title}"] = str.Join(args["{$before_title}"], args["{$title}"], args["{$after_title}"])
 	}
-	args["{$value}"] = html.SpecialChars(h.Index.Param.Search)
+	args["{$value}"] = ""
+	if h.Scene() == constraints.Search {
+		args["{$value}"] = html.SpecialChars(h.Index.Param.Search)
+	}
 	form := html5SearchForm
 	if !slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "search-form") {
 		form = xmlSearchForm

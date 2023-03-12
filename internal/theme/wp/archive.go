@@ -107,7 +107,7 @@ func archiveUl(h *Handle, conf map[any]any, args map[string]string, archives []m
 		if showCount == 1 {
 			count = fmt.Sprintf("(%v)", archive.Posts)
 		}
-		s.Sprintf(`<li><a href="/p/date/%[1]s/%[2]02s">%[1]s年%[2]s月%[3]s</a></li>`, archive.Year, archive.Month, count)
+		s.Sprintf(`<li><a href="/p/date/%[1]s/%02[2]s">%[1]s年%[2]s月%[3]s</a></li>`, archive.Year, archive.Month, count)
 	}
 	return s.String()
 }
