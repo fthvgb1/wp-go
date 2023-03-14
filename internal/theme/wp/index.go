@@ -148,8 +148,8 @@ func (i *IndexHandle) ExecPostsPlugin(calls ...func(*models.Posts)) {
 }
 
 func (i *IndexHandle) Render() {
-	i.PreCodeAndStats()
-	i.PreTemplate()
+	PreCodeAndStats(i.Handle)
+	PreTemplate(i.Handle)
 	i.PushHandleFn(constraints.Ok, NewHandleFn(func(h *Handle) {
 		i.ExecPostsPlugin()
 		i.Pagination()

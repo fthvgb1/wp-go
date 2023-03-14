@@ -34,7 +34,7 @@ func Init(fs embed.FS) {
 	logs.ErrPrintln(err, "解析colorscheme失败")
 }
 
-var pipe = wp.HandlePipe(wp.Render, widget.IsCategory, dispatch)
+var pipe = wp.HandlePipe(wp.Render, widget.MiddleWare(dispatch)...)
 
 func Hook(h *wp.Handle) {
 	pipe(h)

@@ -16,6 +16,7 @@ import (
 	"github.com/fthvgb1/wp-go/internal/plugins/wphandle"
 	"github.com/fthvgb1/wp-go/internal/theme/wp"
 	"github.com/fthvgb1/wp-go/internal/theme/wp/components"
+	"github.com/fthvgb1/wp-go/internal/theme/wp/components/widget"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/gin-gonic/gin"
 	"strings"
@@ -41,7 +42,7 @@ var paginate = func() plugins.PageEle {
 	return p
 }()
 
-var pipe = wp.HandlePipe(wp.Render, ready, dispatch)
+var pipe = wp.HandlePipe(wp.Render, widget.MiddleWare(ready, dispatch)...)
 
 func Hook(h *wp.Handle) {
 	pipe(h)

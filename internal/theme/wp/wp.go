@@ -273,7 +273,7 @@ func (h *Handle) ExecHandleFns() {
 	}
 }
 
-func (h *Handle) PreTemplate() {
+func PreTemplate(h *Handle) {
 	if h.templ == "" {
 		h.templ = str.Join(h.theme, "/posts/index.gohtml")
 		if h.scene == constraints.Detail {
@@ -281,7 +281,7 @@ func (h *Handle) PreTemplate() {
 		}
 	}
 }
-func (h *Handle) PreCodeAndStats() {
+func PreCodeAndStats(h *Handle) {
 	if h.Stats != 0 && h.Code != 0 {
 		return
 	}
