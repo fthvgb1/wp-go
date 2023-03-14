@@ -32,7 +32,7 @@ var repeat = map[string]string{
 
 func CalCustomBackGround(h *wp.Handle) (r string) {
 	themeMods := h.CommonThemeMods()
-	if themeMods.BackgroundImage == "" && themeMods.BackgroundColor == themesupport.CustomBackground.DefaultColor {
+	if themeMods.BackgroundImage == "" && (themeMods.BackgroundColor == "" || themeMods.BackgroundColor == themesupport.CustomBackground.DefaultColor) {
 		return
 	}
 	s := str.NewBuilder()

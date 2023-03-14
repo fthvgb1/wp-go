@@ -70,7 +70,7 @@ func IsZeros(v any) bool {
 	switch v.(type) {
 	case int64, int, int8, int16, int32, uint64, uint, uint8, uint16, uint32:
 		i := fmt.Sprintf("%d", v)
-		return str.ToInt[int](i) == 0
+		return str.ToInt[int64](i) == 0
 	case float32, float64:
 		f := fmt.Sprintf("%v", v)
 		ff, _ := strconv.ParseFloat(f, 64)
@@ -81,7 +81,7 @@ func IsZeros(v any) bool {
 		s := v.(string)
 		return s == ""
 	}
-	return false
+	return reflect.DeepEqual(v, reflect.Zero(reflect.TypeOf(v)).Interface())
 }
 
 func ToBool[T comparable](t T) bool {

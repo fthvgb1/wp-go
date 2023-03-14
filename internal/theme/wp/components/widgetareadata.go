@@ -14,6 +14,7 @@ var widgets = map[string]func(*wp.Handle) string{
 	"recent-posts-2":    widget.RecentPosts,
 	"recent-comments-2": widget.RecentComments,
 	"archives-2":        widget.Archive,
+	"categories-2":      widget.Category,
 }
 
 func WidgetArea(h *wp.Handle) {

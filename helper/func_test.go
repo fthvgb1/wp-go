@@ -217,3 +217,21 @@ func TestToBool(t *testing.T) {
 		})
 	}
 }
+
+func TestIsZeros(t *testing.T) {
+	tt := struct {
+		name string
+		args struct {
+			v struct{ a string }
+		}
+		want bool
+	}{
+		name: "t1",
+		args: struct{ v struct{ a string } }{v: struct{ a string }{a: ""}},
+	}
+	t.Run(tt.name, func(t *testing.T) {
+		if got := IsZeros(tt.args.v); got != tt.want {
+			t.Errorf("IsZeros() = %v, want %v", got, tt.want)
+		}
+	})
+}
