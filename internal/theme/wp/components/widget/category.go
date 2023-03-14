@@ -173,11 +173,14 @@ func parseDropdownCate(h *wp.Handle) (cateName string, r bool) {
 	if cat == "" {
 		return
 	}
-	cates := slice.SimpleToMap(cache.CategoriesTags(h.C, constraints.Category), func(v models.TermsMy) uint64 {
-		return v.Terms.TermId
+	id := str.ToInteger[uint64](cat, 0)
+	if id < 1 {
+		return
+	}
+	i, cc := slice.SearchFirst(cache.CategoriesTags(h.C, constraints.Category), func(my models.TermsMy) bool {
+		return id == my.Terms.TermId
 	})
-	cc, r := cates[str.ToInteger[uint64](cat, 0)]
-	if !r {
+	if i < 0 {
 		return
 	}
 	cateName = cc.Name
