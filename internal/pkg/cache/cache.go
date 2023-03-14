@@ -124,6 +124,9 @@ func (a *Arch) getArchiveCache(ctx context.Context) []models.PostArchive {
 	return a.data
 }
 
+// CategoriesTags categories or tags
+//
+// t is constraints.Tag or constraints.Category
 func CategoriesTags(ctx context.Context, t ...int) []models.TermsMy {
 	r, err := categoryAndTagsCaches.GetCache(ctx, time.Second, ctx)
 	logs.ErrPrintln(err, "get category err")

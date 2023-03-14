@@ -10,6 +10,7 @@ import (
 	"github.com/fthvgb1/wp-go/internal/plugins/wphandle"
 	"github.com/fthvgb1/wp-go/internal/theme/wp"
 	"github.com/fthvgb1/wp-go/internal/theme/wp/components"
+	"github.com/fthvgb1/wp-go/internal/theme/wp/components/widget"
 	"strings"
 )
 
@@ -33,7 +34,7 @@ func Init(fs embed.FS) {
 	logs.ErrPrintln(err, "解析colorscheme失败")
 }
 
-var pipe = wp.HandlePipe(wp.Render, dispatch)
+var pipe = wp.HandlePipe(wp.Render, widget.IsCategory, dispatch)
 
 func Hook(h *wp.Handle) {
 	pipe(h)

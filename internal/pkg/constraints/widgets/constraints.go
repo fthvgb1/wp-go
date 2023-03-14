@@ -5,4 +5,5 @@ const (
 	RecentPostsArgs    = "RecentPostsArgs"
 	RecentCommentsArgs = "RecentCommentsArgs"
 	ArchiveArgs        = "ArchiveArgs"
+	Categories         = "Categories"
 )
