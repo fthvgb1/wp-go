@@ -51,6 +51,15 @@ func (n *Node[T, K]) OrderByLoop(fn func(T, int), orderBy func(T, T) bool) {
 }
 
 func Root[T any, K comparable](a []T, top K, fn func(T) (child, parent K)) *Node[T, K] {
+	m := root(a, top, fn)
+	return m[top]
+}
+
+func Roots[T any, K comparable](a []T, top K, fn func(T) (child, parent K)) map[K]*Node[T, K] {
+	return root(a, top, fn)
+}
+
+func root[T any, K comparable](a []T, top K, fn func(T) (child, parent K)) map[K]*Node[T, K] {
 	m := make(map[K]*Node[T, K])
 	m[top] = &Node[T, K]{Children: new([]Node[T, K])}
 	for _, t := range a {
@@ -64,5 +73,19 @@ func Root[T any, K comparable](a []T, top K, fn func(T) (child, parent K)) *Node
 		}
 		*parent.Children = append(*parent.Children, node)
 	}
-	return m[top]
+	return m
+}
+
+func Ancestor[T any, K comparable](root map[K]*Node[T, K], top K, child *Node[T, K]) *Node[T, K] {
+	a := child
+	for {
+		if a.Parent == top {
+			return a
+		}
+		aa, ok := root[a.Parent]
+		if !ok {
+			return a
+		}
+		a = aa
+	}
 }

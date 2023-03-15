@@ -82,18 +82,77 @@ func categoryUL(h *wp.Handle, args map[string]string, conf map[any]any, categori
 	s := str.NewBuilder()
 	s.WriteString("<ul>\n")
 	isCount := conf["count"].(int64)
-	for _, category := range categories {
+	if conf["hierarchical"].(int64) == 0 {
+		for _, category := range categories {
+			count := ""
+			if isCount != 0 {
+				count = fmt.Sprintf("(%d)", category.Count)
+			}
+			s.Sprintf(`	<li class="cat-item cat-item-%d">
+		<a href="/p/category/%s">%s %s</a>
+	</li>
+`, category.Terms.TermId, category.Name, category.Name, count)
+		}
+	} else {
+
+		m := tree.Roots(categories, 0, func(cate models.TermsMy) (child, parent uint64) {
+			return cate.TermTaxonomyId, cate.Parent
+		})
+		cate := &tree.Node[models.TermsMy, uint64]{Data: models.TermsMy{}}
+		if h.Scene() == constraints.Category {
+			cat := h.C.Param("category")
+			i, ca := slice.SearchFirst(categories, func(my models.TermsMy) bool {
+				return cat == my.Name
+			})
+			if i > 0 {
+				cate = m[ca.TermTaxonomyId]
+			}
+		}
+
+		r := m[0]
+		categoryLi(r, cate, tree.Ancestor(m, 0, cate), isCount, s)
+	}
+
+	s.WriteString("</ul>")
+	return s.String()
+}
+
+func categoryLi(root *tree.Node[models.TermsMy, uint64], cate, roots *tree.Node[models.TermsMy, uint64], isCount int64, s *str.Builder) {
+	for _, child := range *root.Children {
+		category := child.Data
 		count := ""
 		if isCount != 0 {
 			count = fmt.Sprintf("(%d)", category.Count)
 		}
-		s.Sprintf(`	<li class="cat-item cat-item-%d">
-		<a href="/p/category/%s">%s %s</a>
+		var class []string
+
+		if len(*child.Children) > 0 && cate.Data.TermTaxonomyId > 0 {
+			if category.TermTaxonomyId == cate.Parent {
+				class = append(class, "current-cat-parent")
+			}
+
+			if cate.Parent > 0 && category.TermTaxonomyId == roots.Data.TermTaxonomyId {
+				class = append(class, "current-cat-ancestor")
+			}
+		}
+		aria := ""
+		if category.TermTaxonomyId == cate.Data.TermTaxonomyId {
+			class = append(class, "current-cat")
+			aria = `aria-current="page"`
+		}
+		s.Sprintf(`	<li class="cat-item cat-item-%d %s">
+		<a %s href="/p/category/%s">%s %s</a>
 	</li>
-`, category.Terms.TermId, category.Name, category.Name, count)
+`, category.Terms.TermId, strings.Join(class, " "), aria, category.Name, category.Name, count)
+
+		if len(*child.Children) > 0 {
+			s.WriteString(`<ul class="children">
+`)
+			categoryLi(&child, cate, roots, isCount, s)
+			s.WriteString(`</ul>`)
+		}
 	}
-	s.WriteString("</ul>")
-	return s.String()
+
 }
 
 var categoryDropdownJs = `/* <![CDATA[ */
