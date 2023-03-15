@@ -5,6 +5,7 @@ import (
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
+	"github.com/fthvgb1/wp-go/helper/tree"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints/widgets"
@@ -124,7 +125,9 @@ func categoryDropdown(h *wp.Handle, args map[string]string, conf map[any]any, ca
 			currentCategory = h.Index.Param.Category
 		}
 		showCount := conf["count"].(int64)
-		for _, category := range categories {
+		fn := func(category models.TermsMy, deep int) {
+			lv := fmt.Sprintf("level-%d", deep+1)
+			sep := strings.Repeat("&nbsp;", deep*2)
 			selected := ""
 			if category.Name == currentCategory {
 				selected = "selected"
@@ -133,8 +136,19 @@ func categoryDropdown(h *wp.Handle, args map[string]string, conf map[any]any, ca
 			if showCount != 0 {
 				count = fmt.Sprintf("(%d)", category.Count)
 			}
-			s.Sprintf(`		<option %s value="%d">%s %s</option>
-`, selected, category.Terms.TermId, category.Name, count)
+			s.Sprintf(`		<option class="%s" %s value="%d">%s%s %s</option>
+`, lv, selected, category.Terms.TermId, sep, category.Name, count)
+		}
+		if conf["hierarchical"].(int64) == 0 {
+			for _, category := range categories {
+				fn(category, 0)
+			}
+		} else {
+			tree.Root(categories, 0, func(t models.TermsMy) (child, parent uint64) {
+				return t.TermTaxonomyId, t.Parent
+			}).Loop(func(category models.TermsMy, deep int) {
+				fn(category, deep)
+			})
 		}
 		s.WriteString("	</select>\n")
 	}
@@ -183,6 +197,7 @@ func parseDropdownCate(h *wp.Handle) (cateName string, r bool) {
 	if i < 0 {
 		return
 	}
+	r = true
 	cateName = cc.Name
 	return
 }
