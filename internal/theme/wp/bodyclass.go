@@ -36,6 +36,9 @@ func (h *Handle) BodyClass(class ...string) string {
 	case constraints.Category, constraints.Tag:
 		class = append(class, "archive", "category")
 		cat := h.Index.Param.Category
+		if cat == "" {
+			break
+		}
 		_, cate := slice.SearchFirst(cache.CategoriesTags(h.C, h.scene), func(my models.TermsMy) bool {
 			return my.Name == cat
 		})

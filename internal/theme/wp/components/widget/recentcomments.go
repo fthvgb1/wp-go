@@ -48,11 +48,14 @@ var recentCommentsTemplate = `{$before_widget}
 `
 
 func RecentComments(h *wp.Handle) string {
-	args := wp.GetComponentsArgs(h, widgets.RecentCommentsArgs, recentCommentsArgs.Load())
+	args := wp.GetComponentsArgs(h, widgets.RecentComments, recentCommentsArgs.Load())
 	args = maps.FilterZeroMerge(recentCommentsArgs.Load(), args)
 	conf := wpconfig.GetPHPArrayVal("widget_recent-comments", recentCommentConf.Load(), int64(2))
 	conf = maps.FilterZeroMerge(recentCommentConf.Load(), conf)
 	args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
+	if id, ok := args["{$id}"]; ok && id != "" {
+		args["{$before_widget}"] = strings.ReplaceAll(args["{$before_widget}"], "2", args["{$id}"])
+	}
 	if slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
 		args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, conf["title"])
 		args["{$navCloser}"] = "</nav>"
@@ -65,5 +68,5 @@ func RecentComments(h *wp.Handle) string {
 	</li>`, t.CommentAuthor, t.CommentId, t.CommentPostId, t.PostTitle)
 	})
 	s := strings.ReplaceAll(recentCommentsTemplate, "{$li}", strings.Join(comments, "\n"))
-	return h.ComponentFilterFnHook(widgets.RecentCommentsArgs, str.Replace(s, args))
+	return h.ComponentFilterFnHook(widgets.RecentComments, str.Replace(s, args))
 }

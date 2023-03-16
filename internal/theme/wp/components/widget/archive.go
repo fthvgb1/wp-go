@@ -49,17 +49,20 @@ var archiveTemplate = `{$before_widget}
 `
 
 func Archive(h *wp.Handle) string {
-	args := wp.GetComponentsArgs(h, widgets.ArchiveArgs, archiveArgs.Load())
+	args := wp.GetComponentsArgs(h, widgets.Archive, archiveArgs.Load())
 	args = maps.FilterZeroMerge(archiveArgs.Load(), args)
 	conf := wpconfig.GetPHPArrayVal("widget_archives", archivesConfig.Load(), int64(2))
 	args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
+	if id, ok := args["{$id}"]; ok && id != "" {
+		args["{$before_widget}"] = strings.ReplaceAll(args["{$before_widget}"], "2", args["{$id}"])
+	}
 	s := archiveTemplate
 	if int64(1) == conf["dropdown"].(int64) {
 		s = strings.ReplaceAll(s, "{$html}", archiveDropDown(h, conf, args, cache.Archives(h.C)))
 	} else {
 		s = strings.ReplaceAll(s, "{$html}", archiveUl(h, conf, args, cache.Archives(h.C)))
 	}
-	return h.ComponentFilterFnHook(widgets.ArchiveArgs, str.Replace(s, args))
+	return h.ComponentFilterFnHook(widgets.Archive, str.Replace(s, args))
 }
 
 var dropdownScript = `

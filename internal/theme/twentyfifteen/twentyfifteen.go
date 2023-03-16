@@ -43,7 +43,7 @@ func Hook(h *wp.Handle) {
 func dispatch(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
 	components.WidgetArea(h)
 	h.GetPassword()
-	h.PushComponentFilterFn(widgets.SearchFormArgs, func(h *wp.Handle, s string) string {
+	h.PushComponentFilterFn(widgets.Search, func(h *wp.Handle, s string) string {
 		return strings.ReplaceAll(s, `class="search-submit"`, `class="search-submit screen-reader-text"`)
 	})
 	wphandle.RegisterPlugins(h, config.GetConfig().Plugins...)

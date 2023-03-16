@@ -50,10 +50,13 @@ var recentConf = func() safety.Var[map[any]any] {
 }()
 
 func RecentPosts(h *wp.Handle) string {
-	args := wp.GetComponentsArgs(h, widgets.RecentPostsArgs, recentPostsArgs.Load())
+	args := wp.GetComponentsArgs(h, widgets.RecentPosts, recentPostsArgs.Load())
 	args = maps.FilterZeroMerge(recentPostsArgs.Load(), args)
 	conf := wpconfig.GetPHPArrayVal[map[any]any]("widget_recent-posts", recentConf.Load(), int64(2))
 	conf = maps.FilterZeroMerge(recentConf.Load(), conf)
+	if id, ok := args["{$id}"]; ok && id != "" {
+		args["{$before_widget}"] = strings.ReplaceAll(args["{$before_widget}"], "2", args["{$id}"])
+	}
 	args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
 	if slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
 		args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, conf["title"])
@@ -79,5 +82,5 @@ func RecentPosts(h *wp.Handle) string {
 	</li>`, t.Id, ariaCurrent, t.PostTitle, date)
 	})
 	s := strings.ReplaceAll(recentPostsTemplate, "{$li}", strings.Join(posts, "\n"))
-	return h.ComponentFilterFnHook(widgets.RecentPostsArgs, str.Replace(s, args))
+	return h.ComponentFilterFnHook(widgets.RecentPosts, str.Replace(s, args))
 }

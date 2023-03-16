@@ -3,11 +3,13 @@ package wphandle
 import (
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/internal/plugins/wphandle/enlightjs"
+	"github.com/fthvgb1/wp-go/internal/plugins/wphandle/hiddenlogin"
 	"github.com/fthvgb1/wp-go/internal/theme/wp"
 )
 
 var plugins = wp.HandlePlugins{
-	"enlightjs": enlightjs.EnlighterJS,
+	"enlightjs":   enlightjs.EnlighterJS,
+	"hiddenLogin": hiddenlogin.HiddenLogin,
 }
 
 func Plugins() wp.HandlePlugins {

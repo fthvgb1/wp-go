@@ -1,25 +1,3 @@
 {{define "layout/sidebar" }}
     {{template "common/sidebarWidget" .}}
-    <section id="categories-2" class="widget widget_categories">
-        <h2 class="widget-title">分类</h2>
-        <nav aria-label="分类">
-            <ul>
-                {{range $k,$v := .categories}}
-                    <li class="cat-item cat-item-{{$v.Terms.TermId}}">
-                        <a href="/p/category/{{$v.Name}}">{{$v.Name}}</a>
-                    </li>
-                {{end}}
-            </ul>
-
-        </nav>
-    </section>
-    <section id="meta-2" class="widget widget_meta">
-        <h2 class="widget-title">其他操作</h2>
-        <nav aria-label="其他操作">
-            <ul>
-                <li><a href="/feed">条目feed</a></li>
-                <li><a href="/comments/feed">评论feed</a></li>
-            </ul>
-        </nav>
-    </section>
 {{end}}

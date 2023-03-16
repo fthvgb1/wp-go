@@ -36,7 +36,7 @@ var categoryConfig = func() safety.Var[map[any]any] {
 		"{$class}":            "postform",
 		"{$show_option_none}": "选择分类",
 		"{$name}":             "cat",
-		"{$id}":               "cat",
+		"{$selectId}":         "cat",
 		"{$required}":         "",
 		"{$nav}":              "",
 		"{$navCloser}":        "",
@@ -64,6 +64,9 @@ func Category(h *wp.Handle) string {
 	args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
 	t := categoryTemplate
 	dropdown := conf["dropdown"].(int64)
+	if id, ok := args["{$id}"]; ok && id != "" {
+		args["{$before_widget}"] = strings.ReplaceAll(args["{$before_widget}"], "2", args["{$id}"])
+	}
 	categories := cache.CategoriesTags(h.C, constraints.Category)
 	if dropdown == 1 {
 		t = strings.ReplaceAll(t, "{$html}", categoryDropdown(h, args, conf, categories))
@@ -71,7 +74,7 @@ func Category(h *wp.Handle) string {
 	} else {
 		t = strings.ReplaceAll(t, "{$html}", categoryUL(h, args, conf, categories))
 	}
-	return str.Replace(t, args)
+	return h.ComponentFilterFnHook(widgets.Categories, str.Replace(t, args))
 }
 
 func categoryUL(h *wp.Handle, args map[string]string, conf map[any]any, categories []models.TermsMy) string {
@@ -173,10 +176,10 @@ func categoryDropdown(h *wp.Handle, args map[string]string, conf map[any]any, ca
 	s.WriteString(`<form action="/" method="get">
 `)
 	s.Sprintf(`	<label class="screen-reader-text" for="%s">%s</label>
-`, args["{$id}"], args["{$title}"])
+`, args["{$selectId}"], args["{$title}"])
 	if len(categories) > 0 {
 		s.Sprintf(`	<select %s name="%s" id="%s" class="%s">
-`, args["{$required}"], args["{$name}"], args["{$id}"], args["{$class}"])
+`, args["{$required}"], args["{$name}"], args["{$selectId}"], args["{$class}"])
 		s.Sprintf(`		<option value="%[1]s">%[1]s</option>
 `, args["{$show_option_none}"])
 		currentCategory := ""
@@ -218,7 +221,7 @@ func categoryDropdown(h *wp.Handle, args map[string]string, conf map[any]any, ca
 	}
 	s.Sprintf(`<script%s>
 `, attr)
-	s.Sprintf(categoryDropdownJs, args["{$id}"])
+	s.Sprintf(categoryDropdownJs, args["{$selectId}"])
 	s.WriteString("</script>\n")
 	return s.String()
 }

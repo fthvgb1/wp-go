@@ -21,12 +21,14 @@ var searchTemplate = `{$before_widget}
 var searchArgs = func() safety.Var[map[string]string] {
 	v := safety.Var[map[string]string]{}
 	v.Store(map[string]string{
+		"{$id}":            "2",
 		"{$before_widget}": `<aside id="search-2" class="widget widget_search">`,
 		"{$after_widget}":  `</aside>`,
 		"{$aria_label}":    "",
 		"{$title}":         "",
 		"{$before_title}":  `<h2 class="widget-title">`,
 		"{$after_title}":   `</h2>`,
+		"{$form}":          "",
 		"{$button}":        "搜索",
 		"{$placeholder}":   "搜索&hellip;",
 		"{$label}":         "搜索：",
@@ -50,10 +52,13 @@ var xmlSearchForm = `<form role="search" {$aria_label} method="get" id="searchfo
 			</form>`
 
 func SearchForm(h *wp.Handle) string {
-	args := wp.GetComponentsArgs(h, widgets.SearchFormArgs, searchArgs.Load())
+	args := wp.GetComponentsArgs(h, widgets.Search, searchArgs.Load())
 	args = maps.FilterZeroMerge(searchArgs.Load(), args)
 	if args["{$title}"] == "" {
 		args["{$title}"] = wpconfig.GetPHPArrayVal("widget_search", "", int64(2), "title")
+	}
+	if id, ok := args["{$id}"]; ok && id != "" {
+		args["{$before_widget}"] = strings.ReplaceAll(args["{$before_widget}"], "2", args["{$id}"])
 	}
 	if args["{$title}"] != "" {
 		args["{$title}"] = str.Join(args["{$before_title}"], args["{$title}"], args["{$after_title}"])
@@ -63,9 +68,14 @@ func SearchForm(h *wp.Handle) string {
 		args["{$value}"] = html.SpecialChars(h.Index.Param.Search)
 	}
 	form := html5SearchForm
-	if !slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "search-form") {
+	if args["{$form}"] != "" {
+		form = args["{$form}"]
+		delete(args, "{$form}")
+	}
+
+	if !slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
 		form = xmlSearchForm
 	}
 	s := strings.ReplaceAll(searchTemplate, "{$form}", form)
-	return h.ComponentFilterFnHook(widgets.SearchFormArgs, str.Replace(s, args))
+	return h.ComponentFilterFnHook(widgets.Search, str.Replace(s, args))
 }

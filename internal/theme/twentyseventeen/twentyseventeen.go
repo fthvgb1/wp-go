@@ -10,6 +10,7 @@ import (
 	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/pkg/config"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
+	"github.com/fthvgb1/wp-go/internal/pkg/constraints/widgets"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
@@ -61,8 +62,28 @@ func ready(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
 	pushScripts(h)
 	h.SetData("HeaderImage", getHeaderImage(h))
 	h.SetData("scene", h.Scene())
+	for _, s := range []string{widgets.Meta, widgets.Categories, widgets.Archive, widgets.Search, widgets.RecentComments, widgets.RecentPosts} {
+		ss := strings.ReplaceAll(s, "-", "_")
+		if s == widgets.RecentPosts {
+			ss = "recent_entries"
+		}
+		wp.SetComponentsArgsForMap(h, s, "{$before_widget}", fmt.Sprintf(`<section id="%s-2" class="widget widget_%s">`, s, ss))
+		wp.SetComponentsArgsForMap(h, s, "{$after_widget}", "</section>")
+	}
+	wp.SetComponentsArgsForMap(h, widgets.Search, "{$form}", searchForm)
 	next(h)
 }
+
+var searchForm = `<form role="search" method="get" class="search-form" action="/">
+	<label for="search-form-1">
+		<span class="screen-reader-text">{$label}：</span>
+	</label>
+	<input type="search" id="search-form-1" class="search-field" placeholder="{$placeholder}…" value="{$value}" name="s">
+	<button type="submit" class="search-submit">
+<svg class="icon icon-search" aria-hidden="true" role="img"> <use href="#icon-search" xlink:href="#icon-search"></use> </svg>
+<span class="screen-reader-text">{$button}</span>
+</button>
+</form>`
 
 func dispatch(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
 	switch h.Scene() {
