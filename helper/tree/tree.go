@@ -14,6 +14,20 @@ func (n *Node[T, K]) GetChildren() []T {
 	})
 }
 
+func (n *Node[T, K]) Posterity() (r []T) {
+	n.posterity(&r)
+	return r
+}
+
+func (n *Node[T, K]) posterity(a *[]T) {
+	for _, n2 := range *n.Children {
+		*a = append(*a, n2.Data)
+		if len(*n2.Children) > 0 {
+			n2.posterity(a)
+		}
+	}
+}
+
 func (n *Node[T, K]) ChildrenByOrder(fn func(T, T) bool) []T {
 	a := slice.Map(*n.Children, func(t Node[T, K]) T {
 		return t.Data
