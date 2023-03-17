@@ -298,10 +298,8 @@ func (h *Handle) Render() {
 func (h *Handle) CommonComponents() {
 	h.AddCacheComponent("customLogo", CalCustomLogo)
 	h.PushCacheGroupHeadScript("siteIconAndCustomCss", 0, CalSiteIcon, CalCustomCss)
+	h.PushGroupHandleFn(constraints.AllStats, 10, CalMultipleComponents, CalBodyClass)
 	h.PushHandleFn(constraints.AllStats, NewHandleFn(func(h *Handle) {
-		h.CalMultipleComponents()
-		h.CalBodyClass()
-	}, 10), NewHandleFn(func(h *Handle) {
 		h.C.HTML(h.Code, h.templ, h.ginH)
 	}, 0))
 }
@@ -331,7 +329,7 @@ func (h *Handle) PushGroupComponentFns(name string, order int, fns ...func(*Hand
 	h.components[name] = append(h.components[name], calls...)
 }
 
-func (h *Handle) CalMultipleComponents() {
+func CalMultipleComponents(h *Handle) {
 	for k, ss := range h.components {
 		slice.Sort(ss, func(i, j Components) bool {
 			return i.Order > j.Order

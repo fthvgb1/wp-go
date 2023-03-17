@@ -41,7 +41,6 @@ func Hook(h *wp.Handle) {
 }
 
 func ready(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
-	components.WidgetArea(h)
 	h.GetPassword()
 	h.PushComponentFilterFn(widgets.Search, func(h *wp.Handle, s string) string {
 		return strings.ReplaceAll(s, `class="search-submit"`, `class="search-submit screen-reader-text"`)
@@ -49,6 +48,7 @@ func ready(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
 	wphandle.RegisterPlugins(h, config.GetConfig().Plugins...)
 
 	h.PushCacheGroupHeadScript("CalCustomBackGround", 10, CalCustomBackGround, colorSchemeCss)
+	h.PushHandleFn(constraints.Ok, wp.NewHandleFn(components.WidgetArea, 20))
 	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(customHeader, 10))
 	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(wp.Indexs, 100))
 	h.PushHandleFn(constraints.Detail, wp.NewHandleFn(wp.Details, 100))

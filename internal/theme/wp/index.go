@@ -47,11 +47,7 @@ func NewIndexHandle(handle *Handle) *IndexHandle {
 func (i *IndexHandle) ParseIndex(parm *IndexParams) (err error) {
 	i.Param = parm
 	switch i.scene {
-	case constraints.Home, constraints.Search:
-		s := i.C.Query("s")
-		if s != "" && strings.Replace(s, " ", "", -1) != "" {
-			i.scene = constraints.Search
-		}
+	case constraints.Search:
 		i.Param.ParseSearch()
 	case constraints.Category:
 		err = i.Param.ParseCategory()
@@ -158,10 +154,11 @@ func (i *IndexHandle) Render() {
 }
 
 func Indexs(h *Handle) {
-	if h.Scene() != constraints.Detail {
-		i := h.Index
-		_ = i.BuildIndexData(NewIndexParams(i.C))
-		PreCodeAndStats(h)
-		PreTemplate(h)
+	if h.Scene() == constraints.Detail {
+		return
 	}
+	i := h.Index
+	_ = i.BuildIndexData(NewIndexParams(i.C))
+	PreCodeAndStats(h)
+	PreTemplate(h)
 }

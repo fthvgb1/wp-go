@@ -11,7 +11,7 @@ import (
 	"strings"
 )
 
-func (h *Handle) CalBodyClass() {
+func CalBodyClass(h *Handle) {
 	h.ginH["bodyClass"] = h.BodyClass(h.class...)
 }
 

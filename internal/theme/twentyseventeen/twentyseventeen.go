@@ -43,34 +43,29 @@ var paginate = func() plugins.PageEle {
 	return p
 }()
 
-var pipe = wp.HandlePipe(wp.Render, widget.MiddleWare(ready, dispatch)...)
+var pipe = wp.HandlePipe(wp.Render, widget.MiddleWare(ready)...)
 
 func Hook(h *wp.Handle) {
 	pipe(h)
 }
 
 func ready(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
-	components.WidgetArea(h)
 	h.GetPassword()
 	wphandle.RegisterPlugins(h, config.GetConfig().Plugins...)
 	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(calClass, 20))
-	errHandle := wp.NewHandleFn(errorsHandle, 100)
-	h.PushHandleFn(constraints.Error404, errHandle)
-	h.PushHandleFn(constraints.ParamError, errHandle)
-	h.PushHandleFn(constraints.InternalErr, errHandle)
+	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(index, 100))
+	h.PushHandleFn(constraints.Detail, wp.NewHandleFn(detail, 100))
+	h.PushGroupHandleFn(constraints.AllStats, 99, wp.PreCodeAndStats, wp.PreTemplate, errorsHandle)
 	h.PushCacheGroupHeadScript("colorScheme-customHeader", 10, colorScheme, customHeader)
+	h.PushHandleFn(constraints.Ok, wp.NewHandleFn(components.WidgetArea, 20))
 	pushScripts(h)
 	h.SetData("HeaderImage", getHeaderImage(h))
-	h.SetData("scene", h.Scene())
-	for _, s := range []string{widgets.Meta, widgets.Categories, widgets.Archive, widgets.Search, widgets.RecentComments, widgets.RecentPosts} {
-		ss := strings.ReplaceAll(s, "-", "_")
-		if s == widgets.RecentPosts {
-			ss = "recent_entries"
-		}
-		wp.SetComponentsArgsForMap(h, s, "{$before_widget}", fmt.Sprintf(`<section id="%s-2" class="widget widget_%s">`, s, ss))
-		wp.SetComponentsArgsForMap(h, s, "{$after_widget}", "</section>")
-	}
+	h.SetComponentsArgs(widgets.Widget, map[string]string{
+		"{$before_widget}": `<section id="%s" class="widget widget_%s">`,
+		"{$after_widget}":  `</section>`,
+	})
 	wp.SetComponentsArgsForMap(h, widgets.Search, "{$form}", searchForm)
+
 	next(h)
 }
 
@@ -85,15 +80,6 @@ var searchForm = `<form role="search" method="get" class="search-form" action="/
 </button>
 </form>`
 
-func dispatch(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
-	switch h.Scene() {
-	case constraints.Detail:
-		detail(next, h.Detail)
-	default:
-		index(next, h.Index)
-	}
-}
-
 var listPostsPlugins = func() map[string]wp.Plugin[models.Posts, *wp.Handle] {
 	return maps.Merge(wp.ListPostPlugins(), map[string]wp.Plugin[models.Posts, *wp.Handle]{
 		"twentyseventeen_postThumbnail": postThumbnail,
@@ -101,24 +87,29 @@ var listPostsPlugins = func() map[string]wp.Plugin[models.Posts, *wp.Handle] {
 }()
 
 func errorsHandle(h *wp.Handle) {
-	h.SetTempl("twentyseventeen/posts/error.gohtml")
 	switch h.Stats {
-	case constraints.Error404, constraints.InternalErr:
+	case constraints.Error404, constraints.InternalErr, constraints.ParamError:
 		logs.ErrPrintln(h.Err(), "报错：")
+		h.SetTempl("twentyseventeen/posts/error.gohtml")
 	}
 }
 
-func index(next wp.HandleFn[*wp.Handle], i *wp.IndexHandle) {
+func index(h *wp.Handle) {
+	if h.Scene() == constraints.Detail {
+		return
+	}
+	i := h.Index
 	err := i.BuildIndexData(wp.NewIndexParams(i.C))
 	if err != nil {
 		i.SetErr(err)
 	}
+	h.SetData("scene", h.Scene())
 	i.SetPageEle(paginate)
 	i.SetPostsPlugins(listPostsPlugins)
-	next(i.Handle)
 }
 
-func detail(next wp.HandleFn[*wp.Handle], d *wp.DetailHandle) {
+func detail(h *wp.Handle) {
+	d := h.Detail
 	err := d.BuildDetailData()
 	if err != nil {
 		d.SetErr(err)
@@ -129,10 +120,7 @@ func detail(next wp.HandleFn[*wp.Handle], d *wp.DetailHandle) {
 		img.Srcset = fmt.Sprintf("%s %dw, %s", img.Path, img.Width, img.Srcset)
 		d.Post.Thumbnail = img
 	}
-
 	d.CommentRender = commentFormat
-
-	next(d.Handle)
 }
 
 var commentFormat = comment{}

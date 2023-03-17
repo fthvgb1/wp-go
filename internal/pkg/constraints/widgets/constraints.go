@@ -7,4 +7,6 @@ const (
 	Archive        = "archives"
 	Categories     = "categories"
 	Meta           = "meta"
+
+	Widget = "widget"
 )
