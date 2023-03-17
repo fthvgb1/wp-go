@@ -10,13 +10,11 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/theme/wp"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
-	"github.com/fthvgb1/wp-go/safety"
 	"strings"
 )
 
-var recentCommentsArgs = func() safety.Var[map[string]string] {
-	v := safety.Var[map[string]string]{}
-	v.Store(map[string]string{
+func recentCommentsArgs() map[string]string {
+	return map[string]string{
 		"{$before_widget}":      `<aside id="recent-comments-2" class="widget widget_recent_comments">`,
 		"{$after_widget}":       "</aside>",
 		"{$before_title}":       `<h2 class="widget-title">`,
@@ -27,15 +25,15 @@ var recentCommentsArgs = func() safety.Var[map[string]string] {
 		"{$navCloser}":          "",
 		"{$title}":              "",
 		"{$recent_comments_id}": "recentcomments",
-	})
-	recentCommentConf.Store(map[any]any{
+	}
+}
+
+func recentCommentConf() map[any]any {
+	return map[any]any{
 		"number": int64(5),
 		"title":  "近期评论",
-	})
-	return v
-}()
-
-var recentCommentConf = safety.Var[map[any]any]{}
+	}
+}
 
 var recentCommentsTemplate = `{$before_widget}
 {$nav}
@@ -48,10 +46,12 @@ var recentCommentsTemplate = `{$before_widget}
 `
 
 func RecentComments(h *wp.Handle) string {
-	args := wp.GetComponentsArgs(h, widgets.RecentComments, recentCommentsArgs.Load())
-	args = maps.FilterZeroMerge(recentCommentsArgs.Load(), args)
-	conf := wpconfig.GetPHPArrayVal("widget_recent-comments", recentCommentConf.Load(), int64(2))
-	conf = maps.FilterZeroMerge(recentCommentConf.Load(), conf)
+	recentCommentsArgs := recentCommentsArgs()
+	recentCommentConf := recentCommentConf()
+	args := wp.GetComponentsArgs(h, widgets.RecentComments, recentCommentsArgs)
+	args = maps.FilterZeroMerge(recentCommentsArgs, args)
+	conf := wpconfig.GetPHPArrayVal("widget_recent-comments", recentCommentConf, int64(2))
+	conf = maps.FilterZeroMerge(recentCommentConf, conf)
 	args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
 	if id, ok := args["{$id}"]; ok && id != "" {
 		args["{$before_widget}"] = strings.ReplaceAll(args["{$before_widget}"], "2", args["{$id}"])

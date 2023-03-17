@@ -8,7 +8,6 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints/widgets"
 	"github.com/fthvgb1/wp-go/internal/theme/wp"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
-	"github.com/fthvgb1/wp-go/safety"
 	"strings"
 )
 
@@ -21,9 +20,8 @@ var metaTemplate = `{$before_widget}
 {$navCloser}
 {$after_widget}`
 
-var metaArgs = func() safety.Var[map[string]string] {
-	v := safety.Var[map[string]string]{}
-	v.Store(map[string]string{
+func metaArgs() map[string]string {
+	return map[string]string{
 		"{$before_widget}": `<aside id="meta-2" class="widget widget_meta">`,
 		"{$after_widget}":  `</aside>`,
 		"{$aria_label}":    "",
@@ -31,13 +29,13 @@ var metaArgs = func() safety.Var[map[string]string] {
 		"":                 "",
 		"{$before_title}":  `<h2 class="widget-title">`,
 		"{$after_title}":   `</h2>`,
-	})
-	return v
-}()
+	}
+}
 
 func Meta(h *wp.Handle) string {
-	args := wp.GetComponentsArgs(h, widgets.Meta, metaArgs.Load())
-	args = maps.FilterZeroMerge(metaArgs.Load(), args)
+	metaArgs := metaArgs()
+	args := wp.GetComponentsArgs(h, widgets.Meta, metaArgs)
+	args = maps.FilterZeroMerge(metaArgs, args)
 	args["{$title}"] = wpconfig.GetPHPArrayVal("widget_meta", "其它操作", int64(2), "title")
 	if id, ok := args["{$id}"]; ok && id != "" {
 		args["{$before_widget}"] = strings.ReplaceAll(args["{$before_widget}"], "2", args["{$id}"])

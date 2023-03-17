@@ -13,7 +13,7 @@ import (
 )
 
 var widgetFn = map[string]func(*wp.Handle) string{
-	"search":          widget.SearchForm,
+	"search":          widget.Search,
 	"recent-posts":    widget.RecentPosts,
 	"recent-comments": widget.RecentComments,
 	"archives":        widget.Archive,

@@ -11,11 +11,8 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/theme/wp"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
-	"github.com/fthvgb1/wp-go/safety"
 	"strings"
 )
-
-var recentPostsArgs = safety.Var[map[string]string]{}
 
 var recentPostsTemplate = `{$before_widget}
 {$nav}
@@ -27,9 +24,8 @@ var recentPostsTemplate = `{$before_widget}
 {$after_widget}
 `
 
-var recentConf = func() safety.Var[map[any]any] {
-
-	recentPostsArgs.Store(map[string]string{
+func recentPostsArgs() map[string]string {
+	return map[string]string{
 		"{$before_widget}":  `<aside id="recent-posts-2" class="widget widget_recent_entries">`,
 		"{$after_widget}":   "</aside>",
 		"{$before_title}":   `<h2 class="widget-title">`,
@@ -39,21 +35,24 @@ var recentConf = func() safety.Var[map[any]any] {
 		"{$nav}":            "",
 		"{$navCloser}":      "",
 		"{$title}":          "",
-	})
-	v := safety.Var[map[any]any]{}
-	v.Store(map[any]any{
+	}
+}
+
+func recentConf() map[any]any {
+	return map[any]any{
 		"number":    int64(5),
 		"show_date": false,
 		"title":     "近期文章",
-	})
-	return v
-}()
+	}
+}
 
 func RecentPosts(h *wp.Handle) string {
-	args := wp.GetComponentsArgs(h, widgets.RecentPosts, recentPostsArgs.Load())
-	args = maps.FilterZeroMerge(recentPostsArgs.Load(), args)
-	conf := wpconfig.GetPHPArrayVal[map[any]any]("widget_recent-posts", recentConf.Load(), int64(2))
-	conf = maps.FilterZeroMerge(recentConf.Load(), conf)
+	recentPostsArgs := recentPostsArgs()
+	recentConf := recentConf()
+	args := wp.GetComponentsArgs(h, widgets.RecentPosts, recentPostsArgs)
+	args = maps.FilterZeroMerge(recentPostsArgs, args)
+	conf := wpconfig.GetPHPArrayVal[map[any]any]("widget_recent-posts", recentConf, int64(2))
+	conf = maps.FilterZeroMerge(recentConf, conf)
 	if id, ok := args["{$id}"]; ok && id != "" {
 		args["{$before_widget}"] = strings.ReplaceAll(args["{$before_widget}"], "2", args["{$id}"])
 	}

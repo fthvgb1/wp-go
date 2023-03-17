@@ -12,21 +12,29 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/theme/wp"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
-	"github.com/fthvgb1/wp-go/safety"
 	"net/http"
 	"strings"
 )
 
-var categoryArgs safety.Var[map[string]string]
-var categoryConfig = func() safety.Var[map[any]any] {
-	v := safety.Var[map[any]any]{}
-	v.Store(map[any]any{
+var categoryTemplate = `{$before_widget}
+{$title}
+{$nav}
+{$html}
+{$navCloser}
+{$after_widget}
+`
+
+func categoryConfig() map[any]any {
+	return map[any]any{
 		"count":        int64(0),
 		"dropdown":     int64(0),
 		"hierarchical": int64(0),
 		"title":        "分类",
-	})
-	categoryArgs.Store(map[string]string{
+	}
+}
+
+func categoryArgs() map[string]string {
+	return map[string]string{
 		"{$before_widget}":    `<aside id="categories-2" class="widget widget_categories">`,
 		"{$after_widget}":     "</aside>",
 		"{$before_title}":     `<h2 class="widget-title">`,
@@ -44,23 +52,14 @@ var categoryConfig = func() safety.Var[map[any]any] {
 		"{$dropdown_id}":      "archives-dropdown-2",
 		"{$dropdown_type}":    "monthly",
 		"{$dropdown_label}":   "选择月份",
-	})
-	return v
-}()
-
-var categoryTemplate = `{$before_widget}
-{$title}
-{$nav}
-{$html}
-{$navCloser}
-{$after_widget}
-`
+	}
+}
 
 func Category(h *wp.Handle) string {
-	args := wp.GetComponentsArgs(h, widgets.Categories, categoryArgs.Load())
-	args = maps.FilterZeroMerge(categoryArgs.Load(), args)
-	conf := wpconfig.GetPHPArrayVal("widget_categories", categoryConfig.Load(), int64(2))
-	conf = maps.FilterZeroMerge(categoryConfig.Load(), conf)
+	args := wp.GetComponentsArgs(h, widgets.Categories, categoryArgs())
+	args = maps.FilterZeroMerge(categoryArgs(), args)
+	conf := wpconfig.GetPHPArrayVal("widget_categories", categoryConfig(), int64(2))
+	conf = maps.FilterZeroMerge(categoryConfig(), conf)
 	args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
 	t := categoryTemplate
 	dropdown := conf["dropdown"].(int64)
@@ -240,7 +239,7 @@ func IsCategory(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
 }
 
 func parseDropdownCate(h *wp.Handle) (cateName string, r bool) {
-	cate := wp.GetComponentsArgs[map[string]string](h, widgets.Categories, categoryArgs.Load())
+	cate := wp.GetComponentsArgs[map[string]string](h, widgets.Categories, categoryArgs())
 	name, ok := cate["{$name}"]
 	if !ok || name == "" {
 		return

@@ -10,18 +10,19 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/theme/wp"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
-	"github.com/fthvgb1/wp-go/safety"
 	"strings"
 )
 
-var archivesConfig = func() safety.Var[map[any]any] {
-	v := safety.Var[map[any]any]{}
-	v.Store(map[any]any{
-		"count":    int64(0),
-		"dropdown": int64(0),
-		"title":    "归档",
-	})
-	archiveArgs.Store(map[string]string{
+var archiveTemplate = `{$before_widget}
+{$title}
+{$nav}
+{$html}
+{$navCloser}
+{$after_widget}
+`
+
+func archiveArgs() map[string]string {
+	return map[string]string{
 		"{$before_widget}":  `<aside id="archives-2" class="widget widget_archive">`,
 		"{$after_widget}":   "</aside>",
 		"{$before_title}":   `<h2 class="widget-title">`,
@@ -34,24 +35,23 @@ var archivesConfig = func() safety.Var[map[any]any] {
 		"{$dropdown_id}":    "archives-dropdown-2",
 		"{$dropdown_type}":  "monthly",
 		"{$dropdown_label}": "选择月份",
-	})
-	return v
-}()
+	}
+}
 
-var archiveArgs = safety.Var[map[string]string]{}
-
-var archiveTemplate = `{$before_widget}
-{$title}
-{$nav}
-{$html}
-{$navCloser}
-{$after_widget}
-`
+func archivesConfig() map[any]any {
+	return map[any]any{
+		"count":    int64(0),
+		"dropdown": int64(0),
+		"title":    "归档",
+	}
+}
 
 func Archive(h *wp.Handle) string {
-	args := wp.GetComponentsArgs(h, widgets.Archive, archiveArgs.Load())
-	args = maps.FilterZeroMerge(archiveArgs.Load(), args)
-	conf := wpconfig.GetPHPArrayVal("widget_archives", archivesConfig.Load(), int64(2))
+	archiveArgs := archiveArgs()
+	archivesConfig := archivesConfig()
+	args := wp.GetComponentsArgs(h, widgets.Archive, archiveArgs)
+	args = maps.FilterZeroMerge(archiveArgs, args)
+	conf := wpconfig.GetPHPArrayVal("widget_archives", archivesConfig, int64(2))
 	args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
 	if id, ok := args["{$id}"]; ok && id != "" {
 		args["{$before_widget}"] = strings.ReplaceAll(args["{$before_widget}"], "2", args["{$id}"])
