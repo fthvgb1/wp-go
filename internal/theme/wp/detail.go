@@ -101,8 +101,6 @@ func (d *DetailHandle) ContextPost() {
 }
 
 func (d *DetailHandle) Render() {
-	PreCodeAndStats(d.Handle)
-	PreTemplate(d.Handle)
 	reply := ""
 	if d.Post.CommentStatus == "open" && wpconfig.GetOption("thread_comments") == "1" {
 		reply = `<script src='/wp-includes/js/comment-reply.min.js' id='comment-reply-js'></script>`
@@ -118,7 +116,8 @@ func (d *DetailHandle) Render() {
 	d.Handle.Render()
 }
 
-func (d *DetailHandle) Details() {
-	_ = d.BuildDetailData()
-	d.Render()
+func Details(h *Handle) {
+	_ = h.Detail.BuildDetailData()
+	PreCodeAndStats(h)
+	PreTemplate(h)
 }

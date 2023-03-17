@@ -34,13 +34,13 @@ func Init(fs embed.FS) {
 	logs.ErrPrintln(err, "解析colorscheme失败")
 }
 
-var pipe = wp.HandlePipe(wp.Render, widget.MiddleWare(dispatch)...)
+var pipe = wp.HandlePipe(wp.Render, widget.MiddleWare(ready)...)
 
 func Hook(h *wp.Handle) {
 	pipe(h)
 }
 
-func dispatch(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
+func ready(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
 	components.WidgetArea(h)
 	h.GetPassword()
 	h.PushComponentFilterFn(widgets.Search, func(h *wp.Handle, s string) string {
@@ -50,18 +50,7 @@ func dispatch(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
 
 	h.PushCacheGroupHeadScript("CalCustomBackGround", 10, CalCustomBackGround, colorSchemeCss)
 	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(customHeader, 10))
-	switch h.Scene() {
-	case constraints.Detail:
-		detail(next, h.Detail)
-	default:
-		index(next, h.Index)
-	}
-}
-
-func index(next wp.HandleFn[*wp.Handle], i *wp.IndexHandle) {
-	i.Indexs()
-}
-
-func detail(fn wp.HandleFn[*wp.Handle], d *wp.DetailHandle) {
-	d.Details()
+	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(wp.Indexs, 100))
+	h.PushHandleFn(constraints.Detail, wp.NewHandleFn(wp.Details, 100))
+	next(h)
 }

@@ -148,8 +148,6 @@ func (i *IndexHandle) ExecPostsPlugin(calls ...func(*models.Posts)) {
 }
 
 func (i *IndexHandle) Render() {
-	PreCodeAndStats(i.Handle)
-	PreTemplate(i.Handle)
 	i.PushHandleFn(constraints.Ok, NewHandleFn(func(h *Handle) {
 		i.ExecPostsPlugin()
 		i.Pagination()
@@ -159,7 +157,11 @@ func (i *IndexHandle) Render() {
 	i.Handle.Render()
 }
 
-func (i *IndexHandle) Indexs() {
-	_ = i.BuildIndexData(NewIndexParams(i.C))
-	i.Render()
+func Indexs(h *Handle) {
+	if h.Scene() != constraints.Detail {
+		i := h.Index
+		_ = i.BuildIndexData(NewIndexParams(i.C))
+		PreCodeAndStats(h)
+		PreTemplate(h)
+	}
 }

@@ -1,7 +1,6 @@
 package wp
 
 import (
-	"fmt"
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
@@ -229,10 +228,6 @@ func (h *Handle) PushGroupFooterScript(order int, fns ...string) {
 	h.PushGroupComponentStrs(constraints.FooterScript, order, fns...)
 }
 
-func (h *Handle) componentKey(name string) string {
-	return fmt.Sprintf("theme_%d_%s", h.scene, name)
-}
-
 func (h *Handle) PushCacheGroupFooterScript(key string, order int, fns ...func(*Handle) string) {
 	h.PushGroupCacheComponentFn(constraints.FooterScript, key, order, fns...)
 }
@@ -312,8 +307,7 @@ func (h *Handle) CommonComponents() {
 }
 
 func (h *Handle) PushComponents(name string, components ...Components) {
-	k := h.componentKey(name)
-	h.components[k] = append(h.components[k], components...)
+	h.components[name] = append(h.components[name], components...)
 }
 
 func (h *Handle) PushGroupComponentStrs(name string, order int, fns ...string) {
@@ -324,8 +318,7 @@ func (h *Handle) PushGroupComponentStrs(name string, order int, fns ...string) {
 			Order: order,
 		})
 	}
-	k := h.componentKey(name)
-	h.components[k] = append(h.components[k], calls...)
+	h.components[name] = append(h.components[name], calls...)
 }
 func (h *Handle) PushGroupComponentFns(name string, order int, fns ...func(*Handle) string) {
 	var calls []Components
@@ -335,8 +328,7 @@ func (h *Handle) PushGroupComponentFns(name string, order int, fns ...func(*Hand
 			Order: order,
 		})
 	}
-	k := h.componentKey(name)
-	h.components[k] = append(h.components[k], calls...)
+	h.components[name] = append(h.components[name], calls...)
 }
 
 func (h *Handle) CalMultipleComponents() {
