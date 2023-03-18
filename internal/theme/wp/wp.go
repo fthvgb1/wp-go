@@ -27,7 +27,7 @@ type Handle struct {
 	Stats             int
 	templ             string
 	class             []string
-	components        map[string][]Components
+	components        map[string][]Components[string]
 	themeMods         wpconfig.ThemeMods
 	handleFns         map[int][]HandleCall
 	err               error
@@ -39,9 +39,9 @@ type Handle struct {
 type HandlePlugins map[string]HandleFn[*Handle]
 
 // Components Order 为执行顺序，降序执行
-type Components struct {
-	Str      string
-	Fn       func(*Handle) string
+type Components[T any] struct {
+	Val      T
+	Fn       func(*Handle) T
 	Order    int
 	CacheKey string
 }
@@ -178,15 +178,15 @@ func NewHandle(c *gin.Context, scene int, theme string) *Handle {
 		scene:             scene,
 		Stats:             constraints.Ok,
 		themeMods:         mods,
-		components:        make(map[string][]Components),
+		components:        make(map[string][]Components[string]),
 		handleFns:         make(map[int][]HandleCall),
 		componentsArgs:    make(map[string]any),
 		componentFilterFn: make(map[string][]func(*Handle, string) string),
 	}
 }
 
-func (h *Handle) NewCacheComponent(name string, order int, fn func(handle *Handle) string) Components {
-	return Components{Fn: fn, CacheKey: name, Order: order}
+func (h *Handle) NewCacheComponent(name string, order int, fn func(handle *Handle) string) Components[string] {
+	return Components[string]{Fn: fn, CacheKey: name, Order: order}
 }
 
 func (h *Handle) PushHandleFn(statsOrScene int, fns ...HandleCall) {
@@ -205,7 +205,7 @@ func (h *Handle) AddCacheComponent(name string, fn func(*Handle) string) {
 	h.ginH[name] = reload.GetAnyValBys(name, h, fn)
 }
 
-func (h *Handle) PushHeadScript(fn ...Components) {
+func (h *Handle) PushHeadScript(fn ...Components[string]) {
 	h.PushComponents(constraints.HeadScript, fn...)
 }
 func (h *Handle) PushGroupHeadScript(order int, str ...string) {
@@ -215,7 +215,7 @@ func (h *Handle) PushCacheGroupHeadScript(key string, order int, fns ...func(*Ha
 	h.PushGroupCacheComponentFn(constraints.HeadScript, key, order, fns...)
 }
 
-func (h *Handle) PushFooterScript(fn ...Components) {
+func (h *Handle) PushFooterScript(fn ...Components[string]) {
 	h.PushComponents(constraints.FooterScript, fn...)
 }
 
@@ -299,24 +299,24 @@ func (h *Handle) CommonComponents() {
 	}, 0))
 }
 
-func (h *Handle) PushComponents(name string, components ...Components) {
+func (h *Handle) PushComponents(name string, components ...Components[string]) {
 	h.components[name] = append(h.components[name], components...)
 }
 
-func (h *Handle) PushGroupComponentStrs(name string, order int, fns ...string) {
-	var calls []Components
-	for _, fn := range fns {
-		calls = append(calls, Components{
-			Str:   fn,
+func (h *Handle) PushGroupComponentStrs(name string, order int, str ...string) {
+	var calls []Components[string]
+	for _, fn := range str {
+		calls = append(calls, Components[string]{
+			Val:   fn,
 			Order: order,
 		})
 	}
 	h.components[name] = append(h.components[name], calls...)
 }
 func (h *Handle) PushGroupComponentFns(name string, order int, fns ...func(*Handle) string) {
-	var calls []Components
+	var calls []Components[string]
 	for _, fn := range fns {
-		calls = append(calls, Components{
+		calls = append(calls, Components[string]{
 			Fn:    fn,
 			Order: order,
 		})
@@ -326,13 +326,13 @@ func (h *Handle) PushGroupComponentFns(name string, order int, fns ...func(*Hand
 
 func CalComponents(h *Handle) {
 	for k, ss := range h.components {
-		slice.Sort(ss, func(i, j Components) bool {
+		slice.Sort(ss, func(i, j Components[string]) bool {
 			return i.Order > j.Order
 		})
 		var s []string
 		for _, component := range ss {
-			if component.Str != "" {
-				s = append(s, component.Str)
+			if component.Val != "" {
+				s = append(s, component.Val)
 				continue
 			}
 			if component.Fn != nil {

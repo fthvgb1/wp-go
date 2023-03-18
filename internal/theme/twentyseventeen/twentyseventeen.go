@@ -55,7 +55,7 @@ func ready(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
 	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(calClass, 20))
 	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(index, 100))
 	h.PushHandleFn(constraints.Detail, wp.NewHandleFn(detail, 100))
-	h.PushGroupHandleFn(constraints.AllStats, 99, wp.PreCodeAndStats, wp.PreTemplate, errorsHandle)
+	h.PushGroupHandleFn(constraints.AllStats, 90, wp.PreCodeAndStats, wp.PreTemplate, errorsHandle)
 	h.PushCacheGroupHeadScript("colorScheme-customHeader", 10, colorScheme, customHeader)
 	h.PushHandleFn(constraints.Ok, wp.NewHandleFn(components.WidgetArea, 20))
 	pushScripts(h)

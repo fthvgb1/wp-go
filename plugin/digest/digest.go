@@ -57,7 +57,7 @@ func Raw(str string, limit int, u string) string {
 				}
 			}
 
-			if end >= limit || i >= total-1 {
+			if end >= limit || i >= total {
 				break
 			}
 			if ru[i] == l {
@@ -71,8 +71,8 @@ func Raw(str string, limit int, u string) string {
 				end++
 			}
 		}
-		if i > total-1 {
-			i = total - 1
+		if i > total {
+			i = total
 		}
 
 		content = string(ru[:i])

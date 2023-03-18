@@ -3,6 +3,7 @@ package components
 import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper/slice"
+	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints/widgets"
@@ -12,7 +13,7 @@ import (
 	"strings"
 )
 
-var widgetFn = map[string]wp.Components{
+var widgetFn = map[string]wp.Components[string]{
 	"search":          {Fn: widget.Search, CacheKey: "widgetSearch"},
 	"recent-posts":    {Fn: widget.RecentPosts},
 	"recent-comments": {Fn: widget.RecentComments},
@@ -27,6 +28,12 @@ type Widget struct {
 }
 
 func WidgetArea(h *wp.Handle) {
+	sidebar := reload.GetAnyValBys("sidebarWidgets", h, sidebars)
+	h.PushComponents(constraints.SidebarsWidgets, sidebar...)
+	h.SetData("categories", cache.CategoriesTags(h.C, constraints.Category))
+}
+
+func sidebars(h *wp.Handle) []wp.Components[string] {
 	args := wp.GetComponentsArgs(h, widgets.Widget, map[string]string{})
 	beforeWidget, ok := args["{$before_widget}"]
 	if !ok {
@@ -35,7 +42,7 @@ func WidgetArea(h *wp.Handle) {
 		delete(args, "{$before_widget}")
 	}
 	v := wpconfig.GetPHPArrayVal("sidebars_widgets", []any{}, "sidebar-1")
-	sidebar := slice.FilterAndMap(v, func(t any) (wp.Components, bool) {
+	return slice.FilterAndMap(v, func(t any) (wp.Components[string], bool) {
 		vv := t.(string)
 		ss := strings.Split(vv, "-")
 		id := ss[len(ss)-1]
@@ -60,6 +67,4 @@ func WidgetArea(h *wp.Handle) {
 		}
 		return components, false
 	})
-	h.PushComponents(constraints.SidebarsWidgets, sidebar...)
-	h.SetData("categories", cache.CategoriesTags(h.C, constraints.Category))
 }
