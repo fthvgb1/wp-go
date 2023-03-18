@@ -21,6 +21,15 @@ func GetAnyValBy[T any](k string, fn func() T) T {
 	anyMap.Store(k, vv)
 	return vv
 }
+func GetAnyValBys[T, A any](k string, a A, fn func(A) T) T {
+	v, ok := anyMap.Load(k)
+	if ok {
+		return v.(T)
+	}
+	vv := fn(a)
+	anyMap.Store(k, vv)
+	return vv
+}
 
 func GetStrBy[T any](key, delimiter string, t T, fn ...func(T) string) string {
 	v, ok := str.Load(key)

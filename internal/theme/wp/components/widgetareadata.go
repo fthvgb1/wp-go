@@ -12,13 +12,18 @@ import (
 	"strings"
 )
 
-var widgetFn = map[string]func(*wp.Handle) string{
-	"search":          widget.Search,
-	"recent-posts":    widget.RecentPosts,
-	"recent-comments": widget.RecentComments,
-	"archives":        widget.Archive,
-	"categories":      widget.Category,
-	"meta":            widget.Meta,
+var widgetFn = map[string]wp.Components{
+	"search":          {Fn: widget.Search, CacheKey: "widgetSearch"},
+	"recent-posts":    {Fn: widget.RecentPosts},
+	"recent-comments": {Fn: widget.RecentComments},
+	"archives":        {Fn: widget.Archive},
+	"categories":      {Fn: widget.Category},
+	"meta":            {Fn: widget.Meta, CacheKey: "widgetMeta"},
+}
+
+type Widget struct {
+	Fn       func(*wp.Handle) string
+	CacheKey string
 }
 
 func WidgetArea(h *wp.Handle) {
@@ -30,12 +35,12 @@ func WidgetArea(h *wp.Handle) {
 		delete(args, "{$before_widget}")
 	}
 	v := wpconfig.GetPHPArrayVal("sidebars_widgets", []any{}, "sidebar-1")
-	sidebar := slice.FilterAndMap(v, func(t any) (func(*wp.Handle) string, bool) {
+	sidebar := slice.FilterAndMap(v, func(t any) (wp.Components, bool) {
 		vv := t.(string)
 		ss := strings.Split(vv, "-")
 		id := ss[len(ss)-1]
 		name := strings.Join(ss[0:len(ss)-1], "-")
-		fn, ok := widgetFn[name]
+		components, ok := widgetFn[name]
 		if ok {
 			if id != "2" {
 				wp.SetComponentsArgsForMap(h, name, "{$id}", id)
@@ -47,15 +52,14 @@ func WidgetArea(h *wp.Handle) {
 				}
 				wp.SetComponentsArgsForMap(h, name, "{$before_widget}", fmt.Sprintf(beforeWidget, vv, n))
 			}
-			if len(args) > 0 {
-				for k, val := range args {
-					wp.SetComponentsArgsForMap(h, name, k, val)
-				}
+			for k, val := range args {
+				wp.SetComponentsArgsForMap(h, name, k, val)
 			}
-			return fn, true
+			components.Order = 10
+			return components, true
 		}
-		return nil, false
+		return components, false
 	})
-	h.PushGroupComponentFns(constraints.SidebarsWidgets, 10, sidebar...)
+	h.PushComponents(constraints.SidebarsWidgets, sidebar...)
 	h.SetData("categories", cache.CategoriesTags(h.C, constraints.Category))
 }

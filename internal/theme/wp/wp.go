@@ -40,9 +40,10 @@ type HandlePlugins map[string]HandleFn[*Handle]
 
 // Components Order 为执行顺序，降序执行
 type Components struct {
-	Str   string
-	Fn    func(*Handle) string
-	Order int
+	Str      string
+	Fn       func(*Handle) string
+	Order    int
+	CacheKey string
 }
 
 type HandleFn[T any] func(T)
@@ -185,7 +186,7 @@ func NewHandle(c *gin.Context, scene int, theme string) *Handle {
 }
 
 func (h *Handle) NewCacheComponent(name string, order int, fn func(handle *Handle) string) Components {
-	return Components{Str: h.CacheStr(name, fn), Order: order}
+	return Components{Fn: fn, CacheKey: name, Order: order}
 }
 
 func (h *Handle) PushHandleFn(statsOrScene int, fns ...HandleCall) {
@@ -201,13 +202,7 @@ func (h *Handle) PushGroupHandleFn(statsOrScene, order int, fns ...HandleFn[*Han
 }
 
 func (h *Handle) AddCacheComponent(name string, fn func(*Handle) string) {
-	h.ginH[name] = h.CacheStr(name, fn)
-}
-
-func (h *Handle) CacheStr(name string, fn func(*Handle) string) string {
-	return reload.GetAnyValBy(name, func() string {
-		return fn(h)
-	})
+	h.ginH[name] = reload.GetAnyValBys(name, h, fn)
 }
 
 func (h *Handle) PushHeadScript(fn ...Components) {
@@ -298,7 +293,7 @@ func (h *Handle) Render() {
 func (h *Handle) CommonComponents() {
 	h.AddCacheComponent("customLogo", CalCustomLogo)
 	h.PushCacheGroupHeadScript("siteIconAndCustomCss", 0, CalSiteIcon, CalCustomCss)
-	h.PushGroupHandleFn(constraints.AllStats, 10, CalMultipleComponents, CalBodyClass)
+	h.PushGroupHandleFn(constraints.AllStats, 10, CalComponents, CalBodyClass)
 	h.PushHandleFn(constraints.AllStats, NewHandleFn(func(h *Handle) {
 		h.C.HTML(h.Code, h.templ, h.ginH)
 	}, 0))
@@ -329,21 +324,30 @@ func (h *Handle) PushGroupComponentFns(name string, order int, fns ...func(*Hand
 	h.components[name] = append(h.components[name], calls...)
 }
 
-func CalMultipleComponents(h *Handle) {
+func CalComponents(h *Handle) {
 	for k, ss := range h.components {
 		slice.Sort(ss, func(i, j Components) bool {
 			return i.Order > j.Order
 		})
-		v := strings.Join(slice.FilterAndMap(ss, func(t Components) (string, bool) {
-			s := t.Str
-			if s == "" && t.Fn != nil {
-				s = t.Fn(h)
+		var s []string
+		for _, component := range ss {
+			if component.Str != "" {
+				s = append(s, component.Str)
+				continue
 			}
-			return s, s != ""
-		}), "\n")
-		kk := strings.Split(k, "_")
-		key := kk[len(kk)-1]
-		h.ginH[key] = v
+			if component.Fn != nil {
+				v := ""
+				if component.CacheKey != "" {
+					v = reload.GetAnyValBys(component.CacheKey, h, component.Fn)
+				} else {
+					v = component.Fn(h)
+				}
+				if v != "" {
+					s = append(s, v)
+				}
+			}
+		}
+		h.ginH[k] = strings.Join(s, "\n")
 	}
 }
 
