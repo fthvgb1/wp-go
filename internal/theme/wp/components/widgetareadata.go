@@ -22,11 +22,6 @@ var widgetFn = map[string]wp.Components[string]{
 	"meta":            {Fn: widget.Meta, CacheKey: "widgetMeta"},
 }
 
-type Widget struct {
-	Fn       func(*wp.Handle) string
-	CacheKey string
-}
-
 func WidgetArea(h *wp.Handle) {
 	sidebar := reload.GetAnyValBys("sidebarWidgets", h, sidebars)
 	h.PushComponents(constraints.SidebarsWidgets, sidebar...)
@@ -48,23 +43,23 @@ func sidebars(h *wp.Handle) []wp.Components[string] {
 		id := ss[len(ss)-1]
 		name := strings.Join(ss[0:len(ss)-1], "-")
 		components, ok := widgetFn[name]
-		if ok {
-			if id != "2" {
-				wp.SetComponentsArgsForMap(h, name, "{$id}", id)
-			}
-			if beforeWidget != "" {
-				n := strings.ReplaceAll(name, "-", "_")
-				if name == "recent-posts" {
-					n = "recent_entries"
-				}
-				wp.SetComponentsArgsForMap(h, name, "{$before_widget}", fmt.Sprintf(beforeWidget, vv, n))
-			}
-			for k, val := range args {
-				wp.SetComponentsArgsForMap(h, name, k, val)
-			}
-			components.Order = 10
-			return components, true
+		if !ok {
+			return components, false
 		}
-		return components, false
+		if id != "2" {
+			wp.SetComponentsArgsForMap(h, name, "{$id}", id)
+		}
+		if beforeWidget != "" {
+			n := strings.ReplaceAll(name, "-", "_")
+			if name == "recent-posts" {
+				n = "recent_entries"
+			}
+			wp.SetComponentsArgsForMap(h, name, "{$before_widget}", fmt.Sprintf(beforeWidget, vv, n))
+		}
+		for k, val := range args {
+			wp.SetComponentsArgsForMap(h, name, k, val)
+		}
+		components.Order = 10
+		return components, true
 	})
 }
