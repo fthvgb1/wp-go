@@ -2,6 +2,7 @@ package dao
 
 import (
 	"context"
+	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/fthvgb1/wp-go/model"
@@ -21,7 +22,16 @@ type PostContext struct {
 
 func CategoriesAndTags(a ...any) (terms []models.TermsMy, err error) {
 	ctx := a[0].(context.Context)
+	t, ok := a[1].(int)
 	var in = []any{"category", "post_tag"}
+	if ok {
+		switch t {
+		case constraints.Category:
+			in = []any{"category"}
+		case constraints.Tag:
+			in = []any{"post_tag"}
+		}
+	}
 	terms, err = model.Finds[models.TermsMy](ctx, model.Conditions(
 		model.Where(model.SqlBuilder{
 			{"tt.count", ">", "0", "int"},

@@ -192,3 +192,20 @@ func RenderedHtml(t *template.Template, data map[string]any) (r string, err erro
 	r = buf.String()
 	return
 }
+
+func BuildOptions[T any, K comparable](a []T, selected K, fn func(T) (K, any), attr ...string) string {
+	s := strings2.NewBuilder()
+	att := ""
+	if len(attr) > 0 {
+		att = strings.Join(attr, " ")
+	}
+	for _, t := range a {
+		k, v := fn(t)
+		ss := ""
+		if k == selected {
+			ss = "selected"
+		}
+		s.Sprintf(`<option %s %s value="%v">%v</option>`, ss, att, v, k)
+	}
+	return s.String()
+}

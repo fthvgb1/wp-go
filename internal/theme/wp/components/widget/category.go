@@ -144,15 +144,17 @@ func categoryLi(root *tree.Node[models.TermsMy, uint64], cate, roots *tree.Node[
 		}
 		s.Sprintf(`	<li class="cat-item cat-item-%d %s">
 		<a %s href="/p/category/%s">%s %s</a>
-	</li>
+	
 `, category.Terms.TermId, strings.Join(class, " "), aria, category.Name, category.Name, count)
 
 		if len(*child.Children) > 0 {
-			s.WriteString(`<ul class="children">
+			s.WriteString(`	<ul class="children">
 `)
 			categoryLi(&child, cate, roots, isCount, s)
-			s.WriteString(`</ul>`)
+			s.WriteString(`</ul>
+`)
 		}
+		s.Sprintf(`</li>`)
 	}
 
 }

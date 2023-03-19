@@ -2,6 +2,7 @@ package number
 
 import (
 	"fmt"
+	"github.com/fthvgb1/wp-go/taskPools"
 	"golang.org/x/exp/constraints"
 	"reflect"
 	"testing"
@@ -248,5 +249,42 @@ func TestCalTotalPage(t *testing.T) {
 				t.Errorf("CalTotalPage() = %v, want %v", got, tt.want)
 			}
 		})
+	}
+}
+
+func TestCounters(t *testing.T) {
+	type testCase[T constraints.Integer] struct {
+		name string
+		want func() T
+	}
+	var c = 0
+	tests := []testCase[int]{
+		{
+			name: "t1",
+			want: func() int {
+				c++
+				return c
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := Counters[int]()
+			if !reflect.DeepEqual(got(), tt.want()) {
+				t.Errorf("Counters() = %v, want %v", got(), tt.want())
+			}
+			got()
+			got()
+			got()
+			p := taskPools.NewPools(6)
+			for i := 0; i < 50; i++ {
+				p.Execute(func() {
+					got()
+				})
+			}
+			p.Wait()
+			fmt.Println("got ", got())
+		})
+
 	}
 }
