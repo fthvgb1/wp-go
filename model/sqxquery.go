@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"fmt"
+	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/jmoiron/sqlx"
@@ -35,31 +36,26 @@ func SetGet(db *SqlxQuery, fn func(context.Context, any, string, ...any) error) 
 }
 
 func (r *SqlxQuery) Selects(ctx context.Context, dest any, sql string, params ...any) error {
-	v := ctx.Value("handle=>")
-	if v != nil {
-		vv, ok := v.(string)
-		if ok && vv != "" {
-			switch vv {
-			case "string":
-				return ToMapSlice(r.sqlx, dest.(*[]map[string]string), sql, params...)
-			case "scanner":
-				fn := ctx.Value("fn")
-				return Scanner[any](r.sqlx, dest, sql, params...)(fn.(func(any)))
-			}
+	v := helper.GetValFromContext(ctx, "handle=>", "")
+	if v != "" {
+		switch v {
+		case "string":
+			return ToMapSlice(r.sqlx, dest.(*[]map[string]string), sql, params...)
+		case "scanner":
+			fn := ctx.Value("fn")
+			return Scanner[any](r.sqlx, dest, sql, params...)(fn.(func(any)))
 		}
 	}
+
 	return r.sqlx.Select(dest, sql, params...)
 }
 
 func (r *SqlxQuery) Gets(ctx context.Context, dest any, sql string, params ...any) error {
-	v := ctx.Value("handle=>")
-	if v != nil {
-		vv, ok := v.(string)
-		if ok && vv != "" {
-			switch vv {
-			case "string":
-				return GetToMap(r.sqlx, dest.(*map[string]string), sql, params...)
-			}
+	v := helper.GetValFromContext(ctx, "handle=>", "")
+	if v != "" {
+		switch v {
+		case "string":
+			return GetToMap(r.sqlx, dest.(*map[string]string), sql, params...)
 		}
 	}
 	return r.sqlx.Get(dest, sql, params...)

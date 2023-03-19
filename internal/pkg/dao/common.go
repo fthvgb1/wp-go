@@ -2,6 +2,7 @@ package dao
 
 import (
 	"context"
+	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
@@ -32,11 +33,17 @@ func CategoriesAndTags(a ...any) (terms []models.TermsMy, err error) {
 			in = []any{"post_tag"}
 		}
 	}
+	w := model.SqlBuilder{
+		{"tt.taxonomy", "in", ""},
+	}
+	if helper.GetValFromContext(ctx, "onlyTop", false) {
+		w = append(w, []string{"tt.parent", "=", "0", "int"})
+	}
+	if !helper.GetValFromContext(ctx, "showCountZero", false) {
+		w = append(w, []string{"tt.count", ">", "0", "int"})
+	}
 	terms, err = model.Finds[models.TermsMy](ctx, model.Conditions(
-		model.Where(model.SqlBuilder{
-			{"tt.count", ">", "0", "int"},
-			{"tt.taxonomy", "in", ""},
-		}),
+		model.Where(w),
 		model.Fields("t.term_id"),
 		model.Order(model.SqlBuilder{{"t.name", "asc"}}),
 		model.Join(model.SqlBuilder{

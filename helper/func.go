@@ -1,6 +1,7 @@
 package helper
 
 import (
+	"context"
 	"fmt"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"net/url"
@@ -93,4 +94,16 @@ func ToBool[T comparable](t T) bool {
 	}
 	var vv T
 	return vv != t
+}
+
+func GetValFromContext[V, K any](ctx context.Context, k K, defaults V) V {
+	v := ctx.Value(k)
+	if v == nil {
+		return defaults
+	}
+	vv, ok := v.(V)
+	if !ok {
+		return defaults
+	}
+	return vv
 }

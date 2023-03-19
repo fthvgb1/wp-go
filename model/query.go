@@ -2,6 +2,7 @@ package model
 
 import (
 	"context"
+	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/helper/number"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"golang.org/x/exp/constraints"
@@ -64,20 +65,12 @@ func pagination[T Model](db dbQuery, ctx context.Context, q QueryCondition, page
 		return
 	}
 	q.Offset = offset
-	m := ctx.Value("handle=>toMap")
+	m := helper.GetValFromContext[*[]map[string]string](ctx, "handle=>toMap", nil)
 	if m == nil {
 		r, err = finds[T](db, ctx, q)
 		return
 	}
-	mm, ok := m.(*[]map[string]string)
-	if ok {
-		mx, er := findToStringMap[T](db, ctx, q)
-		if er != nil {
-			err = er
-			return
-		}
-		*mm = mx
-	}
+	*m, err = findToStringMap[T](db, ctx, q)
 	return
 }
 

@@ -1,6 +1,7 @@
 package helper
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"testing"
@@ -234,4 +235,35 @@ func TestIsZeros(t *testing.T) {
 			t.Errorf("IsZeros() = %v, want %v", got, tt.want)
 		}
 	})
+}
+
+func TestGetValFromContext(t *testing.T) {
+	type args[K any, V any] struct {
+		ctx      context.Context
+		k        K
+		defaults V
+	}
+	type testCase[K any, V any] struct {
+		name string
+		args args[K, V]
+		want V
+	}
+	tests := []testCase[string, int]{
+		{
+			name: "t1",
+			args: args[string, int]{
+				ctx:      context.WithValue(context.Background(), "kk", 1),
+				k:        "kk",
+				defaults: 0,
+			},
+			want: 1,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := GetValFromContext(tt.args.ctx, tt.args.k, tt.args.defaults); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GetValFromContext() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
