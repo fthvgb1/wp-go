@@ -84,16 +84,27 @@ func categoryUL(h *wp.Handle, args map[string]string, conf map[any]any, categori
 	s := str.NewBuilder()
 	s.WriteString("<ul>\n")
 	isCount := conf["count"].(int64)
+	currentCate := models.TermsMy{}
+	if h.Scene() == constraints.Category {
+		cat := h.C.Param("category")
+		_, currentCate = slice.SearchFirst(categories, func(my models.TermsMy) bool {
+			return cat == my.Name
+		})
+	}
 	if conf["hierarchical"].(int64) == 0 {
 		for _, category := range categories {
 			count := ""
 			if isCount != 0 {
 				count = fmt.Sprintf("(%d)", category.Count)
 			}
-			s.Sprintf(`	<li class="cat-item cat-item-%d">
+			current := ""
+			if category.TermTaxonomyId == currentCate.TermTaxonomyId {
+				current = "current-cat"
+			}
+			s.Sprintf(`	<li class="cat-item cat-item-%d %s">
 		<a href="/p/category/%s">%s %s</a>
 	</li>
-`, category.Terms.TermId, category.Name, category.Name, count)
+`, category.Terms.TermId, current, category.Name, category.Name, count)
 		}
 	} else {
 
@@ -101,16 +112,9 @@ func categoryUL(h *wp.Handle, args map[string]string, conf map[any]any, categori
 			return cate.TermTaxonomyId, cate.Parent
 		})
 		cate := &tree.Node[models.TermsMy, uint64]{Data: models.TermsMy{}}
-		if h.Scene() == constraints.Category {
-			cat := h.C.Param("category")
-			i, ca := slice.SearchFirst(categories, func(my models.TermsMy) bool {
-				return cat == my.Name
-			})
-			if i > 0 {
-				cate = m[ca.TermTaxonomyId]
-			}
+		if currentCate.TermTaxonomyId > 0 {
+			cate = m[currentCate.TermTaxonomyId]
 		}
-
 		r := m[0]
 		categoryLi(r, cate, tree.Ancestor(m, 0, cate), isCount, s)
 	}
