@@ -177,10 +177,15 @@ func MonthPost(args ...any) (r []uint64, err error) {
 		{"year(post_date)", year},
 		{"month(post_date)", month},
 	}
-	return model.Column[models.Posts, uint64](ctx, func(v models.Posts) (uint64, bool) {
+	r, err = model.Column[models.Posts, uint64](ctx, func(v models.Posts) (uint64, bool) {
 		return v.Id, true
 	}, model.Conditions(
 		model.Fields("ID"),
 		model.Where(where),
 	))
+	l := int64(len(r))
+	if l > atomic.LoadInt64(&TotalRaw) {
+		atomic.StoreInt64(&TotalRaw, l)
+	}
+	return
 }

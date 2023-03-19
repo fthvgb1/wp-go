@@ -14,7 +14,7 @@ import (
 )
 
 var widgetFn = map[string]wp.Components[string]{
-	"search":          {Fn: widget.Search, CacheKey: "widgetSearch"},
+	"search":          {Fn: widget.Search},
 	"recent-posts":    {Fn: widget.RecentPosts},
 	"recent-comments": {Fn: widget.RecentComments},
 	"archives":        {Fn: widget.Archive},
