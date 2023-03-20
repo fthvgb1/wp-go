@@ -42,10 +42,15 @@ func CategoriesAndTags(a ...any) (terms []models.TermsMy, err error) {
 	if !helper.GetContextVal(ctx, "showCountZero", false) {
 		w = append(w, []string{"tt.count", ">", "0", "int"})
 	}
+	order := []string{"name", "asc"}
+	ord := helper.GetContextVal[[]string](ctx, "order", nil)
+	if ord != nil {
+		order = ord
+	}
 	terms, err = model.Finds[models.TermsMy](ctx, model.Conditions(
 		model.Where(w),
 		model.Fields("t.term_id"),
-		model.Order(model.SqlBuilder{{"t.name", "asc"}}),
+		model.Order(model.SqlBuilder{order}),
 		model.Join(model.SqlBuilder{
 			{"t", "inner join", "wp_term_taxonomy tt", "t.term_id = tt.term_id"},
 		}),

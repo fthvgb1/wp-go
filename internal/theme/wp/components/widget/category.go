@@ -76,13 +76,8 @@ func Category(h *wp.Handle) string {
 	return h.ComponentFilterFnHook(widgets.Categories, str.Replace(t, args))
 }
 
-func categoryUL(h *wp.Handle, args map[string]string, conf map[any]any, categories []models.TermsMy) string {
-	if slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
-		args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, args["{title}"])
-		args["{$navCloser}"] = "</nav>"
-	}
+func CategoryLi(h *wp.Handle, conf map[any]any, categories []models.TermsMy) string {
 	s := str.NewBuilder()
-	s.WriteString("<ul>\n")
 	isCount := conf["count"].(int64)
 	currentCate := models.TermsMy{}
 	if h.Scene() == constraints.Category {
@@ -118,7 +113,17 @@ func categoryUL(h *wp.Handle, args map[string]string, conf map[any]any, categori
 		r := m[0]
 		categoryLi(r, cate, tree.Ancestor(m, 0, cate), isCount, s)
 	}
+	return s.String()
+}
 
+func categoryUL(h *wp.Handle, args map[string]string, conf map[any]any, categories []models.TermsMy) string {
+	if slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
+		args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, args["{title}"])
+		args["{$navCloser}"] = "</nav>"
+	}
+	s := str.NewBuilder()
+	s.WriteString("<ul>\n")
+	s.WriteString(CategoryLi(h, conf, categories))
 	s.WriteString("</ul>")
 	return s.String()
 }
