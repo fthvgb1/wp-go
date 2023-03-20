@@ -96,7 +96,7 @@ func ToBool[T comparable](t T) bool {
 	return vv != t
 }
 
-func GetValFromContext[V, K any](ctx context.Context, k K, defaults V) V {
+func GetContextVal[V, K any](ctx context.Context, k K, defaults V) V {
 	v := ctx.Value(k)
 	if v == nil {
 		return defaults

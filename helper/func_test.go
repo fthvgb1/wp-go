@@ -261,8 +261,8 @@ func TestGetValFromContext(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := GetValFromContext(tt.args.ctx, tt.args.k, tt.args.defaults); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("GetValFromContext() = %v, want %v", got, tt.want)
+			if got := GetContextVal(tt.args.ctx, tt.args.k, tt.args.defaults); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GetContextVal() = %v, want %v", got, tt.want)
 			}
 		})
 	}

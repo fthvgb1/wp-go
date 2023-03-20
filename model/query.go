@@ -65,7 +65,7 @@ func pagination[T Model](db dbQuery, ctx context.Context, q QueryCondition, page
 		return
 	}
 	q.Offset = offset
-	m := helper.GetValFromContext[*[]map[string]string](ctx, "handle=>toMap", nil)
+	m := helper.GetContextVal[*[]map[string]string](ctx, "handle=>toMap", nil)
 	if m == nil {
 		r, err = finds[T](db, ctx, q)
 		return

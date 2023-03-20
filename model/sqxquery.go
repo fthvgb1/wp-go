@@ -36,7 +36,7 @@ func SetGet(db *SqlxQuery, fn func(context.Context, any, string, ...any) error) 
 }
 
 func (r *SqlxQuery) Selects(ctx context.Context, dest any, sql string, params ...any) error {
-	v := helper.GetValFromContext(ctx, "handle=>", "")
+	v := helper.GetContextVal(ctx, "handle=>", "")
 	if v != "" {
 		switch v {
 		case "string":
@@ -51,7 +51,7 @@ func (r *SqlxQuery) Selects(ctx context.Context, dest any, sql string, params ..
 }
 
 func (r *SqlxQuery) Gets(ctx context.Context, dest any, sql string, params ...any) error {
-	v := helper.GetValFromContext(ctx, "handle=>", "")
+	v := helper.GetContextVal(ctx, "handle=>", "")
 	if v != "" {
 		switch v {
 		case "string":
