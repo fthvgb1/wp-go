@@ -2,6 +2,7 @@ package block
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/number"
@@ -9,7 +10,6 @@ import (
 	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	constraints2 "github.com/fthvgb1/wp-go/internal/pkg/constraints"
-	"github.com/fthvgb1/wp-go/internal/pkg/constraints/blocks"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/theme/wp"
@@ -28,8 +28,8 @@ func categoryConf() map[any]any {
 
 func categoryDefaultArgs() map[string]string {
 	return map[string]string{
-		"{$before_widget}":    `<section id="block-%v" class="%s">`,
-		"{$after_widget}":     `</section>`,
+		"{$before_widget}":    `<aside id="%s" class="%s">`,
+		"{$after_widget}":     `</aside>`,
 		"{$name}":             "cat",
 		"{$class}":            "postform",
 		"{$selectId}":         "cat",
@@ -70,32 +70,43 @@ func parseAttr(attr map[any]any) string {
 	return strings.Join(attrs, " ")
 }
 
-func Category(h *wp.Handle, id string, blockParser ParserBlock) (func() string, error) {
+func Category(h *wp.Handle, id string, blockParser ParserBlock, args map[string]string) (func() string, error) {
 	counter := number.Counters[int]()
-	var con any
-	err := json.Unmarshal([]byte(blockParser.Attrs), &con)
+	var err error
+	conf := reload.GetAnyValBys("block-category-conf", h, func(h *wp.Handle) map[any]any {
+		var con any
+		err = json.Unmarshal([]byte(blockParser.Attrs), &con)
+		if err != nil {
+			logs.ErrPrintln(err, "解析category attr错误", blockParser.Attrs)
+			return nil
+		}
+		var conf map[any]any
+		switch con.(type) {
+		case map[any]any:
+			conf = con.(map[any]any)
+		case map[string]any:
+			conf = maps.StrAnyToAnyAny(con.(map[string]any))
+		}
+		conf = maps.FilterZeroMerge(categoryConf(), conf)
+
+		if maps.GetAnyAnyValWithDefaults(conf, false, "showPostCounts") {
+			conf["count"] = int64(1)
+		}
+
+		if maps.GetAnyAnyValWithDefaults(conf, false, "displayAsDropdown") {
+			conf["dropdown"] = int64(1)
+		}
+		if maps.GetAnyAnyValWithDefaults(conf, false, "showHierarchy") {
+			conf["hierarchical"] = int64(1)
+		}
+		return conf
+	})
+
 	if err != nil {
-		logs.ErrPrintln(err, "解析category attr错误", blockParser.Attrs)
 		return nil, err
 	}
-	var conf map[any]any
-	switch con.(type) {
-	case map[any]any:
-		conf = con.(map[any]any)
-	case map[string]any:
-		conf = maps.StrAnyToAnyAny(con.(map[string]any))
-	}
-	conf = maps.FilterZeroMerge(categoryConf(), conf)
-
-	if maps.GetAnyAnyValWithDefaults(conf, false, "showPostCounts") {
-		conf["count"] = int64(1)
-	}
-
-	if maps.GetAnyAnyValWithDefaults(conf, false, "displayAsDropdown") {
-		conf["dropdown"] = int64(1)
-	}
-	if maps.GetAnyAnyValWithDefaults(conf, false, "showHierarchy") {
-		conf["hierarchical"] = int64(1)
+	if conf == nil {
+		return nil, errors.New("解析block-category配置错误")
 	}
 
 	if maps.GetAnyAnyValWithDefaults(conf, false, "showEmpty") {
@@ -104,7 +115,10 @@ func Category(h *wp.Handle, id string, blockParser ParserBlock) (func() string, 
 	if maps.GetAnyAnyValWithDefaults(conf, false, "showOnlyTopLevel") {
 		h.C.Set("showOnlyTopLevel", true)
 	}
-	args := maps.FilterZeroMerge(categoryDefaultArgs(), wp.GetComponentsArgs[map[string]string](h, blocks.Categories, nil))
+	args = reload.GetAnyValBys("block-category-args", h, func(h *wp.Handle) map[string]string {
+		return maps.FilterZeroMerge(categoryDefaultArgs(), args)
+	})
+
 	return func() string {
 		return category(h, id, counter, args, conf)
 	}, nil
@@ -126,7 +140,7 @@ func category(h *wp.Handle, id string, counter number.Counter[int], args map[str
 		conf["className"] = strings.Join(classes, " ")
 		out = categoryUl(h, categories, conf)
 	}
-	before := fmt.Sprintf(args["{$before_widget}"], id, strings.Join(class, " "))
+	before := fmt.Sprintf(args["{$before_widget}"], str.Join("block-", id), strings.Join(class, " "))
 	return str.Join(before, out, args["{$after_widget}"])
 }
 

@@ -61,7 +61,7 @@ func ready(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
 	pushScripts(h)
 	h.SetData("HeaderImage", getHeaderImage(h))
 	h.SetComponentsArgs(widgets.Widget, map[string]string{
-		"{$before_widget}": `<section id="%s" class="widget widget_%s">`,
+		"{$before_widget}": `<section id="%s" class="%s">`,
 		"{$after_widget}":  `</section>`,
 	})
 	wp.SetComponentsArgsForMap(h, widgets.Search, "{$form}", searchForm)

@@ -32,8 +32,6 @@ func sidebars(h *wp.Handle) []wp.Components[string] {
 	beforeWidget, ok := args["{$before_widget}"]
 	if !ok {
 		beforeWidget = ""
-	} else {
-		delete(args, "{$before_widget}")
 	}
 	v := wpconfig.GetPHPArrayVal("sidebars_widgets", []any{}, "sidebar-1")
 	return slice.FilterAndMap(v, func(t any) (wp.Components[string], bool) {
@@ -49,18 +47,23 @@ func sidebars(h *wp.Handle) []wp.Components[string] {
 			wp.SetComponentsArgsForMap(h, name, "{$id}", id)
 		}
 		names := str.Join("widget-", name)
-		if beforeWidget != "" {
+
+		if beforeWidget != "" && name != "block" {
 			n := strings.ReplaceAll(name, "-", "_")
 			if name == "recent-posts" {
 				n = "recent_entries"
 			}
+			n = str.Join("widget widget_", n)
+			delete(args, "{$before_widget}")
 			wp.SetComponentsArgsForMap(h, names, "{$before_widget}", fmt.Sprintf(beforeWidget, vv, n))
+		} else {
+			args["{$before_widget}"] = beforeWidget
 		}
 		for k, val := range args {
 			wp.SetComponentsArgsForMap(h, names, k, val)
 		}
 		if name == "block" {
-			fn := Block(id)
+			fn := Block(id, args)
 			if fn == nil {
 				return wp.Components[string]{}, false
 			}

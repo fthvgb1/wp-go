@@ -8,11 +8,11 @@ import (
 	"strings"
 )
 
-var blockFn = map[string]func(*wp.Handle, string, block.ParserBlock) (func() string, error){
+var blockFn = map[string]func(*wp.Handle, string, block.ParserBlock, map[string]string) (func() string, error){
 	"core/categories": block.Category,
 }
 
-func Block(id string) func(*wp.Handle) string {
+func Block(id string, args map[string]string) func(*wp.Handle) string {
 	content := wpconfig.GetPHPArrayVal("widget_block", "", str.ToInteger[int64](id, 0), "content")
 	if content == "" {
 		return nil
@@ -23,7 +23,7 @@ func Block(id string) func(*wp.Handle) string {
 		for _, parserBlock := range v.Output {
 			fn, ok := blockFn[parserBlock.Name]
 			if ok {
-				s, err := fn(h, id, parserBlock)
+				s, err := fn(h, id, parserBlock, args)
 				if err != nil {
 					continue
 				}
