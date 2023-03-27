@@ -49,9 +49,6 @@ func categoryArgs() map[string]string {
 		"{$nav}":              "",
 		"{$navCloser}":        "",
 		"{$title}":            "",
-		"{$dropdown_id}":      "archives-dropdown-2",
-		"{$dropdown_type}":    "monthly",
-		"{$dropdown_label}":   "选择月份",
 	}
 }
 
@@ -68,7 +65,7 @@ func Category(h *wp.Handle) string {
 	}
 	categories := cache.CategoriesTags(h.C, constraints.Category)
 	if dropdown == 1 {
-		t = strings.ReplaceAll(t, "{$html}", categoryDropdown(h, args, conf, categories))
+		t = strings.ReplaceAll(t, "{$html}", CategoryDropdown(h, args, conf, categories))
 
 	} else {
 		t = strings.ReplaceAll(t, "{$html}", categoryUL(h, args, conf, categories))
@@ -181,49 +178,13 @@ var categoryDropdownJs = `/* <![CDATA[ */
 /* ]]> */
 `
 
-func categoryDropdown(h *wp.Handle, args map[string]string, conf map[any]any, categories []models.TermsMy) string {
+func CategoryDropdown(h *wp.Handle, args map[string]string, conf map[any]any, categories []models.TermsMy) string {
 	s := str.NewBuilder()
 	s.WriteString(`<form action="/" method="get">
 `)
 	s.Sprintf(`	<label class="screen-reader-text" for="%s">%s</label>
 `, args["{$selectId}"], args["{$title}"])
-	if len(categories) > 0 {
-		s.Sprintf(`	<select %s name="%s" id="%s" class="%s">
-`, args["{$required}"], args["{$name}"], args["{$selectId}"], args["{$class}"])
-		s.Sprintf(`		<option value="%[1]s">%[1]s</option>
-`, args["{$show_option_none}"])
-		currentCategory := ""
-		if h.Scene() == constraints.Category {
-			currentCategory = h.Index.Param.Category
-		}
-		showCount := conf["count"].(int64)
-		fn := func(category models.TermsMy, deep int) {
-			lv := fmt.Sprintf("level-%d", deep+1)
-			sep := strings.Repeat("&nbsp;", deep*2)
-			selected := ""
-			if category.Name == currentCategory {
-				selected = "selected"
-			}
-			count := ""
-			if showCount != 0 {
-				count = fmt.Sprintf("(%d)", category.Count)
-			}
-			s.Sprintf(`		<option class="%s" %s value="%d">%s%s %s</option>
-`, lv, selected, category.Terms.TermId, sep, category.Name, count)
-		}
-		if conf["hierarchical"].(int64) == 0 {
-			for _, category := range categories {
-				fn(category, 0)
-			}
-		} else {
-			tree.Root(categories, 0, func(t models.TermsMy) (child, parent uint64) {
-				return t.TermTaxonomyId, t.Parent
-			}).Loop(func(category models.TermsMy, deep int) {
-				fn(category, deep)
-			})
-		}
-		s.WriteString("	</select>\n")
-	}
+	s.WriteString(DropdownCategories(h, args, conf, categories))
 	s.WriteString("</form>\n")
 	attr := ""
 	if !slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "script") {
@@ -234,6 +195,49 @@ func categoryDropdown(h *wp.Handle, args map[string]string, conf map[any]any, ca
 	s.Sprintf(categoryDropdownJs, args["{$selectId}"])
 	s.WriteString("</script>\n")
 	return s.String()
+}
+
+func DropdownCategories(h *wp.Handle, args map[string]string, conf map[any]any, categories []models.TermsMy) string {
+	if len(categories) < 1 {
+		return ""
+	}
+	s := str.NewBuilder()
+	s.Sprintf(`	<select %s name="%s" id="%s" class="%s">
+`, args["{$required}"], args["{$name}"], args["{$selectId}"], args["{$class}"])
+	s.Sprintf(`		<option value="-1">%s</option>
+`, args["{$show_option_none}"])
+	currentCategory := ""
+	if h.Scene() == constraints.Category {
+		currentCategory = h.Index.Param.Category
+	}
+	showCount := conf["count"].(int64)
+	fn := func(category models.TermsMy, deep int) {
+		lv := fmt.Sprintf("level-%d", deep+1)
+		sep := strings.Repeat("&nbsp;", deep*2)
+		selected := ""
+		if category.Name == currentCategory {
+			selected = "selected"
+		}
+		count := ""
+		if showCount != 0 {
+			count = fmt.Sprintf("(%d)", category.Count)
+		}
+		s.Sprintf(`		<option class="%s" %s value="%d">%s%s %s</option>
+`, lv, selected, category.Terms.TermId, sep, category.Name, count)
+	}
+	if conf["hierarchical"].(int64) == 0 {
+		for _, category := range categories {
+			fn(category, 0)
+		}
+	} else {
+		tree.Root(categories, 0, func(t models.TermsMy) (child, parent uint64) {
+			return t.TermTaxonomyId, t.Parent
+		}).Loop(func(category models.TermsMy, deep int) {
+			fn(category, deep)
+		})
+	}
+	s.WriteString("	</select>\n")
+	return h.ComponentFilterFnHook("wp_dropdown_cats", s.String())
 }
 
 func IsCategory(next wp.HandleFn[*wp.Handle], h *wp.Handle) {

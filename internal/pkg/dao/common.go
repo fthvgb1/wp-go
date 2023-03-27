@@ -36,10 +36,10 @@ func CategoriesAndTags(a ...any) (terms []models.TermsMy, err error) {
 	w := model.SqlBuilder{
 		{"tt.taxonomy", "in", ""},
 	}
-	if helper.GetContextVal(ctx, "onlyTop", false) {
+	if helper.GetContextVal(ctx, "showOnlyTopLevel", false) {
 		w = append(w, []string{"tt.parent", "=", "0", "int"})
 	}
-	if !helper.GetContextVal(ctx, "showCountZero", false) {
+	if !helper.GetContextVal(ctx, "showEmpty", false) {
 		w = append(w, []string{"tt.count", ">", "0", "int"})
 	}
 	order := []string{"name", "asc"}

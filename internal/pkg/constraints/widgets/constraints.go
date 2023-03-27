@@ -1,12 +1,12 @@
 package widgets
 
 const (
-	Search         = "search"
-	RecentPosts    = "recent-posts"
-	RecentComments = "recent-comments"
-	Archive        = "archives"
-	Categories     = "categories"
-	Meta           = "meta"
+	Search         = "widget-search"
+	RecentPosts    = "widget-recent-posts"
+	RecentComments = "widget-recent-comments"
+	Archive        = "widget-archives"
+	Categories     = "widget-categories"
+	Meta           = "widget-meta"
 
 	Widget = "widget"
 )

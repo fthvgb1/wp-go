@@ -96,6 +96,13 @@ func ToBool[T comparable](t T) bool {
 	return vv != t
 }
 
+func ToBoolInt(t any) int8 {
+	if IsZeros(t) {
+		return 0
+	}
+	return 1
+}
+
 func GetContextVal[V, K any](ctx context.Context, k K, defaults V) V {
 	v := ctx.Value(k)
 	if v == nil {

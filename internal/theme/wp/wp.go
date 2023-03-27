@@ -33,7 +33,7 @@ type Handle struct {
 	err               error
 	abort             bool
 	componentsArgs    map[string]any
-	componentFilterFn map[string][]func(*Handle, string) string
+	componentFilterFn map[string][]func(*Handle, string, ...any) string
 }
 
 type HandlePlugins map[string]HandleFn[*Handle]
@@ -55,19 +55,19 @@ type HandleCall struct {
 	Order int
 }
 
-func (h *Handle) ComponentFilterFn(name string) ([]func(*Handle, string) string, bool) {
+func (h *Handle) ComponentFilterFn(name string) ([]func(*Handle, string, ...any) string, bool) {
 	fn, ok := h.componentFilterFn[name]
 	return fn, ok
 }
 
-func (h *Handle) PushComponentFilterFn(name string, fns ...func(*Handle, string) string) {
+func (h *Handle) PushComponentFilterFn(name string, fns ...func(*Handle, string, ...any) string) {
 	h.componentFilterFn[name] = append(h.componentFilterFn[name], fns...)
 }
-func (h *Handle) ComponentFilterFnHook(name, s string) string {
+func (h *Handle) ComponentFilterFnHook(name, s string, args ...any) string {
 	calls, ok := h.componentFilterFn[name]
 	if ok {
-		return slice.Reduce(calls, func(fn func(*Handle, string) string, r string) string {
-			return fn(h, r)
+		return slice.Reduce(calls, func(fn func(*Handle, string, ...any) string, r string) string {
+			return fn(h, r, args...)
 		}, s)
 	}
 	return s
@@ -181,7 +181,7 @@ func NewHandle(c *gin.Context, scene int, theme string) *Handle {
 		components:        make(map[string][]Components[string]),
 		handleFns:         make(map[int][]HandleCall),
 		componentsArgs:    make(map[string]any),
-		componentFilterFn: make(map[string][]func(*Handle, string) string),
+		componentFilterFn: make(map[string][]func(*Handle, string, ...any) string),
 	}
 }
 

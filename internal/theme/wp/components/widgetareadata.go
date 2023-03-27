@@ -3,8 +3,8 @@ package components
 import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper/slice"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/cmd/reload"
-	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints/widgets"
 	"github.com/fthvgb1/wp-go/internal/theme/wp"
@@ -25,7 +25,6 @@ var widgetFn = map[string]wp.Components[string]{
 func WidgetArea(h *wp.Handle) {
 	sidebar := reload.GetAnyValBys("sidebarWidgets", h, sidebars)
 	h.PushComponents(constraints.SidebarsWidgets, sidebar...)
-	h.SetData("categories", cache.CategoriesTags(h.C, constraints.Category))
 }
 
 func sidebars(h *wp.Handle) []wp.Components[string] {
@@ -43,21 +42,29 @@ func sidebars(h *wp.Handle) []wp.Components[string] {
 		id := ss[len(ss)-1]
 		name := strings.Join(ss[0:len(ss)-1], "-")
 		components, ok := widgetFn[name]
-		if !ok {
+		if name != "block" && !ok {
 			return components, false
 		}
 		if id != "2" {
 			wp.SetComponentsArgsForMap(h, name, "{$id}", id)
 		}
+		names := str.Join("widget-", name)
 		if beforeWidget != "" {
 			n := strings.ReplaceAll(name, "-", "_")
 			if name == "recent-posts" {
 				n = "recent_entries"
 			}
-			wp.SetComponentsArgsForMap(h, name, "{$before_widget}", fmt.Sprintf(beforeWidget, vv, n))
+			wp.SetComponentsArgsForMap(h, names, "{$before_widget}", fmt.Sprintf(beforeWidget, vv, n))
 		}
 		for k, val := range args {
-			wp.SetComponentsArgsForMap(h, name, k, val)
+			wp.SetComponentsArgsForMap(h, names, k, val)
+		}
+		if name == "block" {
+			fn := Block(id)
+			if fn == nil {
+				return wp.Components[string]{}, false
+			}
+			components = wp.Components[string]{Fn: fn, Order: 10}
 		}
 		components.Order = 10
 		return components, true

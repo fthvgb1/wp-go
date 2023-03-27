@@ -51,6 +51,19 @@ func AnyAnyToStrAny(m map[any]any) (r map[string]any) {
 	}
 	return
 }
+func StrAnyToAnyAny(m map[string]any) (r map[any]any) {
+	r = make(map[any]any)
+	for kk, v := range m {
+		vv, ok := v.(map[string]any)
+		if ok {
+			r[kk] = StrAnyToAnyAny(vv)
+		} else {
+			r[kk] = v
+		}
+
+	}
+	return
+}
 
 func IsExists[K comparable, V any](m map[K]V, k K) bool {
 	_, ok := m[k]
@@ -134,4 +147,15 @@ func WithDefaultVal[K comparable, V any](m map[K]V, k K, defaults V) V {
 		return vv
 	}
 	return defaults
+}
+
+func AnyAnyMap[K comparable, V any](m map[any]any, fn func(k, v any) (K, V, bool)) map[K]V {
+	mm := make(map[K]V, 0)
+	for k, v := range m {
+		key, val, ok := fn(k, v)
+		if ok {
+			mm[key] = val
+		}
+	}
+	return mm
 }

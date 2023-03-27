@@ -7,6 +7,7 @@ import (
 	"io"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 func Join(s ...string) (str string) {
@@ -93,4 +94,20 @@ func (b *Builder) Sprintf(format string, a ...any) int {
 // CutSpecialDuplicate '\t', '\n', '\v', '\f', '\r', ' ', U+0085 (NEL), U+00A0 (NBSP)
 func CutSpecialDuplicate(s, char string) string {
 	return strings.Join(strings.Fields(s), char)
+}
+
+// CamelCaseTo 驼峰单词转下划线或横杠单词 //分隔符
+func CamelCaseTo(s string, delimiter rune) string {
+	var output []rune
+	for i, r := range s {
+		if i == 0 {
+			output = append(output, unicode.ToLower(r))
+		} else {
+			if unicode.IsUpper(r) {
+				output = append(output, delimiter)
+			}
+			output = append(output, unicode.ToLower(r))
+		}
+	}
+	return string(output)
 }

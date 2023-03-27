@@ -73,13 +73,25 @@ func Roots[T any, K comparable](a []T, top K, fn func(T) (child, parent K)) map[
 	return root(a, top, fn)
 }
 
+type nod[K comparable] struct {
+	current K
+	parent  K
+}
+
 func root[T any, K comparable](a []T, top K, fn func(T) (child, parent K)) map[K]*Node[T, K] {
 	m := make(map[K]*Node[T, K])
+	mm := make(map[int]nod[K])
 	m[top] = &Node[T, K]{Children: new([]Node[T, K])}
-	for _, t := range a {
+	for i, t := range a {
 		c, p := fn(t)
 		node := Node[T, K]{Parent: p, Data: t, Children: new([]Node[T, K])}
 		m[c] = &node
+		mm[i] = nod[K]{c, p}
+	}
+	for i := range a {
+		c := mm[i].current
+		p := mm[i].parent
+		node := *m[c]
 		parent, ok := m[p]
 		if !ok {
 			m[p] = &Node[T, K]{Children: new([]Node[T, K])}
