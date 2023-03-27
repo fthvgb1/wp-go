@@ -6,6 +6,7 @@ import (
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/helper/tree"
+	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints/widgets"
@@ -53,10 +54,17 @@ func categoryArgs() map[string]string {
 }
 
 func Category(h *wp.Handle) string {
-	args := wp.GetComponentsArgs(h, widgets.Categories, categoryArgs())
-	args = maps.FilterZeroMerge(categoryArgs(), args)
-	conf := wpconfig.GetPHPArrayVal("widget_categories", categoryConfig(), int64(2))
-	conf = maps.FilterZeroMerge(categoryConfig(), conf)
+	args := reload.GetAnyValBys("widget-category-args", h, func(h *wp.Handle) map[string]string {
+		args := wp.GetComponentsArgs(h, widgets.Categories, categoryArgs())
+		args = maps.FilterZeroMerge(categoryArgs(), args)
+		return args
+	})
+	conf := reload.GetAnyValBys("widget-category-conf", h, func(a *wp.Handle) map[any]any {
+		conf := wpconfig.GetPHPArrayVal("widget_categories", categoryConfig(), int64(2))
+		conf = maps.FilterZeroMerge(categoryConfig(), conf)
+		return conf
+	})
+
 	args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
 	t := categoryTemplate
 	dropdown := conf["dropdown"].(int64)

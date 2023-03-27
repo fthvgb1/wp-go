@@ -5,6 +5,7 @@ import (
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
+	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints/widgets"
@@ -47,12 +48,19 @@ func recentConf() map[any]any {
 }
 
 func RecentPosts(h *wp.Handle) string {
-	recentPostsArgs := recentPostsArgs()
-	recentConf := recentConf()
-	args := wp.GetComponentsArgs(h, widgets.RecentPosts, recentPostsArgs)
-	args = maps.FilterZeroMerge(recentPostsArgs, args)
-	conf := wpconfig.GetPHPArrayVal[map[any]any]("widget_recent-posts", recentConf, int64(2))
-	conf = maps.FilterZeroMerge(recentConf, conf)
+	args := reload.GetAnyValBys("widget-recent-posts-args", h, func(h *wp.Handle) map[string]string {
+		recent := recentPostsArgs()
+		args := wp.GetComponentsArgs(h, widgets.RecentPosts, recent)
+		args = maps.FilterZeroMerge(recent, args)
+		return args
+	})
+	conf := reload.GetAnyValBys("widget-recent-posts-conf", h, func(h *wp.Handle) map[any]any {
+		recent := recentConf()
+		conf := wpconfig.GetPHPArrayVal[map[any]any]("widget_recent-posts", recent, int64(2))
+		conf = maps.FilterZeroMerge(recent, conf)
+		return conf
+	})
+
 	if id, ok := args["{$id}"]; ok && id != "" {
 		args["{$before_widget}"] = strings.ReplaceAll(args["{$before_widget}"], "2", args["{$id}"])
 	}

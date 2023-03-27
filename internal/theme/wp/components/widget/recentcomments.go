@@ -5,6 +5,7 @@ import (
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
+	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints/widgets"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
@@ -46,12 +47,20 @@ var recentCommentsTemplate = `{$before_widget}
 `
 
 func RecentComments(h *wp.Handle) string {
-	recentCommentsArgs := recentCommentsArgs()
-	recentCommentConf := recentCommentConf()
-	args := wp.GetComponentsArgs(h, widgets.RecentComments, recentCommentsArgs)
-	args = maps.FilterZeroMerge(recentCommentsArgs, args)
-	conf := wpconfig.GetPHPArrayVal("widget_recent-comments", recentCommentConf, int64(2))
-	conf = maps.FilterZeroMerge(recentCommentConf, conf)
+	args := reload.GetAnyValBys("widget-recent-comment-args", h, func(h *wp.Handle) map[string]string {
+		commentsArgs := recentCommentsArgs()
+		args := wp.GetComponentsArgs(h, widgets.RecentComments, commentsArgs)
+		args = maps.FilterZeroMerge(commentsArgs, args)
+		return args
+	})
+
+	conf := reload.GetAnyValBys("widget-recent-comment-conf", h, func(h *wp.Handle) map[any]any {
+		commentConf := recentCommentConf()
+		conf := wpconfig.GetPHPArrayVal("widget_recent-comments", commentConf, int64(2))
+		conf = maps.FilterZeroMerge(commentConf, conf)
+		return conf
+	})
+
 	args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
 	if id, ok := args["{$id}"]; ok && id != "" {
 		args["{$before_widget}"] = strings.ReplaceAll(args["{$before_widget}"], "2", args["{$id}"])

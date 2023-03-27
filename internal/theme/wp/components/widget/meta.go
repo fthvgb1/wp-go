@@ -5,6 +5,7 @@ import (
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
+	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints/widgets"
 	"github.com/fthvgb1/wp-go/internal/theme/wp"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
@@ -33,9 +34,12 @@ func metaArgs() map[string]string {
 }
 
 func Meta(h *wp.Handle) string {
-	metaArgs := metaArgs()
-	args := wp.GetComponentsArgs(h, widgets.Meta, metaArgs)
-	args = maps.FilterZeroMerge(metaArgs, args)
+	args := reload.GetAnyValBys("widget-meta-args", h, func(h *wp.Handle) map[string]string {
+		metaArgs := metaArgs()
+		args := wp.GetComponentsArgs(h, widgets.Meta, metaArgs)
+		args = maps.FilterZeroMerge(metaArgs, args)
+		return args
+	})
 	args["{$title}"] = wpconfig.GetPHPArrayVal("widget_meta", "其它操作", int64(2), "title")
 	if id, ok := args["{$id}"]; ok && id != "" {
 		args["{$before_widget}"] = strings.ReplaceAll(args["{$before_widget}"], "2", args["{$id}"])

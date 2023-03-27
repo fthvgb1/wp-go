@@ -5,6 +5,7 @@ import (
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
+	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints/widgets"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
@@ -47,11 +48,19 @@ func archivesConfig() map[any]any {
 }
 
 func Archive(h *wp.Handle) string {
-	archiveArgs := archiveArgs()
-	archivesConfig := archivesConfig()
-	args := wp.GetComponentsArgs(h, widgets.Archive, archiveArgs)
-	args = maps.FilterZeroMerge(archiveArgs, args)
-	conf := wpconfig.GetPHPArrayVal("widget_archives", archivesConfig, int64(2))
+	args := reload.GetAnyValBys("widget-archive-args", h, func(h *wp.Handle) map[string]string {
+		archiveArgs := archiveArgs()
+		args := wp.GetComponentsArgs(h, widgets.Archive, archiveArgs)
+		args = maps.FilterZeroMerge(archiveArgs, args)
+		return args
+	})
+
+	conf := reload.GetAnyValBys("widget-archive-conf", h, func(h *wp.Handle) map[any]any {
+		archivesConfig := archivesConfig()
+		conf := wpconfig.GetPHPArrayVal("widget_archives", archivesConfig, int64(2))
+		return conf
+	})
+
 	args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
 	if id, ok := args["{$id}"]; ok && id != "" {
 		args["{$before_widget}"] = strings.ReplaceAll(args["{$before_widget}"], "2", args["{$id}"])

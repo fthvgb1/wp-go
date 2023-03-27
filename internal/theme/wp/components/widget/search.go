@@ -5,6 +5,7 @@ import (
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
+	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints/widgets"
 	"github.com/fthvgb1/wp-go/internal/theme/wp"
@@ -49,9 +50,12 @@ func searchArgs() map[string]string {
 }
 
 func Search(h *wp.Handle) string {
-	searchArgs := searchArgs()
-	args := wp.GetComponentsArgs(h, widgets.Search, searchArgs)
-	args = maps.FilterZeroMerge(searchArgs, args)
+	args := reload.GetAnyValBys("widget-search-args", h, func(h *wp.Handle) map[string]string {
+		search := searchArgs()
+		args := wp.GetComponentsArgs(h, widgets.Search, search)
+		args = maps.FilterZeroMerge(search, args)
+		return args
+	})
 	if args["{$title}"] == "" {
 		args["{$title}"] = wpconfig.GetPHPArrayVal("widget_search", "", int64(2), "title")
 	}
