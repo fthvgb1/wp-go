@@ -36,10 +36,6 @@ func categoryConfig() map[any]any {
 
 func categoryArgs() map[string]string {
 	return map[string]string{
-		"{$before_widget}":    `<aside id="categories-2" class="widget widget_categories">`,
-		"{$after_widget}":     "</aside>",
-		"{$before_title}":     `<h2 class="widget-title">`,
-		"{$after_title}":      "</h2>",
 		"{$before_sidebar}":   "",
 		"{$after_sidebar}":    "",
 		"{$class}":            "postform",
@@ -53,28 +49,28 @@ func categoryArgs() map[string]string {
 	}
 }
 
-func Category(h *wp.Handle) string {
-	args := reload.GetAnyValBys("widget-category-args", h, func(h *wp.Handle) map[string]string {
-		args := wp.GetComponentsArgs(h, widgets.Categories, categoryArgs())
-		args = maps.FilterZeroMerge(categoryArgs(), args)
-		return args
-	})
+func Category(h *wp.Handle, id string) string {
+
 	conf := reload.GetAnyValBys("widget-category-conf", h, func(a *wp.Handle) map[any]any {
 		conf := wpconfig.GetPHPArrayVal("widget_categories", categoryConfig(), int64(2))
 		conf = maps.FilterZeroMerge(categoryConfig(), conf)
 		return conf
 	})
 
-	args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
+	args := reload.GetAnyValBys("widget-category-args", h, func(h *wp.Handle) map[string]string {
+		commonArgs := wp.GetComponentsArgs(h, widgets.Widget, map[string]string{})
+		args := wp.GetComponentsArgs(h, widgets.Categories, categoryArgs())
+		args = maps.FilterZeroMerge(categoryArgs(), CommonArgs(), commonArgs, args)
+		args["{$before_widget}"] = fmt.Sprintf(args["{$before_widget}"], str.Join("categories-", id), str.Join("widget widget_", "categories"))
+		args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
+		return args
+	})
+
 	t := categoryTemplate
 	dropdown := conf["dropdown"].(int64)
-	if id, ok := args["{$id}"]; ok && id != "" {
-		args["{$before_widget}"] = strings.ReplaceAll(args["{$before_widget}"], "2", args["{$id}"])
-	}
 	categories := cache.CategoriesTags(h.C, constraints.Category)
 	if dropdown == 1 {
 		t = strings.ReplaceAll(t, "{$html}", CategoryDropdown(h, args, conf, categories))
-
 	} else {
 		t = strings.ReplaceAll(t, "{$html}", categoryUL(h, args, conf, categories))
 	}

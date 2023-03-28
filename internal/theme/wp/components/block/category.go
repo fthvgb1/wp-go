@@ -10,6 +10,7 @@ import (
 	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	constraints2 "github.com/fthvgb1/wp-go/internal/pkg/constraints"
+	"github.com/fthvgb1/wp-go/internal/pkg/constraints/widgets"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/theme/wp"
@@ -70,7 +71,7 @@ func parseAttr(attr map[any]any) string {
 	return strings.Join(attrs, " ")
 }
 
-func Category(h *wp.Handle, id string, blockParser ParserBlock, args map[string]string) (func() string, error) {
+func Category(h *wp.Handle, id string, blockParser ParserBlock) (func() string, error) {
 	counter := number.Counters[int]()
 	var err error
 	conf := reload.GetAnyValBys("block-category-conf", h, func(h *wp.Handle) map[any]any {
@@ -115,7 +116,8 @@ func Category(h *wp.Handle, id string, blockParser ParserBlock, args map[string]
 	if maps.GetAnyAnyValWithDefaults(conf, false, "showOnlyTopLevel") {
 		h.C.Set("showOnlyTopLevel", true)
 	}
-	args = reload.GetAnyValBys("block-category-args", h, func(h *wp.Handle) map[string]string {
+	args := reload.GetAnyValBys("block-category-args", h, func(h *wp.Handle) map[string]string {
+		args := wp.GetComponentsArgs(h, widgets.Widget, map[string]string{})
 		return maps.FilterZeroMerge(categoryDefaultArgs(), args)
 	})
 

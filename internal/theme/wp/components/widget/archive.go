@@ -24,10 +24,6 @@ var archiveTemplate = `{$before_widget}
 
 func archiveArgs() map[string]string {
 	return map[string]string{
-		"{$before_widget}":  `<aside id="archives-2" class="widget widget_archive">`,
-		"{$after_widget}":   "</aside>",
-		"{$before_title}":   `<h2 class="widget-title">`,
-		"{$after_title}":    "</h2>",
 		"{$before_sidebar}": "",
 		"{$after_sidebar}":  "",
 		"{$nav}":            "",
@@ -47,24 +43,23 @@ func archivesConfig() map[any]any {
 	}
 }
 
-func Archive(h *wp.Handle) string {
-	args := reload.GetAnyValBys("widget-archive-args", h, func(h *wp.Handle) map[string]string {
-		archiveArgs := archiveArgs()
-		args := wp.GetComponentsArgs(h, widgets.Archive, archiveArgs)
-		args = maps.FilterZeroMerge(archiveArgs, args)
-		return args
-	})
-
+func Archive(h *wp.Handle, id string) string {
 	conf := reload.GetAnyValBys("widget-archive-conf", h, func(h *wp.Handle) map[any]any {
 		archivesConfig := archivesConfig()
 		conf := wpconfig.GetPHPArrayVal("widget_archives", archivesConfig, int64(2))
 		return conf
 	})
 
-	args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
-	if id, ok := args["{$id}"]; ok && id != "" {
-		args["{$before_widget}"] = strings.ReplaceAll(args["{$before_widget}"], "2", args["{$id}"])
-	}
+	args := reload.GetAnyValBys("widget-archive-args", h, func(h *wp.Handle) map[string]string {
+		archiveArgs := archiveArgs()
+		commonArgs := wp.GetComponentsArgs(h, widgets.Widget, CommonArgs())
+		args := wp.GetComponentsArgs(h, widgets.Archive, archiveArgs)
+		args = maps.FilterZeroMerge(archiveArgs, CommonArgs(), commonArgs, args)
+		args["{$before_widget}"] = fmt.Sprintf(args["{$before_widget}"], str.Join("archives-", id), str.Join("widget widget_", "archive"))
+		args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
+		return args
+	})
+
 	s := archiveTemplate
 	if int64(1) == conf["dropdown"].(int64) {
 		s = strings.ReplaceAll(s, "{$html}", archiveDropDown(h, conf, args, cache.Archives(h.C)))

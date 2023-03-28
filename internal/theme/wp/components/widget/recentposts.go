@@ -27,10 +27,6 @@ var recentPostsTemplate = `{$before_widget}
 
 func recentPostsArgs() map[string]string {
 	return map[string]string{
-		"{$before_widget}":  `<aside id="recent-posts-2" class="widget widget_recent_entries">`,
-		"{$after_widget}":   "</aside>",
-		"{$before_title}":   `<h2 class="widget-title">`,
-		"{$after_title}":    "</h2>",
 		"{$before_sidebar}": "",
 		"{$after_sidebar}":  "",
 		"{$nav}":            "",
@@ -47,13 +43,7 @@ func recentConf() map[any]any {
 	}
 }
 
-func RecentPosts(h *wp.Handle) string {
-	args := reload.GetAnyValBys("widget-recent-posts-args", h, func(h *wp.Handle) map[string]string {
-		recent := recentPostsArgs()
-		args := wp.GetComponentsArgs(h, widgets.RecentPosts, recent)
-		args = maps.FilterZeroMerge(recent, args)
-		return args
-	})
+func RecentPosts(h *wp.Handle, id string) string {
 	conf := reload.GetAnyValBys("widget-recent-posts-conf", h, func(h *wp.Handle) map[any]any {
 		recent := recentConf()
 		conf := wpconfig.GetPHPArrayVal[map[any]any]("widget_recent-posts", recent, int64(2))
@@ -61,14 +51,20 @@ func RecentPosts(h *wp.Handle) string {
 		return conf
 	})
 
-	if id, ok := args["{$id}"]; ok && id != "" {
-		args["{$before_widget}"] = strings.ReplaceAll(args["{$before_widget}"], "2", args["{$id}"])
-	}
-	args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
-	if slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
-		args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, conf["title"])
-		args["{$navCloser}"] = "</nav>"
-	}
+	args := reload.GetAnyValBys("widget-recent-posts-args", h, func(h *wp.Handle) map[string]string {
+		recent := recentPostsArgs()
+		commonArgs := wp.GetComponentsArgs(h, widgets.Widget, map[string]string{})
+		args := wp.GetComponentsArgs(h, widgets.RecentPosts, recent)
+		args = maps.FilterZeroMerge(recent, CommonArgs(), commonArgs, args)
+		args["{$before_widget}"] = fmt.Sprintf(args["{$before_widget}"], str.Join("recent-posts-", id), str.Join("widget widget_", "recent_entries"))
+		args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
+		if slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
+			args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, conf["title"])
+			args["{$navCloser}"] = "</nav>"
+		}
+		return args
+	})
+
 	currentPostId := uint64(0)
 	if h.Scene() == constraints.Detail {
 		currentPostId = str.ToInteger(h.C.Param("id"), uint64(0))

@@ -16,10 +16,6 @@ import (
 
 func recentCommentsArgs() map[string]string {
 	return map[string]string{
-		"{$before_widget}":      `<aside id="recent-comments-2" class="widget widget_recent_comments">`,
-		"{$after_widget}":       "</aside>",
-		"{$before_title}":       `<h2 class="widget-title">`,
-		"{$after_title}":        "</h2>",
 		"{$before_sidebar}":     "",
 		"{$after_sidebar}":      "",
 		"{$nav}":                "",
@@ -46,29 +42,27 @@ var recentCommentsTemplate = `{$before_widget}
 {$after_widget}
 `
 
-func RecentComments(h *wp.Handle) string {
-	args := reload.GetAnyValBys("widget-recent-comment-args", h, func(h *wp.Handle) map[string]string {
-		commentsArgs := recentCommentsArgs()
-		args := wp.GetComponentsArgs(h, widgets.RecentComments, commentsArgs)
-		args = maps.FilterZeroMerge(commentsArgs, args)
-		return args
-	})
-
+func RecentComments(h *wp.Handle, id string) string {
 	conf := reload.GetAnyValBys("widget-recent-comment-conf", h, func(h *wp.Handle) map[any]any {
 		commentConf := recentCommentConf()
 		conf := wpconfig.GetPHPArrayVal("widget_recent-comments", commentConf, int64(2))
 		conf = maps.FilterZeroMerge(commentConf, conf)
 		return conf
 	})
+	args := reload.GetAnyValBys("widget-recent-comment-args", h, func(h *wp.Handle) map[string]string {
+		commentsArgs := recentCommentsArgs()
+		commonArgs := wp.GetComponentsArgs(h, widgets.Widget, map[string]string{})
+		args := wp.GetComponentsArgs(h, widgets.RecentComments, commentsArgs)
+		args = maps.FilterZeroMerge(commentsArgs, CommonArgs(), commonArgs, args)
+		args["{$before_widget}"] = fmt.Sprintf(args["{$before_widget}"], str.Join("recent-comments-", id), str.Join("widget widget_", "recent_comments"))
+		args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
+		if slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
+			args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, conf["title"])
+			args["{$navCloser}"] = "</nav>"
+		}
+		return args
+	})
 
-	args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
-	if id, ok := args["{$id}"]; ok && id != "" {
-		args["{$before_widget}"] = strings.ReplaceAll(args["{$before_widget}"], "2", args["{$id}"])
-	}
-	if slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
-		args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, conf["title"])
-		args["{$navCloser}"] = "</nav>"
-	}
 	comments := slice.Map(cache.RecentComments(h.C, int(conf["number"].(int64))), func(t models.Comments) string {
 		return fmt.Sprintf(`	<li>
 <span class="comment-author-link">%s</span>发表在《
