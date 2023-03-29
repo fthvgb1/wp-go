@@ -82,6 +82,9 @@ func (i *IndexHandle) GetIndexData() (posts []models.Posts, totalRaw int, err er
 	case constraints.Home, constraints.Category, constraints.Tag, constraints.Author:
 
 		posts, totalRaw, err = cache.PostLists(i.C, i.Param.CacheKey, i.C, q, i.Param.Page, i.Param.PageSize)
+		if i.scene == constraints.Home && i.Param.Page == 1 {
+			i.MarkSticky(&posts)
+		}
 
 	case constraints.Search:
 
@@ -161,4 +164,14 @@ func Indexs(h *Handle) {
 	_ = i.BuildIndexData(NewIndexParams(i.C))
 	PreCodeAndStats(h)
 	PreTemplate(h)
+}
+
+func (i *IndexHandle) MarkSticky(posts *[]models.Posts) {
+	a := i.StickPosts()
+	if len(a) < 1 {
+		return
+	}
+	*posts = append(a, slice.Filter(*posts, func(post models.Posts, _ int) bool {
+		return !i.IsStick(post.Id)
+	})...)
 }

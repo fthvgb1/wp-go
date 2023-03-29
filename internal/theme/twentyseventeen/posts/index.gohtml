@@ -17,8 +17,12 @@
                     <div id="primary" class="content-area">
                         <main id="main" class="site-main">
                             {{ range $k,$v:=.posts}}
-                                <article id="post-{{$v.Id}}" class="post-{{$v.Id}} post {{if $v.Thumbnail.Path}}has-post-thumbnail{{end}} type-post status-publish format-standard hentry category">
-
+                                <article id="post-{{$v.Id}}" class="post-{{$v.Id}} post {{if $v.Thumbnail.Path}}has-post-thumbnail{{end}} {{if $v.IsSticky}}sticky{{end}} type-post status-publish format-standard hentry category">
+                                    {{if $v.IsSticky}}
+                                        <svg class="icon icon-thumb-tack" aria-hidden="true" role="img">
+                                            <use href="#icon-thumb-tack" xlink:href="#icon-thumb-tack"></use>
+                                        </svg>
+                                    {{end}}
                                     <header class="entry-header">
                                         <div class="entry-meta">
                                             <span class="screen-reader-text">发布于 </span>

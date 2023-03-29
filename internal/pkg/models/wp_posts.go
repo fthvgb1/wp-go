@@ -35,6 +35,7 @@ type Posts struct {
 	Tags               []string `json:"tags"`
 	CategoriesHtml     string
 	TagsHtml           string
+	IsSticky           bool
 	Thumbnail          PostThumbnail
 	AttachmentMetadata WpAttachmentMetadata
 }

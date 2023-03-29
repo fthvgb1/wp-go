@@ -32,32 +32,35 @@
                         </div><!-- .entry-content -->
 
                         <footer class="entry-footer">
-                <span class="posted-on">
-                    <span class="screen-reader-text">发布于 </span>
-                    <a href="/p/{{$v.Id}}" rel="bookmark">
-                        <time class="entry-date published updated" datetime="{{$v.PostDateGmt}}">{{$v.PostDate|dateCh}}
-                        </time>
-                    </a>
-                </span>
+                            {{if $v.IsSticky}}
+                                <span class="sticky-post">特色</span>
+                            {{end}}
+                            <span class="posted-on">
+                                <span class="screen-reader-text">发布于 </span>
+                                <a href="/p/{{$v.Id}}" rel="bookmark">
+                                    <time class="entry-date published updated" datetime="{{$v.PostDateGmt}}">{{$v.PostDate|dateCh}}
+                                    </time>
+                                </a>
+                            </span>
                             {{if $v.CategoriesHtml}}
                                 <span class="cat-links">
-                    <span class="screen-reader-text">分类 </span>
-                    {{$v.CategoriesHtml|unescaped}}
-                </span>
+                                    <span class="screen-reader-text">分类 </span>
+                                    {{$v.CategoriesHtml|unescaped}}
+                                </span>
                             {{end}}
 
                             {{if $v.TagsHtml}}
                                 <span class="tags-links">
-                    <span class="screen-reader-text">标签 </span>
-                    {{$v.TagsHtml|unescaped}}
-                </span>
+                                    <span class="screen-reader-text">标签 </span>
+                                    {{$v.TagsHtml|unescaped}}
+                                </span>
                             {{end}}
                             {{if gt $v.CommentCount 0}}
                                 <span class="comments-link">
-                        <a href="/p/{{$v.Id}}#comments">
-                             <span class="screen-reader-text">{{$v.PostTitle}}</span>有{{$v.CommentCount}}条评论
-                         </a>
-                    </span>
+                                    <a href="/p/{{$v.Id}}#comments">
+                                        <span class="screen-reader-text">{{$v.PostTitle}}</span>有{{$v.CommentCount}}条评论
+                                     </a>
+                                </span>
                             {{end}}
 
                         </footer><!-- .entry-footer -->
