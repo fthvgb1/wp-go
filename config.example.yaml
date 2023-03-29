@@ -58,8 +58,6 @@ cacheTime:
   userInfoCacheTime: 24h
   # 单独评论缓存时间
   commentsCacheTime: 24h
-  # 主题的页眉图片缓存时间
-  themeHeaderImagCacheTime: 5m
   # 随机sleep时间
   sleepTime: [ 1s,3s ]
 # 摘要字数

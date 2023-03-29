@@ -38,24 +38,23 @@ type Config struct {
 }
 
 type CacheTime struct {
-	CacheControl             time.Duration   `yaml:"cacheControl"`
-	RecentPostCacheTime      time.Duration   `yaml:"recentPostCacheTime"`
-	CategoryCacheTime        time.Duration   `yaml:"categoryCacheTime"`
-	ArchiveCacheTime         time.Duration   `yaml:"archiveCacheTime"`
-	ContextPostCacheTime     time.Duration   `yaml:"contextPostCacheTime"`
-	RecentCommentsCacheTime  time.Duration   `yaml:"recentCommentsCacheTime"`
-	DigestCacheTime          time.Duration   `yaml:"digestCacheTime"`
-	PostListCacheTime        time.Duration   `yaml:"postListCacheTime"`
-	SearchPostCacheTime      time.Duration   `yaml:"searchPostCacheTime"`
-	MonthPostCacheTime       time.Duration   `yaml:"monthPostCacheTime"`
-	PostDataCacheTime        time.Duration   `yaml:"postDataCacheTime"`
-	PostCommentsCacheTime    time.Duration   `yaml:"postCommentsCacheTime"`
-	CrontabClearCacheTime    time.Duration   `yaml:"crontabClearCacheTime"`
-	MaxPostIdCacheTime       time.Duration   `yaml:"maxPostIdCacheTime"`
-	UserInfoCacheTime        time.Duration   `yaml:"userInfoCacheTime"`
-	CommentsCacheTime        time.Duration   `yaml:"commentsCacheTime"`
-	ThemeHeaderImagCacheTime time.Duration   `yaml:"themeHeaderImagCacheTime"`
-	SleepTime                []time.Duration `yaml:"sleepTime"`
+	CacheControl            time.Duration   `yaml:"cacheControl"`
+	RecentPostCacheTime     time.Duration   `yaml:"recentPostCacheTime"`
+	CategoryCacheTime       time.Duration   `yaml:"categoryCacheTime"`
+	ArchiveCacheTime        time.Duration   `yaml:"archiveCacheTime"`
+	ContextPostCacheTime    time.Duration   `yaml:"contextPostCacheTime"`
+	RecentCommentsCacheTime time.Duration   `yaml:"recentCommentsCacheTime"`
+	DigestCacheTime         time.Duration   `yaml:"digestCacheTime"`
+	PostListCacheTime       time.Duration   `yaml:"postListCacheTime"`
+	SearchPostCacheTime     time.Duration   `yaml:"searchPostCacheTime"`
+	MonthPostCacheTime      time.Duration   `yaml:"monthPostCacheTime"`
+	PostDataCacheTime       time.Duration   `yaml:"postDataCacheTime"`
+	PostCommentsCacheTime   time.Duration   `yaml:"postCommentsCacheTime"`
+	CrontabClearCacheTime   time.Duration   `yaml:"crontabClearCacheTime"`
+	MaxPostIdCacheTime      time.Duration   `yaml:"maxPostIdCacheTime"`
+	UserInfoCacheTime       time.Duration   `yaml:"userInfoCacheTime"`
+	CommentsCacheTime       time.Duration   `yaml:"commentsCacheTime"`
+	SleepTime               []time.Duration `yaml:"sleepTime"`
 }
 
 type Ssl struct {

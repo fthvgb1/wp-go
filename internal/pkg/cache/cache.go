@@ -42,8 +42,6 @@ var newCommentCache *cache.MapCache[string, string]
 
 var allUsernameCache *cache.VarCache[map[string]struct{}]
 
-var headerImagesCache *cache.MapCache[string, []models.PostThumbnail]
-
 func InitActionsCommonCache() {
 	c := config.GetConfig()
 	archivesCaches = &Arch{
@@ -80,8 +78,6 @@ func InitActionsCommonCache() {
 	commentsCache = cachemanager.MapBatchCacheBy(dao.GetCommentByIds, c.CacheTime.CommentsCacheTime)
 
 	allUsernameCache = cache.NewVarCache(dao.AllUsername, c.CacheTime.UserInfoCacheTime)
-
-	headerImagesCache = cachemanager.MapCacheBy[string](getHeaderImages, c.CacheTime.ThemeHeaderImagCacheTime)
 
 	feedCache = cache.NewVarCache(feed, time.Hour)
 
