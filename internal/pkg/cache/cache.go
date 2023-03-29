@@ -9,6 +9,7 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/dao"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
+	"github.com/fthvgb1/wp-go/safety"
 	"sync"
 	"time"
 )
@@ -47,6 +48,7 @@ func InitActionsCommonCache() {
 	archivesCaches = &Arch{
 		mutex: &sync.Mutex{},
 		fn:    dao.Archives,
+		data:  *safety.NewVar([]models.PostArchive{}),
 	}
 
 	searchPostIdsCache = cachemanager.MapCacheBy[string](dao.SearchPostIds, c.CacheTime.SearchPostCacheTime)
@@ -95,14 +97,15 @@ func Archives(ctx context.Context) (r []models.PostArchive) {
 }
 
 type Arch struct {
-	data  []models.PostArchive
+	data  safety.Var[[]models.PostArchive]
 	mutex *sync.Mutex
 	fn    func(context.Context) ([]models.PostArchive, error)
 	month time.Month
 }
 
 func (a *Arch) getArchiveCache(ctx context.Context) []models.PostArchive {
-	l := len(a.data)
+	data := a.data.Load()
+	l := len(data)
 	m := time.Now().Month()
 	if l > 0 && a.month != m || l < 1 {
 		r, err := a.fn(ctx)
@@ -113,9 +116,10 @@ func (a *Arch) getArchiveCache(ctx context.Context) []models.PostArchive {
 		a.mutex.Lock()
 		defer a.mutex.Unlock()
 		a.month = m
-		a.data = r
+		a.data.Store(r)
+		data = r
 	}
-	return a.data
+	return data
 }
 
 // CategoriesTags categories or tags

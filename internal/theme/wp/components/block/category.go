@@ -100,6 +100,17 @@ func Category(h *wp.Handle, id string, blockParser ParserBlock) (func() string, 
 		if maps.GetAnyAnyValWithDefaults(conf, false, "showHierarchy") {
 			conf["hierarchical"] = int64(1)
 		}
+
+		class := maps.GetAnyAnyValWithDefaults(conf, "", "className")
+		classes := strings.Split(class, " ")
+		classes = append(classes, "wp-block-categories")
+		if conf["dropdown"].(int64) == 1 {
+			classes = append(classes, "wp-block-categories-dropdown")
+			conf["className"] = strings.Join(classes, " ")
+		} else {
+			classes = append(classes, "wp-block-categories-list")
+			conf["className"] = strings.Join(classes, " ")
+		}
 		return conf
 	})
 
@@ -130,16 +141,9 @@ func category(h *wp.Handle, id string, counter number.Counter[int], args map[str
 	var out = ""
 	categories := cache.CategoriesTags(h.C, constraints2.Category)
 	class := []string{"widget", "widget_block", "widget_categories"}
-	classx := maps.GetAnyAnyValWithDefaults(conf, "", "className")
-	classes := strings.Split(classx, " ")
-	classes = append(classes, "wp-block-categories")
 	if conf["dropdown"].(int64) == 1 {
-		classes = append(classes, "wp-block-categories-dropdown")
-		conf["className"] = strings.Join(classes, " ")
 		out = dropdown(h, categories, counter(), args, conf)
 	} else {
-		classes = append(classes, "wp-block-categories-list")
-		conf["className"] = strings.Join(classes, " ")
 		out = categoryUl(h, categories, conf)
 	}
 	before := fmt.Sprintf(args["{$before_widget}"], str.Join("block-", id), strings.Join(class, " "))

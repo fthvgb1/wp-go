@@ -18,7 +18,7 @@ func (h *Handle) DisplayHeaderText() bool {
 
 func (h *Handle) GetCustomHeader() (r models.PostThumbnail, isRand bool) {
 	var err error
-	hs := reload.GetAnyValBys("headerImages", h.theme, func(theme string) []models.PostThumbnail {
+	hss := reload.GetAnyValBys("headerImages", h.theme, func(theme string) []models.PostThumbnail {
 		hs, er := h.GetHeaderImages(h.theme)
 		if er != nil {
 			err = er
@@ -30,6 +30,7 @@ func (h *Handle) GetCustomHeader() (r models.PostThumbnail, isRand bool) {
 		logs.ErrPrintln(err, "获取页眉背景图失败")
 		return
 	}
+	hs := slice.Copy(hss)
 
 	if len(hs) < 1 {
 		return

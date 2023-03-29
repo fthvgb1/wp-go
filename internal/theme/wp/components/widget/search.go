@@ -70,6 +70,7 @@ func Search(h *wp.Handle, id string) string {
 
 		return args
 	})
+	args = maps.Copy(args)
 	s := strings.ReplaceAll(searchTemplate, "{$form}", form)
 	args["{$value}"] = ""
 	if h.Scene() == constraints.Search {

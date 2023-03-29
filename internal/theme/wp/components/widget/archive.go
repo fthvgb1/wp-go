@@ -57,6 +57,10 @@ func Archive(h *wp.Handle, id string) string {
 		args = maps.FilterZeroMerge(archiveArgs, CommonArgs(), commonArgs, args)
 		args["{$before_widget}"] = fmt.Sprintf(args["{$before_widget}"], str.Join("archives-", id), str.Join("widget widget_", "archive"))
 		args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
+		if slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
+			args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, conf["title"].(string))
+			args["{$navCloser}"] = "</nav>"
+		}
 		return args
 	})
 
@@ -109,10 +113,6 @@ func archiveDropDown(h *wp.Handle, conf map[any]any, args map[string]string, arc
 }
 
 func archiveUl(h *wp.Handle, conf map[any]any, args map[string]string, archives []models.PostArchive) string {
-	if slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
-		args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, conf["title"].(string))
-		args["{$navCloser}"] = "</nav>"
-	}
 	s := str.NewBuilder()
 	s.WriteString(`<ul>`)
 	showCount := conf["count"].(int64)
