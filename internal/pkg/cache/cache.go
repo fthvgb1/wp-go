@@ -10,12 +10,10 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/safety"
-	"sync"
 	"time"
 )
 
 var postContextCache *cache.MapCache[uint64, dao.PostContext]
-var archivesCaches *Arch
 var categoryAndTagsCaches *cache.MapCache[int, []models.TermsMy]
 var recentPostsCaches *cache.VarCache[[]models.Posts]
 var recentCommentsCaches *cache.VarCache[[]models.Comments]
@@ -45,11 +43,6 @@ var allUsernameCache *cache.VarCache[map[string]struct{}]
 
 func InitActionsCommonCache() {
 	c := config.GetConfig()
-	archivesCaches = &Arch{
-		mutex: &sync.Mutex{},
-		fn:    dao.Archives,
-		data:  *safety.NewVar([]models.PostArchive{}),
-	}
 
 	searchPostIdsCache = cachemanager.MapCacheBy[string](dao.SearchPostIds, c.CacheTime.SearchPostCacheTime)
 
@@ -92,19 +85,19 @@ func InitActionsCommonCache() {
 	InitFeed()
 }
 
-func Archives(ctx context.Context) (r []models.PostArchive) {
-	return archivesCaches.getArchiveCache(ctx)
-}
-
 type Arch struct {
-	data  safety.Var[[]models.PostArchive]
-	mutex *sync.Mutex
+	data  []models.PostArchive
 	fn    func(context.Context) ([]models.PostArchive, error)
 	month time.Month
 }
 
-func (a *Arch) getArchiveCache(ctx context.Context) []models.PostArchive {
-	data := a.data.Load()
+var arch = safety.NewVar(Arch{
+	fn: dao.Archives,
+})
+
+func Archives(ctx context.Context) []models.PostArchive {
+	a := arch.Load()
+	data := a.data
 	l := len(data)
 	m := time.Now().Month()
 	if l > 0 && a.month != m || l < 1 {
@@ -113,10 +106,9 @@ func (a *Arch) getArchiveCache(ctx context.Context) []models.PostArchive {
 			logs.ErrPrintln(err, "set cache err[%s]")
 			return nil
 		}
-		a.mutex.Lock()
-		defer a.mutex.Unlock()
 		a.month = m
-		a.data.Store(r)
+		a.data = r
+		arch.Store(a)
 		data = r
 	}
 	return data

@@ -72,9 +72,10 @@ func Search(h *wp.Handle, id string) string {
 	})
 	args = maps.Copy(args)
 	s := strings.ReplaceAll(searchTemplate, "{$form}", form)
-	args["{$value}"] = ""
+	val := ""
 	if h.Scene() == constraints.Search {
-		args["{$value}"] = html.SpecialChars(h.Index.Param.Search)
+		val = html.SpecialChars(h.Index.Param.Search)
 	}
+	s = strings.ReplaceAll(s, "{$value}", val)
 	return h.ComponentFilterFnHook(widgets.Search, str.Replace(s, args))
 }

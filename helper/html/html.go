@@ -32,6 +32,9 @@ const (
 )
 
 func SpecialChars(text string, flag ...int) string {
+	if len(text) < 1 {
+		return ""
+	}
 	flags := EntQuotes
 	if len(flag) > 0 {
 		flags = flag[0]
