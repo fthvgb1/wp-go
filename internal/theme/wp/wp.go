@@ -12,6 +12,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
+	"sync"
 )
 
 type Handle struct {
@@ -26,7 +27,7 @@ type Handle struct {
 	Code              int
 	Stats             int
 	templ             string
-	class             []string
+	bodyClass         []string
 	components        map[string][]Components[string]
 	themeMods         wpconfig.ThemeMods
 	handleFns         map[int][]HandleCall
@@ -35,6 +36,9 @@ type Handle struct {
 	componentsArgs    map[string]any
 	componentFilterFn map[string][]func(*Handle, string, ...any) string
 }
+
+var configHandle = reload.Vars(&Handle{})
+var configHandleMux = sync.Mutex{}
 
 type HandlePlugins map[string]HandleFn[*Handle]
 
@@ -53,6 +57,24 @@ type HandlePipeFn[T any] func(HandleFn[T], T)
 type HandleCall struct {
 	Fn    HandleFn[*Handle]
 	Order int
+}
+
+func InitThemeArgAndConfig(fn func(*Handle) *Handle, h *Handle) {
+	hh := configHandle.Load()
+	if len(hh.handleFns) < 1 {
+		configHandleMux.Lock()
+		hh = configHandle.Load()
+		if len(hh.handleFns) < 1 {
+			hh = fn(h)
+			configHandle.Store(hh)
+		}
+		configHandleMux.Unlock()
+	}
+	h.components = hh.components
+	h.handleFns = hh.handleFns
+	h.componentsArgs = hh.componentsArgs
+	h.componentFilterFn = hh.componentFilterFn
+	h.ginH = maps.Copy(hh.ginH)
 }
 
 func (h *Handle) ComponentFilterFn(name string) ([]func(*Handle, string, ...any) string, bool) {
@@ -109,7 +131,7 @@ func (h *Handle) SetData(k string, v any) {
 }
 
 func (h *Handle) PushClass(class ...string) {
-	h.class = append(h.class, class...)
+	h.bodyClass = append(h.bodyClass, class...)
 }
 
 func GetComponentsArgs[T any](h *Handle, k string, defaults T) T {
@@ -202,7 +224,7 @@ func (h *Handle) PushGroupHandleFn(statsOrScene, order int, fns ...HandleFn[*Han
 }
 
 func (h *Handle) AddCacheComponent(name string, fn func(*Handle) string) {
-	h.ginH[name] = reload.GetAnyValBys(name, h, fn)
+	h.components[name] = append(h.components[name], h.NewCacheComponent(name, 10, fn))
 }
 
 func (h *Handle) PushHeadScript(fn ...Components[string]) {

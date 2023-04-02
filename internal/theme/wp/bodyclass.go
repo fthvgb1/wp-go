@@ -12,7 +12,7 @@ import (
 )
 
 func CalBodyClass(h *Handle) {
-	h.ginH["bodyClass"] = h.BodyClass(h.class...)
+	h.ginH["bodyClass"] = h.BodyClass(h.bodyClass...)
 }
 
 func (h *Handle) BodyClass(class ...string) string {
