@@ -43,29 +43,35 @@ var paginate = func() plugins.PageEle {
 	return p
 }()
 
-var pipe = wp.HandlePipe(wp.Render, widget.MiddleWare(ready)...)
+var pipe = wp.HandlePipe(wp.ExecuteHandleFn, widget.MiddleWare(ready, data)...)
 
 func Hook(h *wp.Handle) {
 	pipe(h)
 }
 
-func ready(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
-	h.GetPassword()
+func configs(h *wp.Handle) *wp.Handle {
 	wphandle.RegisterPlugins(h, config.GetConfig().Plugins...)
 	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(calClass, 20))
-	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(index, 100))
-	h.PushHandleFn(constraints.Detail, wp.NewHandleFn(detail, 100))
-	h.PushGroupHandleFn(constraints.AllStats, 90, wp.PreCodeAndStats, wp.PreTemplate, errorsHandle)
 	h.PushCacheGroupHeadScript("colorScheme-customHeader", 10, colorScheme, customHeader)
-	h.PushHandleFn(constraints.Ok, wp.NewHandleFn(components.WidgetArea, 20))
+	components.WidgetArea(h)
 	pushScripts(h)
-	h.SetData("HeaderImage", getHeaderImage(h))
+	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(func(h *wp.Handle) {
+		h.SetData("HeaderImage", getHeaderImage(h))
+	}, 10))
 	h.SetComponentsArgs(widgets.Widget, map[string]string{
 		"{$before_widget}": `<section id="%s" class="%s">`,
 		"{$after_widget}":  `</section>`,
 	})
+	h.PushGroupHandleFn(constraints.AllStats, 90, wp.PreTemplate, errorsHandle)
+	h.CommonComponents()
 	wp.SetComponentsArgsForMap(h, widgets.Search, "{$form}", searchForm)
-
+	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(wp.IndexRender, 10))
+	h.PushHandleFn(constraints.Detail, wp.NewHandleFn(wp.DetailRender, 10))
+	return h
+}
+func ready(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
+	wp.InitThemeArgAndConfig(configs, h)
+	h.GetPassword()
 	next(h)
 }
 
@@ -92,6 +98,17 @@ func errorsHandle(h *wp.Handle) {
 		logs.ErrPrintln(h.Err(), "报错：")
 		h.SetTempl("twentyseventeen/posts/error.gohtml")
 	}
+}
+
+func data(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
+	if h.Scene() == constraints.Detail {
+		detail(h)
+	} else {
+		index(h)
+	}
+	wp.PreCodeAndStats(h)
+	h.DetermineHandleFns()
+	next(h)
 }
 
 func index(h *wp.Handle) {

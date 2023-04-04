@@ -156,6 +156,16 @@ func (i *IndexHandle) Render() {
 	i.Handle.Render()
 }
 
+func IndexRender(h *Handle) {
+	if h.scene == constraints.Detail || h.Stats != constraints.Ok {
+		return
+	}
+	i := h.Index
+	i.ExecPostsPlugin()
+	i.Pagination()
+	i.ginH["posts"] = i.Posts
+}
+
 func Indexs(h *Handle) {
 	if h.Scene() == constraints.Detail {
 		return
@@ -171,7 +181,9 @@ func (i *IndexHandle) MarkSticky(posts *[]models.Posts) {
 	if len(a) < 1 {
 		return
 	}
+	m := i.StickMapPosts()
 	*posts = append(a, slice.Filter(*posts, func(post models.Posts, _ int) bool {
-		return !i.IsStick(post.Id)
+		_, ok := m[post.Id]
+		return !ok
 	})...)
 }

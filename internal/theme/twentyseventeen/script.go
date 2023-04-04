@@ -7,7 +7,7 @@ import (
 )
 
 func pushScripts(h *wp.Handle) {
-	h.PushCacheGroupFooterScript("head", 30, func(h *wp.Handle) string {
+	h.PushCacheGroupHeadScript("head", 30, func(h *wp.Handle) string {
 		head := headScript
 		if "dark" == wpconfig.GetThemeModsVal(ThemeName, "colorscheme", "light") {
 			head = fmt.Sprintf("%s\n%s", headScript, ` <link rel="stylesheet" id="twentyseventeen-colors-dark-css" href="/wp-content/themes/twentyseventeen/assets/css/colors-dark.css?ver=20191025" media="all">`)

@@ -1,6 +1,7 @@
 package wp
 
 import (
+	"fmt"
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
@@ -12,7 +13,6 @@ import (
 	"github.com/gin-gonic/gin"
 	"net/http"
 	"strings"
-	"sync"
 )
 
 type Handle struct {
@@ -35,10 +35,16 @@ type Handle struct {
 	abort             bool
 	componentsArgs    map[string]any
 	componentFilterFn map[string][]func(*Handle, string, ...any) string
+	handleCall        []HandleCall
 }
 
-var configHandle = reload.Vars(&Handle{})
-var configHandleMux = sync.Mutex{}
+func (h *Handle) HandleCall() []HandleCall {
+	return h.handleCall
+}
+
+func (h *Handle) SetHandleCall(handleCall []HandleCall) {
+	h.handleCall = handleCall
+}
 
 type HandlePlugins map[string]HandleFn[*Handle]
 
@@ -60,17 +66,21 @@ type HandleCall struct {
 }
 
 func InitThemeArgAndConfig(fn func(*Handle) *Handle, h *Handle) {
-	hh := configHandle.Load()
-	if len(hh.handleFns) < 1 {
-		configHandleMux.Lock()
-		hh = configHandle.Load()
-		if len(hh.handleFns) < 1 {
-			hh = fn(h)
-			configHandle.Store(hh)
-		}
-		configHandleMux.Unlock()
+	hh := reload.GetAnyValBys("themeArgAndConfig", h, func(h *Handle) Handle {
+		h.components = make(map[string][]Components[string])
+		h.handleFns = make(map[int][]HandleCall)
+		h.componentsArgs = make(map[string]any)
+		h.componentFilterFn = make(map[string][]func(*Handle, string, ...any) string)
+		hh := fn(h)
+		return *hh
+	})
+	m := make(map[string][]Components[string])
+	for k, v := range hh.components {
+		vv := make([]Components[string], len(v))
+		copy(vv, v)
+		m[k] = vv // slice.Copy(v)
 	}
-	h.components = hh.components
+	h.components = m // maps.Copy(hh.components)
 	h.handleFns = hh.handleFns
 	h.componentsArgs = hh.componentsArgs
 	h.componentFilterFn = hh.componentFilterFn
@@ -193,17 +203,13 @@ func NewHandle(c *gin.Context, scene int, theme string) *Handle {
 	mods, err := wpconfig.GetThemeMods(theme)
 	logs.ErrPrintln(err, "获取mods失败")
 	return &Handle{
-		C:                 c,
-		theme:             theme,
-		Session:           sessions.Default(c),
-		ginH:              gin.H{},
-		scene:             scene,
-		Stats:             constraints.Ok,
-		themeMods:         mods,
-		components:        make(map[string][]Components[string]),
-		handleFns:         make(map[int][]HandleCall),
-		componentsArgs:    make(map[string]any),
-		componentFilterFn: make(map[string][]func(*Handle, string, ...any) string),
+		C:         c,
+		theme:     theme,
+		Session:   sessions.Default(c),
+		ginH:      gin.H{},
+		scene:     scene,
+		Stats:     constraints.Ok,
+		themeMods: mods,
 	}
 }
 
@@ -249,8 +255,11 @@ func (h *Handle) PushCacheGroupFooterScript(key string, order int, fns ...func(*
 	h.PushGroupCacheComponentFn(constraints.FooterScript, key, order, fns...)
 }
 func (h *Handle) PushGroupCacheComponentFn(name, key string, order int, fns ...func(*Handle) string) {
-	v := reload.GetStrBy(key, "\n", h, fns...)
-	h.PushGroupComponentStrs(name, order, v)
+	h.PushComponents(name, h.NewCacheComponent(key, order, func(h *Handle) string {
+		return strings.Join(slice.Map(fns, func(t func(*Handle) string) string {
+			return t(h)
+		}), "\n")
+	}))
 }
 
 func (h *Handle) GetPassword() {
@@ -360,7 +369,7 @@ func CalComponents(h *Handle) {
 			if component.Fn != nil {
 				v := ""
 				if component.CacheKey != "" {
-					v = reload.GetAnyValBys(component.CacheKey, h, component.Fn)
+					v = reload.SafetyMapBy("calComponent", component.CacheKey, h, component.Fn)
 				} else {
 					v = component.Fn(h)
 				}
@@ -384,6 +393,42 @@ func HandlePipe[T any](initial func(T), fns ...HandlePipeFn[T]) HandleFn[T] {
 			next(f, t)
 		}
 	}, initial)
+}
+
+func DetermineHandleFn(h *Handle) []HandleCall {
+	calls, ok := h.handleFns[h.Stats]
+	var fns []HandleCall
+	if ok {
+		fns = append(fns, calls...)
+	}
+	calls, ok = h.handleFns[h.scene]
+	if ok {
+		fns = append(fns, calls...)
+	}
+	calls, ok = h.handleFns[constraints.AllStats]
+	if ok {
+		fns = append(fns, calls...)
+	}
+	slice.Sort(fns, func(i, j HandleCall) bool {
+		return i.Order > j.Order
+	})
+	return fns
+}
+
+func (h *Handle) DetermineHandleFns() {
+	key := fmt.Sprintf("%d-%d", h.scene, h.Stats)
+	h.handleCall = reload.SafetyMapBy("handleCalls", key, h, func(h *Handle) []HandleCall {
+		return DetermineHandleFn(h)
+	})
+}
+
+func ExecuteHandleFn(h *Handle) {
+	for _, fn := range h.handleCall {
+		fn.Fn(h)
+		if h.abort {
+			break
+		}
+	}
 }
 
 func Render(h *Handle) {

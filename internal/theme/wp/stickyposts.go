@@ -14,7 +14,7 @@ import (
 )
 
 func (h *Handle) StickPosts() []models.Posts {
-	return reload.GetAnyValBys("stickPosts", h, func(h *Handle) (r []models.Posts) {
+	return reload.GetAnyValBys("stickPostsSlice", h, func(h *Handle) (r []models.Posts) {
 		v := wpconfig.GetOption("sticky_posts")
 		if v == "" {
 			return

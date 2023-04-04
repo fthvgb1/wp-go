@@ -68,7 +68,7 @@ func RecentComments(h *wp.Handle, id string) string {
 <span class="comment-author-link">%s</span>发表在《
 		<a href="/p/%v#comment-%v">%s</a>
 		》
-	</li>`, t.CommentAuthor, t.CommentId, t.CommentPostId, t.PostTitle)
+	</li>`, t.CommentAuthor, t.CommentPostId, t.CommentId, t.PostTitle)
 	})
 	s := strings.ReplaceAll(recentCommentsTemplate, "{$li}", strings.Join(comments, "\n"))
 	return h.ComponentFilterFnHook(widgets.RecentComments, str.Replace(s, args))

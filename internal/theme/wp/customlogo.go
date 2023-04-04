@@ -6,10 +6,7 @@ import (
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
-	"sync"
 )
-
-var logoLock = sync.Mutex{}
 
 func CalCustomLogo(h *Handle) (r string) {
 	id := uint64(h.themeMods.CustomLogo)
@@ -33,9 +30,7 @@ func CalCustomLogo(h *Handle) (r string) {
 		"decoding": "async",
 		//"loading":"lazy",
 	}
-	logoLock.Lock()
 	img := wpconfig.Thumbnail(logo.AttachmentMetadata, siz, "", "")
-	logoLock.Unlock()
 	imgx["srcset"] = img.Srcset
 	imgx["sizes"] = img.Sizes
 	imgx["src"] = img.Path

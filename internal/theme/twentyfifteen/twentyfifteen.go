@@ -34,23 +34,38 @@ func Init(fs embed.FS) {
 	logs.ErrPrintln(err, "解析colorscheme失败")
 }
 
-var pipe = wp.HandlePipe(wp.Render, widget.MiddleWare(ready)...)
+var pipe = wp.HandlePipe(wp.ExecuteHandleFn, widget.MiddleWare(ready, data)...)
 
 func Hook(h *wp.Handle) {
 	pipe(h)
 }
 
 func ready(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
+	wp.InitThemeArgAndConfig(configs, h)
 	h.GetPassword()
+	next(h)
+}
+
+func data(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
+	if h.Scene() == constraints.Detail {
+		wp.Details(h)
+	} else {
+		wp.Indexs(h)
+	}
+	h.DetermineHandleFns()
+	next(h)
+}
+
+func configs(h *wp.Handle) *wp.Handle {
 	h.PushComponentFilterFn(widgets.Search, func(h *wp.Handle, s string, args ...any) string {
 		return strings.ReplaceAll(s, `class="search-submit"`, `class="search-submit screen-reader-text"`)
 	})
 	wphandle.RegisterPlugins(h, config.GetConfig().Plugins...)
-
 	h.PushCacheGroupHeadScript("CalCustomBackGround", 10, CalCustomBackGround, colorSchemeCss)
+	h.CommonComponents()
 	h.PushHandleFn(constraints.Ok, wp.NewHandleFn(components.WidgetArea, 20))
 	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(customHeader, 10))
-	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(wp.Indexs, 100))
-	h.PushHandleFn(constraints.Detail, wp.NewHandleFn(wp.Details, 100))
-	next(h)
+	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(wp.IndexRender, 50))
+	h.PushHandleFn(constraints.Detail, wp.NewHandleFn(wp.DetailRender, 50))
+	return h
 }
