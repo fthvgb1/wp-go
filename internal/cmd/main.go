@@ -16,7 +16,6 @@ import (
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/fthvgb1/wp-go/model"
 	"log"
-	"math/rand"
 	"os"
 	"os/signal"
 	"regexp"
@@ -39,7 +38,6 @@ func init() {
 	if intReg.MatchString(address) && !strings.Contains(address, ":") {
 		address = ":" + address
 	}
-	rand.Seed(time.Now().UnixNano())
 	err := initConf(confPath)
 	if err != nil {
 		panic(err)
@@ -101,6 +99,8 @@ func reloads() {
 	}()
 	err := config.InitConfig(confPath)
 	logs.ErrPrintln(err, "获取配置文件失败", confPath)
+	_, err = db.InitDb()
+	logs.ErrPrintln(err, "重新读取db失败", config.GetConfig().Mysql)
 	err = wpconfig.InitOptions()
 	logs.ErrPrintln(err, "获取网站设置WpOption失败")
 	err = wpconfig.InitTerms()

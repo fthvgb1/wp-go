@@ -63,6 +63,10 @@ func Category(h *wp.Handle, id string) string {
 		args = maps.FilterZeroMerge(categoryArgs(), CommonArgs(), commonArgs, args)
 		args["{$before_widget}"] = fmt.Sprintf(args["{$before_widget}"], str.Join("categories-", id), str.Join("widget widget_", "categories"))
 		args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
+		if conf["dropdown"].(int64) == 0 && slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
+			args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, args["{title}"])
+			args["{$navCloser}"] = "</nav>"
+		}
 		return args
 	})
 
@@ -118,10 +122,6 @@ func CategoryLi(h *wp.Handle, conf map[any]any, categories []models.TermsMy) str
 }
 
 func categoryUL(h *wp.Handle, args map[string]string, conf map[any]any, categories []models.TermsMy) string {
-	if slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
-		args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, args["{title}"])
-		args["{$navCloser}"] = "</nav>"
-	}
 	s := str.NewBuilder()
 	s.WriteString("<ul>\n")
 	s.WriteString(CategoryLi(h, conf, categories))

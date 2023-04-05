@@ -4,18 +4,18 @@ import (
 	"context"
 	"github.com/fthvgb1/wp-go/internal/pkg/config"
 	"github.com/fthvgb1/wp-go/model"
+	"github.com/fthvgb1/wp-go/safety"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"log"
 )
 
-var db *sqlx.DB
+var safeDb = safety.NewVar[*sqlx.DB](nil)
 
-func InitDb() (*sqlx.DB, error) {
+func InitDb() (*safety.Var[*sqlx.DB], error) {
 	c := config.GetConfig()
 	dsn := c.Mysql.Dsn.GetDsn()
-	var err error
-	db, err = sqlx.Open("mysql", dsn)
+	db, err := sqlx.Open("mysql", dsn)
 	if err != nil {
 		return nil, err
 	}
@@ -31,14 +31,14 @@ func InitDb() (*sqlx.DB, error) {
 	if c.Mysql.Pool.ConnMaxLifetime != 0 {
 		db.SetConnMaxLifetime(c.Mysql.Pool.ConnMaxLifetime)
 	}
-	return db, err
+	safeDb.Store(db)
+	return safeDb, err
 }
 
-func QueryDb(db *sqlx.DB) *model.SqlxQuery {
+func QueryDb(db *safety.Var[*sqlx.DB]) *model.SqlxQuery {
 	query := model.NewSqlxQuery(db, model.NewUniversalDb(
 		nil,
 		nil))
-
 	model.SetSelect(query, func(ctx context.Context, a any, s string, args ...any) error {
 		if config.GetConfig().ShowQuerySql {
 			go log.Println(model.FormatSql(s, args...))

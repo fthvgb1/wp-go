@@ -161,6 +161,7 @@ func categoryUl(h *wp.Handle, categories []models.TermsMy, conf map[any]any) str
 func dropdown(h *wp.Handle, categories []models.TermsMy, id int, args map[string]string, conf map[any]any) string {
 	s := str.NewBuilder()
 	ids := fmt.Sprintf(`wp-block-categories-%v`, id)
+	args = maps.Copy(args)
 	args["{$selectId}"] = ids
 	attrs := reload.GetAnyValBys("block-category-attr", conf, parseAttr)
 	selects := widget.DropdownCategories(h, args, conf, categories)

@@ -57,7 +57,7 @@ func Archive(h *wp.Handle, id string) string {
 		args = maps.FilterZeroMerge(archiveArgs, CommonArgs(), commonArgs, args)
 		args["{$before_widget}"] = fmt.Sprintf(args["{$before_widget}"], str.Join("archives-", id), str.Join("widget widget_", "archive"))
 		args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
-		if slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
+		if conf["dropdown"].(int64) == 0 && slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
 			args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, conf["title"].(string))
 			args["{$navCloser}"] = "</nav>"
 		}

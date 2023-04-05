@@ -6,18 +6,18 @@ import (
 	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
+	"github.com/fthvgb1/wp-go/safety"
 	"github.com/jmoiron/sqlx"
 	"strconv"
 	"strings"
 )
 
 type SqlxQuery struct {
-	sqlx *sqlx.DB
+	sqlx *safety.Var[*sqlx.DB]
 	UniversalDb
 }
 
-func NewSqlxQuery(sqlx *sqlx.DB, u UniversalDb) *SqlxQuery {
-
+func NewSqlxQuery(sqlx *safety.Var[*sqlx.DB], u UniversalDb) *SqlxQuery {
 	s := &SqlxQuery{sqlx: sqlx, UniversalDb: u}
 	if u.selects == nil {
 		s.UniversalDb.selects = s.Selects
@@ -37,28 +37,30 @@ func SetGet(db *SqlxQuery, fn func(context.Context, any, string, ...any) error) 
 
 func (r *SqlxQuery) Selects(ctx context.Context, dest any, sql string, params ...any) error {
 	v := helper.GetContextVal(ctx, "handle=>", "")
+	db := r.sqlx.Load()
 	if v != "" {
 		switch v {
 		case "string":
-			return ToMapSlice(r.sqlx, dest.(*[]map[string]string), sql, params...)
+			return ToMapSlice(db, dest.(*[]map[string]string), sql, params...)
 		case "scanner":
 			fn := ctx.Value("fn")
-			return Scanner[any](r.sqlx, dest, sql, params...)(fn.(func(any)))
+			return Scanner[any](db, dest, sql, params...)(fn.(func(any)))
 		}
 	}
 
-	return r.sqlx.Select(dest, sql, params...)
+	return db.Select(dest, sql, params...)
 }
 
 func (r *SqlxQuery) Gets(ctx context.Context, dest any, sql string, params ...any) error {
+	db := r.sqlx.Load()
 	v := helper.GetContextVal(ctx, "handle=>", "")
 	if v != "" {
 		switch v {
 		case "string":
-			return GetToMap(r.sqlx, dest.(*map[string]string), sql, params...)
+			return GetToMap(db, dest.(*map[string]string), sql, params...)
 		}
 	}
-	return r.sqlx.Get(dest, sql, params...)
+	return db.Get(dest, sql, params...)
 }
 
 func Scanner[T any](db *sqlx.DB, v T, s string, params ...any) func(func(T)) error {
@@ -87,7 +89,7 @@ func ToMapSlice[V any](db *sqlx.DB, dest *[]map[string]V, sql string, params ...
 	defer rows.Close()
 	columnLen := len(columns)
 	c := make([]*V, columnLen)
-	for i, _ := range c {
+	for i := range c {
 		var a V
 		c[i] = &a
 	}
@@ -116,7 +118,7 @@ func GetToMap[V any](db *sqlx.DB, dest *map[string]V, sql string, params ...any)
 	}
 	columnLen := len(columns)
 	c := make([]*V, columnLen)
-	for i, _ := range c {
+	for i := range c {
 		var a V
 		c[i] = &a
 	}
