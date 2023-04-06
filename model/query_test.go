@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"github.com/fthvgb1/wp-go/safety"
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/jmoiron/sqlx"
 	"reflect"
@@ -107,7 +108,7 @@ func init() {
 	if err != nil {
 		panic(err)
 	}
-	glob = NewSqlxQuery(db, NewUniversalDb(func(ctx2 context.Context, a any, s string, a2 ...any) error {
+	glob = NewSqlxQuery(safety.NewVar(db), NewUniversalDb(func(ctx2 context.Context, a any, s string, a2 ...any) error {
 		x := FormatSql(s, a2...)
 		fmt.Println(x)
 		return glob.Selects(ctx2, a, s, a2...)

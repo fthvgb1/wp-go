@@ -1,26 +1,29 @@
 package logs
 
 import (
+	"fmt"
 	"log"
+	"runtime"
 	"strings"
 )
 
 func ErrPrintln(err error, desc string, args ...any) {
-	s := strings.Builder{}
-	tmp := "%s err:[%s]"
-	if desc == "" {
-		tmp = "%s%s"
+	if err == nil {
+		return
 	}
-	s.WriteString(tmp)
-	argss := []any{desc, err}
+	var pcs [1]uintptr
+	runtime.Callers(2, pcs[:])
+	f := runtime.CallersFrames([]uintptr{pcs[0]})
+	ff, _ := f.Next()
+	s := strings.Builder{}
+	_, _ = fmt.Fprintf(&s, "%s:%d %s err:[%s]", ff.File, ff.Line, desc, err)
 	if len(args) > 0 {
 		s.WriteString(" args:")
 		for _, arg := range args {
-			s.WriteString("%v ")
-			argss = append(argss, arg)
+			_, _ = fmt.Fprintf(&s, "%v", arg)
 		}
 	}
 	if err != nil {
-		log.Printf(s.String(), argss...)
+		log.Println(s.String())
 	}
 }
