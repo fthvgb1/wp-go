@@ -149,7 +149,7 @@ func GetThemeMods(theme string) (r ThemeMods, err error) {
 	//这里在的err可以不用处理，因为php的默认值和有设置过的类型可能不一样，直接按有设置的类型处理就行
 	r, err = maps.StrAnyMapToStruct[ThemeMods](m)
 	if err != nil {
-		logs.ErrPrintln(err, "解析thememods错误")
+		logs.Error(err, "解析thememods错误(可忽略)")
 		err = nil
 	}
 	r.setThemeSupport(theme)

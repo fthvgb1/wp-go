@@ -30,7 +30,7 @@ func GetPostMetaByPostIds(args ...any) (r map[uint64]map[string]any, err error) 
 		if postmeta.MetaKey == "_wp_attachment_metadata" {
 			metadata, err := phphelper.UnPHPSerializeToStruct[models.WpAttachmentMetadata](postmeta.MetaValue)
 			if err != nil {
-				logs.ErrPrintln(err, "解析postmeta失败", postmeta.MetaId, postmeta.MetaValue)
+				logs.Error(err, "解析postmeta失败", postmeta.MetaId, postmeta.MetaValue)
 				continue
 			}
 			r[postmeta.PostId][postmeta.MetaKey] = metadata

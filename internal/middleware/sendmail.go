@@ -48,7 +48,7 @@ func RecoverAndSendMail(w io.Writer) func(ctx *gin.Context) {
 					fmt.Sprintf("%s%s %s 发生错误", fmt.Sprintf(wpconfig.GetOption("siteurl")), c.FullPath(), time.Now().Format(time.RFC1123Z)), content)
 
 				if er != nil {
-					logs.ErrPrintln(er, "recover send mail fail", fmt.Sprintf("%v", err))
+					logs.IfError(er, "recover send mail fail", fmt.Sprintf("%v", err))
 				}
 			}()
 		}

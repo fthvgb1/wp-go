@@ -65,22 +65,23 @@ type HandleCall struct {
 	Order int
 }
 
-func InitThemeArgAndConfig(fn func(*Handle) *Handle, h *Handle) {
+func InitThemeArgAndConfig(fn func(*Handle), h *Handle) {
 	hh := reload.GetAnyValBys("themeArgAndConfig", h, func(h *Handle) Handle {
 		h.components = make(map[string][]Components[string])
 		h.handleFns = make(map[int][]HandleCall)
 		h.componentsArgs = make(map[string]any)
 		h.componentFilterFn = make(map[string][]func(*Handle, string, ...any) string)
-		hh := fn(h)
-		return *hh
+		h.ginH = gin.H{}
+		fn(h)
+		return *h
 	})
 	m := make(map[string][]Components[string])
 	for k, v := range hh.components {
 		vv := make([]Components[string], len(v))
 		copy(vv, v)
-		m[k] = vv // slice.Copy(v)
+		m[k] = vv
 	}
-	h.components = m // maps.Copy(hh.components)
+	h.components = m
 	h.handleFns = hh.handleFns
 	h.componentsArgs = hh.componentsArgs
 	h.componentFilterFn = hh.componentFilterFn
@@ -201,12 +202,11 @@ func (h *Handle) SetComponentsArgs(key string, value any) {
 
 func NewHandle(c *gin.Context, scene int, theme string) *Handle {
 	mods, err := wpconfig.GetThemeMods(theme)
-	logs.ErrPrintln(err, "获取mods失败")
+	logs.IfError(err, "获取mods失败")
 	return &Handle{
 		C:         c,
 		theme:     theme,
 		Session:   sessions.Default(c),
-		ginH:      gin.H{},
 		scene:     scene,
 		Stats:     constraints.Ok,
 		themeMods: mods,

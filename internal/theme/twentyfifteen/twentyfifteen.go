@@ -19,19 +19,24 @@ const ThemeName = "twentyfifteen"
 func Init(fs embed.FS) {
 	b, err := fs.ReadFile("twentyfifteen/themesupport.json")
 	if err != nil {
+		logs.Error(err, "读取themesupport.json失败")
 		return
 	}
 	err = json.Unmarshal(b, &themesupport)
-	logs.ErrPrintln(err, "解析themesupport失败")
+	if err != nil {
+		logs.Error(err, "解析themesupport失败")
+		return
+	}
 	bytes, err := fs.ReadFile("twentyfifteen/colorscheme.json")
 	if err != nil {
+		logs.Error(err, "读取colorscheme.json失败")
 		return
 	}
 	err = json.Unmarshal(bytes, &colorscheme)
 	if err != nil {
+		logs.Error(err, "解析colorscheme失败")
 		return
 	}
-	logs.ErrPrintln(err, "解析colorscheme失败")
 }
 
 var pipe = wp.HandlePipe(wp.ExecuteHandleFn, widget.MiddleWare(ready, data)...)
@@ -56,7 +61,7 @@ func data(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
 	next(h)
 }
 
-func configs(h *wp.Handle) *wp.Handle {
+func configs(h *wp.Handle) {
 	h.PushComponentFilterFn(widgets.Search, func(h *wp.Handle, s string, args ...any) string {
 		return strings.ReplaceAll(s, `class="search-submit"`, `class="search-submit screen-reader-text"`)
 	})
@@ -67,5 +72,4 @@ func configs(h *wp.Handle) *wp.Handle {
 	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(customHeader, 10))
 	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(wp.IndexRender, 50))
 	h.PushHandleFn(constraints.Detail, wp.NewHandleFn(wp.DetailRender, 50))
-	return h
 }

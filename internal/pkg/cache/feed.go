@@ -96,7 +96,7 @@ func postFeed(arg ...any) (x string, err error) {
 	id := arg[1].(string)
 	ID := str.ToInteger[uint64](id, 0)
 	maxId, err := GetMaxPostId(c)
-	logs.ErrPrintln(err, "get max post id")
+	logs.IfError(err, "get max post id")
 	if ID < 1 || ID > maxId || err != nil {
 		return
 	}

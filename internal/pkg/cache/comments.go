@@ -15,7 +15,7 @@ func RecentComments(ctx context.Context, n int) (r []models.Comments) {
 	if len(r) > n {
 		r = r[0:n]
 	}
-	logs.ErrPrintln(err, "get recent comment")
+	logs.IfError(err, "get recent comment fail")
 	return
 }
 

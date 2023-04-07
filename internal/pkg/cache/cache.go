@@ -103,7 +103,7 @@ func Archives(ctx context.Context) []models.PostArchive {
 	if l > 0 && a.month != m || l < 1 {
 		r, err := a.fn(ctx)
 		if err != nil {
-			logs.ErrPrintln(err, "set cache err[%s]")
+			logs.Error(err, "set cache fail")
 			return nil
 		}
 		a.month = m
@@ -123,7 +123,7 @@ func CategoriesTags(ctx context.Context, t ...int) []models.TermsMy {
 		tt = t[0]
 	}
 	r, err := categoryAndTagsCaches.GetCache(ctx, tt, time.Second, ctx, tt)
-	logs.ErrPrintln(err, "get category err")
+	logs.IfError(err, "get category fail")
 	return r
 }
 func AllCategoryTagsNames(ctx context.Context, t ...int) map[string]struct{} {
@@ -132,7 +132,10 @@ func AllCategoryTagsNames(ctx context.Context, t ...int) map[string]struct{} {
 		tt = t[0]
 	}
 	r, err := categoryAndTagsCaches.GetCache(ctx, tt, time.Second, ctx, tt)
-	logs.ErrPrintln(err, "get category err")
+	if err != nil {
+		logs.Error(err, "get category fail")
+		return nil
+	}
 	return slice.ToMap(r, func(t models.TermsMy) (string, struct{}) {
 		return t.Name, struct{}{}
 	}, true)

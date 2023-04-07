@@ -53,7 +53,10 @@ func initConf(c string) (err error) {
 	if err != nil {
 		return
 	}
-
+	err = logs.InitLogger()
+	if err != nil {
+		return err
+	}
 	database, err := db.InitDb()
 	if err != nil {
 		return
@@ -84,7 +87,7 @@ func flushCache() {
 	defer func() {
 		if r := recover(); r != nil {
 			err := mail.SendMail([]string{config.GetConfig().Mail.User}, "清空缓存失败", fmt.Sprintf("err:[%s]", r))
-			logs.ErrPrintln(err, "发邮件失败")
+			logs.IfError(err, "发邮件失败")
 		}
 	}()
 	cachemanager.Flush()
@@ -98,13 +101,15 @@ func reloads() {
 		}
 	}()
 	err := config.InitConfig(confPath)
-	logs.ErrPrintln(err, "获取配置文件失败", confPath)
+	logs.IfError(err, "获取配置文件失败", confPath)
+	err = logs.InitLogger()
+	logs.IfError(err, "日志配置错误")
 	_, err = db.InitDb()
-	logs.ErrPrintln(err, "重新读取db失败", config.GetConfig().Mysql)
+	logs.IfError(err, "重新读取db失败", config.GetConfig().Mysql)
 	err = wpconfig.InitOptions()
-	logs.ErrPrintln(err, "获取网站设置WpOption失败")
+	logs.IfError(err, "获取网站设置WpOption失败")
 	err = wpconfig.InitTerms()
-	logs.ErrPrintln(err, "获取WpTerms表失败")
+	logs.IfError(err, "获取WpTerms表失败")
 	reload.Reload()
 	flushCache()
 	log.Println("reload complete")

@@ -53,7 +53,7 @@ func RecentPosts(ctx context.Context, n int) (r []models.Posts) {
 	if n < len(r) {
 		r = r[:n]
 	}
-	logs.ErrPrintln(err, "get recent post")
+	logs.IfError(err, "get recent post")
 	return
 }
 

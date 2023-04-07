@@ -69,8 +69,8 @@ maxRequestSleepNum: 100
 maxRequestNum: 500
 # 单ip同时最大搜索请求数
 singleIpSearchNum: 10
-
-
+# 错误日志输出路径
+logOutput: err.log
 # Gzip
 gzip: false
 # 提交评论url

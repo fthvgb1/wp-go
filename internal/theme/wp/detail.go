@@ -38,7 +38,7 @@ func (d *DetailHandle) BuildDetailData() (err error) {
 func (d *DetailHandle) CheckAndGetPost() (err error) {
 	id := str.ToInteger[uint64](d.C.Param("id"), 0)
 	maxId, err := cache.GetMaxPostId(d.C)
-	logs.ErrPrintln(err, "get max post id")
+	logs.IfError(err, "get max post id")
 	if id > maxId || id <= 0 {
 		d.Stats = constraints.ParamError
 		err = errors.New("无效的文档id")
@@ -49,7 +49,7 @@ func (d *DetailHandle) CheckAndGetPost() (err error) {
 	post, err := cache.GetPostById(d.C, id)
 	if post.Id == 0 || err != nil || post.PostStatus != "publish" {
 		d.Stats = constraints.Error404
-		logs.ErrPrintln(err, "获取id失败")
+		logs.IfError(err, "获取id失败")
 		err = errors.New(str.Join("无效的文档id "))
 		return
 	}
@@ -71,7 +71,7 @@ func (d *DetailHandle) PasswordProject() {
 }
 func (d *DetailHandle) Comment() {
 	comments, err := cache.PostComments(d.C, d.Post.Id)
-	logs.ErrPrintln(err, "get d.Post comment", d.Post.Id)
+	logs.IfError(err, "get d.Post comment", d.Post.Id)
 	d.ginH["comments"] = comments
 	d.Comments = comments
 
@@ -95,7 +95,7 @@ func (d *DetailHandle) RenderComment() {
 
 func (d *DetailHandle) ContextPost() {
 	prev, next, err := cache.GetContextPost(d.C, d.Post.Id, d.Post.PostDate)
-	logs.ErrPrintln(err, "get pre and next post", d.Post.Id, d.Post.PostDate)
+	logs.IfError(err, "get pre and next post", d.Post.Id, d.Post.PostDate)
 	d.ginH["next"] = next
 	d.ginH["prev"] = prev
 }

@@ -70,7 +70,7 @@ func GetListPostPlugins(name []string, m map[string]Plugin[models.Posts, *Handle
 		if ok {
 			return v, true
 		}
-		logs.ErrPrintln(errors.New(str.Join("插件", t, "不存在")), "")
+		logs.IfError(errors.New(str.Join("插件", t, "不存在")), "")
 		return nil, false
 	})
 }

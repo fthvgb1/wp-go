@@ -49,7 +49,7 @@ func Hook(h *wp.Handle) {
 	pipe(h)
 }
 
-func configs(h *wp.Handle) *wp.Handle {
+func configs(h *wp.Handle) {
 	wphandle.RegisterPlugins(h, config.GetConfig().Plugins...)
 	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(calClass, 20))
 	h.PushCacheGroupHeadScript("colorScheme-customHeader", 10, colorScheme, customHeader)
@@ -67,7 +67,6 @@ func configs(h *wp.Handle) *wp.Handle {
 	wp.SetComponentsArgsForMap(h, widgets.Search, "{$form}", searchForm)
 	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(wp.IndexRender, 10))
 	h.PushHandleFn(constraints.Detail, wp.NewHandleFn(wp.DetailRender, 10))
-	return h
 }
 func ready(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
 	wp.InitThemeArgAndConfig(configs, h)
@@ -95,7 +94,7 @@ var listPostsPlugins = func() map[string]wp.Plugin[models.Posts, *wp.Handle] {
 func errorsHandle(h *wp.Handle) {
 	switch h.Stats {
 	case constraints.Error404, constraints.InternalErr, constraints.ParamError:
-		logs.ErrPrintln(h.Err(), "报错：")
+		logs.IfError(h.Err(), "报错：")
 		h.SetTempl("twentyseventeen/posts/error.gohtml")
 	}
 }

@@ -78,7 +78,7 @@ func Category(h *wp.Handle, id string, blockParser ParserBlock) (func() string, 
 		var con any
 		err = json.Unmarshal([]byte(blockParser.Attrs), &con)
 		if err != nil {
-			logs.ErrPrintln(err, "解析category attr错误", blockParser.Attrs)
+			logs.Error(err, "解析category attr错误", blockParser.Attrs)
 			return nil
 		}
 		var conf map[any]any

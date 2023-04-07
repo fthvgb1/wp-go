@@ -27,7 +27,7 @@ func (h *Handle) GetCustomHeader() (r models.PostThumbnail, isRand bool) {
 		return hs
 	})
 	if err != nil {
-		logs.ErrPrintln(err, "获取页眉背景图失败")
+		logs.Error(err, "获取页眉背景图失败")
 		return
 	}
 	hs := slice.Copy(img)

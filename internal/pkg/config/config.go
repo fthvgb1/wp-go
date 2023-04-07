@@ -15,65 +15,66 @@ func GetConfig() Config {
 }
 
 type Config struct {
-	Ssl                Ssl       `yaml:"ssl"`
-	Mysql              Mysql     `yaml:"mysql"`
-	Mail               Mail      `yaml:"mail"`
-	CacheTime          CacheTime `yaml:"cacheTime"`
-	DigestWordCount    int       `yaml:"digestWordCount"`
-	MaxRequestSleepNum int64     `yaml:"maxRequestSleepNum"`
-	MaxRequestNum      int64     `yaml:"maxRequestNum"`
-	SingleIpSearchNum  int64     `yaml:"singleIpSearchNum"`
-	Gzip               bool      `yaml:"gzip"`
-	PostCommentUrl     string    `yaml:"postCommentUrl"`
-	TrustIps           []string  `yaml:"trustIps"`
-	TrustServerNames   []string  `yaml:"trustServerNames"`
-	Theme              string    `yaml:"theme"`
-	PostOrder          string    `yaml:"postOrder"`
-	UploadDir          string    `yaml:"uploadDir"`
-	Pprof              string    `yaml:"pprof"`
-	ListPagePlugins    []string  `yaml:"listPagePlugins"`
-	PaginationStep     int       `yaml:"paginationStep"`
-	ShowQuerySql       bool      `yaml:"showQuerySql"`
-	Plugins            []string  `yaml:"plugins"`
+	Ssl                Ssl       `yaml:"ssl" json:"ssl"`
+	Mysql              Mysql     `yaml:"mysql" json:"mysql"`
+	Mail               Mail      `yaml:"mail" json:"mail"`
+	CacheTime          CacheTime `yaml:"cacheTime" json:"cacheTime"`
+	DigestWordCount    int       `yaml:"digestWordCount" json:"digestWordCount,omitempty"`
+	MaxRequestSleepNum int64     `yaml:"maxRequestSleepNum" json:"maxRequestSleepNum,omitempty"`
+	MaxRequestNum      int64     `yaml:"maxRequestNum" json:"maxRequestNum,omitempty"`
+	SingleIpSearchNum  int64     `yaml:"singleIpSearchNum" json:"singleIpSearchNum,omitempty"`
+	Gzip               bool      `yaml:"gzip" json:"gzip,omitempty"`
+	PostCommentUrl     string    `yaml:"postCommentUrl" json:"postCommentUrl,omitempty"`
+	TrustIps           []string  `yaml:"trustIps" json:"trustIps,omitempty"`
+	TrustServerNames   []string  `yaml:"trustServerNames" json:"trustServerNames,omitempty"`
+	Theme              string    `yaml:"theme" json:"theme,omitempty"`
+	PostOrder          string    `yaml:"postOrder" json:"postOrder,omitempty"`
+	UploadDir          string    `yaml:"uploadDir" json:"uploadDir,omitempty"`
+	Pprof              string    `yaml:"pprof" json:"pprof,omitempty"`
+	ListPagePlugins    []string  `yaml:"listPagePlugins" json:"listPagePlugins,omitempty"`
+	PaginationStep     int       `yaml:"paginationStep" json:"paginationStep,omitempty"`
+	ShowQuerySql       bool      `yaml:"showQuerySql" json:"showQuerySql,omitempty"`
+	Plugins            []string  `yaml:"plugins" json:"plugins,omitempty"`
+	LogOutput          string    `yaml:"logOutput" json:"logOutput,omitempty"`
 }
 
 type CacheTime struct {
-	CacheControl            time.Duration   `yaml:"cacheControl"`
-	RecentPostCacheTime     time.Duration   `yaml:"recentPostCacheTime"`
-	CategoryCacheTime       time.Duration   `yaml:"categoryCacheTime"`
-	ArchiveCacheTime        time.Duration   `yaml:"archiveCacheTime"`
-	ContextPostCacheTime    time.Duration   `yaml:"contextPostCacheTime"`
-	RecentCommentsCacheTime time.Duration   `yaml:"recentCommentsCacheTime"`
-	DigestCacheTime         time.Duration   `yaml:"digestCacheTime"`
-	PostListCacheTime       time.Duration   `yaml:"postListCacheTime"`
-	SearchPostCacheTime     time.Duration   `yaml:"searchPostCacheTime"`
-	MonthPostCacheTime      time.Duration   `yaml:"monthPostCacheTime"`
-	PostDataCacheTime       time.Duration   `yaml:"postDataCacheTime"`
-	PostCommentsCacheTime   time.Duration   `yaml:"postCommentsCacheTime"`
-	CrontabClearCacheTime   time.Duration   `yaml:"crontabClearCacheTime"`
-	MaxPostIdCacheTime      time.Duration   `yaml:"maxPostIdCacheTime"`
-	UserInfoCacheTime       time.Duration   `yaml:"userInfoCacheTime"`
-	CommentsCacheTime       time.Duration   `yaml:"commentsCacheTime"`
-	SleepTime               []time.Duration `yaml:"sleepTime"`
+	CacheControl            time.Duration   `yaml:"cacheControl" json:"cacheControl,omitempty"`
+	RecentPostCacheTime     time.Duration   `yaml:"recentPostCacheTime" json:"recentPostCacheTime,omitempty"`
+	CategoryCacheTime       time.Duration   `yaml:"categoryCacheTime" json:"categoryCacheTime,omitempty"`
+	ArchiveCacheTime        time.Duration   `yaml:"archiveCacheTime" json:"archiveCacheTime,omitempty"`
+	ContextPostCacheTime    time.Duration   `yaml:"contextPostCacheTime" json:"contextPostCacheTime,omitempty"`
+	RecentCommentsCacheTime time.Duration   `yaml:"recentCommentsCacheTime" json:"recentCommentsCacheTime,omitempty"`
+	DigestCacheTime         time.Duration   `yaml:"digestCacheTime" json:"digestCacheTime,omitempty"`
+	PostListCacheTime       time.Duration   `yaml:"postListCacheTime" json:"postListCacheTime,omitempty"`
+	SearchPostCacheTime     time.Duration   `yaml:"searchPostCacheTime" json:"searchPostCacheTime,omitempty"`
+	MonthPostCacheTime      time.Duration   `yaml:"monthPostCacheTime" json:"monthPostCacheTime,omitempty"`
+	PostDataCacheTime       time.Duration   `yaml:"postDataCacheTime" json:"postDataCacheTime,omitempty"`
+	PostCommentsCacheTime   time.Duration   `yaml:"postCommentsCacheTime" json:"postCommentsCacheTime,omitempty"`
+	CrontabClearCacheTime   time.Duration   `yaml:"crontabClearCacheTime" json:"crontabClearCacheTime,omitempty"`
+	MaxPostIdCacheTime      time.Duration   `yaml:"maxPostIdCacheTime" json:"maxPostIdCacheTime,omitempty"`
+	UserInfoCacheTime       time.Duration   `yaml:"userInfoCacheTime" json:"userInfoCacheTime,omitempty"`
+	CommentsCacheTime       time.Duration   `yaml:"commentsCacheTime" json:"commentsCacheTime,omitempty"`
+	SleepTime               []time.Duration `yaml:"sleepTime" json:"sleepTime,omitempty"`
 }
 
 type Ssl struct {
-	Cert string `yaml:"cert"`
-	Key  string `yaml:"key"`
+	Cert string `yaml:"cert" json:"cert,omitempty"`
+	Key  string `yaml:"key" json:"key,omitempty"`
 }
 
 type Mail struct {
-	User  string `yaml:"user"`
-	Alias string `yaml:"alias"`
-	Pass  string `yaml:"pass"`
-	Host  string `yaml:"host"`
-	Port  int    `yaml:"port"`
-	Ssl   bool   `yaml:"ssl"`
+	User  string `yaml:"user" json:"user,omitempty"`
+	Alias string `yaml:"alias" json:"alias,omitempty"`
+	Pass  string `yaml:"pass" json:"pass,omitempty"`
+	Host  string `yaml:"host" json:"host,omitempty"`
+	Port  int    `yaml:"port" json:"port,omitempty"`
+	Ssl   bool   `yaml:"ssl" json:"ssl,omitempty"`
 }
 
 type Mysql struct {
-	Dsn  Dsn  `yaml:"dsn"`
-	Pool Pool `yaml:"pool"`
+	Dsn  Dsn  `yaml:"dsn" json:"dsn"`
+	Pool Pool `yaml:"pool" json:"pool"`
 }
 
 func InitConfig(conf string) error {
@@ -94,12 +95,12 @@ func InitConfig(conf string) error {
 }
 
 type Dsn struct {
-	Host     string `yaml:"host"`
-	Port     string `yaml:"port"`
-	Db       string `yaml:"db"`
-	User     string `yaml:"user"`
-	Password string `yaml:"password"`
-	Charset  string `yaml:"charset"`
+	Host     string `yaml:"host" json:"host,omitempty"`
+	Port     string `yaml:"port" json:"port,omitempty"`
+	Db       string `yaml:"db" json:"db,omitempty"`
+	User     string `yaml:"user" json:"user,omitempty"`
+	Password string `yaml:"password" json:"password,omitempty"`
+	Charset  string `yaml:"charset" json:"charset,omitempty"`
 }
 
 func (m Dsn) GetDsn() string {
@@ -111,8 +112,8 @@ func (m Dsn) GetDsn() string {
 }
 
 type Pool struct {
-	ConnMaxIdleTime time.Duration `yaml:"connMaxIdleTime"`
-	MaxOpenConn     int           `yaml:"maxOpenConn"`
-	MaxIdleConn     int           `yaml:"maxIdleConn"`
-	ConnMaxLifetime time.Duration `yaml:"connMaxLifetime"`
+	ConnMaxIdleTime time.Duration `yaml:"connMaxIdleTime" json:"connMaxIdleTime,omitempty"`
+	MaxOpenConn     int           `yaml:"maxOpenConn" json:"maxOpenConn,omitempty"`
+	MaxIdleConn     int           `yaml:"maxIdleConn" json:"maxIdleConn,omitempty"`
+	ConnMaxLifetime time.Duration `yaml:"connMaxLifetime" json:"connMaxLifetime,omitempty"`
 }

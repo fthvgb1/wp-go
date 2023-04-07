@@ -21,7 +21,7 @@ func (h *Handle) StickPosts() []models.Posts {
 		}
 		array, err := phpserialize.UnmarshalIndexedArray([]byte(v))
 		if err != nil {
-			logs.ErrPrintln(err, "解析option sticky_posts错误")
+			logs.Error(err, "解析option sticky_posts错误", v)
 			return
 		}
 		r = slice.FilterAndMap(array, func(t any) (models.Posts, bool) {

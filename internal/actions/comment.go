@@ -94,17 +94,17 @@ func PostComment(c *gin.Context) {
 		go func() {
 			id := str.ToInteger[uint64](i, 0)
 			if id <= 0 {
-				logs.ErrPrintln(err, "获取文档id", i)
+				logs.Error(errors.New("获取文档id错误"), "", i)
 				return
 			}
 			post, err := cache.GetPostById(cc, id)
 			if err != nil {
-				logs.ErrPrintln(err, "获取文档", id)
+				logs.Error(err, "获取文档错误", id)
 				return
 			}
 			su := fmt.Sprintf("%s: %s[%s]发表了评论对文档[%v]的评论", wpconfig.GetOption("siteurl"), author, m, post.PostTitle)
 			err = mail.SendMail([]string{conf.Mail.User}, su, comment)
-			logs.ErrPrintln(err, "发送邮件", conf.Mail.User, su, comment)
+			logs.IfError(err, "发送邮件", conf.Mail.User, su, comment)
 		}()
 
 		s, er := io.ReadAll(ress.Body)

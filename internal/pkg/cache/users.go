@@ -25,6 +25,6 @@ func GetAllUsername(ctx context.Context) (map[string]struct{}, error) {
 
 func GetUserById(ctx context.Context, uid uint64) models.Users {
 	r, err := usersCache.GetCache(ctx, uid, time.Second, ctx, uid)
-	logs.ErrPrintln(err, "get user", uid)
+	logs.IfError(err, "get user", uid)
 	return r
 }

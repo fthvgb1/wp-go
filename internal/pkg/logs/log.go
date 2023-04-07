@@ -2,17 +2,45 @@ package logs
 
 import (
 	"fmt"
+	"github.com/fthvgb1/wp-go/internal/pkg/config"
+	"github.com/fthvgb1/wp-go/safety"
+	"io"
 	"log"
+	"os"
 	"runtime"
 	"strings"
 )
 
-func ErrPrintln(err error, desc string, args ...any) {
-	if err == nil {
-		return
+var logs = safety.NewVar[*log.Logger](nil)
+
+func InitLogger() error {
+	l := &log.Logger{}
+	c := config.GetConfig()
+	if c.LogOutput == "" {
+		c.LogOutput = "stderr"
 	}
+	var out io.Writer
+	switch c.LogOutput {
+	case "stdout":
+		out = os.Stdout
+	case "stderr":
+		out = os.Stderr
+	default:
+		file, err := os.OpenFile(c.LogOutput, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0777)
+		if err != nil {
+			return err
+		}
+		out = file
+	}
+	logs.Store(l)
+	l.SetFlags(log.Ldate | log.Ltime)
+	l.SetOutput(out)
+	return nil
+}
+
+func Errs(err error, depth int, desc string, args ...any) {
 	var pcs [1]uintptr
-	runtime.Callers(2, pcs[:])
+	runtime.Callers(depth, pcs[:])
 	f := runtime.CallersFrames([]uintptr{pcs[0]})
 	ff, _ := f.Next()
 	s := strings.Builder{}
@@ -23,7 +51,16 @@ func ErrPrintln(err error, desc string, args ...any) {
 			_, _ = fmt.Fprintf(&s, "%v", arg)
 		}
 	}
-	if err != nil {
-		log.Println(s.String())
+	logs.Load().Println(s.String())
+}
+
+func Error(err error, desc string, args ...any) {
+	Errs(err, 3, desc, args)
+}
+
+func IfError(err error, desc string, args ...any) {
+	if err == nil {
+		return
 	}
+	Errs(err, 3, desc, args...)
 }
