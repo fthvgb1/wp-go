@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper"
-	"github.com/fthvgb1/wp-go/helper/maps"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/pkg/config"
@@ -50,7 +49,8 @@ func Hook(h *wp.Handle) {
 }
 
 func configs(h *wp.Handle) {
-	wphandle.RegisterPlugins(h, config.GetConfig().Plugins...)
+	conf := config.GetConfig()
+	wphandle.RegisterPlugins(h, conf.Plugins...)
 	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(calClass, 20))
 	h.PushCacheGroupHeadScript("colorScheme-customHeader", 10, colorScheme, customHeader)
 	components.WidgetArea(h)
@@ -64,6 +64,8 @@ func configs(h *wp.Handle) {
 	})
 	h.PushGroupHandleFn(constraints.AllStats, 90, wp.PreTemplate, errorsHandle)
 	h.CommonComponents()
+	h.Index.SetPageEle(paginate)
+	h.Index.SetListPlugin(wp.PostsPlugins(wp.PostPlugin(postThumbnail), wp.GetListPostPlugins(conf.ListPagePlugins, wp.ListPostPlugins())...))
 	wp.SetComponentsArgsForMap(h, widgets.Search, "{$form}", searchForm)
 	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(wp.IndexRender, 10))
 	h.PushHandleFn(constraints.Detail, wp.NewHandleFn(wp.DetailRender, 10))
@@ -84,12 +86,6 @@ var searchForm = `<form role="search" method="get" class="search-form" action="/
 <span class="screen-reader-text">{$button}</span>
 </button>
 </form>`
-
-var listPostsPlugins = func() map[string]wp.Plugin[models.Posts, *wp.Handle] {
-	return maps.Merge(wp.ListPostPlugins(), map[string]wp.Plugin[models.Posts, *wp.Handle]{
-		"twentyseventeen_postThumbnail": postThumbnail,
-	})
-}()
 
 func errorsHandle(h *wp.Handle) {
 	switch h.Stats {
@@ -120,8 +116,6 @@ func index(h *wp.Handle) {
 		i.SetErr(err)
 	}
 	h.SetData("scene", h.Scene())
-	i.SetPageEle(paginate)
-	i.SetPostsPlugins(listPostsPlugins)
 }
 
 func detail(h *wp.Handle) {
@@ -159,14 +153,13 @@ func (c comment) FormatLi(ctx *gin.Context, m models.Comments, depth int, isTls 
 	return plugins.FormatLi(templ, ctx, m, depth, isTls, eo, parent)
 }
 
-func postThumbnail(next wp.Fn[models.Posts], h *wp.Handle, t models.Posts) models.Posts {
-	if t.Thumbnail.Path != "" {
-		t.Thumbnail.Sizes = "(max-width: 767px) 89vw, (max-width: 1000px) 54vw, (max-width: 1071px) 543px, 580px"
+func postThumbnail(h *wp.Handle, posts *models.Posts) {
+	if posts.Thumbnail.Path != "" {
+		posts.Thumbnail.Sizes = "(max-width: 767px) 89vw, (max-width: 1000px) 54vw, (max-width: 1071px) 543px, 580px"
 		if h.Scene() == constraints.Detail {
-			t.Thumbnail.Sizes = "100vw"
+			posts.Thumbnail.Sizes = "100vw"
 		}
 	}
-	return next(t)
 }
 
 var header = reload.Vars(models.PostThumbnail{})

@@ -6,7 +6,6 @@ import (
 	"github.com/fthvgb1/wp-go/helper/number"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
-	"github.com/fthvgb1/wp-go/internal/pkg/config"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/plugins"
@@ -17,11 +16,19 @@ import (
 
 type IndexHandle struct {
 	*Handle
-	Param        *IndexParams
-	Posts        []models.Posts
-	pageEle      pagination.Elements
-	TotalRows    int
-	postsPlugins map[string]Plugin[models.Posts, *Handle]
+	Param       *IndexParams
+	Posts       []models.Posts
+	pageEle     pagination.Elements
+	TotalRows   int
+	postsPlugin PostsPlugin
+}
+
+func (i *IndexHandle) ListPlugin() func(*Handle, *models.Posts) {
+	return i.postsPlugin
+}
+
+func (i *IndexHandle) SetListPlugin(listPlugin func(*Handle, *models.Posts)) {
+	i.postsPlugin = listPlugin
 }
 
 func (i *IndexHandle) PageEle() pagination.Elements {
@@ -30,14 +37,6 @@ func (i *IndexHandle) PageEle() pagination.Elements {
 
 func (i *IndexHandle) SetPageEle(pageEle pagination.Elements) {
 	i.pageEle = pageEle
-}
-
-func (i *IndexHandle) PostsPlugins() map[string]Plugin[models.Posts, *Handle] {
-	return i.postsPlugins
-}
-
-func (i *IndexHandle) SetPostsPlugins(postsPlugins map[string]Plugin[models.Posts, *Handle]) {
-	i.postsPlugins = postsPlugins
 }
 
 func NewIndexHandle(handle *Handle) *IndexHandle {
@@ -126,34 +125,16 @@ func (i *IndexHandle) BuildIndexData(parm *IndexParams) (err error) {
 	}
 	i.Posts = posts
 	i.TotalRows = totalRows
-
 	i.ginH["totalPage"] = number.CalTotalPage(totalRows, i.Param.PageSize)
-
 	return
 }
 
-func (i *IndexHandle) ExecPostsPlugin(calls ...func(*models.Posts)) {
-
-	pluginConf := config.GetConfig().ListPagePlugins
-
-	postsPlugins := i.postsPlugins
-	if postsPlugins == nil {
-		postsPlugins = pluginFns
+func (i *IndexHandle) ExecPostsPlugin() {
+	if i.postsPlugin != nil {
+		for j := range i.Posts {
+			i.postsPlugin(i.Handle, &i.Posts[j])
+		}
 	}
-	plugin := GetListPostPlugins(pluginConf, postsPlugins)
-
-	i.Posts = slice.Map(i.Posts, PluginFn[models.Posts](plugin, i.Handle, Defaults(calls...)))
-
-}
-
-func (i *IndexHandle) Render() {
-	i.PushHandleFn(constraints.Ok, NewHandleFn(func(h *Handle) {
-		i.ExecPostsPlugin()
-		i.Pagination()
-		i.ginH["posts"] = i.Posts
-	}, 10))
-
-	i.Handle.Render()
 }
 
 func IndexRender(h *Handle) {

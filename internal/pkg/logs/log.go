@@ -12,8 +12,10 @@ import (
 )
 
 var logs = safety.NewVar[*log.Logger](nil)
+var logFile = safety.NewVar[*os.File](nil)
 
 func InitLogger() error {
+	preFD := logFile.Load()
 	l := &log.Logger{}
 	c := config.GetConfig()
 	if c.LogOutput == "" {
@@ -31,6 +33,10 @@ func InitLogger() error {
 			return err
 		}
 		out = file
+		logFile.Store(file)
+	}
+	if preFD != nil {
+		_ = preFD.Close()
 	}
 	logs.Store(l)
 	l.SetFlags(log.Ldate | log.Ltime)

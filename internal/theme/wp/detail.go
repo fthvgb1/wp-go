@@ -100,21 +100,6 @@ func (d *DetailHandle) ContextPost() {
 	d.ginH["prev"] = prev
 }
 
-func (d *DetailHandle) Render() {
-	d.PushHandleFn(constraints.Ok, NewHandleFn(func(h *Handle) {
-		d.PasswordProject()
-		d.RenderComment()
-		d.ginH["post"] = d.Post
-		reply := ""
-		if d.Post.CommentStatus == "open" && wpconfig.GetOption("thread_comments") == "1" {
-			reply = `<script src='/wp-includes/js/comment-reply.min.js' id='comment-reply-js'></script>`
-		}
-		d.PushGroupFooterScript(10, reply)
-	}, 10))
-
-	d.Handle.Render()
-}
-
 func DetailRender(h *Handle) {
 	if h.Stats != constraints.Ok {
 		return

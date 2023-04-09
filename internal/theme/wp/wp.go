@@ -66,6 +66,7 @@ type HandleCall struct {
 }
 
 func InitThemeArgAndConfig(fn func(*Handle), h *Handle) {
+	var inited = false
 	hh := reload.GetAnyValBys("themeArgAndConfig", h, func(h *Handle) Handle {
 		h.components = make(map[string][]Components[string])
 		h.handleFns = make(map[int][]HandleCall)
@@ -73,6 +74,7 @@ func InitThemeArgAndConfig(fn func(*Handle), h *Handle) {
 		h.componentFilterFn = make(map[string][]func(*Handle, string, ...any) string)
 		h.ginH = gin.H{}
 		fn(h)
+		inited = true
 		return *h
 	})
 	m := make(map[string][]Components[string])
@@ -82,10 +84,16 @@ func InitThemeArgAndConfig(fn func(*Handle), h *Handle) {
 		m[k] = vv
 	}
 	h.components = m
+	h.ginH = maps.Copy(hh.ginH)
+	if inited {
+		return
+	}
+	h.Index.postsPlugin = hh.Index.postsPlugin
+	h.Index.pageEle = hh.Index.pageEle
+	h.Detail.CommentRender = hh.Detail.CommentRender
 	h.handleFns = hh.handleFns
 	h.componentsArgs = hh.componentsArgs
 	h.componentFilterFn = hh.componentFilterFn
-	h.ginH = maps.Copy(hh.ginH)
 }
 
 func (h *Handle) ComponentFilterFn(name string) ([]func(*Handle, string, ...any) string, bool) {
@@ -428,14 +436,5 @@ func ExecuteHandleFn(h *Handle) {
 		if h.abort {
 			break
 		}
-	}
-}
-
-func Render(h *Handle) {
-	switch h.scene {
-	case constraints.Detail:
-		h.Detail.Render()
-	default:
-		h.Index.Render()
 	}
 }
