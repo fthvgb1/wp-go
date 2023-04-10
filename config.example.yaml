@@ -69,12 +69,12 @@ maxRequestSleepNum: 100
 maxRequestNum: 500
 # 单ip同时最大搜索请求数
 singleIpSearchNum: 10
-# 错误日志输出路径
+# 错误日志输出路径 stdout|stderr|file path 默认为stderr
 logOutput: err.log
 # Gzip
 gzip: false
-# 提交评论url
-postCommentUrl: http://wp.test/wp-comments-post.php
+# 提交评论url host需为ip形式
+postCommentUrl: http://127.0.0.1/wp-comments-post.php
 # TrustIps
 trustIps: []
 # 分页器间隔数

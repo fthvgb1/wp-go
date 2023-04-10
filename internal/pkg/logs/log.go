@@ -61,7 +61,7 @@ func Errs(err error, depth int, desc string, args ...any) {
 }
 
 func Error(err error, desc string, args ...any) {
-	Errs(err, 3, desc, args)
+	Errs(err, 3, desc, args...)
 }
 
 func IfError(err error, desc string, args ...any) {

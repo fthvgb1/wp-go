@@ -2,6 +2,7 @@ package actions
 
 import (
 	"bytes"
+	"compress/gzip"
 	"errors"
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper/slice"
@@ -31,11 +32,12 @@ func PostComment(c *gin.Context) {
 		if err != nil {
 			c.Writer.WriteHeader(http.StatusConflict)
 			c.Writer.Header().Set("Content-Type", "text/html; charset=utf-8")
-			c.Writer.WriteString(err.Error())
+			c.Writer.WriteString("评论出错，请联系管理员或稍后再度")
 		}
 	}()
 	conf := config.GetConfig()
 	if err != nil {
+		logs.Error(err, "获取评论数据错误")
 		return
 	}
 	c.Request.Body = io.NopCloser(bytes.NewBuffer(data))
@@ -46,17 +48,20 @@ func PostComment(c *gin.Context) {
 	c.Request.Body = io.NopCloser(bytes.NewBuffer(data))
 	req, err := http.NewRequest("POST", conf.PostCommentUrl, strings.NewReader(c.Request.PostForm.Encode()))
 	if err != nil {
+		logs.Error(err, "创建评论请求错误")
 		return
 	}
 	defer req.Body.Close()
 	req.Header = c.Request.Header.Clone()
 	home, err := url.Parse(wpconfig.GetOption("siteurl"))
 	if err != nil {
+		logs.Error(err, "解析评论接口错误")
 		return
 	}
 	req.Host = home.Host
 	res, err := cli.Do(req)
 	if err != nil && err != http.ErrUseLastResponse {
+		logs.Error(err, "请求评论接口错误")
 		return
 	}
 	if res.StatusCode == http.StatusFound {
@@ -76,11 +81,7 @@ func PostComment(c *gin.Context) {
 		}
 		up.Host = cu.Host
 		up.Scheme = "http"
-		newReq, er := http.NewRequest("GET", up.String(), nil)
-		if er != nil {
-			err = er
-			return
-		}
+		newReq, _ := http.NewRequest("GET", up.String(), nil)
 		newReq.Host = home.Host
 		newReq.Header.Set("Cookie", strings.Join(slice.Map(c.Request.Cookies(), func(t *http.Cookie) string {
 			return fmt.Sprintf("%s=%s", t.Name, t.Value)
@@ -116,9 +117,23 @@ func PostComment(c *gin.Context) {
 		c.Redirect(http.StatusFound, res.Header.Get("Location"))
 		return
 	}
-	s, err := io.ReadAll(res.Body)
+	var r io.Reader
+	if res.Header.Get("Content-Encoding") == "gzip" {
+		r, err = gzip.NewReader(res.Body)
+		if err != nil {
+			logs.Error(err, "gzip解压错误")
+			return
+		}
+	} else {
+		r = res.Body
+	}
+	s, err := io.ReadAll(r)
 	if err != nil {
+		logs.Error(err, "读取结果错误")
 		return
 	}
-	err = errors.New(string(s))
+	c.Writer.Header().Set("Content-Type", "text/html; charset=utf-8")
+	c.Writer.WriteHeader(res.StatusCode)
+	_, _ = c.Writer.Write(s)
+
 }
