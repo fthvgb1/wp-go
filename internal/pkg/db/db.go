@@ -20,9 +20,6 @@ func InitDb() (*safety.Var[*sqlx.DB], error) {
 		return nil, err
 	}
 	preDb := safeDb.Load()
-	if preDb != nil {
-		_ = preDb.Close()
-	}
 	if c.Mysql.Pool.ConnMaxIdleTime != 0 {
 		db.SetConnMaxIdleTime(c.Mysql.Pool.ConnMaxLifetime)
 	}
@@ -36,6 +33,9 @@ func InitDb() (*safety.Var[*sqlx.DB], error) {
 		db.SetConnMaxLifetime(c.Mysql.Pool.ConnMaxLifetime)
 	}
 	safeDb.Store(db)
+	if preDb != nil {
+		_ = preDb.Close()
+	}
 	return safeDb, err
 }
 

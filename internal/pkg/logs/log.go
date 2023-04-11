@@ -35,10 +35,10 @@ func InitLogger() error {
 		out = file
 		logFile.Store(file)
 	}
+	logs.Store(l)
 	if preFD != nil {
 		_ = preFD.Close()
 	}
-	logs.Store(l)
 	l.SetFlags(log.Ldate | log.Ltime)
 	l.SetOutput(out)
 	return nil
