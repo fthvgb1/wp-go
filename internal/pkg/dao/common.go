@@ -57,10 +57,10 @@ func CategoriesAndTags(a ...any) (terms []models.TermsMy, err error) {
 		model.In(in),
 	))
 	for i := 0; i < len(terms); i++ {
-		if v, ok := wpconfig.Terms.Load(terms[i].Terms.TermId); ok {
+		if v, ok := wpconfig.GetTerm(terms[i].Terms.TermId); ok {
 			terms[i].Terms = v
 		}
-		if v, ok := wpconfig.TermTaxonomies.Load(terms[i].Terms.TermId); ok {
+		if v, ok := wpconfig.GetTermTaxonomy(terms[i].Terms.TermId); ok {
 			terms[i].TermTaxonomy = v
 		}
 	}

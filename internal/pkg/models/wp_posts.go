@@ -29,6 +29,8 @@ type Posts struct {
 	CommentCount        int64     `gorm:"column:comment_count" db:"comment_count" json:"comment_count" form:"comment_count"`
 
 	//扩展字段
+	TermsId            uint64   `db:"terms_id" json:"terms_id"`
+	TermIds            []uint64 `db:"term_ids" json:"term_ids"`
 	Taxonomy           string   `db:"taxonomy" json:"taxonomy"`
 	CategoryName       string   `db:"category_name" json:"category_name"`
 	Categories         []string `json:"categories"`

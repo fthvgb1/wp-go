@@ -8,6 +8,7 @@ import (
 	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
+	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -84,6 +85,12 @@ func InitThemeArgAndConfig(fn func(*Handle), h *Handle) {
 	}
 	h.components = m
 	h.ginH = maps.Copy(hh.ginH)
+	h.ginH["calPostClass"] = func(posts models.Posts) string {
+		return h.PostClass(posts)
+	}
+	h.ginH["calBodyClass"] = func() string {
+		return h.BodyClass()
+	}
 	if inited {
 		return
 	}

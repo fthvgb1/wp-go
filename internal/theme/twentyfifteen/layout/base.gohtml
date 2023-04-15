@@ -3,7 +3,7 @@
     <html lang="{{getLang}}" class="no-js">
     {{template "layout/head" .}}
 
-    <body class="{{.bodyClass}}">
+    <body class="{{.calBodyClass|exec}}">
     {{template "svg"}}
     <div id="page" class="hfeed site">
         <a class="skip-link screen-reader-text" href="#content">

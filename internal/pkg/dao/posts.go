@@ -24,7 +24,7 @@ func GetPostsByIds(a ...any) (m map[uint64]models.Posts, err error) {
 			{"left join", "wp_term_taxonomy c", "b.term_taxonomy_id=c.term_taxonomy_id"},
 			{"left join", "wp_terms d", "c.term_id=d.term_id"},
 		}),
-		model.Fields("a.*,ifnull(d.name,'') category_name,ifnull(taxonomy,'') `taxonomy`"),
+		model.Fields("a.*,ifnull(d.name,'') category_name,ifnull(c.term_id,0) terms_id,ifnull(taxonomy,'') `taxonomy`"),
 		model.In(slice.ToAnySlice(ids)),
 	))
 
@@ -41,6 +41,9 @@ func GetPostsByIds(a ...any) (m map[uint64]models.Posts, err error) {
 			v.Categories = append(v.Categories, post.CategoryName)
 		} else if post.Taxonomy == "post_tag" {
 			v.Tags = append(v.Tags, post.CategoryName)
+		}
+		if post.TermsId > 0 {
+			v.TermIds = append(v.TermIds, post.TermsId)
 		}
 		postsMap[post.Id] = v
 	}

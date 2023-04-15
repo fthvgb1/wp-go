@@ -7,6 +7,7 @@ import (
 	"golang.org/x/exp/constraints"
 	"math"
 	"math/rand"
+	"strconv"
 )
 
 func Range[T constraints.Integer](start, end, step T) []T {
@@ -71,6 +72,10 @@ func Sub[T constraints.Integer | constraints.Float](i, j T) T {
 
 func ToString[T constraints.Integer | constraints.Float](n T) string {
 	return fmt.Sprintf("%v", n)
+}
+
+func IntToString[T constraints.Integer](i T) string {
+	return strconv.FormatInt(int64(i), 10)
 }
 
 func Abs[T constraints.Integer | constraints.Float](n T) T {

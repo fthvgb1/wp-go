@@ -1,6 +1,7 @@
 package theme
 
 import (
+	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"html/template"
 	"time"
@@ -20,6 +21,14 @@ var comFn = template.FuncMap{
 		return wpconfig.GetOption(k)
 	},
 	"getLang": wpconfig.GetLang,
+	"postsFn": postsFn,
+	"exec": func(fn func() string) string {
+		return fn()
+	},
+}
+
+func postsFn(fn func(models.Posts) string, a models.Posts) string {
+	return fn(a)
 }
 
 func FuncMap() template.FuncMap {

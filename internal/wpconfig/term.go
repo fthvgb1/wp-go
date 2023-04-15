@@ -1,30 +1,49 @@
 package wpconfig
 
 import (
-	"context"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/model"
 	"github.com/fthvgb1/wp-go/safety"
 )
 
-var Terms safety.Map[uint64, models.Terms]
-var TermTaxonomies safety.Map[uint64, models.TermTaxonomy]
+var terms = safety.NewMap[uint64, models.Terms]()
+var termTaxonomies = safety.NewMap[uint64, models.TermTaxonomy]()
+
+var my = safety.NewMap[uint64, models.TermsMy]()
+
+func GetTerm(termId uint64) (models.Terms, bool) {
+	return terms.Load(termId)
+}
+
+func GetTermTaxonomy(termId uint64) (models.TermTaxonomy, bool) {
+	return termTaxonomies.Load(termId)
+}
+func GetTermMy(termId uint64) (models.TermsMy, bool) {
+	return my.Load(termId)
+}
 
 func InitTerms() (err error) {
-	ctx := context.Background()
-	terms, err := model.SimpleFind[models.Terms](ctx, nil, "*")
+	terms.Flush()
+	termTaxonomies.Flush()
+	term, err := model.SimpleFind[models.Terms](ctx, nil, "*")
 	if err != nil {
 		return err
 	}
-	for _, wpTerms := range terms {
-		Terms.Store(wpTerms.TermId, wpTerms)
+	for _, wpTerms := range term {
+		terms.Store(wpTerms.TermId, wpTerms)
 	}
 	termTax, err := model.SimpleFind[models.TermTaxonomy](ctx, nil, "*")
 	if err != nil {
 		return err
 	}
 	for _, taxonomy := range termTax {
-		TermTaxonomies.Store(taxonomy.TermTaxonomyId, taxonomy)
+		termTaxonomies.Store(taxonomy.TermTaxonomyId, taxonomy)
+		if term, ok := terms.Load(taxonomy.TermId); ok {
+			my.Store(taxonomy.TermId, models.TermsMy{
+				Terms:        term,
+				TermTaxonomy: taxonomy,
+			})
+		}
 	}
 	return
 }

@@ -12,8 +12,7 @@
                     </header>
                 {{end}}
                 {{ range $k,$v:=.posts}}
-                    <article id="post-{{$v.Id}}"
-                             class="post-{{$v.Id}} post {{if $v.IsSticky}}sticky{{end}} {{if $v.Thumbnail.Path}}has-post-thumbnail{{end}} type-post status-publish format-standard hentry category">
+                    <article class="{{ $v|postsFn $.calPostClass}}">
                         {{if $v.Thumbnail.Path}}
                             <a class="post-thumbnail" href="/p/{{$v.Id}}" aria-hidden="true">
                                 <img width="{{$v.Thumbnail.Width}}" height="{{$v.Thumbnail.Height}}" src="{{$v.Thumbnail.Path}}" class="attachment-post-thumbnail size-post-thumbnail wp-post-image" alt="{{$v.PostTitle}}" decoding="async">

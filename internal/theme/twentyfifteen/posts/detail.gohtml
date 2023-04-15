@@ -4,8 +4,7 @@
     {{ if and (.post) (gt .post.Id 0)}}
         <div id="primary" class="content-area">
             <main id="main" class="site-main">
-                <article id="post-{{.post.Id}}"
-                         class="post-{{.post.Id}} post type-post status-publish format-standard hentry category-uncategorized">
+                <article class="{{ .post|postsFn .calPostClass}}">
 
                     <header class="entry-header">
                         <h1 class="entry-title">{{.post.PostTitle}}</h1></header><!-- .entry-header -->

@@ -1,6 +1,7 @@
 package wp
 
 import (
+	"fmt"
 	"github.com/fthvgb1/wp-go/helper/number"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
@@ -74,4 +75,45 @@ func (h *Handle) BodyClass() string {
 		class = append(class, "wp-embed-responsive")
 	}
 	return h.ComponentFilterFnHook("bodyClass", strings.Join(class, " "))
+}
+func (h *Handle) PostClass(posts models.Posts) string {
+	var class []string
+	class = append(class, fmt.Sprintf("post-%d", posts.Id), posts.PostType,
+		str.Join("type-", posts.PostType), str.Join("status-", posts.PostStatus),
+		"hentry", "format-standard")
+	if h.CommonThemeMods().ThemeSupport.PostThumbnails && posts.Thumbnail.Path != "" {
+		class = append(class, "has-post-thumbnail")
+	}
+
+	if posts.PostPassword != "" {
+		if h.password != posts.PostPassword {
+			class = append(class, "post-password-required")
+		} else {
+			class = append(class, "post-password-projected")
+		}
+	}
+
+	if h.scene == constraints.Home && h.IsStick(posts.Id) {
+		class = append(class, "sticky")
+	}
+	for _, id := range posts.TermIds {
+		term, ok := wpconfig.GetTermMy(id)
+		if !ok || term.Slug == "" {
+			continue
+		}
+		termClass := term.Slug
+		if termClass[0] == '%' {
+			termClass = number.ToString(term.Terms.TermId)
+		}
+		switch term.Taxonomy {
+		case "category":
+			class = append(class, str.Join("category-", termClass))
+		case "post_tag":
+			class = append(class, str.Join("tag-", termClass))
+		case "post_format":
+			class = append(class, fmt.Sprintf("format-%s", strings.ReplaceAll(term.Slug, "post-format-", "")))
+		}
+	}
+
+	return h.ComponentFilterFnHook("postClass", strings.Join(class, " "))
 }
