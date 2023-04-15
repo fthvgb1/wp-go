@@ -51,7 +51,7 @@ func Hook(h *wp.Handle) {
 func configs(h *wp.Handle) {
 	conf := config.GetConfig()
 	wphandle.RegisterPlugins(h, conf.Plugins...)
-	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(calClass, 20))
+	h.PushComponentFilterFn("bodyClass", calClass)
 	h.PushCacheGroupHeadScript("colorScheme-customHeader", 10, colorScheme, customHeader)
 	components.WidgetArea(h)
 	pushScripts(h)
@@ -185,10 +185,10 @@ func getHeaderImage(h *wp.Handle) (r models.PostThumbnail) {
 	return
 }
 
-func calClass(h *wp.Handle) {
+func calClass(h *wp.Handle, s string, a ...any) string {
+	class := strings.Split(s, " ")
 	themeMods := h.CommonThemeMods()
 	u := wpconfig.GetThemeModsVal(ThemeName, "header_image", themeMods.ThemeSupport.CustomHeader.DefaultImage)
-	var class []string
 	if u != "" && u != "remove-header" {
 		class = append(class, "has-header-image")
 	}
@@ -207,5 +207,5 @@ func calClass(h *wp.Handle) {
 			class = append(class, "page-two-column")
 		}
 	}
-	h.PushClass(class...)
+	return strings.Join(class, " ")
 }

@@ -27,7 +27,6 @@ type Handle struct {
 	Code              int
 	Stats             int
 	templ             string
-	bodyClass         []string
 	components        map[string][]Components[string]
 	themeMods         wpconfig.ThemeMods
 	handleFns         map[int][]HandleCall
@@ -147,10 +146,6 @@ func (h *Handle) SetDatas(GinH gin.H) {
 }
 func (h *Handle) SetData(k string, v any) {
 	h.ginH[k] = v
-}
-
-func (h *Handle) PushClass(class ...string) {
-	h.bodyClass = append(h.bodyClass, class...)
 }
 
 func GetComponentsArgs[T any](h *Handle, k string, defaults T) T {

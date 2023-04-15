@@ -12,10 +12,11 @@ import (
 )
 
 func CalBodyClass(h *Handle) {
-	h.ginH["bodyClass"] = h.BodyClass(h.bodyClass...)
+	h.ginH["bodyClass"] = h.BodyClass()
 }
 
-func (h *Handle) BodyClass(class ...string) string {
+func (h *Handle) BodyClass() string {
+	var class []string
 	if constraints.Ok != h.Stats {
 		class = append(class, "error404")
 	}
@@ -72,5 +73,5 @@ func (h *Handle) BodyClass(class ...string) string {
 	if h.themeMods.ThemeSupport.ResponsiveEmbeds {
 		class = append(class, "wp-embed-responsive")
 	}
-	return strings.Join(class, " ")
+	return h.ComponentFilterFnHook("bodyClass", strings.Join(class, " "))
 }
