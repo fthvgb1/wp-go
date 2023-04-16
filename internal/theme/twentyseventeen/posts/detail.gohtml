@@ -12,7 +12,7 @@
                 <div class="wrap">
                     <div id="primary" class="content-area">
                         <main id="main" class="site-main">
-                            <article id="post-{{.post.Id}}" class="post-{{.post.Id}} post type-post status-publish format-standard hentry {{if .post.Thumbnail.Path}}has-post-thumbnail{{end}} category-uncategorized">
+                            <article id="post-{{.post.Id}}" class="{{ .post|postsFn .calPostClass}}">
 
                                 <header class="entry-header">
                                     <div class="entry-meta">

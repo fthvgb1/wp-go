@@ -4,7 +4,7 @@
 
     {{template "layout/head" .}}
 
-    <body class="{{.bodyClass}}">
+    <body class="{{.calBodyClass|exec}}">
     {{template "svg"}}
     <div id="page" class="site">
         <a class="skip-link screen-reader-text" href="#content">跳至内容</a>

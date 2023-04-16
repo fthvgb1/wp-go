@@ -334,7 +334,7 @@ func (h *Handle) Render() {
 func (h *Handle) CommonComponents() {
 	h.AddCacheComponent("customLogo", CalCustomLogo)
 	h.PushCacheGroupHeadScript("siteIconAndCustomCss", 0, CalSiteIcon, CalCustomCss)
-	h.PushGroupHandleFn(constraints.AllStats, 10, CalComponents, CalBodyClass)
+	h.PushGroupHandleFn(constraints.AllStats, 10, CalComponents)
 	h.PushHandleFn(constraints.AllStats, NewHandleFn(func(h *Handle) {
 		h.C.HTML(h.Code, h.templ, h.ginH)
 	}, 0))

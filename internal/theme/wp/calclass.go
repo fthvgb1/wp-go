@@ -9,12 +9,9 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
+	"strconv"
 	"strings"
 )
-
-func CalBodyClass(h *Handle) {
-	h.ginH["bodyClass"] = h.BodyClass()
-}
 
 func (h *Handle) BodyClass() string {
 	var class []string
@@ -101,19 +98,24 @@ func (h *Handle) PostClass(posts models.Posts) string {
 		if !ok || term.Slug == "" {
 			continue
 		}
-		termClass := term.Slug
-		if termClass[0] == '%' {
-			termClass = number.ToString(term.Terms.TermId)
-		}
-		switch term.Taxonomy {
-		case "category":
-			class = append(class, str.Join("category-", termClass))
-		case "post_tag":
-			class = append(class, str.Join("tag-", termClass))
-		case "post_format":
-			class = append(class, fmt.Sprintf("format-%s", strings.ReplaceAll(term.Slug, "post-format-", "")))
-		}
+		class = append(class, TermClass(term))
 	}
 
 	return h.ComponentFilterFnHook("postClass", strings.Join(class, " "))
+}
+
+func TermClass(term models.TermsMy) string {
+	termClass := term.Slug
+	if strings.Contains(term.Slug, "%") {
+		termClass = strconv.FormatUint(term.TermTaxonomy.TermId, 10)
+	}
+	switch term.Taxonomy {
+	case "category":
+		return str.Join("category-", termClass)
+	case "post_tag":
+		return str.Join("tag-", termClass)
+	case "post_format":
+		return fmt.Sprintf("format-%s", strings.ReplaceAll(term.Slug, "post-format-", ""))
+	}
+	return fmt.Sprintf("%s-%d", term.Taxonomy, term.TermTaxonomy.TermId)
 }

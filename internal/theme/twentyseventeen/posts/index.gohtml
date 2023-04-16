@@ -17,7 +17,7 @@
                     <div id="primary" class="content-area">
                         <main id="main" class="site-main">
                             {{ range $k,$v:=.posts}}
-                                <article id="post-{{$v.Id}}" class="post-{{$v.Id}} post {{if $v.Thumbnail.Path}}has-post-thumbnail{{end}} {{if $v.IsSticky}}sticky{{end}} type-post status-publish format-standard hentry category">
+                                <article id="post-{{$v.Id}}" class="{{ $v|postsFn $.calPostClass}}">
                                     {{if $v.IsSticky}}
                                         <svg class="icon icon-thumb-tack" aria-hidden="true" role="img">
                                             <use href="#icon-thumb-tack" xlink:href="#icon-thumb-tack"></use>
