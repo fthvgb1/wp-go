@@ -19,32 +19,31 @@
                     </div><!-- .entry-content -->
 
                     <footer class="entry-footer">
-                <span class="posted-on">
-                    <span class="screen-reader-text">发布于 </span>
-                    <a href="/p/{{.post.Id}}" rel="bookmark">
-                        <time class="entry-date published updated"
-                              datetime="{{.post.PostDateGmt}}">{{.post.PostDate|dateCh}}
-                        </time>
-                    </a>
-                </span>
-                <span class="byline">
-                    <span class="author vcard">
-                        <span class="screen-reader-text">作者 </span>
-                        <a class="url fn n" href="/p/author/{{.user.UserLogin}}">{{.user.UserLogin}}</a>
-                    </span>
-                </span>
+                        <span class="posted-on">
+                            <span class="screen-reader-text">发布于 </span>
+                            <a href="/p/{{.post.Id}}" rel="bookmark">
+                                <time class="entry-date published updated"
+                                      datetime="{{.post.PostDateGmt}}">{{.post.PostDate|dateCh}}
+                                </time>
+                            </a>
+                        </span>
+                        <span class="byline">
+                            <span class="author vcard">
+                                <span class="screen-reader-text">作者 </span>
+                                <a class="url fn n" href="/p/author/{{.user.UserLogin}}">{{.user.UserLogin}}</a>
+                            </span>
+                        </span>
                         {{if .post.CategoriesHtml}}
                             <span class="cat-links">
-                    <span class="screen-reader-text">分类 </span>
-                    {{.post.CategoriesHtml|unescaped}}
-                </span>
+                                <span class="screen-reader-text">分类 </span>
+                                {{.post.CategoriesHtml|unescaped}}
+                            </span>
                         {{end}}
 
                         {{if .post.TagsHtml}}
                             <span class="tags-links">
-                    <span class="screen-reader-text">标签 </span>
-                    {{.post.TagsHtml|unescaped}}
-                </span>
+                                <span class="screen-reader-text">标签 </span>{{.post.TagsHtml|unescaped}}
+                            </span>
                         {{end}}
                     </footer>
                     <!-- .entry-footer -->
