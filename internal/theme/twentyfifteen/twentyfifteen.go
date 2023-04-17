@@ -12,6 +12,7 @@ import (
 	"github.com/fthvgb1/wp-go/internal/theme/wp"
 	"github.com/fthvgb1/wp-go/internal/theme/wp/components"
 	"github.com/fthvgb1/wp-go/internal/theme/wp/components/widget"
+	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"strings"
 )
 
@@ -76,4 +77,11 @@ func configs(h *wp.Handle) {
 	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(customHeader, 10))
 	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(wp.IndexRender, 50))
 	h.PushHandleFn(constraints.Detail, wp.NewHandleFn(wp.DetailRender, 50))
+	h.PushHandleFn(constraints.Detail, wp.NewHandleFn(postThumb, 60))
+}
+
+func postThumb(h *wp.Handle) {
+	if h.Detail.Post.Thumbnail.Path != "" {
+		h.Detail.Post.Thumbnail = wpconfig.Thumbnail(h.Detail.Post.Thumbnail.OriginAttachmentData, "post-thumbnail", "")
+	}
 }

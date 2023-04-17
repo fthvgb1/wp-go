@@ -5,6 +5,11 @@
         <div id="primary" class="content-area">
             <main id="main" class="site-main">
                 <article class="{{ .post|postsFn .calPostClass}}">
+                    {{if .post.Thumbnail.Path }}
+                        <div class="post-thumbnail">
+                            <img width="{{.post.Thumbnail.Width}}" height="{{.post.Thumbnail.Height}}" src="{{.post.Thumbnail.Path}}" class="attachment-post-thumbnail size-post-thumbnail wp-post-image" alt="" decoding="async">
+                        </div>
+                    {{end}}
 
                     <header class="entry-header">
                         <h1 class="entry-title">{{.post.PostTitle}}</h1></header><!-- .entry-header -->

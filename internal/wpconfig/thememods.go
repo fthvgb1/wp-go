@@ -82,8 +82,8 @@ func Thumbnail(metadata models.WpAttachmentMetadata, Type, host string, except .
 			FileSize: metadata.FileSize,
 		}
 	}
-	if _, ok := metadata.Sizes[Type]; ok {
-		r.Path = fmt.Sprintf("%s/wp-content/uploads/%s", host, metadata.File)
+	if siz, ok := metadata.Sizes[Type]; ok {
+		r.Path = fmt.Sprintf("%s/wp-content/uploads/%s", host, strings.ReplaceAll(metadata.File, filepath.Base(metadata.File), siz.File))
 		r.Width = metadata.Sizes[Type].Width
 		r.Height = metadata.Sizes[Type].Height
 

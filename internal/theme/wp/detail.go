@@ -66,7 +66,6 @@ func (d *DetailHandle) PasswordProject() {
 		if d.password != d.Post.PostPassword {
 			wpposts.PasswdProjectContent(&d.Post)
 		}
-		d.ginH["post"] = d.Post
 	}
 }
 func (d *DetailHandle) Comment() {

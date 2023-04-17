@@ -110,12 +110,10 @@ func TermClass(term models.TermsMy) string {
 		termClass = strconv.FormatUint(term.TermTaxonomy.TermId, 10)
 	}
 	switch term.Taxonomy {
-	case "category":
-		return str.Join("category-", termClass)
 	case "post_tag":
 		return str.Join("tag-", termClass)
 	case "post_format":
 		return fmt.Sprintf("format-%s", strings.ReplaceAll(term.Slug, "post-format-", ""))
 	}
-	return fmt.Sprintf("%s-%d", term.Taxonomy, term.TermTaxonomy.TermId)
+	return str.Join(term.Taxonomy, "-", termClass)
 }
