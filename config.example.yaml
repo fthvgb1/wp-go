@@ -60,9 +60,10 @@ cacheTime:
   commentsCacheTime: 24h
   # 随机sleep时间
   sleepTime: [ 1s,3s ]
-# 摘要字数
+# 摘要字数 >0截取指定字数 =0输出出空字符  <0为不截取,原样输出
 digestWordCount: 300
-
+# 摘要允许的标签 默认为<a><b><blockquote><br><cite><code><dd><del><div><dl><dt><em><h1><h2><h3><h4><h5><h6><i><img><li><ol><p><pre><span><strong><ul>
+digestTag: "<a><b><blockquote><br><cite><code><dd><del><div><dl><dt><em><h1><h2><h3><h4><h5><h6><i><img><li><ol><p><pre><span><strong><ul>"
 # 到达指定并发请求数时随机sleep
 maxRequestSleepNum: 100
 # 全局最大请求数，超过直接403

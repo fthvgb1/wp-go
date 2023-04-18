@@ -7,6 +7,7 @@ import (
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
+	"github.com/fthvgb1/wp-go/internal/plugins"
 	"github.com/fthvgb1/wp-go/internal/plugins/wpposts"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/fthvgb1/wp-go/plugin/digest"
@@ -63,7 +64,7 @@ func feed(arg ...any) (xml []string, err error) {
 			wpposts.PasswordProjectTitle(&t)
 			wpposts.PasswdProjectContent(&t)
 		} else {
-			desc = digest.Raw(t.PostContent, 55, fmt.Sprintf("/p/%d", t.Id))
+			desc = plugins.Digests(t.PostContent, t.Id, 55, nil)
 		}
 		l := ""
 		if t.CommentStatus == "open" && t.CommentCount > 0 {
@@ -172,8 +173,7 @@ func commentsFeed(args ...any) (r []string, err error) {
 			wpposts.PasswdProjectContent(&post)
 			content = post.PostContent
 		} else {
-			desc = digest.ClearHtml(t.CommentContent)
-			content = desc
+			content = digest.StripTags(t.CommentContent, "")
 		}
 		return rss2.Item{
 			Title:       fmt.Sprintf("%s对《%s》的评论", t.CommentAuthor, post.PostTitle),
