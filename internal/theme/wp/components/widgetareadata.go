@@ -2,7 +2,6 @@ package components
 
 import (
 	"github.com/fthvgb1/wp-go/helper/slice"
-	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/theme/wp"
 	"github.com/fthvgb1/wp-go/internal/theme/wp/components/widget"
@@ -25,11 +24,10 @@ type widgetComponent struct {
 }
 
 func WidgetArea(h *wp.Handle) {
-	sidebar := reload.GetAnyValBys("sidebarWidgets", h, sidebars)
-	h.PushComponents(constraints.SidebarsWidgets, sidebar...)
+	h.PushComponents(constraints.SidebarsWidgets, sidebars()...)
 }
 
-func sidebars(*wp.Handle) []wp.Components[string] {
+func sidebars() []wp.Components[string] {
 	v := wpconfig.GetPHPArrayVal("sidebars_widgets", []any{}, "sidebar-1")
 	return slice.FilterAndMap(v, func(t any) (wp.Components[string], bool) {
 		vv := t.(string)
