@@ -153,8 +153,6 @@ func Indexs(h *Handle) {
 	}
 	i := h.Index
 	_ = i.BuildIndexData(NewIndexParams(i.C))
-	PreCodeAndStats(h)
-	PreTemplate(h)
 }
 
 func (i *IndexHandle) MarkSticky(posts *[]models.Posts) {

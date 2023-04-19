@@ -41,7 +41,7 @@ func Init(fs embed.FS) {
 	}
 }
 
-var pipe = wp.HandlePipe(wp.ExecuteHandleFn, widget.MiddleWare(ready, data)...)
+var pipe = wp.HandlePipe(wp.ExecuteHandleFn, widget.MiddleWare(ready, wp.DataHandle)...)
 
 func Hook(h *wp.Handle) {
 	pipe(h)
@@ -50,16 +50,6 @@ func Hook(h *wp.Handle) {
 func ready(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
 	wp.InitThemeArgAndConfig(configs, h)
 	h.GetPassword()
-	next(h)
-}
-
-func data(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
-	if h.Scene() == constraints.Detail {
-		wp.Details(h)
-	} else {
-		wp.Indexs(h)
-	}
-	h.DetermineHandleFns()
 	next(h)
 }
 
@@ -73,11 +63,15 @@ func configs(h *wp.Handle) {
 	h.PushCacheGroupHeadScript("CalCustomBackGround", 10, CalCustomBackGround, colorSchemeCss)
 	h.CommonComponents()
 	h.Index.SetListPlugin(wp.PostsPlugins(wp.PostPlugin(), wp.GetListPostPlugins(conf.ListPagePlugins, wp.ListPostPlugins())...))
-	h.PushHandleFn(constraints.Ok, wp.NewHandleFn(components.WidgetArea, 20))
-	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(customHeader, 10))
-	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(wp.IndexRender, 50))
-	h.PushHandleFn(constraints.Detail, wp.NewHandleFn(wp.DetailRender, 50))
-	h.PushHandleFn(constraints.Detail, wp.NewHandleFn(postThumb, 60))
+	components.WidgetArea(h)
+	h.PushRender(constraints.AllStats, wp.NewHandleFn(customHeader, 10))
+	h.PushRender(constraints.AllStats, wp.NewHandleFn(wp.IndexRender, 50))
+	h.PushRender(constraints.Detail, wp.NewHandleFn(wp.DetailRender, 50))
+	h.PushRender(constraints.Detail, wp.NewHandleFn(postThumb, 60))
+	h.PushDataHandler(constraints.Detail, wp.NewHandleFn(wp.Details, 100))
+	h.PushDataHandler(constraints.AllScene, wp.NewHandleFn(wp.Indexs, 100))
+	h.PushDataHandler(constraints.AllScene, wp.NewHandleFn(wp.PreCodeAndStats, 80))
+	h.PushDataHandler(constraints.AllScene, wp.NewHandleFn(wp.PreTemplate, 70))
 }
 
 func postThumb(h *wp.Handle) {

@@ -30,7 +30,8 @@ type Handle struct {
 	templ             string
 	components        map[string][]Components[string]
 	themeMods         wpconfig.ThemeMods
-	handleFns         map[int][]HandleCall
+	renders           map[int][]HandleCall
+	dataHandler       map[int][]HandleCall
 	err               error
 	abort             bool
 	componentsArgs    map[string]any
@@ -69,7 +70,8 @@ func InitThemeArgAndConfig(fn func(*Handle), h *Handle) {
 	var inited = false
 	hh := reload.GetAnyValBys("themeArgAndConfig", h, func(h *Handle) Handle {
 		h.components = make(map[string][]Components[string])
-		h.handleFns = make(map[int][]HandleCall)
+		h.renders = make(map[int][]HandleCall)
+		h.dataHandler = make(map[int][]HandleCall)
 		h.componentsArgs = make(map[string]any)
 		h.componentFilterFn = make(map[string][]func(*Handle, string, ...any) string)
 		h.ginH = gin.H{}
@@ -97,7 +99,8 @@ func InitThemeArgAndConfig(fn func(*Handle), h *Handle) {
 	h.Index.postsPlugin = hh.Index.postsPlugin
 	h.Index.pageEle = hh.Index.pageEle
 	h.Detail.CommentRender = hh.Detail.CommentRender
-	h.handleFns = hh.handleFns
+	h.renders = hh.renders
+	h.dataHandler = hh.dataHandler
 	h.componentsArgs = hh.componentsArgs
 	h.componentFilterFn = hh.componentFilterFn
 }
@@ -227,16 +230,45 @@ func (h *Handle) NewCacheComponent(name string, order int, fn func(handle *Handl
 	return Components[string]{Fn: fn, CacheKey: name, Order: order}
 }
 
-func (h *Handle) PushHandleFn(statsOrScene int, fns ...HandleCall) {
-	h.handleFns[statsOrScene] = append(h.handleFns[statsOrScene], fns...)
+func (h *Handle) PushRender(statsOrScene int, fns ...HandleCall) {
+	h.renders[statsOrScene] = append(h.renders[statsOrScene], fns...)
+}
+func (h *Handle) PushDataHandler(Scene int, fns ...HandleCall) {
+	h.dataHandler[Scene] = append(h.dataHandler[Scene], fns...)
 }
 
-func (h *Handle) PushGroupHandleFn(statsOrScene, order int, fns ...HandleFn[*Handle]) {
+func (h *Handle) PushGroupRender(statsOrScene, order int, fns ...HandleFn[*Handle]) {
 	var calls []HandleCall
 	for _, fn := range fns {
 		calls = append(calls, HandleCall{fn, order})
 	}
-	h.handleFns[statsOrScene] = append(h.handleFns[statsOrScene], calls...)
+	h.renders[statsOrScene] = append(h.renders[statsOrScene], calls...)
+}
+func (h *Handle) PushGroupDataHandler(scene, order int, fns ...HandleFn[*Handle]) {
+	var calls []HandleCall
+	for _, fn := range fns {
+		calls = append(calls, HandleCall{fn, order})
+	}
+	h.dataHandler[scene] = append(h.dataHandler[scene], calls...)
+}
+
+func DataHandle(next HandleFn[*Handle], h *Handle) {
+	handlers := reload.SafetyMapBy("dataHandle", h.scene, h, func(h *Handle) []HandleCall {
+		a := h.dataHandler[h.scene]
+		aa, ok := h.dataHandler[constraints.AllScene]
+		if ok {
+			a = append(a, aa...)
+		}
+		slice.Sort(a, func(i, j HandleCall) bool {
+			return i.Order > j.Order
+		})
+		return a
+	})
+	for _, handler := range handlers {
+		handler.Fn(h)
+	}
+	h.DetermineHandleFns()
+	next(h)
 }
 
 func (h *Handle) AddCacheComponent(name string, fn func(*Handle) string) {
@@ -280,16 +312,16 @@ func (h *Handle) GetPassword() {
 }
 
 func (h *Handle) ExecHandleFns() {
-	calls, ok := h.handleFns[h.Stats]
+	calls, ok := h.renders[h.Stats]
 	var fns []HandleCall
 	if ok {
 		fns = append(fns, calls...)
 	}
-	calls, ok = h.handleFns[h.scene]
+	calls, ok = h.renders[h.scene]
 	if ok {
 		fns = append(fns, calls...)
 	}
-	calls, ok = h.handleFns[constraints.AllStats]
+	calls, ok = h.renders[constraints.AllStats]
 	if ok {
 		fns = append(fns, calls...)
 	}
@@ -334,8 +366,8 @@ func (h *Handle) Render() {
 func (h *Handle) CommonComponents() {
 	h.AddCacheComponent("customLogo", CalCustomLogo)
 	h.PushCacheGroupHeadScript("siteIconAndCustomCss", 0, CalSiteIcon, CalCustomCss)
-	h.PushGroupHandleFn(constraints.AllStats, 10, CalComponents)
-	h.PushHandleFn(constraints.AllStats, NewHandleFn(func(h *Handle) {
+	h.PushGroupRender(constraints.AllStats, 10, CalComponents)
+	h.PushRender(constraints.AllStats, NewHandleFn(func(h *Handle) {
 		h.C.HTML(h.Code, h.templ, h.ginH)
 	}, 0))
 }
@@ -406,16 +438,20 @@ func HandlePipe[T any](initial func(T), fns ...HandlePipeFn[T]) HandleFn[T] {
 }
 
 func DetermineHandleFn(h *Handle) []HandleCall {
-	calls, ok := h.handleFns[h.Stats]
+	calls, ok := h.renders[h.Stats]
 	var fns []HandleCall
 	if ok {
 		fns = append(fns, calls...)
 	}
-	calls, ok = h.handleFns[h.scene]
+	calls, ok = h.renders[h.scene]
 	if ok {
 		fns = append(fns, calls...)
 	}
-	calls, ok = h.handleFns[constraints.AllStats]
+	calls, ok = h.renders[constraints.AllStats]
+	if ok {
+		fns = append(fns, calls...)
+	}
+	calls, ok = h.renders[constraints.AllScene]
 	if ok {
 		fns = append(fns, calls...)
 	}

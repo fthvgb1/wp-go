@@ -42,7 +42,7 @@ var paginate = func() plugins.PageEle {
 	return p
 }()
 
-var pipe = wp.HandlePipe(wp.ExecuteHandleFn, widget.MiddleWare(ready, data)...)
+var pipe = wp.HandlePipe(wp.ExecuteHandleFn, widget.MiddleWare(ready, wp.DataHandle)...)
 
 func Hook(h *wp.Handle) {
 	pipe(h)
@@ -55,20 +55,23 @@ func configs(h *wp.Handle) {
 	h.PushCacheGroupHeadScript("colorScheme-customHeader", 10, colorScheme, customHeader)
 	components.WidgetArea(h)
 	pushScripts(h)
-	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(func(h *wp.Handle) {
+	h.PushRender(constraints.AllStats, wp.NewHandleFn(func(h *wp.Handle) {
 		h.SetData("HeaderImage", getHeaderImage(h))
 	}, 10))
 	h.SetComponentsArgs(widgets.Widget, map[string]string{
 		"{$before_widget}": `<section id="%s" class="%s">`,
 		"{$after_widget}":  `</section>`,
 	})
-	h.PushGroupHandleFn(constraints.AllStats, 90, wp.PreTemplate, errorsHandle)
+	h.PushGroupRender(constraints.AllStats, 90, wp.PreTemplate, errorsHandle)
 	h.CommonComponents()
 	h.Index.SetPageEle(paginate)
 	h.Index.SetListPlugin(wp.PostsPlugins(wp.PostPlugin(postThumbnail), wp.GetListPostPlugins(conf.ListPagePlugins, wp.ListPostPlugins())...))
 	wp.SetComponentsArgsForMap(h, widgets.Search, "{$form}", searchForm)
-	h.PushHandleFn(constraints.AllStats, wp.NewHandleFn(wp.IndexRender, 10))
-	h.PushHandleFn(constraints.Detail, wp.NewHandleFn(wp.DetailRender, 10))
+	h.PushRender(constraints.AllStats, wp.NewHandleFn(wp.IndexRender, 10))
+	h.PushRender(constraints.Detail, wp.NewHandleFn(wp.DetailRender, 10))
+	h.PushDataHandler(constraints.Detail, wp.NewHandleFn(detail, 100))
+	h.PushDataHandler(constraints.AllScene, wp.NewHandleFn(index, 100))
+	h.PushDataHandler(constraints.AllScene, wp.NewHandleFn(wp.PreCodeAndStats, 90))
 }
 func ready(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
 	wp.InitThemeArgAndConfig(configs, h)
@@ -93,17 +96,6 @@ func errorsHandle(h *wp.Handle) {
 		logs.IfError(h.Err(), "报错：")
 		h.SetTempl("twentyseventeen/posts/error.gohtml")
 	}
-}
-
-func data(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
-	if h.Scene() == constraints.Detail {
-		detail(h)
-	} else {
-		index(h)
-	}
-	wp.PreCodeAndStats(h)
-	h.DetermineHandleFns()
-	next(h)
 }
 
 func index(h *wp.Handle) {

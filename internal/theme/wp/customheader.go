@@ -93,7 +93,7 @@ func (h *Handle) GetHeaderImages(theme string) (r []models.PostThumbnail, err er
 }
 
 func thumb(m models.Posts, theme string) models.PostThumbnail {
-	m.Thumbnail = wpconfig.Thumbnail(m.AttachmentMetadata, "thumbnail", "", "thumbnail", "post-thumbnail", fmt.Sprintf("%s-thumbnail-avatar", theme))
+	m.Thumbnail = wpconfig.Thumbnail(m.AttachmentMetadata, "full", "", "thumbnail", "post-thumbnail", fmt.Sprintf("%s-thumbnail-avatar", theme))
 	m.Thumbnail.Width = m.AttachmentMetadata.Width
 	m.Thumbnail.Height = m.AttachmentMetadata.Height
 	if m.Thumbnail.Path != "" {

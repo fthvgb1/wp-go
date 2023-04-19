@@ -14,6 +14,7 @@ const (
 	ParamError
 	InternalErr
 	AllStats
+	AllScene
 
 	Defaults = "default"
 

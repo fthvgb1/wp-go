@@ -116,6 +116,4 @@ func DetailRender(h *Handle) {
 
 func Details(h *Handle) {
 	_ = h.Detail.BuildDetailData()
-	PreCodeAndStats(h)
-	PreTemplate(h)
 }
