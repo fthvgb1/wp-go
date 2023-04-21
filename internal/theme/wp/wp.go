@@ -1,7 +1,6 @@
 package wp
 
 import (
-	"fmt"
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
@@ -30,21 +29,13 @@ type Handle struct {
 	templ             string
 	components        map[string][]Components[string]
 	themeMods         wpconfig.ThemeMods
-	renders           map[int][]HandleCall
-	dataHandler       map[int][]HandleCall
+	handlers          map[int]map[int][]HandleCall
+	handleHook        map[int][]func(HandleCall) (HandleCall, bool)
 	err               error
 	abort             bool
+	stopPipe          bool
 	componentsArgs    map[string]any
 	componentFilterFn map[string][]func(*Handle, string, ...any) string
-	handleCall        []HandleCall
-}
-
-func (h *Handle) HandleCall() []HandleCall {
-	return h.handleCall
-}
-
-func (h *Handle) SetHandleCall(handleCall []HandleCall) {
-	h.handleCall = handleCall
 }
 
 type HandlePlugins map[string]HandleFn[*Handle]
@@ -59,21 +50,20 @@ type Components[T any] struct {
 
 type HandleFn[T any] func(T)
 
-type HandlePipeFn[T any] func(HandleFn[T], T)
-
 type HandleCall struct {
 	Fn    HandleFn[*Handle]
 	Order int
+	Name  string
 }
 
 func InitThemeArgAndConfig(fn func(*Handle), h *Handle) {
 	var inited = false
 	hh := reload.GetAnyValBys("themeArgAndConfig", h, func(h *Handle) Handle {
 		h.components = make(map[string][]Components[string])
-		h.renders = make(map[int][]HandleCall)
-		h.dataHandler = make(map[int][]HandleCall)
 		h.componentsArgs = make(map[string]any)
 		h.componentFilterFn = make(map[string][]func(*Handle, string, ...any) string)
+		h.handlers = make(map[int]map[int][]HandleCall)
+		h.handleHook = make(map[int][]func(HandleCall) (HandleCall, bool))
 		h.ginH = gin.H{}
 		fn(h)
 		inited = true
@@ -99,8 +89,8 @@ func InitThemeArgAndConfig(fn func(*Handle), h *Handle) {
 	h.Index.postsPlugin = hh.Index.postsPlugin
 	h.Index.pageEle = hh.Index.pageEle
 	h.Detail.CommentRender = hh.Detail.CommentRender
-	h.renders = hh.renders
-	h.dataHandler = hh.dataHandler
+	h.handlers = hh.handlers
+	h.handleHook = hh.handleHook
 	h.componentsArgs = hh.componentsArgs
 	h.componentFilterFn = hh.componentFilterFn
 }
@@ -125,6 +115,9 @@ func (h *Handle) ComponentFilterFnHook(name, s string, args ...any) string {
 
 func (h *Handle) Abort() {
 	h.abort = true
+}
+func (h *Handle) StopPipe() {
+	h.stopPipe = true
 }
 
 func (h *Handle) CommonThemeMods() wpconfig.ThemeMods {
@@ -230,47 +223,6 @@ func (h *Handle) NewCacheComponent(name string, order int, fn func(handle *Handl
 	return Components[string]{Fn: fn, CacheKey: name, Order: order}
 }
 
-func (h *Handle) PushRender(statsOrScene int, fns ...HandleCall) {
-	h.renders[statsOrScene] = append(h.renders[statsOrScene], fns...)
-}
-func (h *Handle) PushDataHandler(Scene int, fns ...HandleCall) {
-	h.dataHandler[Scene] = append(h.dataHandler[Scene], fns...)
-}
-
-func (h *Handle) PushGroupRender(statsOrScene, order int, fns ...HandleFn[*Handle]) {
-	var calls []HandleCall
-	for _, fn := range fns {
-		calls = append(calls, HandleCall{fn, order})
-	}
-	h.renders[statsOrScene] = append(h.renders[statsOrScene], calls...)
-}
-func (h *Handle) PushGroupDataHandler(scene, order int, fns ...HandleFn[*Handle]) {
-	var calls []HandleCall
-	for _, fn := range fns {
-		calls = append(calls, HandleCall{fn, order})
-	}
-	h.dataHandler[scene] = append(h.dataHandler[scene], calls...)
-}
-
-func DataHandle(next HandleFn[*Handle], h *Handle) {
-	handlers := reload.SafetyMapBy("dataHandle", h.scene, h, func(h *Handle) []HandleCall {
-		a := h.dataHandler[h.scene]
-		aa, ok := h.dataHandler[constraints.AllScene]
-		if ok {
-			a = append(a, aa...)
-		}
-		slice.Sort(a, func(i, j HandleCall) bool {
-			return i.Order > j.Order
-		})
-		return a
-	})
-	for _, handler := range handlers {
-		handler.Fn(h)
-	}
-	h.DetermineHandleFns()
-	next(h)
-}
-
 func (h *Handle) AddCacheComponent(name string, fn func(*Handle) string) {
 	h.components[name] = append(h.components[name], h.NewCacheComponent(name, 10, fn))
 }
@@ -311,31 +263,6 @@ func (h *Handle) GetPassword() {
 	}
 }
 
-func (h *Handle) ExecHandleFns() {
-	calls, ok := h.renders[h.Stats]
-	var fns []HandleCall
-	if ok {
-		fns = append(fns, calls...)
-	}
-	calls, ok = h.renders[h.scene]
-	if ok {
-		fns = append(fns, calls...)
-	}
-	calls, ok = h.renders[constraints.AllStats]
-	if ok {
-		fns = append(fns, calls...)
-	}
-	slice.Sort(fns, func(i, j HandleCall) bool {
-		return i.Order > j.Order
-	})
-	for _, fn := range fns {
-		fn.Fn(h)
-		if h.abort {
-			break
-		}
-	}
-}
-
 func PreTemplate(h *Handle) {
 	if h.templ == "" {
 		h.templ = str.Join(h.theme, "/posts/index.gohtml")
@@ -358,18 +285,16 @@ func PreCodeAndStats(h *Handle) {
 	}
 }
 
-func (h *Handle) Render() {
-	h.CommonComponents()
-	h.ExecHandleFns()
-}
-
 func (h *Handle) CommonComponents() {
 	h.AddCacheComponent("customLogo", CalCustomLogo)
 	h.PushCacheGroupHeadScript("siteIconAndCustomCss", 0, CalSiteIcon, CalCustomCss)
-	h.PushGroupRender(constraints.AllStats, 10, CalComponents)
-	h.PushRender(constraints.AllStats, NewHandleFn(func(h *Handle) {
-		h.C.HTML(h.Code, h.templ, h.ginH)
-	}, 0))
+	h.PushRender(constraints.AllStats, NewHandleFn(CalComponents, 10, "wp.CalComponents"))
+	h.PushRender(constraints.AllStats, NewHandleFn(RenderTemplate, 0, "wp.RenderTemplate"))
+}
+
+func RenderTemplate(h *Handle) {
+	h.C.HTML(h.Code, h.templ, h.ginH)
+	h.StopPipe()
 }
 
 func (h *Handle) PushComponents(name string, components ...Components[string]) {
@@ -424,55 +349,10 @@ func CalComponents(h *Handle) {
 	}
 }
 
-func NewHandleFn(fn HandleFn[*Handle], order int) HandleCall {
-	return HandleCall{Fn: fn, Order: order}
+func NewHandleFn(fn HandleFn[*Handle], order int, name string) HandleCall {
+	return HandleCall{Fn: fn, Order: order, Name: name}
 }
 
-// HandlePipe  方便把功能写在其它包里
-func HandlePipe[T any](initial func(T), fns ...HandlePipeFn[T]) HandleFn[T] {
-	return slice.ReverseReduce(fns, func(next HandlePipeFn[T], f func(t T)) func(t T) {
-		return func(t T) {
-			next(f, t)
-		}
-	}, initial)
-}
+func NothingToDo(*Handle) {
 
-func DetermineHandleFn(h *Handle) []HandleCall {
-	calls, ok := h.renders[h.Stats]
-	var fns []HandleCall
-	if ok {
-		fns = append(fns, calls...)
-	}
-	calls, ok = h.renders[h.scene]
-	if ok {
-		fns = append(fns, calls...)
-	}
-	calls, ok = h.renders[constraints.AllStats]
-	if ok {
-		fns = append(fns, calls...)
-	}
-	calls, ok = h.renders[constraints.AllScene]
-	if ok {
-		fns = append(fns, calls...)
-	}
-	slice.Sort(fns, func(i, j HandleCall) bool {
-		return i.Order > j.Order
-	})
-	return fns
-}
-
-func (h *Handle) DetermineHandleFns() {
-	key := fmt.Sprintf("%d-%d", h.scene, h.Stats)
-	h.handleCall = reload.SafetyMapBy("handleCalls", key, h, func(h *Handle) []HandleCall {
-		return DetermineHandleFn(h)
-	})
-}
-
-func ExecuteHandleFn(h *Handle) {
-	for _, fn := range h.handleCall {
-		fn.Fn(h)
-		if h.abort {
-			break
-		}
-	}
 }

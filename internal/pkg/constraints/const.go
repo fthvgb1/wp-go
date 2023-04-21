@@ -16,6 +16,9 @@ const (
 	AllStats
 	AllScene
 
+	PipData
+	PipRender
+
 	Defaults = "default"
 
 	HeadScript      = "headScript"

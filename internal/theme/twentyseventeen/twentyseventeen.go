@@ -42,7 +42,10 @@ var paginate = func() plugins.PageEle {
 	return p
 }()
 
-var pipe = wp.HandlePipe(wp.ExecuteHandleFn, widget.MiddleWare(ready, wp.DataHandle)...)
+var pipe = wp.HandlePipe(wp.NothingToDo, widget.MiddleWare(ready,
+	wp.PipeHandle(constraints.PipData, wp.PipeKey, wp.PipeDataHandle),
+	wp.PipeHandle(constraints.PipRender, wp.PipeKey, wp.PipeRender),
+)...)
 
 func Hook(h *wp.Handle) {
 	pipe(h)
@@ -55,23 +58,24 @@ func configs(h *wp.Handle) {
 	h.PushCacheGroupHeadScript("colorScheme-customHeader", 10, colorScheme, customHeader)
 	components.WidgetArea(h)
 	pushScripts(h)
-	h.PushRender(constraints.AllStats, wp.NewHandleFn(func(h *wp.Handle) {
-		h.SetData("HeaderImage", getHeaderImage(h))
-	}, 10))
+	h.PushRender(constraints.AllStats, wp.NewHandleFn(headerImage, 10, "headerImage"))
 	h.SetComponentsArgs(widgets.Widget, map[string]string{
 		"{$before_widget}": `<section id="%s" class="%s">`,
 		"{$after_widget}":  `</section>`,
 	})
-	h.PushGroupRender(constraints.AllStats, 90, wp.PreTemplate, errorsHandle)
+	h.PushRender(constraints.AllStats,
+		wp.NewHandleFn(wp.PreTemplate, 70, "wp.PreTemplate"),
+		wp.NewHandleFn(errorsHandle, 80, "errorsHandle"),
+	)
 	h.CommonComponents()
 	h.Index.SetPageEle(paginate)
 	h.Index.SetListPlugin(wp.PostsPlugins(wp.PostPlugin(postThumbnail), wp.GetListPostPlugins(conf.ListPagePlugins, wp.ListPostPlugins())...))
 	wp.SetComponentsArgsForMap(h, widgets.Search, "{$form}", searchForm)
-	h.PushRender(constraints.AllStats, wp.NewHandleFn(wp.IndexRender, 10))
-	h.PushRender(constraints.Detail, wp.NewHandleFn(wp.DetailRender, 10))
-	h.PushDataHandler(constraints.Detail, wp.NewHandleFn(detail, 100))
-	h.PushDataHandler(constraints.AllScene, wp.NewHandleFn(index, 100))
-	h.PushDataHandler(constraints.AllScene, wp.NewHandleFn(wp.PreCodeAndStats, 90))
+	h.PushRender(constraints.AllStats, wp.NewHandleFn(wp.IndexRender, 10, "wp.IndexRender"))
+	h.PushRender(constraints.Detail, wp.NewHandleFn(wp.DetailRender, 10, "wp.DetailRender"))
+	h.PushDataHandler(constraints.Detail, wp.NewHandleFn(detail, 100, "detail"))
+	h.PushDataHandler(constraints.AllScene, wp.NewHandleFn(index, 100, "index"))
+	h.PushDataHandler(constraints.AllScene, wp.NewHandleFn(wp.PreCodeAndStats, 90, "wp.PreCodeAndStats"))
 }
 func ready(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
 	wp.InitThemeArgAndConfig(configs, h)
@@ -155,6 +159,10 @@ func postThumbnail(h *wp.Handle, posts *models.Posts) {
 }
 
 var header = reload.Vars(models.PostThumbnail{})
+
+func headerImage(h *wp.Handle) {
+	h.SetData("HeaderImage", getHeaderImage(h))
+}
 
 func getHeaderImage(h *wp.Handle) (r models.PostThumbnail) {
 	img := header.Load()

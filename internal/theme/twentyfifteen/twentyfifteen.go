@@ -41,7 +41,10 @@ func Init(fs embed.FS) {
 	}
 }
 
-var pipe = wp.HandlePipe(wp.ExecuteHandleFn, widget.MiddleWare(ready, wp.DataHandle)...)
+var pipe = wp.HandlePipe(wp.NothingToDo, widget.MiddleWare(ready,
+	wp.PipeHandle(constraints.PipData, wp.PipeKey, wp.PipeDataHandle),
+	wp.PipeHandle(constraints.PipRender, wp.PipeKey, wp.PipeRender),
+)...)
 
 func Hook(h *wp.Handle) {
 	pipe(h)
@@ -64,14 +67,14 @@ func configs(h *wp.Handle) {
 	h.CommonComponents()
 	h.Index.SetListPlugin(wp.PostsPlugins(wp.PostPlugin(), wp.GetListPostPlugins(conf.ListPagePlugins, wp.ListPostPlugins())...))
 	components.WidgetArea(h)
-	h.PushRender(constraints.AllStats, wp.NewHandleFn(customHeader, 10))
-	h.PushRender(constraints.AllStats, wp.NewHandleFn(wp.IndexRender, 50))
-	h.PushRender(constraints.Detail, wp.NewHandleFn(wp.DetailRender, 50))
-	h.PushRender(constraints.Detail, wp.NewHandleFn(postThumb, 60))
-	h.PushDataHandler(constraints.Detail, wp.NewHandleFn(wp.Details, 100))
-	h.PushDataHandler(constraints.AllScene, wp.NewHandleFn(wp.Indexs, 100))
-	h.PushDataHandler(constraints.AllScene, wp.NewHandleFn(wp.PreCodeAndStats, 80))
-	h.PushDataHandler(constraints.AllScene, wp.NewHandleFn(wp.PreTemplate, 70))
+	h.PushRender(constraints.AllStats, wp.NewHandleFn(customHeader, 10, "customHeader"))
+	h.PushRender(constraints.AllStats, wp.NewHandleFn(wp.IndexRender, 50, "wp.IndexRender"))
+	h.PushRender(constraints.Detail, wp.NewHandleFn(wp.DetailRender, 50, "wp.DetailRender"))
+	h.PushRender(constraints.Detail, wp.NewHandleFn(postThumb, 60, "postThumb"))
+	h.PushDataHandler(constraints.Detail, wp.NewHandleFn(wp.Details, 100, "wp.Details"))
+	h.PushDataHandler(constraints.AllScene, wp.NewHandleFn(wp.Indexs, 100, "wp.Indexs"))
+	h.PushDataHandler(constraints.AllScene, wp.NewHandleFn(wp.PreCodeAndStats, 80, "wp.PreCodeAndStats"))
+	h.PushRender(constraints.AllScene, wp.NewHandleFn(wp.PreTemplate, 70, "wp.PreTemplate"))
 }
 
 func postThumb(h *wp.Handle) {
