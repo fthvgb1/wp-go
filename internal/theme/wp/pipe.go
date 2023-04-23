@@ -65,7 +65,7 @@ func PipeHandle(pipeScene int, keyFn func(*Handle, int) string, fn func(*Handle,
 }
 
 func PipeKey(h *Handle, pipScene int) string {
-	return fmt.Sprintf("%d-%d-%d", pipScene, h.scene, h.scene)
+	return fmt.Sprintf("pipekey-%d-%d-%d", pipScene, h.scene, h.scene)
 }
 
 func PipeDataHandle(h *Handle, dataHandlers map[int][]HandleCall) (handlers []HandleCall) {

@@ -53,6 +53,10 @@ func initConf(c string) (err error) {
 	if err != nil {
 		return
 	}
+	err = config.InitTrans()
+	if err != nil {
+		return err
+	}
 	err = logs.InitLogger()
 	if err != nil {
 		return err
