@@ -14,7 +14,7 @@ import (
 )
 
 var postContextCache *cache.MapCache[uint64, dao.PostContext]
-var categoryAndTagsCaches *cache.MapCache[int, []models.TermsMy]
+var categoryAndTagsCaches *cache.MapCache[string, []models.TermsMy]
 var recentPostsCaches *cache.VarCache[[]models.Posts]
 var recentCommentsCaches *cache.VarCache[[]models.Comments]
 var postCommentCaches *cache.MapCache[uint64, []uint64]
@@ -56,7 +56,7 @@ func InitActionsCommonCache() {
 
 	postMetaCache = cachemanager.MapBatchCacheBy(dao.GetPostMetaByPostIds, c.CacheTime.PostDataCacheTime)
 
-	categoryAndTagsCaches = cachemanager.MapCacheBy[int](dao.CategoriesAndTags, c.CacheTime.CategoryCacheTime)
+	categoryAndTagsCaches = cachemanager.MapCacheBy[string](dao.CategoriesAndTags, c.CacheTime.CategoryCacheTime)
 
 	recentPostsCaches = cache.NewVarCache(dao.RecentPosts, c.CacheTime.RecentPostCacheTime)
 
@@ -117,8 +117,8 @@ func Archives(ctx context.Context) []models.PostArchive {
 // CategoriesTags categories or tags
 //
 // t is constraints.Tag or constraints.Category
-func CategoriesTags(ctx context.Context, t ...int) []models.TermsMy {
-	tt := 0
+func CategoriesTags(ctx context.Context, t ...string) []models.TermsMy {
+	tt := ""
 	if len(t) > 0 {
 		tt = t[0]
 	}
@@ -126,8 +126,8 @@ func CategoriesTags(ctx context.Context, t ...int) []models.TermsMy {
 	logs.IfError(err, "get category fail")
 	return r
 }
-func AllCategoryTagsNames(ctx context.Context, t ...int) map[string]struct{} {
-	tt := 0
+func AllCategoryTagsNames(ctx context.Context, t ...string) map[string]struct{} {
+	tt := ""
 	if len(t) > 0 {
 		tt = t[0]
 	}

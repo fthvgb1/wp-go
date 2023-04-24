@@ -20,14 +20,14 @@
 
                 <div class="site-branding" style="margin-bottom: 0px;">
                     <div class="wrap">
-                        {{template "common/customLogo" .}}
+                        {{.customLogo|exec}}
                         <div class="site-branding-text">
                             <h1 class="site-title">
                                 <a href="/" rel="home">{{ "blogname"| getOption }}</a>
                             </h1>
                             <p class="site-description">{{"blogdescription"| getOption}}</p>
                         </div><!-- .site-branding-text -->
-                        {{if eq .scene 1}}
+                        {{if eq .scene "home"}}
                             <a href="#content" class="menu-scroll-down">
                                 <svg class="icon icon-arrow-right" aria-hidden="true" role="img">
                                     <use href="#icon-arrow-right" xlink:href="#icon-arrow-right"></use>

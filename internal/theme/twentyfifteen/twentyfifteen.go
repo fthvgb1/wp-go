@@ -42,8 +42,8 @@ func Init(fs embed.FS) {
 }
 
 var pipe = wp.HandlePipe(wp.NothingToDo, widget.MiddleWare(ready,
-	wp.PipeHandle(constraints.PipData, wp.PipeKey, wp.PipeDataHandle),
-	wp.PipeHandle(constraints.PipRender, wp.PipeKey, wp.PipeRender),
+	wp.PipeHandle(constraints.PipeData, wp.PipeKey, wp.PipeDataHandle),
+	wp.PipeHandle(constraints.PipeRender, wp.PipeKey, wp.PipeRender),
 )...)
 
 func Hook(h *wp.Handle) {
@@ -67,7 +67,7 @@ func configs(h *wp.Handle) {
 	h.CommonComponents()
 	h.Index.SetListPlugin(wp.PostsPlugins(wp.PostPlugin(), wp.GetListPostPlugins(conf.ListPagePlugins, wp.ListPostPlugins())...))
 	components.WidgetArea(h)
-	h.PushRender(constraints.AllStats, wp.NewHandleFn(customHeader, 10, "customHeader"))
+	h.SetData("customHeader", customHeader(h))
 	h.PushRender(constraints.AllStats, wp.NewHandleFn(wp.IndexRender, 50, "wp.IndexRender"))
 	h.PushRender(constraints.Detail, wp.NewHandleFn(wp.DetailRender, 50, "wp.DetailRender"))
 	h.PushRender(constraints.Detail, wp.NewHandleFn(postThumb, 60, "postThumb"))

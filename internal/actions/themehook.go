@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func ThemeHook(scene int) func(*gin.Context) {
+func ThemeHook(scene string) func(*gin.Context) {
 	return func(c *gin.Context) {
 		s := scene
 		if scene == constraints.Home {
@@ -19,6 +19,8 @@ func ThemeHook(scene int) func(*gin.Context) {
 		h := wp.NewHandle(c, s, t)
 		h.Index = wp.NewIndexHandle(h)
 		h.Detail = wp.NewDetailHandle(h)
+		templ, _ := theme.GetTemplate(t)
+		h.SetTemplate(templ)
 		theme.Hook(t, h)
 	}
 }

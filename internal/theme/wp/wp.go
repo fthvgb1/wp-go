@@ -7,10 +7,10 @@ import (
 	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
-	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	"html/template"
 	"net/http"
 	"strings"
 )
@@ -23,19 +23,28 @@ type Handle struct {
 	Session           sessions.Session
 	ginH              gin.H
 	password          string
-	scene             int
+	scene             string
 	Code              int
-	Stats             int
+	Stats             string
 	templ             string
 	components        map[string][]Components[string]
 	themeMods         wpconfig.ThemeMods
-	handlers          map[int]map[int][]HandleCall
-	handleHook        map[int][]func(HandleCall) (HandleCall, bool)
+	handlers          map[string]map[string][]HandleCall
+	handleHook        map[string][]func(HandleCall) (HandleCall, bool)
 	err               error
 	abort             bool
 	stopPipe          bool
 	componentsArgs    map[string]any
 	componentFilterFn map[string][]func(*Handle, string, ...any) string
+	template          *template.Template
+}
+
+func (h *Handle) SetTemplate(template *template.Template) {
+	h.template = template
+}
+
+func (h *Handle) Template() *template.Template {
+	return h.template
 }
 
 type HandlePlugins map[string]HandleFn[*Handle]
@@ -62,8 +71,8 @@ func InitThemeArgAndConfig(fn func(*Handle), h *Handle) {
 		h.components = make(map[string][]Components[string])
 		h.componentsArgs = make(map[string]any)
 		h.componentFilterFn = make(map[string][]func(*Handle, string, ...any) string)
-		h.handlers = make(map[int]map[int][]HandleCall)
-		h.handleHook = make(map[int][]func(HandleCall) (HandleCall, bool))
+		h.handlers = make(map[string]map[string][]HandleCall)
+		h.handleHook = make(map[string][]func(HandleCall) (HandleCall, bool))
 		h.ginH = gin.H{}
 		fn(h)
 		inited = true
@@ -77,12 +86,9 @@ func InitThemeArgAndConfig(fn func(*Handle), h *Handle) {
 	}
 	h.components = m
 	h.ginH = maps.Copy(hh.ginH)
-	h.ginH["calPostClass"] = func(posts models.Posts) string {
-		return h.PostClass(posts)
-	}
-	h.ginH["calBodyClass"] = func() string {
-		return h.BodyClass()
-	}
+	h.ginH["calPostClass"] = postClass(h)
+	h.ginH["calBodyClass"] = bodyClass(h)
+	h.ginH["customLogo"] = customLogo(h)
 	if inited {
 		return
 	}
@@ -140,7 +146,7 @@ func (h *Handle) SetTempl(templ string) {
 	h.templ = templ
 }
 
-func (h *Handle) Scene() int {
+func (h *Handle) Scene() string {
 	return h.scene
 }
 
@@ -206,7 +212,7 @@ func (h *Handle) SetComponentsArgs(key string, value any) {
 	h.componentsArgs[key] = value
 }
 
-func NewHandle(c *gin.Context, scene int, theme string) *Handle {
+func NewHandle(c *gin.Context, scene string, theme string) *Handle {
 	mods, err := wpconfig.GetThemeMods(theme)
 	logs.IfError(err, "获取mods失败")
 	return &Handle{
@@ -272,7 +278,7 @@ func PreTemplate(h *Handle) {
 	}
 }
 func PreCodeAndStats(h *Handle) {
-	if h.Stats != 0 && h.Code != 0 {
+	if h.Stats != "" && h.Code != 0 {
 		return
 	}
 	switch h.Stats {
@@ -286,7 +292,6 @@ func PreCodeAndStats(h *Handle) {
 }
 
 func (h *Handle) CommonComponents() {
-	h.AddCacheComponent("customLogo", CalCustomLogo)
 	h.PushCacheGroupHeadScript("siteIconAndCustomCss", 0, CalSiteIcon, CalCustomCss)
 	h.PushRender(constraints.AllStats, NewHandleFn(CalComponents, 10, "wp.CalComponents"))
 	h.PushRender(constraints.AllStats, NewHandleFn(RenderTemplate, 0, "wp.RenderTemplate"))

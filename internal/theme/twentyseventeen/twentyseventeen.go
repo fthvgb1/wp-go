@@ -43,8 +43,8 @@ var paginate = func() plugins.PageEle {
 }()
 
 var pipe = wp.HandlePipe(wp.NothingToDo, widget.MiddleWare(ready,
-	wp.PipeHandle(constraints.PipData, wp.PipeKey, wp.PipeDataHandle),
-	wp.PipeHandle(constraints.PipRender, wp.PipeKey, wp.PipeRender),
+	wp.PipeHandle(constraints.PipeData, wp.PipeKey, wp.PipeDataHandle),
+	wp.PipeHandle(constraints.PipeRender, wp.PipeKey, wp.PipeRender),
 )...)
 
 func Hook(h *wp.Handle) {

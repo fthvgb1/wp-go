@@ -1,7 +1,4 @@
 {{define "common/head"}}
-    {{if .customHeader}}
-        {{.customHeader|unescaped}}
-    {{end}}
 
     {{if .headScript}}
         {{.headScript|unescaped}}
@@ -18,11 +15,6 @@
     {{end}}
 {{end}}
 
-{{define "common/customLogo"}}
-    {{if .customLogo}}
-        {{.customLogo|unescaped}}
-    {{end}}
-{{end}}
 
 {{define "common/sidebarWidget"}}
     {{if .sidebarsWidgets}}

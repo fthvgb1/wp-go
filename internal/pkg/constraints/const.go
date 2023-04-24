@@ -1,23 +1,23 @@
 package constraints
 
 const (
-	Home = iota + 1
-	Archive
-	Category
-	Tag
-	Search
-	Author
-	Detail
+	Home     = "Home"
+	Archive  = "Archive"
+	Category = "Category"
+	Tag      = "Tag"
+	Search   = "Search"
+	Author   = "Author"
+	Detail   = "Detail"
 
-	Ok
-	Error404
-	ParamError
-	InternalErr
-	AllStats
-	AllScene
+	Ok          = "Ok"
+	Error404    = "Error404"
+	ParamError  = "ParamError"
+	InternalErr = "InternalErr"
+	AllStats    = "AllStats"
+	AllScene    = "AllScene"
 
-	PipData
-	PipRender
+	PipeData   = "PipeData"
+	PipeRender = "PipeRender"
 
 	Defaults = "default"
 

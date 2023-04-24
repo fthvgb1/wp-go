@@ -23,7 +23,7 @@ type PostContext struct {
 
 func CategoriesAndTags(a ...any) (terms []models.TermsMy, err error) {
 	ctx := a[0].(context.Context)
-	t, ok := a[1].(int)
+	t, ok := a[1].(string)
 	var in = []any{"category", "post_tag"}
 	if ok {
 		switch t {

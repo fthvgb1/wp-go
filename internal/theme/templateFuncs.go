@@ -22,8 +22,8 @@ var comFn = template.FuncMap{
 	},
 	"getLang": wpconfig.GetLang,
 	"postsFn": postsFn,
-	"exec": func(fn func() string) string {
-		return fn()
+	"exec": func(fn func() string) template.HTML {
+		return template.HTML(fn())
 	},
 }
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper/maps"
 	str "github.com/fthvgb1/wp-go/helper/strings"
+	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/pkg/cache"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 )
@@ -39,4 +40,12 @@ func CalCustomLogo(h *Handle) (r string) {
 	}, fmt.Sprintf(`<img wight="%v" height="%v"`, img.Width, img.Height)))
 	r = fmt.Sprintf(`<a href="%s" class="custom-logo-link" rel="home"%s>%s</a>`, "/", ` aria-current="page"`, r)
 	return
+}
+
+func customLogo(h *Handle) func() string {
+	return func() string {
+		return reload.GetAnyValBys("customLogo", h, func(h *Handle) string {
+			return CalCustomLogo(h)
+		})
+	}
 }

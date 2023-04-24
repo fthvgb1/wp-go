@@ -13,6 +13,12 @@ import (
 	"strings"
 )
 
+func bodyClass(h *Handle) func() string {
+	return func() string {
+		return h.BodyClass()
+	}
+}
+
 func (h *Handle) BodyClass() string {
 	var class []string
 	if constraints.Ok != h.Stats {
@@ -72,6 +78,12 @@ func (h *Handle) BodyClass() string {
 		class = append(class, "wp-embed-responsive")
 	}
 	return h.ComponentFilterFnHook("bodyClass", strings.Join(class, " "))
+}
+
+func postClass(h *Handle) func(posts models.Posts) string {
+	return func(posts models.Posts) string {
+		return h.PostClass(posts)
+	}
 }
 func (h *Handle) PostClass(posts models.Posts) string {
 	var class []string

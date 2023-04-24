@@ -108,15 +108,16 @@ func calCustomHeader(h *wp.Handle) (r string, rand bool) {
 	return
 }
 
-func customHeader(h *wp.Handle) {
-	headers := header.Load()
-	if headers == constraints.Defaults {
-		headerss, rand := calCustomHeader(h)
-		headers = headerss
-		if !rand {
-			header.Store(headers)
+func customHeader(h *wp.Handle) func() string {
+	return func() string {
+		headers := header.Load()
+		if headers == constraints.Defaults {
+			headerss, rand := calCustomHeader(h)
+			headers = headerss
+			if !rand {
+				header.Store(headers)
+			}
 		}
+		return headers
 	}
-	h.SetData("customHeader", headers)
-	return
 }
