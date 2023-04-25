@@ -128,7 +128,7 @@ func GetAnyValBy[T, A any](namespace string, tryTimes int, a A, fn func(A) (T, b
 	}
 	v.v, ok = fn(a)
 	times := v.counter()
-	if ok || times == tryTimes {
+	if ok || times >= tryTimes {
 		v.ok = true
 		vv.Val.Store(v)
 	}
