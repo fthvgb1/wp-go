@@ -341,7 +341,7 @@ func CalComponents(h *Handle) {
 			if component.Fn != nil {
 				v := ""
 				if component.CacheKey != "" {
-					v = reload.SafetyMapBy("calComponent", component.CacheKey, h, component.Fn)
+					v = reload.GetAnyValMapBy("calComponent", component.CacheKey, h, component.Fn)
 				} else {
 					v = component.Fn(h)
 				}

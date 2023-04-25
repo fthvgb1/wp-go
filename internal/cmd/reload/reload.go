@@ -1,13 +1,12 @@
 package reload
 
 import (
+	"github.com/fthvgb1/wp-go/helper/number"
 	"github.com/fthvgb1/wp-go/safety"
 	"sync"
 )
 
 var calls []func()
-
-var str = safety.NewMap[string, string]()
 
 var anyMap = safety.NewMap[string, any]()
 
@@ -16,8 +15,9 @@ type safetyVar[T, A any] struct {
 	mutex sync.Mutex
 }
 type val[T any] struct {
-	v  T
-	ok bool
+	v       T
+	ok      bool
+	counter number.Counter[int]
 }
 type safetyMap[K comparable, V, A any] struct {
 	val   *safety.Map[K, V]
@@ -27,7 +27,7 @@ type safetyMap[K comparable, V, A any] struct {
 var safetyMaps = safety.NewMap[string, any]()
 var safetyMapLock = sync.Mutex{}
 
-func SafetyMapByFn[K comparable, V, A any](namespace string, fn func(A) V) func(key K, args A) V {
+func GetAnyMapFnBys[K comparable, V, A any](namespace string, fn func(A) V) func(key K, args A) V {
 	m := safetyMapFn[K, V, A](namespace)
 	return func(key K, a A) V {
 		v, ok := m.val.Load(key)
@@ -69,7 +69,7 @@ func safetyMapFn[K comparable, V, A any](namespace string) *safetyMap[K, V, A] {
 	return m
 }
 
-func SafetyMapBy[K comparable, V, A any](namespace string, key K, a A, fn func(A) V) V {
+func GetAnyValMapBy[K comparable, V, A any](namespace string, key K, a A, fn func(A) V) V {
 	m := safetyMapFn[K, V, A](namespace)
 	v, ok := m.val.Load(key)
 	if ok {
@@ -87,7 +87,7 @@ func SafetyMapBy[K comparable, V, A any](namespace string, key K, a A, fn func(A
 	return v
 }
 
-func GetAnyValBys[T, A any](namespace string, a A, fn func(A) T) T {
+func anyVal[T, A any](namespace string, counter bool) *safetyVar[T, A] {
 	var vv *safetyVar[T, A]
 	vvv, ok := safetyMaps.Load(namespace)
 	if ok {
@@ -98,7 +98,11 @@ func GetAnyValBys[T, A any](namespace string, a A, fn func(A) T) T {
 		if ok {
 			vv = vvv.(*safetyVar[T, A])
 		} else {
-			vv = &safetyVar[T, A]{safety.NewVar(val[T]{}), sync.Mutex{}}
+			v := val[T]{}
+			if counter {
+				v.counter = number.Counters[int]()
+			}
+			vv = &safetyVar[T, A]{safety.NewVar(v), sync.Mutex{}}
 			Push(func() {
 				vv.Val.Flush()
 			})
@@ -106,6 +110,34 @@ func GetAnyValBys[T, A any](namespace string, a A, fn func(A) T) T {
 		}
 		safetyMapLock.Unlock()
 	}
+	return vv
+}
+
+func GetAnyValBy[T, A any](namespace string, tryTimes int, a A, fn func(A) (T, bool)) T {
+	var vv = anyVal[T, A](namespace, true)
+	var ok bool
+	v := vv.Val.Load()
+	if v.ok {
+		return v.v
+	}
+	vv.mutex.Lock()
+	v = vv.Val.Load()
+	if v.ok {
+		vv.mutex.Unlock()
+		return v.v
+	}
+	v.v, ok = fn(a)
+	times := v.counter()
+	if ok || times == tryTimes {
+		v.ok = true
+		vv.Val.Store(v)
+	}
+	vv.mutex.Unlock()
+	return v.v
+}
+
+func GetAnyValBys[T, A any](namespace string, a A, fn func(A) T) T {
+	var vv = anyVal[T, A](namespace, false)
 	v := vv.Val.Load()
 	if v.ok {
 		return v.v
@@ -147,6 +179,5 @@ func Reload() {
 		call()
 	}
 	anyMap.Flush()
-	str.Flush()
 	safetyMaps.Flush()
 }

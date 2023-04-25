@@ -30,7 +30,7 @@ var intReg = regexp.MustCompile(`^\d`)
 
 func init() {
 	flag.StringVar(&confPath, "c", "config.yaml", "config file")
-	flag.StringVar(&address, "p", "", "listen address(port)")
+	flag.StringVar(&address, "p", "", "listen address and port")
 	flag.Parse()
 	if address == "" && os.Getenv("PORT") == "" {
 		address = "80"

@@ -34,7 +34,7 @@ func (h *Handle) PushDataHandler(scene string, fns ...HandleCall) {
 
 func PipeHandle(pipeScene string, keyFn func(*Handle, string) string, fn func(*Handle, map[string][]HandleCall) []HandleCall) func(HandleFn[*Handle], *Handle) {
 	return func(next HandleFn[*Handle], h *Handle) {
-		handlers := reload.SafetyMapBy("pipeHandlers", keyFn(h, pipeScene), h, func(h *Handle) []HandleCall {
+		handlers := reload.GetAnyValMapBy("pipeHandlers", keyFn(h, pipeScene), h, func(h *Handle) []HandleCall {
 			conf := h.handleHook[pipeScene]
 			calls := fn(h, h.handlers[pipeScene])
 			calls = slice.FilterAndMap(calls, func(call HandleCall) (HandleCall, bool) {

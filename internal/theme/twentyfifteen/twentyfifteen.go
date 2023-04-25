@@ -62,7 +62,7 @@ func configs(h *wp.Handle) {
 		return strings.ReplaceAll(s, `class="search-submit"`, `class="search-submit screen-reader-text"`)
 	})
 	h.Index.SetPageEle(plugins.TwentyFifteenPagination())
-	wphandle.RegisterPlugins(h, conf.Plugins...)
+	wphandle.UsePlugins(h)
 	h.PushCacheGroupHeadScript("CalCustomBackGround", 10, CalCustomBackGround, colorSchemeCss)
 	h.CommonComponents()
 	h.Index.SetListPlugin(wp.PostsPlugins(wp.PostPlugin(), wp.GetListPostPlugins(conf.ListPagePlugins, wp.ListPostPlugins())...))

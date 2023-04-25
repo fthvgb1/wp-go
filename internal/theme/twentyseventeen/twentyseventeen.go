@@ -53,7 +53,7 @@ func Hook(h *wp.Handle) {
 
 func configs(h *wp.Handle) {
 	conf := config.GetConfig()
-	wphandle.RegisterPlugins(h, conf.Plugins...)
+	wphandle.UsePlugins(h)
 	h.PushComponentFilterFn("bodyClass", calClass)
 	h.PushCacheGroupHeadScript("colorScheme-customHeader", 10, colorScheme, customHeader)
 	components.WidgetArea(h)
