@@ -69,6 +69,7 @@ func configs(h *wp.Handle) {
 	)
 	h.CommonComponents()
 	h.Index.SetPageEle(paginate)
+	wp.ReplyCommentJs(h)
 	h.Index.SetListPlugin(wp.PostsPlugins(wp.PostPlugin(postThumbnail), wp.GetListPostPlugins(conf.ListPagePlugins, wp.ListPostPlugins())...))
 	wp.SetComponentsArgsForMap(h, widgets.Search, "{$form}", searchForm)
 	h.PushRender(constraints.AllStats, wp.NewHandleFn(wp.IndexRender, 10, "wp.IndexRender"))
