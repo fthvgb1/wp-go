@@ -37,7 +37,7 @@ type Selectors struct {
 }
 
 func EnlighterJS(h *wp.Handle) {
-	h.PushGroupHeadScript(20, `<link rel='stylesheet' id='enlighterjs-css'  href='/wp-content/plugins/enlighter/cache/enlighterjs.min.css' media='all' />`)
+	h.PushGroupHeadScript("enlighterjs-css", 20, `<link rel='stylesheet' id='enlighterjs-css'  href='/wp-content/plugins/enlighter/cache/enlighterjs.min.css' media='all' />`)
 
 	h.PushCacheGroupFooterScript("enlighterJs", 10, func(h *wp.Handle) string {
 		op := wpconfig.GetOption("enlighter-options")

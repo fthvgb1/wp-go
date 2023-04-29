@@ -93,17 +93,17 @@ func NewIndexParams(ctx *gin.Context) *IndexParams {
 		PostStatus: []any{"publish"},
 		BlogName:   wpconfig.GetOption("blogname"),
 	}
-	i.ParseSearch = i.parseSearch
-	i.ParseArchive = i.parseArchive
-	i.ParseCategory = i.parseCategory
-	i.ParseTag = i.parseTag
-	i.CategoryCondition = i.categoryCondition
-	i.ParseAuthor = i.parseAuthor
-	i.ParseParams = i.parseParams
+	i.ParseSearch = i.ParseSearchs
+	i.ParseArchive = i.ParseArchives
+	i.ParseCategory = i.ParseCategorys
+	i.ParseTag = i.ParseTags
+	i.CategoryCondition = i.CategoryConditions
+	i.ParseAuthor = i.ParseAuthors
+	i.ParseParams = i.ParseParamss
 	return i
 }
 
-func (i *IndexParams) parseSearch() {
+func (i *IndexParams) ParseSearchs() {
 	s := i.Ctx.Query("s")
 	if s != "" {
 		q := str.Join("%", s, "%")
@@ -118,7 +118,7 @@ func (i *IndexParams) parseSearch() {
 		i.Search = s
 	}
 }
-func (i *IndexParams) parseArchive() error {
+func (i *IndexParams) ParseArchives() error {
 	year := i.Ctx.Param("year")
 	if year != "" {
 		y := str.ToInteger(year, -1)
@@ -148,7 +148,7 @@ func (i *IndexParams) parseArchive() error {
 	return nil
 }
 
-func (i *IndexParams) parseCategory() error {
+func (i *IndexParams) ParseCategorys() error {
 	category := i.Ctx.Param("category")
 	if category != "" {
 		if !maps.IsExists(cache.AllCategoryTagsNames(i.Ctx, constraints.Category), category) {
@@ -161,7 +161,7 @@ func (i *IndexParams) parseCategory() error {
 	}
 	return nil
 }
-func (i *IndexParams) parseTag() error {
+func (i *IndexParams) ParseTags() error {
 	tag := i.Ctx.Param("tag")
 	if tag != "" {
 		if !maps.IsExists(cache.AllCategoryTagsNames(i.Ctx, constraints.Tag), tag) {
@@ -175,7 +175,7 @@ func (i *IndexParams) parseTag() error {
 	return nil
 }
 
-func (i *IndexParams) categoryCondition() {
+func (i *IndexParams) CategoryConditions() {
 	if i.Category != "" {
 		i.Where = append(i.Where, []string{
 			"d.name", i.Category,
@@ -190,7 +190,7 @@ func (i *IndexParams) categoryCondition() {
 		i.setTitleLR(i.Category, i.BlogName)
 	}
 }
-func (i *IndexParams) parseAuthor() (err error) {
+func (i *IndexParams) ParseAuthors() (err error) {
 	username := i.Ctx.Param("author")
 	if username != "" {
 		allUsername, er := cache.GetAllUsername(i.Ctx)
@@ -215,7 +215,7 @@ func (i *IndexParams) parseAuthor() (err error) {
 	return
 }
 
-func (i *IndexParams) parseParams() {
+func (i *IndexParams) ParseParamss() {
 	i.Order = i.Ctx.Query("Order")
 	if !maps.IsExists(orders, i.Order) {
 		order := config.GetConfig().PostOrder

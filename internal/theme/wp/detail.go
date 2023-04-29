@@ -107,13 +107,18 @@ func DetailRender(h *Handle) {
 	d.PasswordProject()
 	d.RenderComment()
 	d.ginH["post"] = d.Post
-	reply := ""
-	if d.Post.CommentStatus == "open" && wpconfig.GetOption("thread_comments") == "1" {
-		reply = `<script src='/wp-includes/js/comment-reply.min.js' id='comment-reply-js'></script>`
-	}
-	d.PushGroupFooterScript(10, reply)
 }
 
 func Details(h *Handle) {
 	_ = h.Detail.BuildDetailData()
+}
+
+func ReplyCommentJs(h *Handle) {
+	h.PushFooterScript(h.NewComponent("comment-reply.js", false, 10, func(h *Handle) string {
+		reply := ""
+		if h.Detail.Post.CommentStatus == "open" && wpconfig.GetOption("thread_comments") == "1" {
+			reply = `<script src='/wp-includes/js/comment-reply.min.js' id='comment-reply-js'></script>`
+		}
+		return reply
+	}))
 }

@@ -67,6 +67,7 @@ func configs(h *wp.Handle) {
 	h.CommonComponents()
 	h.Index.SetListPlugin(wp.PostsPlugins(wp.PostPlugin(), wp.GetListPostPlugins(conf.ListPagePlugins, wp.ListPostPlugins())...))
 	components.WidgetArea(h)
+	wp.ReplyCommentJs(h)
 	h.SetData("customHeader", customHeader(h))
 	h.PushRender(constraints.AllStats, wp.NewHandleFn(wp.IndexRender, 50, "wp.IndexRender"))
 	h.PushRender(constraints.Detail, wp.NewHandleFn(wp.DetailRender, 50, "wp.DetailRender"))

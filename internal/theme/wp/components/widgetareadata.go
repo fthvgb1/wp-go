@@ -10,17 +10,18 @@ import (
 )
 
 var widgetFn = map[string]widgetComponent{
-	"search":          {fn: widget.Search},
-	"recent-posts":    {fn: widget.RecentPosts},
-	"recent-comments": {fn: widget.RecentComments},
-	"archives":        {fn: widget.Archive},
-	"categories":      {fn: widget.Category},
-	"meta":            {fn: widget.Meta, cacheKey: "widgetMeta"},
+	"search":          {fn: widget.Search, name: "search"},
+	"recent-posts":    {fn: widget.RecentPosts, name: "recent-posts"},
+	"recent-comments": {fn: widget.RecentComments, name: "recent-comments"},
+	"archives":        {fn: widget.Archive, name: "archives"},
+	"categories":      {fn: widget.Category, name: "categories"},
+	"meta":            {fn: widget.Meta, name: "meta", cached: true},
 }
 
 type widgetComponent struct {
-	fn       func(h *wp.Handle, id string) string
-	cacheKey string
+	fn     func(h *wp.Handle, id string) string
+	cached bool
+	name   string
 }
 
 func WidgetArea(h *wp.Handle) {
@@ -47,7 +48,8 @@ func sidebars() []wp.Components[string] {
 			component.Fn = fn
 		} else {
 			component.Fn = widget.Fn(id, widgetComponents.fn)
-			component.CacheKey = widgetComponents.cacheKey
+			component.Name = widgetComponents.name
+			component.Cached = widgetComponents.cached
 		}
 		component.Order = 10
 		return component, true

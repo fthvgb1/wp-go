@@ -1,8 +1,8 @@
 package wp
 
 import (
-	"fmt"
 	"github.com/fthvgb1/wp-go/helper/slice"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/cmd/reload"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 )
@@ -65,7 +65,8 @@ func PipeHandle(pipeScene string, keyFn func(*Handle, string) string, fn func(*H
 }
 
 func PipeKey(h *Handle, pipScene string) string {
-	return fmt.Sprintf("pipekey-%s-%s-%s", pipScene, h.scene, h.scene)
+	key := str.Join("pipekey", "-", pipScene, "-", h.scene, "-", h.Stats)
+	return h.ComponentFilterFnHook("pipeKey", key, pipScene)
 }
 
 func PipeDataHandle(h *Handle, dataHandlers map[string][]HandleCall) (handlers []HandleCall) {
