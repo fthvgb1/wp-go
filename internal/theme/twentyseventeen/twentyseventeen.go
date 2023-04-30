@@ -67,6 +67,7 @@ func configs(h *wp.Handle) {
 		wp.NewHandleFn(wp.PreTemplate, 70, "wp.PreTemplate"),
 		wp.NewHandleFn(errorsHandle, 80, "errorsHandle"),
 	)
+	h.Detail.CommentRender = commentFormat
 	h.CommonComponents()
 	h.Index.SetPageEle(paginate)
 	wp.ReplyCommentJs(h)
@@ -127,7 +128,6 @@ func detail(h *wp.Handle) {
 		img.Srcset = fmt.Sprintf("%s %dw, %s", img.Path, img.Width, img.Srcset)
 		d.Post.Thumbnail = img
 	}
-	d.CommentRender = commentFormat
 }
 
 var commentFormat = comment{}
