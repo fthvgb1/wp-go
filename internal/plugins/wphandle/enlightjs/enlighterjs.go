@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/internal/phphelper"
+	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/theme/wp"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
@@ -37,9 +38,9 @@ type Selectors struct {
 }
 
 func EnlighterJS(h *wp.Handle) {
-	h.PushGroupHeadScript("enlighterjs-css", 20, `<link rel='stylesheet' id='enlighterjs-css'  href='/wp-content/plugins/enlighter/cache/enlighterjs.min.css' media='all' />`)
+	h.PushGroupHeadScript(constraints.AllScene, "enlighterjs-css", 20, `<link rel='stylesheet' id='enlighterjs-css'  href='/wp-content/plugins/enlighter/cache/enlighterjs.min.css' media='all' />`)
 
-	h.PushCacheGroupFooterScript("enlighterJs", 10, func(h *wp.Handle) string {
+	h.PushCacheGroupFooterScript(constraints.AllScene, "enlighterJs", 10, func(h *wp.Handle) string {
 		op := wpconfig.GetOption("enlighter-options")
 		opp, err := phphelper.UnPHPSerializeToStrAnyMap(op)
 		if err != nil {

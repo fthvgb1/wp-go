@@ -114,7 +114,7 @@ func Details(h *Handle) {
 }
 
 func ReplyCommentJs(h *Handle) {
-	h.PushFooterScript(h.NewComponent("comment-reply.js", false, 10, func(h *Handle) string {
+	h.PushFooterScript(constraints.Detail, NewComponent("comment-reply.js", "", false, 10, func(h *Handle) string {
 		reply := ""
 		if h.Detail.Post.CommentStatus == "open" && wpconfig.GetOption("thread_comments") == "1" {
 			reply = `<script src='/wp-includes/js/comment-reply.min.js' id='comment-reply-js'></script>`

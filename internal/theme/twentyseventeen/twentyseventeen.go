@@ -55,7 +55,7 @@ func configs(h *wp.Handle) {
 	conf := config.GetConfig()
 	wphandle.UsePlugins(h)
 	h.PushComponentFilterFn("bodyClass", calClass)
-	h.PushCacheGroupHeadScript("colorScheme-customHeader", 10, colorScheme, customHeader)
+	h.PushCacheGroupHeadScript(constraints.AllScene, "colorScheme-customHeader", 10, colorScheme, customHeader)
 	components.WidgetArea(h)
 	pushScripts(h)
 	h.PushRender(constraints.AllStats, wp.NewHandleFn(headerImage, 10, "headerImage"))

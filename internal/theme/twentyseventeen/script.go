@@ -2,19 +2,20 @@ package twentyseventeen
 
 import (
 	"fmt"
+	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/theme/wp"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 )
 
 func pushScripts(h *wp.Handle) {
-	h.PushCacheGroupHeadScript("{theme}.head", 30, func(h *wp.Handle) string {
+	h.PushCacheGroupHeadScript(constraints.AllScene, "{theme}.head", 30, func(h *wp.Handle) string {
 		head := headScript
 		if "dark" == wpconfig.GetThemeModsVal(ThemeName, "colorscheme", "light") {
 			head = fmt.Sprintf("%s\n%s", headScript, ` <link rel="stylesheet" id="twentyseventeen-colors-dark-css" href="/wp-content/themes/twentyseventeen/assets/css/colors-dark.css?ver=20191025" media="all">`)
 		}
 		return head
 	})
-	h.PushGroupFooterScript("{theme}.footer", 20, footerScript)
+	h.PushGroupFooterScript(constraints.AllScene, "{theme}.footer", 20, footerScript)
 
 }
 

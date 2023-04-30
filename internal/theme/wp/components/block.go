@@ -12,12 +12,16 @@ var blockFn = map[string]func(*wp.Handle, string, block.ParserBlock) (func() str
 	"core/categories": block.Category,
 }
 
-func Block(id string) func(*wp.Handle) string {
+func Block(id string) (func(*wp.Handle) string, string) {
 	content := wpconfig.GetPHPArrayVal("widget_block", "", str.ToInteger[int64](id, 0), "content")
 	if content == "" {
-		return nil
+		return nil, ""
 	}
+	var name string
 	v := block.ParseBlock(content)
+	if len(v.Output) > 0 {
+		name = v.Output[0].Name
+	}
 	return func(h *wp.Handle) string {
 		var out []string
 		for _, parserBlock := range v.Output {
@@ -28,8 +32,9 @@ func Block(id string) func(*wp.Handle) string {
 					continue
 				}
 				out = append(out, s())
+
 			}
 		}
 		return strings.Join(out, "\n")
-	}
+	}, name
 }

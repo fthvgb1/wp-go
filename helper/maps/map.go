@@ -110,13 +110,41 @@ func Copy[K comparable, V any](m map[K]V) map[K]V {
 
 func Merge[K comparable, V any](m ...map[K]V) map[K]V {
 	if len(m) < 1 {
-		panic("no map")
+		return nil
 	} else if len(m) < 2 {
 		return m[0]
 	}
 	mm := m[0]
+	if mm == nil {
+		mm = make(map[K]V)
+	}
 	for _, m2 := range m[1:] {
 		for k, v := range m2 {
+			mm[k] = v
+		}
+	}
+	return mm
+}
+
+func MergeBy[K comparable, V any](fn func(k K, v1, v2 V) (V, bool), m ...map[K]V) map[K]V {
+	if len(m) < 1 {
+		return nil
+	} else if len(m) < 2 {
+		return m[0]
+	}
+	mm := m[0]
+	if mm == nil {
+		mm = make(map[K]V)
+	}
+	for _, m2 := range m[1:] {
+		for k, v := range m2 {
+			vv, ok := mm[k]
+			if ok {
+				vvv, ok := fn(k, vv, v)
+				if ok {
+					v = vvv
+				}
+			}
 			mm[k] = v
 		}
 	}
@@ -130,6 +158,9 @@ func FilterZeroMerge[K comparable, V any](m ...map[K]V) map[K]V {
 		return m[0]
 	}
 	mm := m[0]
+	if mm == nil {
+		mm = make(map[K]V)
+	}
 	for _, m2 := range m[1:] {
 		for k, v := range m2 {
 			if helper.IsZeros(v) {

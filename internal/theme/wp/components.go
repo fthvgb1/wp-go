@@ -27,7 +27,13 @@ func (h *Handle) HookComponents(scene string, fn func(Components[string]) (Compo
 }
 
 func CalComponents(h *Handle) {
-	for k, components := range h.components {
+	componentss := reload.GetAnyValMapBy("scene-components", str.Join("allScene-", h.scene), h, func(h *Handle) map[string][]Components[string] {
+		return maps.MergeBy(func(k string, v1, v2 []Components[string]) ([]Components[string], bool) {
+			vv := append(v1, v2...)
+			return vv, vv != nil
+		}, nil, h.components[h.scene], h.components[constraints.AllScene])
+	})
+	for k, components := range componentss {
 		key := str.Join("calComponents-", k)
 		key = h.ComponentFilterFnHook("calComponents", key, k)
 		ss := reload.GetAnyValMapBy("calComponents", key, h, func(h *Handle) []Components[string] {
@@ -72,58 +78,63 @@ func CalComponents(h *Handle) {
 	}
 }
 
-func (h *Handle) PushComponents(name string, components ...Components[string]) {
-	h.components[name] = append(h.components[name], components...)
+func (h *Handle) PushComponents(scene, componentType string, components ...Components[string]) {
+	c, ok := h.components[scene]
+	if !ok {
+		c = make(map[string][]Components[string])
+		h.components[scene] = c
+	}
+	c[componentType] = append(c[componentType], components...)
 }
 
-func (h *Handle) PushGroupComponentStr(componentType, name string, order int, strs ...string) {
-	var calls []Components[string]
+func (h *Handle) PushGroupComponentStr(scene, componentType, name string, order int, strs ...string) {
+	var components []Components[string]
 	for _, val := range strs {
-		calls = append(calls, Components[string]{
+		components = append(components, Components[string]{
 			Val:   val,
 			Order: order,
 			Name:  name,
 		})
 	}
-	h.components[componentType] = append(h.components[componentType], calls...)
+	h.PushComponents(scene, componentType, components...)
 }
 
-func (h *Handle) PushCacheGroupHeadScript(key string, order int, fns ...func(*Handle) string) {
-	h.PushGroupCacheComponentFn(constraints.HeadScript, key, order, fns...)
+func (h *Handle) PushCacheGroupHeadScript(scene, name string, order int, fns ...func(*Handle) string) {
+	h.PushGroupCacheComponentFn(scene, constraints.HeadScript, name, order, fns...)
 }
 
-func (h *Handle) PushFooterScript(components ...Components[string]) {
-	h.PushComponents(constraints.FooterScript, components...)
+func (h *Handle) PushFooterScript(scene string, components ...Components[string]) {
+	h.PushComponents(scene, constraints.FooterScript, components...)
 }
 
-func (h *Handle) PushGroupFooterScript(name string, order int, strs ...string) {
-	h.PushGroupComponentStr(constraints.FooterScript, name, order, strs...)
+func (h *Handle) PushGroupFooterScript(scene, name string, order int, strs ...string) {
+	h.PushGroupComponentStr(scene, constraints.FooterScript, name, order, strs...)
 }
 
-func (h *Handle) PushCacheGroupFooterScript(name string, order int, fns ...func(*Handle) string) {
-	h.PushGroupCacheComponentFn(constraints.FooterScript, name, order, fns...)
+func (h *Handle) PushCacheGroupFooterScript(scene, name string, order int, fns ...func(*Handle) string) {
+	h.PushGroupCacheComponentFn(scene, constraints.FooterScript, name, order, fns...)
 }
-func (h *Handle) PushGroupCacheComponentFn(componentType, name string, order int, fns ...func(*Handle) string) {
-	h.PushComponents(componentType, h.NewComponent(name, true, order, func(h *Handle) string {
+func (h *Handle) PushGroupCacheComponentFn(scene, componentType, name string, order int, fns ...func(*Handle) string) {
+	h.PushComponents(scene, componentType, NewComponent(name, "", true, order, func(h *Handle) string {
 		return strings.Join(slice.Map(fns, func(t func(*Handle) string) string {
 			return t(h)
 		}), "\n")
 	}))
 }
 
-func (h *Handle) NewComponent(name string, cached bool, order int, fn func(handle *Handle) string) Components[string] {
-	return Components[string]{Fn: fn, Name: name, Cached: cached, Order: order}
+func NewComponent(name, val string, cached bool, order int, fn func(handle *Handle) string) Components[string] {
+	return Components[string]{Fn: fn, Name: name, Cached: cached, Order: order, Val: val}
 }
 
-func (h *Handle) AddCacheComponent(componentType, name string, order int, fn func(*Handle) string) {
-	h.components[componentType] = append(h.components[componentType], h.NewComponent(name, true, order, fn))
+func (h *Handle) AddCacheComponent(scene, componentType, name string, order int, fn func(*Handle) string) {
+	h.PushComponents(scene, componentType, NewComponent(name, "", true, order, fn))
 }
 
-func (h *Handle) PushHeadScript(components ...Components[string]) {
-	h.PushComponents(constraints.HeadScript, components...)
+func (h *Handle) PushHeadScript(scene string, components ...Components[string]) {
+	h.PushComponents(scene, constraints.HeadScript, components...)
 }
-func (h *Handle) PushGroupHeadScript(name string, order int, str ...string) {
-	h.PushGroupComponentStr(constraints.HeadScript, name, order, str...)
+func (h *Handle) PushGroupHeadScript(scene, name string, order int, str ...string) {
+	h.PushGroupComponentStr(scene, constraints.HeadScript, name, order, str...)
 }
 
 func GetComponentsArgs[T any](h *Handle, k string, defaults T) T {

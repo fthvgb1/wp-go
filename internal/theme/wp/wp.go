@@ -25,7 +25,7 @@ type Handle struct {
 	Code              int
 	Stats             string
 	templ             string
-	components        map[string][]Components[string]
+	components        map[string]map[string][]Components[string]
 	componentHook     map[string][]func(Components[string]) (Components[string], bool)
 	themeMods         wpconfig.ThemeMods
 	handlers          map[string]map[string][]HandleCall
@@ -38,7 +38,7 @@ type Handle struct {
 	template          *template.Template
 }
 
-func (h *Handle) Components() map[string][]Components[string] {
+func (h *Handle) Components() map[string]map[string][]Components[string] {
 	return h.components
 }
 
@@ -84,7 +84,7 @@ type HandleCall struct {
 func InitThemeArgAndConfig(fn func(*Handle), h *Handle) {
 	var inited = false
 	hh := reload.GetAnyValBys("themeArgAndConfig", h, func(h *Handle) Handle {
-		h.components = make(map[string][]Components[string])
+		h.components = make(map[string]map[string][]Components[string])
 		h.componentsArgs = make(map[string]any)
 		h.componentFilterFn = make(map[string][]func(*Handle, string, ...any) string)
 		h.handlers = make(map[string]map[string][]HandleCall)
@@ -193,7 +193,7 @@ func PreCodeAndStats(h *Handle) {
 }
 
 func (h *Handle) CommonComponents() {
-	h.PushCacheGroupHeadScript("siteIconAndCustomCss", 0, CalSiteIcon, CalCustomCss)
+	h.PushCacheGroupHeadScript(constraints.AllScene, "siteIconAndCustomCss", 0, CalSiteIcon, CalCustomCss)
 	h.PushRender(constraints.AllStats, NewHandleFn(CalComponents, 10, "wp.CalComponents"))
 	h.PushRender(constraints.AllStats, NewHandleFn(RenderTemplate, 0, "wp.RenderTemplate"))
 }

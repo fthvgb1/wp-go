@@ -2,6 +2,7 @@ package components
 
 import (
 	"github.com/fthvgb1/wp-go/helper/slice"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints"
 	"github.com/fthvgb1/wp-go/internal/theme/wp"
 	"github.com/fthvgb1/wp-go/internal/theme/wp/components/widget"
@@ -10,12 +11,12 @@ import (
 )
 
 var widgetFn = map[string]widgetComponent{
-	"search":          {fn: widget.Search, name: "search"},
-	"recent-posts":    {fn: widget.RecentPosts, name: "recent-posts"},
-	"recent-comments": {fn: widget.RecentComments, name: "recent-comments"},
-	"archives":        {fn: widget.Archive, name: "archives"},
-	"categories":      {fn: widget.Category, name: "categories"},
-	"meta":            {fn: widget.Meta, name: "meta", cached: true},
+	"search":          {fn: widget.Search, name: "widget.search"},
+	"recent-posts":    {fn: widget.RecentPosts, name: "widget.recent-posts"},
+	"recent-comments": {fn: widget.RecentComments, name: "widget.recent-comments"},
+	"archives":        {fn: widget.Archive, name: "widget.archives"},
+	"categories":      {fn: widget.Category, name: "widget.categories"},
+	"meta":            {fn: widget.Meta, name: "widget.meta", cached: true},
 }
 
 type widgetComponent struct {
@@ -25,7 +26,7 @@ type widgetComponent struct {
 }
 
 func WidgetArea(h *wp.Handle) {
-	h.PushComponents(constraints.SidebarsWidgets, sidebars()...)
+	h.PushComponents(constraints.AllScene, constraints.SidebarsWidgets, sidebars()...)
 }
 
 func sidebars() []wp.Components[string] {
@@ -41,11 +42,12 @@ func sidebars() []wp.Components[string] {
 		}
 		var component wp.Components[string]
 		if name == "block" {
-			fn := Block(id)
+			fn, fnName := Block(id)
 			if fn == nil {
 				return component, false
 			}
 			component.Fn = fn
+			component.Name = str.Join("block.", fnName)
 		} else {
 			component.Fn = widget.Fn(id, widgetComponents.fn)
 			component.Name = widgetComponents.name
