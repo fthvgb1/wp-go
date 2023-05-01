@@ -153,7 +153,7 @@ func MergeBy[K comparable, V any](fn func(k K, v1, v2 V) (V, bool), m ...map[K]V
 
 func FilterZeroMerge[K comparable, V any](m ...map[K]V) map[K]V {
 	if len(m) < 1 {
-		panic("no map")
+		return nil
 	} else if len(m) < 2 {
 		return m[0]
 	}

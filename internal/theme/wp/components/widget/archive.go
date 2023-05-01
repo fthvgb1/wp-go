@@ -47,7 +47,7 @@ func Archive(h *wp.Handle, id string) string {
 	conf := reload.GetAnyValBys("widget-archive-conf", h, func(h *wp.Handle) map[any]any {
 		archivesConfig := archivesConfig()
 		conf := wpconfig.GetPHPArrayVal("widget_archives", archivesConfig, int64(2))
-		return conf
+		return maps.FilterZeroMerge(archivesConfig, conf)
 	})
 
 	args := reload.GetAnyValBys("widget-archive-args", h, func(h *wp.Handle) map[string]string {
