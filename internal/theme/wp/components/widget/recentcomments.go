@@ -10,7 +10,6 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints/widgets"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/theme/wp"
-	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"strings"
 )
 
@@ -25,11 +24,9 @@ func recentCommentsArgs() map[string]string {
 	}
 }
 
-func recentCommentConf() map[any]any {
-	return map[any]any{
-		"number": int64(5),
-		"title":  "近期评论",
-	}
+var recentCommentConf = map[any]any{
+	"number": int64(5),
+	"title":  "近期评论",
 }
 
 var recentCommentsTemplate = `{$before_widget}
@@ -43,12 +40,8 @@ var recentCommentsTemplate = `{$before_widget}
 `
 
 func RecentComments(h *wp.Handle, id string) string {
-	conf := reload.GetAnyValBys("widget-recent-comment-conf", h, func(h *wp.Handle) map[any]any {
-		commentConf := recentCommentConf()
-		conf := wpconfig.GetPHPArrayVal("widget_recent-comments", commentConf, int64(2))
-		conf = maps.FilterZeroMerge(commentConf, conf)
-		return conf
-	})
+	conf := configs(recentCommentConf, "widget_recent-comments", int64(2))
+
 	args := reload.GetAnyValBys("widget-recent-comment-args", h, func(h *wp.Handle) map[string]string {
 		commentsArgs := recentCommentsArgs()
 		commonArgs := wp.GetComponentsArgs(h, widgets.Widget, map[string]string{})

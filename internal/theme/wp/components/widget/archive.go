@@ -10,7 +10,6 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints/widgets"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/theme/wp"
-	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"strings"
 )
 
@@ -35,21 +34,14 @@ func archiveArgs() map[string]string {
 	}
 }
 
-func archivesConfig() map[any]any {
-	return map[any]any{
-		"count":    int64(0),
-		"dropdown": int64(0),
-		"title":    "归档",
-	}
+var archivesConfig = map[any]any{
+	"count":    int64(0),
+	"dropdown": int64(0),
+	"title":    "归档",
 }
 
 func Archive(h *wp.Handle, id string) string {
-	conf := reload.GetAnyValBys("widget-archive-conf", h, func(h *wp.Handle) map[any]any {
-		archivesConfig := archivesConfig()
-		conf := wpconfig.GetPHPArrayVal("widget_archives", archivesConfig, int64(2))
-		return maps.FilterZeroMerge(archivesConfig, conf)
-	})
-
+	conf := configs(archivesConfig, "widget_archives", int64(2))
 	args := reload.GetAnyValBys("widget-archive-args", h, func(h *wp.Handle) map[string]string {
 		archiveArgs := archiveArgs()
 		commonArgs := wp.GetComponentsArgs(h, widgets.Widget, CommonArgs())

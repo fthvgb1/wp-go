@@ -32,7 +32,7 @@ func PasswordProject(next PostsPlugin, h *Handle, post *models.Posts) {
 	r := post
 	if post.PostPassword != "" {
 		wpposts.PasswordProjectTitle(r)
-		if h.password != post.PostPassword {
+		if h.GetPassword() != post.PostPassword {
 			wpposts.PasswdProjectContent(r)
 			return
 		}

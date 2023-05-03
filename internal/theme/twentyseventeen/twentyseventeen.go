@@ -42,18 +42,16 @@ var paginate = func() plugins.PageEle {
 	return p
 }()
 
-var pipe = wp.HandlePipe(wp.NothingToDo, widget.MiddleWare(ready,
-	wp.PipeHandle(constraints.PipeData, wp.PipeKey, wp.PipeDataHandle),
-	wp.PipeHandle(constraints.PipeRender, wp.PipeKey, wp.PipeRender),
-)...)
-
 func Hook(h *wp.Handle) {
-	pipe(h)
+	wp.Run(h, configs)
 }
 
 func configs(h *wp.Handle) {
 	conf := config.GetConfig()
 	wphandle.UsePlugins(h)
+	wp.InitPipe(h)
+	h.PushHandler(constraints.PipeMiddleware, constraints.Home,
+		wp.NewHandleFn(widget.IsCategory, 100, "widget.IsCategory"))
 	h.PushComponentFilterFn("bodyClass", calClass)
 	h.PushCacheGroupHeadScript(constraints.AllScene, "colorScheme-customHeader", 10, colorScheme, customHeader)
 	components.WidgetArea(h)
@@ -78,11 +76,6 @@ func configs(h *wp.Handle) {
 	h.PushDataHandler(constraints.Detail, wp.NewHandleFn(detail, 100, "detail"))
 	h.PushDataHandler(constraints.AllScene, wp.NewHandleFn(index, 100, "index"))
 	h.PushDataHandler(constraints.AllScene, wp.NewHandleFn(wp.PreCodeAndStats, 90, "wp.PreCodeAndStats"))
-}
-func ready(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
-	wp.InitThemeArgAndConfig(configs, h)
-	h.GetPassword()
-	next(h)
 }
 
 var searchForm = `<form role="search" method="get" class="search-form" action="/">
@@ -186,7 +179,7 @@ func getHeaderImage(h *wp.Handle) (r models.PostThumbnail) {
 	return
 }
 
-func calClass(h *wp.Handle, s string, a ...any) string {
+func calClass(h *wp.Handle, s string, _ ...any) string {
 	class := strings.Split(s, " ")
 	themeMods := h.CommonThemeMods()
 	u := wpconfig.GetThemeModsVal(ThemeName, "header_image", themeMods.ThemeSupport.CustomHeader.DefaultImage)

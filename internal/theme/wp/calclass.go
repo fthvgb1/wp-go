@@ -95,7 +95,7 @@ func (h *Handle) PostClass(posts models.Posts) string {
 	}
 
 	if posts.PostPassword != "" {
-		if h.password != posts.PostPassword {
+		if h.GetPassword() != posts.PostPassword {
 			class = append(class, "post-password-required")
 		} else {
 			class = append(class, "post-password-projected")

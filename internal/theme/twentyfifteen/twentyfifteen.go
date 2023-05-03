@@ -41,28 +41,21 @@ func Init(fs embed.FS) {
 	}
 }
 
-var pipe = wp.HandlePipe(wp.NothingToDo, widget.MiddleWare(ready,
-	wp.PipeHandle(constraints.PipeData, wp.PipeKey, wp.PipeDataHandle),
-	wp.PipeHandle(constraints.PipeRender, wp.PipeKey, wp.PipeRender),
-)...)
-
 func Hook(h *wp.Handle) {
-	pipe(h)
-}
-
-func ready(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
-	wp.InitThemeArgAndConfig(configs, h)
-	h.GetPassword()
-	next(h)
+	wp.Run(h, configs)
 }
 
 func configs(h *wp.Handle) {
+	wphandle.UsePlugins(h)
 	conf := config.GetConfig()
 	h.PushComponentFilterFn(widgets.Search, func(h *wp.Handle, s string, args ...any) string {
 		return strings.ReplaceAll(s, `class="search-submit"`, `class="search-submit screen-reader-text"`)
 	})
+	wp.InitPipe(h)
+	h.PushHandler(constraints.PipeMiddleware, constraints.Home,
+		wp.NewHandleFn(widget.IsCategory, 100, "widget.IsCategory"))
+
 	h.Index.SetPageEle(plugins.TwentyFifteenPagination())
-	wphandle.UsePlugins(h)
 	h.PushCacheGroupHeadScript(constraints.AllScene, "CalCustomBackGround", 10, CalCustomBackGround)
 	h.PushCacheGroupHeadScript(constraints.AllScene, "colorSchemeCss", 10, colorSchemeCss)
 	h.CommonComponents()

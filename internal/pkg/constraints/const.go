@@ -16,8 +16,9 @@ const (
 	AllStats    = "AllStats"
 	AllScene    = "AllScene"
 
-	PipeData   = "PipeData"
-	PipeRender = "PipeRender"
+	PipeData       = "PipeData"
+	PipeMiddleware = "PipeMiddleware"
+	PipeRender     = "PipeRender"
 
 	Defaults = "default"
 

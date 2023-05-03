@@ -1,6 +1,7 @@
 package wp
 
 import (
+	"fmt"
 	"github.com/fthvgb1/wp-go/helper/maps"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/internal/cmd/reload"
@@ -81,7 +82,7 @@ type HandleCall struct {
 	Name  string
 }
 
-func InitThemeArgAndConfig(fn func(*Handle), h *Handle) {
+func InitHandle(fn func(*Handle), h *Handle) {
 	var inited = false
 	hh := reload.GetAnyValBys("themeArgAndConfig", h, func(h *Handle) Handle {
 		h.components = make(map[string]map[string][]Components[string])
@@ -90,6 +91,8 @@ func InitThemeArgAndConfig(fn func(*Handle), h *Handle) {
 		h.handlers = make(map[string]map[string][]HandleCall)
 		h.handleHook = make(map[string][]func(HandleCall) (HandleCall, bool))
 		h.ginH = gin.H{}
+		fnMap = map[string]map[string]any{}
+		fnHook = map[string]map[string]any{}
 		fn(h)
 		inited = true
 		return *h
@@ -131,10 +134,6 @@ func (h *Handle) SetErr(err error) {
 	h.err = err
 }
 
-func (h *Handle) Password() string {
-	return h.password
-}
-
 func (h *Handle) SetTempl(templ string) {
 	h.templ = templ
 }
@@ -163,11 +162,15 @@ func NewHandle(c *gin.Context, scene string, theme string) *Handle {
 	}
 }
 
-func (h *Handle) GetPassword() {
+func (h *Handle) GetPassword() string {
+	if h.password != "" {
+		return h.password
+	}
 	pw := h.Session.Get("post_password")
 	if pw != nil {
 		h.password = pw.(string)
 	}
+	return h.password
 }
 
 func PreTemplate(h *Handle) {
@@ -208,5 +211,5 @@ func NewHandleFn(fn HandleFn[*Handle], order int, name string) HandleCall {
 }
 
 func NothingToDo(*Handle) {
-
+	fmt.Println("hi guys,how did you came to here? Is something wrong happened ?")
 }

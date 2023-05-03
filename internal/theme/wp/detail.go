@@ -63,7 +63,7 @@ func (d *DetailHandle) CheckAndGetPost() (err error) {
 func (d *DetailHandle) PasswordProject() {
 	if d.Post.PostPassword != "" {
 		wpposts.PasswordProjectTitle(&d.Post)
-		if d.password != d.Post.PostPassword {
+		if d.GetPassword() != d.Post.PostPassword {
 			wpposts.PasswdProjectContent(&d.Post)
 		}
 	}
@@ -82,7 +82,7 @@ func (d *DetailHandle) RenderComment() {
 	}
 	ableComment := true
 	if d.Post.CommentStatus != "open" ||
-		(d.Post.PostPassword != "" && d.password != d.Post.PostPassword) {
+		(d.Post.PostPassword != "" && d.GetPassword() != d.Post.PostPassword) {
 		ableComment = false
 	}
 	d.ginH["showComment"] = ableComment

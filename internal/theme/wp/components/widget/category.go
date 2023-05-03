@@ -12,7 +12,6 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/constraints/widgets"
 	"github.com/fthvgb1/wp-go/internal/pkg/models"
 	"github.com/fthvgb1/wp-go/internal/theme/wp"
-	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"net/http"
 	"strings"
 )
@@ -24,14 +23,11 @@ var categoryTemplate = `{$before_widget}
 {$navCloser}
 {$after_widget}
 `
-
-func categoryConfig() map[any]any {
-	return map[any]any{
-		"count":        int64(0),
-		"dropdown":     int64(0),
-		"hierarchical": int64(0),
-		"title":        "分类",
-	}
+var categoryConfig = map[any]any{
+	"count":        int64(0),
+	"dropdown":     int64(0),
+	"hierarchical": int64(0),
+	"title":        "分类",
 }
 
 func categoryArgs() map[string]string {
@@ -50,12 +46,7 @@ func categoryArgs() map[string]string {
 }
 
 func Category(h *wp.Handle, id string) string {
-
-	conf := reload.GetAnyValBys("widget-category-conf", h, func(a *wp.Handle) map[any]any {
-		conf := wpconfig.GetPHPArrayVal("widget_categories", categoryConfig(), int64(2))
-		conf = maps.FilterZeroMerge(categoryConfig(), conf)
-		return conf
-	})
+	conf := configs(categoryConfig, "widget_categories", int64(2))
 
 	args := reload.GetAnyValBys("widget-category-args", h, func(h *wp.Handle) map[string]string {
 		commonArgs := wp.GetComponentsArgs(h, widgets.Widget, map[string]string{})
@@ -244,17 +235,13 @@ func DropdownCategories(h *wp.Handle, args map[string]string, conf map[any]any, 
 	return h.ComponentFilterFnHook("wp_dropdown_cats", s.String())
 }
 
-func IsCategory(next wp.HandleFn[*wp.Handle], h *wp.Handle) {
-	if h.Scene() != constraints.Home {
-		next(h)
-		return
-	}
+func IsCategory(h *wp.Handle) {
 	name, ok := parseDropdownCate(h)
-	if !ok {
-		next(h)
-		return
+	if ok {
+		h.C.Redirect(http.StatusMovedPermanently, fmt.Sprintf("/p/category/%s", name))
+		h.Abort()
+		h.StopPipe()
 	}
-	h.C.Redirect(http.StatusMovedPermanently, fmt.Sprintf("/p/category/%s", name))
 }
 
 func parseDropdownCate(h *wp.Handle) (cateName string, r bool) {

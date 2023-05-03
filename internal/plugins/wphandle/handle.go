@@ -4,12 +4,14 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/config"
 	"github.com/fthvgb1/wp-go/internal/plugins/wphandle/enlightjs"
 	"github.com/fthvgb1/wp-go/internal/plugins/wphandle/hiddenlogin"
+	"github.com/fthvgb1/wp-go/internal/plugins/wphandle/tests"
 	"github.com/fthvgb1/wp-go/internal/theme/wp"
 )
 
 var plugins = wp.HandlePlugins{
 	"enlightjs":   enlightjs.EnlighterJS,
 	"hiddenLogin": hiddenlogin.HiddenLogin,
+	"test":        tests.Tt,
 }
 
 func RegisterPlugins(m wp.HandlePlugins) {
