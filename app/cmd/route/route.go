@@ -77,6 +77,7 @@ func SetupRouter() *gin.Engine {
 	r.GET("/p/:id/feed", actions.PostFeed)
 	r.GET("/feed", actions.Feed)
 	r.GET("/comments/feed", actions.CommentsFeed)
+	//r.NoRoute(actions.ThemeHook(constraints.NoRoute))
 	commentMiddleWare, _ := middleware.FlowLimit(c.MaxRequestSleepNum, 5, c.CacheTime.SleepTime)
 	r.POST("/comment", commentMiddleWare, actions.PostComment)
 	if c.Pprof != "" {

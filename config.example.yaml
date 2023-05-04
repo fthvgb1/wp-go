@@ -92,7 +92,9 @@ postOrder: "desc"
 uploadDir: ""
 # pprof route path 为空表示不开启pprof,否则为pprof的路由
 pprof: "/debug/pprof"
-# 程序插件
+# 要使用的程序插件名
 plugins: ["enlightjs"]
+# 插件存放路径
+pluginPath: "./plugins"
 # 列表页面post使用的插件
 listPagePlugins: ["passwordProject","digest","twentyseventeen_postThumbnail"]

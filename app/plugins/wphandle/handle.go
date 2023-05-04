@@ -45,22 +45,22 @@ func LoadPlugins() {
 		return
 	}
 	for _, entry := range glob {
-		f := filepath.Join(dirPath, entry)
-		p, err := plugin.Open(f)
+		p, err := plugin.Open(entry)
 		if err != nil {
-			logs.Error(err, "读取插件错误", f)
+			logs.Error(err, "读取插件错误", entry)
 			continue
 		}
 		name := filepath.Ext(entry)
-		name = str.FirstUpper(entry[0 : len(entry)-len(name)])
+		name = filepath.Base(entry[0 : len(entry)-len(name)])
+		name = str.FirstUpper(name)
 		pl, err := p.Lookup(name)
 		if err != nil {
-			logs.Error(err, "插件lookup错误", f)
+			logs.Error(err, "插件lookup错误", entry)
 			continue
 		}
 		plu, ok := pl.(func(*wp.Handle))
 		if !ok {
-			logs.Error(errors.New("switch func(*wp.Handle) fail"), "插件转换错误", f)
+			logs.Error(errors.New("switch func(*wp.Handle) fail"), "插件转换错误", entry)
 			continue
 		}
 		RegisterPlugin(name, plu)

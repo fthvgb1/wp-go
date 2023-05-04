@@ -9,6 +9,8 @@ const (
 	Author   = "Author"
 	Detail   = "Detail"
 
+	NoRoute = "NoRoute"
+
 	Ok          = "Ok"
 	Error404    = "Error404"
 	ParamError  = "ParamError"
