@@ -23,6 +23,13 @@ func Join(s ...string) (str string) {
 	return
 }
 
+func FirstUpper(s string) string {
+	if len(s) < 1 {
+		return s
+	}
+	return Join(strings.ToUpper(s[:1]), s[1:])
+}
+
 func ToInteger[T constraints.Integer](s string, defaults T) T {
 	if s == "" {
 		return defaults

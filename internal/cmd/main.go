@@ -12,6 +12,7 @@ import (
 	"github.com/fthvgb1/wp-go/internal/pkg/db"
 	"github.com/fthvgb1/wp-go/internal/pkg/logs"
 	"github.com/fthvgb1/wp-go/internal/plugins"
+	"github.com/fthvgb1/wp-go/internal/plugins/wphandle"
 	"github.com/fthvgb1/wp-go/internal/theme"
 	"github.com/fthvgb1/wp-go/internal/wpconfig"
 	"github.com/fthvgb1/wp-go/model"
@@ -74,6 +75,7 @@ func initConf(c string) (err error) {
 	if err != nil {
 		return
 	}
+	wphandle.LoadPlugins()
 	return
 }
 
@@ -114,6 +116,7 @@ func reloads() {
 	logs.IfError(err, "获取网站设置WpOption失败")
 	err = wpconfig.InitTerms()
 	logs.IfError(err, "获取WpTerms表失败")
+	wphandle.LoadPlugins()
 	reload.Reload()
 	flushCache()
 	log.Println("reload complete")

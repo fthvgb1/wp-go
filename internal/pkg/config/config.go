@@ -19,6 +19,8 @@ type Config struct {
 	Mysql              Mysql     `yaml:"mysql" json:"mysql"`
 	Mail               Mail      `yaml:"mail" json:"mail"`
 	CacheTime          CacheTime `yaml:"cacheTime" json:"cacheTime"`
+	PluginPath         string    `yaml:"pluginPath" json:"pluginPath"`
+	ExternScript       []string  `json:"externScript" yaml:"externScript"`
 	DigestWordCount    int       `yaml:"digestWordCount" json:"digestWordCount,omitempty"`
 	DigestAllowTag     string    `yaml:"digestAllowTag" json:"digestAllowTag"`
 	MaxRequestSleepNum int64     `yaml:"maxRequestSleepNum" json:"maxRequestSleepNum,omitempty"`
