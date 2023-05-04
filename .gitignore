@@ -2,4 +2,4 @@
 wp-go.iml
 config.yaml
 err.log
-./plugins/
+plugins
