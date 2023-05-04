@@ -8,9 +8,9 @@ import (
 )
 
 func InitTheme() {
-	addThemeHookFunc(twentyfifteen.ThemeName, twentyfifteen.Hook)
+	AddThemeHookFunc(twentyfifteen.ThemeName, twentyfifteen.Hook)
 	twentyfifteen.Init(TemplateFs)
-	addThemeHookFunc(twentyseventeen.ThemeName, twentyseventeen.Hook)
+	AddThemeHookFunc(twentyseventeen.ThemeName, twentyseventeen.Hook)
 	twentyseventeen.Init(TemplateFs)
 }
 
