@@ -1,7 +1,6 @@
 package wp
 
 import (
-	"fmt"
 	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints"
 	"github.com/fthvgb1/wp-go/app/pkg/logs"
@@ -37,6 +36,14 @@ type Handle struct {
 	componentsArgs    map[string]any
 	componentFilterFn map[string][]func(*Handle, string, ...any) string
 	template          *template.Template
+}
+
+func (h *Handle) GinH() gin.H {
+	return h.ginH
+}
+
+func (h *Handle) SetScene(scene string) {
+	h.scene = scene
 }
 
 func (h *Handle) Components() map[string]map[string][]Components[string] {
@@ -94,6 +101,7 @@ func InitHandle(fn func(*Handle), h *Handle) {
 		fnMap = map[string]map[string]any{}
 		fnHook = map[string]map[string]any{}
 		fn(h)
+		h.C.Set("inited", true)
 		inited = true
 		return *h
 	})
@@ -113,6 +121,7 @@ func InitHandle(fn func(*Handle), h *Handle) {
 	h.componentHook = hh.componentHook
 	h.componentsArgs = hh.componentsArgs
 	h.componentFilterFn = hh.componentFilterFn
+	h.C.Set("inited", true)
 }
 
 func (h *Handle) Abort() {
@@ -195,13 +204,35 @@ func PreCodeAndStats(h *Handle) {
 	}
 }
 
+var htmlContentType = []string{"text/html; charset=utf-8"}
+
+func (h *Handle) RenderHtml(t *template.Template, statsCode int, name string) {
+	header := h.C.Writer.Header()
+	if val := header["Content-Type"]; len(val) == 0 {
+		header["Content-Type"] = htmlContentType
+	}
+	h.C.Status(statsCode)
+	err := t.ExecuteTemplate(h.C.Writer, name, h.ginH)
+	h.Abort()
+	h.StopPipe()
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (h *Handle) PushHandlers(pipeScene string, call HandleCall, statsOrScene ...string) {
+	for _, s := range statsOrScene {
+		h.PushHandler(pipeScene, s, call)
+	}
+}
+
 func (h *Handle) CommonComponents() {
 	h.PushCacheGroupHeadScript(constraints.AllScene, "siteIconAndCustomCss", 0, CalSiteIcon, CalCustomCss)
 	h.PushRender(constraints.AllStats, NewHandleFn(CalComponents, 10, "wp.CalComponents"))
-	h.PushRender(constraints.AllStats, NewHandleFn(RenderTemplate, 0, "wp.RenderTemplate"))
+	h.PushRender(constraints.AllStats, NewHandleFn(PreRenderTemplate, 0, "wp.PreRenderTemplate"))
 }
 
-func RenderTemplate(h *Handle) {
+func PreRenderTemplate(h *Handle) {
 	h.C.HTML(h.Code, h.templ, h.ginH)
 	h.StopPipe()
 }
@@ -211,5 +242,4 @@ func NewHandleFn(fn HandleFn[*Handle], order int, name string) HandleCall {
 }
 
 func NothingToDo(*Handle) {
-	fmt.Println("hi guys,how did you came to here? Is something wrong happened ?")
 }

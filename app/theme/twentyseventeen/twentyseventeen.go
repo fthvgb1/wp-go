@@ -71,10 +71,10 @@ func configs(h *wp.Handle) {
 	wp.ReplyCommentJs(h)
 	h.Index.SetListPlugin(wp.PostsPlugins(wp.PostPlugin(postThumbnail), wp.GetListPostPlugins(conf.ListPagePlugins, wp.ListPostPlugins())...))
 	wp.SetComponentsArgsForMap(h, widgets.Search, "{$form}", searchForm)
-	h.PushRender(constraints.AllStats, wp.NewHandleFn(wp.IndexRender, 10, "wp.IndexRender"))
+	wp.PushIndexHandler(constraints.PipeRender, h, wp.NewHandleFn(wp.IndexRender, 10, "wp.IndexRender"))
 	h.PushRender(constraints.Detail, wp.NewHandleFn(wp.DetailRender, 10, "wp.DetailRender"))
-	h.PushDataHandler(constraints.Detail, wp.NewHandleFn(detail, 100, "detail"))
-	h.PushDataHandler(constraints.AllScene, wp.NewHandleFn(index, 100, "index"))
+	h.PushDataHandler(constraints.Detail, wp.NewHandleFn(wp.Detail, 100, "wp.Detail"), wp.NewHandleFn(postThumb, 90, "{theme}.postThumb"))
+	wp.PushIndexHandler(constraints.PipeData, h, wp.NewHandleFn(wp.Index, 100, "wp.Index"))
 	h.PushDataHandler(constraints.AllScene, wp.NewHandleFn(wp.PreCodeAndStats, 90, "wp.PreCodeAndStats"))
 }
 
@@ -97,24 +97,8 @@ func errorsHandle(h *wp.Handle) {
 	}
 }
 
-func index(h *wp.Handle) {
-	if h.Scene() == constraints.Detail {
-		return
-	}
-	i := h.Index
-	err := i.BuildIndexData(wp.NewIndexParams(i.C))
-	if err != nil {
-		i.SetErr(err)
-	}
-	h.SetData("scene", h.Scene())
-}
-
-func detail(h *wp.Handle) {
+func postThumb(h *wp.Handle) {
 	d := h.Detail
-	err := d.BuildDetailData()
-	if err != nil {
-		d.SetErr(err)
-	}
 	if d.Post.Thumbnail.Path != "" {
 		img := wpconfig.Thumbnail(d.Post.Thumbnail.OriginAttachmentData, "full", "", "thumbnail", "post-thumbnail")
 		img.Sizes = "100vw"

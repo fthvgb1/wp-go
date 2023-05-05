@@ -1,15 +1,12 @@
 package wp
 
 import (
-	"errors"
 	"github.com/fthvgb1/wp-go/app/pkg/config"
-	"github.com/fthvgb1/wp-go/app/pkg/logs"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
 	"github.com/fthvgb1/wp-go/app/plugins"
 	"github.com/fthvgb1/wp-go/app/plugins/wpposts"
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
-	str "github.com/fthvgb1/wp-go/helper/strings"
 )
 
 type PostsPlugin func(*Handle, *models.Posts)
@@ -75,7 +72,6 @@ func GetListPostPlugins(name []string, m map[string]func(PostsPlugin, *Handle, *
 		if ok {
 			return v, true
 		}
-		logs.IfError(errors.New(str.Join("插件", t, "不存在")), "")
 		return nil, false
 	})
 }

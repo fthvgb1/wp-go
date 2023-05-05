@@ -43,6 +43,13 @@ func NewIndexHandle(handle *Handle) *IndexHandle {
 	return &IndexHandle{Handle: handle}
 }
 
+func PushIndexHandler(pipeScene string, h *Handle, call HandleCall) {
+	h.PushHandlers(pipeScene, call, constraints.Home,
+		constraints.Category, constraints.Search, constraints.Tag,
+		constraints.Archive, constraints.Author,
+	)
+}
+
 func (i *IndexHandle) ParseIndex(parm *IndexParams) (err error) {
 	i.Param = parm
 	switch i.scene {
@@ -138,21 +145,19 @@ func (i *IndexHandle) ExecPostsPlugin() {
 }
 
 func IndexRender(h *Handle) {
-	if h.scene == constraints.Detail || h.Stats != constraints.Ok {
-		return
-	}
 	i := h.Index
 	i.ExecPostsPlugin()
 	i.Pagination()
 	i.ginH["posts"] = i.Posts
 }
 
-func Indexs(h *Handle) {
-	if h.Scene() == constraints.Detail {
-		return
-	}
+func Index(h *Handle) {
 	i := h.Index
-	_ = i.BuildIndexData(NewIndexParams(i.C))
+	err := i.BuildIndexData(NewIndexParams(i.C))
+	if err != nil {
+		i.SetErr(err)
+	}
+	h.SetData("scene", h.Scene())
 }
 
 func (i *IndexHandle) MarkSticky(posts *[]models.Posts) {

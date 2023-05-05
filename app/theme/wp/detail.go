@@ -109,8 +109,12 @@ func DetailRender(h *Handle) {
 	d.ginH["post"] = d.Post
 }
 
-func Details(h *Handle) {
-	_ = h.Detail.BuildDetailData()
+func Detail(h *Handle) {
+	err := h.Detail.BuildDetailData()
+	if err != nil {
+		h.Detail.SetErr(err)
+	}
+	h.SetData("scene", h.Scene())
 }
 
 func ReplyCommentJs(h *Handle) {

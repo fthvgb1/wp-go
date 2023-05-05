@@ -3,6 +3,7 @@ package wp
 import (
 	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints"
+	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 )
@@ -102,7 +103,9 @@ func PipeKey(h *Handle, pipScene string) string {
 }
 
 func Run(h *Handle, conf func(*Handle)) {
-	InitHandle(conf, h)
+	if !helper.GetContextVal(h.C, "inited", false) {
+		InitHandle(conf, h)
+	}
 	reload.GetAnyValBys(str.Join("pipeInit-", h.scene), h, func(h *Handle) func(*Handle) {
 		p := GetFn[Pipe]("pipe", constraints.AllScene)
 		p = append(p, GetFn[Pipe]("pipe", h.scene)...)
