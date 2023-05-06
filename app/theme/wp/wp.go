@@ -234,6 +234,7 @@ func (h *Handle) CommonComponents() {
 
 func PreRenderTemplate(h *Handle) {
 	h.C.HTML(h.Code, h.templ, h.ginH)
+	h.Abort()
 	h.StopPipe()
 }
 

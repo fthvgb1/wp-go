@@ -17,6 +17,13 @@ import (
 	"net/http"
 )
 
+var hooker []func(r *gin.Engine)
+
+// Hook 方便插件在init时使用
+func Hook(fn ...func(r *gin.Engine)) {
+	hooker = append(hooker, fn...)
+}
+
 func SetupRouter() *gin.Engine {
 	// Disable Console Color
 	// gin.DisableConsoleColor()
@@ -83,6 +90,10 @@ func SetupRouter() *gin.Engine {
 	if c.Pprof != "" {
 		pprof.Register(r, c.Pprof)
 	}
+	for _, fn := range hooker {
+		fn(r)
+	}
+
 	reload.Push(func() {
 		c := config.GetConfig()
 		siteFlow(c.MaxRequestSleepNum, c.MaxRequestNum, c.CacheTime.SleepTime)
