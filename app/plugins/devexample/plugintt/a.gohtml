@@ -1,0 +1,9 @@
+<div>
+    {{.aa}}
+</div>
+
+<div>
+    {{ range $k,$v := .posts}}
+      <h2>{{$v.PostTitle}} </h2>
+    {{end}}
+</div>
