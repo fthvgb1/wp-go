@@ -9,11 +9,10 @@ import (
 )
 
 type Route struct {
-	Path         string
-	Scene        string
-	Method       []string
-	Type         string //const|reg
-	ConfigHandle func(*wp.Handle)
+	Path   string
+	Scene  string
+	Method []string
+	Type   string
 }
 
 var routeHook []func(Route) (Route, bool)
@@ -36,7 +35,6 @@ var routes = func() *safety.Map[string, Route] {
 //			Scene:  constraints.Home,
 //			Method: []string{"GET"},
 //			Type:   "reg",
-//			ConfigHandle: $theme.Hook or nil,
 //		}
 func PushRoute(path string, route Route) error {
 	if route.Type == "const" {
@@ -112,7 +110,7 @@ func ResolveRoute(h *wp.Handle) {
 	v, ok := rs[requestURI]
 	if ok && slice.IsContained(v.Method, h.C.Request.Method) {
 		h.SetScene(v.Scene)
-		wp.Run(h, v.ConfigHandle)
+		wp.Run(h, nil)
 		return
 	}
 	for path, reg := range rrs {
@@ -124,7 +122,7 @@ func ResolveRoute(h *wp.Handle) {
 		if slice.IsContained(rr.Method, h.C.Request.Method) {
 			h.SetScene(rr.Scene)
 			h.C.Set("route", r)
-			wp.Run(h, rr.ConfigHandle)
+			wp.Run(h, nil)
 			return
 		}
 	}

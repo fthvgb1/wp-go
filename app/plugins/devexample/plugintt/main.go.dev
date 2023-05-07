@@ -65,7 +65,6 @@ func config(h *wp.Handle) {
 		Scene:        constraints.Home,
 		Method:       []string{"GET"},
 		Type:         "reg",
-		ConfigHandle: wp.Index,
 	})
 	//...
 }
