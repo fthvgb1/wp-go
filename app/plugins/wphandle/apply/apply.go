@@ -1,11 +1,13 @@
 package apply
 
-var fn any
+import "github.com/fthvgb1/wp-go/safety"
+
+var fn safety.Var[any]
 
 func SetFn(f any) {
-	fn = f
+	fn.Store(f)
 }
 
 func UsePlugins() any {
-	return fn
+	return fn.Load()
 }

@@ -65,11 +65,12 @@ func (h *Handle) PushDataHandler(scene string, fns ...HandleCall) {
 	h.PushHandler(constraints.PipeData, scene, fns...)
 }
 
-func PipeHandle(pipeScene string, keyFn func(*Handle, string) string, fn func(*Handle, map[string][]HandleCall) []HandleCall) func(HandleFn[*Handle], *Handle) {
+func PipeHandle(pipeScene string, keyFn func(*Handle, string) string, fn func(*Handle, map[string][]HandleCall, string) []HandleCall) func(HandleFn[*Handle], *Handle) {
 	return func(next HandleFn[*Handle], h *Handle) {
-		handlers := reload.GetAnyValMapBy("pipeHandlers", keyFn(h, pipeScene), h, func(h *Handle) []HandleCall {
+		key := keyFn(h, pipeScene)
+		handlers := reload.GetAnyValMapBy("pipeHandlers", key, h, func(h *Handle) []HandleCall {
 			conf := h.handleHook[pipeScene]
-			calls := fn(h, h.handlers[pipeScene])
+			calls := fn(h, h.handlers[pipeScene], key)
 			calls = slice.FilterAndMap(calls, func(call HandleCall) (HandleCall, bool) {
 				ok := true
 				for _, hook := range conf {
@@ -135,26 +136,26 @@ func MiddlewareKey(h *Handle, pipScene string) string {
 	return h.ComponentFilterFnHook("middleware", "middleware", pipScene)
 }
 
-func PipeMiddlewareHandle(h *Handle, middlewares map[string][]HandleCall) (handlers []HandleCall) {
+func PipeMiddlewareHandle(h *Handle, middlewares map[string][]HandleCall, key string) (handlers []HandleCall) {
 	handlers = append(handlers, middlewares[h.scene]...)
 	handlers = append(handlers, middlewares[constraints.AllScene]...)
-	handlers = h.PipeHandleHook("PipeMiddlewareHandle", handlers)
+	handlers = h.PipeHandleHook("PipeMiddlewareHandle", handlers, key)
 	return
 }
 
-func PipeDataHandle(h *Handle, dataHandlers map[string][]HandleCall) (handlers []HandleCall) {
+func PipeDataHandle(h *Handle, dataHandlers map[string][]HandleCall, key string) (handlers []HandleCall) {
 	handlers = append(handlers, dataHandlers[h.scene]...)
 	handlers = append(handlers, dataHandlers[constraints.AllScene]...)
-	handlers = h.PipeHandleHook("PipeDataHandle", handlers)
+	handlers = h.PipeHandleHook("PipeDataHandle", handlers, key)
 	return
 }
 
-func PipeRender(h *Handle, renders map[string][]HandleCall) (handlers []HandleCall) {
+func PipeRender(h *Handle, renders map[string][]HandleCall, key string) (handlers []HandleCall) {
 	handlers = append(handlers, renders[h.Stats]...)
 	handlers = append(handlers, renders[h.scene]...)
 	handlers = append(handlers, renders[constraints.AllStats]...)
 	handlers = append(handlers, renders[constraints.AllScene]...)
-	handlers = h.PipeHandleHook("PipeRender", handlers)
+	handlers = h.PipeHandleHook("PipeRender", handlers, key)
 	return
 }
 
@@ -184,10 +185,10 @@ func (h *Handle) PushPipeHandleHook(name string, fn ...func([]HandleCall) []Hand
 	return PushFnHook("pipeHandleHook", name, fn...)
 }
 
-func (h *Handle) PipeHandleHook(name string, calls []HandleCall) []HandleCall {
-	fn := GetFnHook[func(*Handle, []HandleCall) []HandleCall]("pipeHandleHook", name)
-	return slice.Reduce(fn, func(t func(*Handle, []HandleCall) []HandleCall, r []HandleCall) []HandleCall {
-		return t(h, r)
+func (h *Handle) PipeHandleHook(name string, calls []HandleCall, key string) []HandleCall {
+	fn := GetFnHook[func(*Handle, []HandleCall, string) []HandleCall]("pipeHandleHook", name)
+	return slice.Reduce(fn, func(t func(*Handle, []HandleCall, string) []HandleCall, r []HandleCall) []HandleCall {
+		return t(h, r, key)
 	}, calls)
 }
 
