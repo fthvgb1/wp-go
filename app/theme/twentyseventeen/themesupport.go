@@ -1,5 +1,7 @@
 package twentyseventeen
 
+import "github.com/fthvgb1/wp-go/app/wpconfig"
+
 type themeSupport struct {
 	CustomLineHeight bool           `json:"custom-line-height"`
 	StarterContent   StarterContent `json:"starter-content"`
@@ -147,3 +149,64 @@ var themesupport = themeSupport{
 		},
 	},
 }
+
+var _ = func() struct{} {
+	v := wpconfig.ThemeSupport{
+		CoreBlockPatterns:  true,
+		WidgetsBlockEditor: true,
+		AutomaticFeedLinks: true,
+		TitleTag:           true,
+		PostThumbnails:     true,
+		Menus:              true,
+		HTML5: []string{
+			"comment-form",
+			"comment-list",
+			"gallery",
+			"caption",
+			"script",
+			"style",
+			"navigation-widgets",
+		},
+		PostFormats: []string{
+			"aside",
+			"image",
+			"video",
+			"quote",
+			"link",
+			"gallery",
+			"audio",
+		},
+		CustomLogo: wpconfig.CustomLogo{
+			Width:              250,
+			Height:             250,
+			FlexWidth:          true,
+			FlexHeight:         false,
+			HeaderText:         "",
+			UnlinkHomepageLogo: false,
+		},
+		CustomizeSelectiveRefreshWidgets: true,
+		EditorStyle:                      true,
+		EditorStyles:                     true,
+		WpBlockStyles:                    true,
+		ResponsiveEmbeds:                 true,
+		CustomHeader: wpconfig.CustomHeader{
+			DefaultImage:         "http://wp.test/wp-content/themes/twentyseventeen/assets/images/header.jpg",
+			RandomDefault:        false,
+			Width:                2000,
+			Height:               1200,
+			FlexHeight:           true,
+			FlexWidth:            false,
+			DefaultTextColor:     "",
+			HeaderText:           true,
+			Uploads:              true,
+			WpHeadCallback:       "twentyseventeen_header_style",
+			AdminHeadCallback:    "",
+			AdminPreviewCallback: "",
+			Video:                true,
+			VideoActiveCallback:  "is_front_page",
+		},
+		Widgets: true,
+	}
+	wpconfig.SetThemeSupport(ThemeName, v)
+	return struct{}{}
+}()

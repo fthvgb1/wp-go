@@ -1,5 +1,7 @@
 package twentyfifteen
 
+import "github.com/fthvgb1/wp-go/app/wpconfig"
+
 type themeSupport struct {
 	CustomBackground      customBackground        `json:"custom-background"`
 	EditorColorPalette    []EditorColorPalette    `json:"editor-color-palette"`
@@ -227,3 +229,67 @@ var colorscheme = map[string]ColorScheme{
 		},
 	},
 }
+
+var _ = func() struct{} {
+	v := wpconfig.ThemeSupport{
+		CoreBlockPatterns:  true,
+		WidgetsBlockEditor: true,
+		AutomaticFeedLinks: true,
+		TitleTag:           true,
+		PostThumbnails:     true,
+		Menus:              true,
+		HTML5: []string{
+			"search-form",
+			"comment-form",
+			"comment-list",
+			"gallery",
+			"caption",
+			"script",
+			"style",
+			"navigation-widgets",
+		},
+		PostFormats: []string{
+			"aside",
+			"image",
+			"video",
+			"quote",
+			"link",
+			"gallery",
+			"status",
+			"audio",
+			"chat",
+		},
+		CustomLogo: wpconfig.CustomLogo{
+			Width:              248,
+			Height:             248,
+			FlexWidth:          false,
+			FlexHeight:         true,
+			HeaderText:         "",
+			UnlinkHomepageLogo: false,
+		},
+		CustomizeSelectiveRefreshWidgets: true,
+		EditorStyle:                      true,
+		EditorStyles:                     true,
+		WpBlockStyles:                    true,
+		ResponsiveEmbeds:                 true,
+		CustomHeader: wpconfig.CustomHeader{
+			DefaultImage:         "",
+			RandomDefault:        false,
+			Width:                954,
+			Height:               1300,
+			FlexHeight:           false,
+			FlexWidth:            false,
+			DefaultTextColor:     "333333",
+			HeaderText:           true,
+			Uploads:              true,
+			WpHeadCallback:       "twentyfifteen_header_style",
+			AdminHeadCallback:    "",
+			AdminPreviewCallback: "",
+			Video:                false,
+			VideoActiveCallback:  "is_front_page",
+		},
+		Widgets: true,
+	}
+	wpconfig.SetThemeSupport(ThemeName, v)
+	return struct{}{}
+}()

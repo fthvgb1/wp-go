@@ -2,7 +2,6 @@ package wpconfig
 
 import (
 	"embed"
-	"encoding/json"
 	"fmt"
 	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/phphelper"
@@ -122,6 +121,12 @@ var themeModes = func() *safety.Map[string, ThemeMods] {
 
 var themeModsRaw *safety.Map[string, map[string]any]
 
+var themeSupport = map[string]ThemeSupport{}
+
+func SetThemeSupport(theme string, support ThemeSupport) {
+	themeSupport[theme] = support
+}
+
 func GetThemeModsVal[T any](theme, k string, defaults T) (r T) {
 	m, ok := themeModsRaw.Load(theme)
 	if !ok {
@@ -170,14 +175,11 @@ func IsCustomBackground(theme string) bool {
 }
 
 func (m *ThemeMods) setThemeSupport(themeName string) {
-	bytes, err := templateFs.ReadFile(filepath.Join(themeName, "themesupport.json"))
-	if err != nil {
-		return
+	var v ThemeSupport
+	vv, ok := themeSupport[themeName]
+	if ok {
+		m.ThemeSupport = vv
+	} else {
+		m.ThemeSupport = v
 	}
-	var themeSupport ThemeSupport
-	err = json.Unmarshal(bytes, &themeSupport)
-	if err != nil {
-		return
-	}
-	m.ThemeSupport = themeSupport
 }

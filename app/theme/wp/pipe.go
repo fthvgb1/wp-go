@@ -139,14 +139,14 @@ func MiddlewareKey(h *Handle, pipScene string) string {
 func PipeMiddlewareHandle(h *Handle, middlewares map[string][]HandleCall, key string) (handlers []HandleCall) {
 	handlers = append(handlers, middlewares[h.scene]...)
 	handlers = append(handlers, middlewares[constraints.AllScene]...)
-	handlers = h.PipeHandleHook("PipeMiddlewareHandle", handlers, key)
+	handlers = *h.PipeHandleHook("PipeMiddlewareHandle", &handlers, key)
 	return
 }
 
 func PipeDataHandle(h *Handle, dataHandlers map[string][]HandleCall, key string) (handlers []HandleCall) {
 	handlers = append(handlers, dataHandlers[h.scene]...)
 	handlers = append(handlers, dataHandlers[constraints.AllScene]...)
-	handlers = h.PipeHandleHook("PipeDataHandle", handlers, key)
+	handlers = *h.PipeHandleHook("PipeDataHandle", &handlers, key)
 	return
 }
 
@@ -155,7 +155,7 @@ func PipeRender(h *Handle, renders map[string][]HandleCall, key string) (handler
 	handlers = append(handlers, renders[h.scene]...)
 	handlers = append(handlers, renders[constraints.AllStats]...)
 	handlers = append(handlers, renders[constraints.AllScene]...)
-	handlers = h.PipeHandleHook("PipeRender", handlers, key)
+	handlers = *h.PipeHandleHook("PipeRender", &handlers, key)
 	return
 }
 
@@ -185,9 +185,9 @@ func (h *Handle) PushPipeHandleHook(name string, fn ...func([]HandleCall) []Hand
 	return PushFnHook("pipeHandleHook", name, fn...)
 }
 
-func (h *Handle) PipeHandleHook(name string, calls []HandleCall, key string) []HandleCall {
-	fn := GetFnHook[func(*Handle, []HandleCall, string) []HandleCall]("pipeHandleHook", name)
-	return slice.Reduce(fn, func(t func(*Handle, []HandleCall, string) []HandleCall, r []HandleCall) []HandleCall {
+func (h *Handle) PipeHandleHook(name string, calls *[]HandleCall, key string) *[]HandleCall {
+	fn := GetFnHook[func(*Handle, *[]HandleCall, string) *[]HandleCall]("pipeHandleHook", name)
+	return slice.Reduce(fn, func(t func(*Handle, *[]HandleCall, string) *[]HandleCall, r *[]HandleCall) *[]HandleCall {
 		return t(h, r, key)
 	}, calls)
 }
