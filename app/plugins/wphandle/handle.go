@@ -4,6 +4,7 @@ import (
 	"errors"
 	"github.com/fthvgb1/wp-go/app/pkg/config"
 	"github.com/fthvgb1/wp-go/app/pkg/logs"
+	"github.com/fthvgb1/wp-go/app/plugins/wphandle/apply"
 	"github.com/fthvgb1/wp-go/app/plugins/wphandle/enlightjs"
 	"github.com/fthvgb1/wp-go/app/plugins/wphandle/hiddenlogin"
 	"github.com/fthvgb1/wp-go/app/theme/wp"
@@ -65,5 +66,7 @@ func LoadPlugins() {
 		}
 		RegisterPlugin(name, plu)
 	}
-
+	apply.SetFn(func(h *wp.Handle) {
+		UsePlugins(h)
+	})
 }

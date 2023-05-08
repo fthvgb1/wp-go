@@ -240,7 +240,6 @@ func IsCategory(h *wp.Handle) {
 	if ok {
 		h.C.Redirect(http.StatusMovedPermanently, fmt.Sprintf("/p/category/%s", name))
 		h.Abort()
-		h.StopPipe()
 	}
 }
 

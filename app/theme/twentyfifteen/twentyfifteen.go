@@ -1,14 +1,10 @@
 package twentyfifteen
 
 import (
-	"embed"
-	"encoding/json"
 	"github.com/fthvgb1/wp-go/app/pkg/config"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints/widgets"
-	"github.com/fthvgb1/wp-go/app/pkg/logs"
 	"github.com/fthvgb1/wp-go/app/plugins"
-	"github.com/fthvgb1/wp-go/app/plugins/wphandle"
 	"github.com/fthvgb1/wp-go/app/theme/wp"
 	"github.com/fthvgb1/wp-go/app/theme/wp/components"
 	"github.com/fthvgb1/wp-go/app/theme/wp/components/widget"
@@ -18,35 +14,11 @@ import (
 
 const ThemeName = "twentyfifteen"
 
-func Init(fs embed.FS) {
-	b, err := fs.ReadFile("twentyfifteen/themesupport.json")
-	if err != nil {
-		logs.Error(err, "读取themesupport.json失败")
-		return
-	}
-	err = json.Unmarshal(b, &themesupport)
-	if err != nil {
-		logs.Error(err, "解析themesupport失败")
-		return
-	}
-	bytes, err := fs.ReadFile("twentyfifteen/colorscheme.json")
-	if err != nil {
-		logs.Error(err, "读取colorscheme.json失败")
-		return
-	}
-	err = json.Unmarshal(bytes, &colorscheme)
-	if err != nil {
-		logs.Error(err, "解析colorscheme失败")
-		return
-	}
-}
-
 func Hook(h *wp.Handle) {
 	wp.Run(h, configs)
 }
 
 func configs(h *wp.Handle) {
-	wphandle.UsePlugins(h)
 	conf := config.GetConfig()
 	h.PushComponentFilterFn(widgets.Search, func(h *wp.Handle, s string, args ...any) string {
 		return strings.ReplaceAll(s, `class="search-submit"`, `class="search-submit screen-reader-text"`)

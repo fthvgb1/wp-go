@@ -4,6 +4,7 @@ import (
 	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints"
 	"github.com/fthvgb1/wp-go/app/pkg/logs"
+	"github.com/fthvgb1/wp-go/app/plugins/wphandle/apply"
 	"github.com/fthvgb1/wp-go/app/wpconfig"
 	"github.com/fthvgb1/wp-go/helper/maps"
 	str "github.com/fthvgb1/wp-go/helper/strings"
@@ -100,6 +101,11 @@ func InitHandle(fn func(*Handle), h *Handle) {
 		h.ginH = gin.H{}
 		fnMap = map[string]map[string]any{}
 		fnHook = map[string]map[string]any{}
+		v := apply.UsePlugins()
+		pluginFn, ok := v.(func(*Handle))
+		if ok {
+			pluginFn(h)
+		}
 		fn(h)
 		h.C.Set("inited", true)
 		inited = true
@@ -126,9 +132,13 @@ func InitHandle(fn func(*Handle), h *Handle) {
 
 func (h *Handle) Abort() {
 	h.abort = true
+	h.stopPipe = true
 }
 func (h *Handle) StopPipe() {
 	h.stopPipe = true
+}
+func (h *Handle) StopHandle() {
+	h.abort = true
 }
 
 func (h *Handle) CommonThemeMods() wpconfig.ThemeMods {
@@ -214,7 +224,6 @@ func (h *Handle) RenderHtml(t *template.Template, statsCode int, name string) {
 	h.C.Status(statsCode)
 	err := t.ExecuteTemplate(h.C.Writer, name, h.ginH)
 	h.Abort()
-	h.StopPipe()
 	if err != nil {
 		panic(err)
 	}
@@ -235,12 +244,12 @@ func (h *Handle) CommonComponents() {
 func PreRenderTemplate(h *Handle) {
 	h.C.HTML(h.Code, h.templ, h.ginH)
 	h.Abort()
-	h.StopPipe()
 }
 
 func NewHandleFn(fn HandleFn[*Handle], order int, name string) HandleCall {
 	return HandleCall{Fn: fn, Order: order, Name: name}
 }
 
-func NothingToDo(*Handle) {
+func NothingToDo(h *Handle) {
+	h.Abort()
 }

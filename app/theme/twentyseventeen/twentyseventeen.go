@@ -1,8 +1,6 @@
 package twentyseventeen
 
 import (
-	"embed"
-	"encoding/json"
 	"fmt"
 	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/pkg/config"
@@ -11,7 +9,6 @@ import (
 	"github.com/fthvgb1/wp-go/app/pkg/logs"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
 	"github.com/fthvgb1/wp-go/app/plugins"
-	"github.com/fthvgb1/wp-go/app/plugins/wphandle"
 	"github.com/fthvgb1/wp-go/app/theme/wp"
 	"github.com/fthvgb1/wp-go/app/theme/wp/components"
 	"github.com/fthvgb1/wp-go/app/theme/wp/components/widget"
@@ -23,14 +20,6 @@ import (
 )
 
 const ThemeName = "twentyseventeen"
-
-func Init(fs embed.FS) {
-	b, err := fs.ReadFile(str.Join(ThemeName, "/themesupport.json"))
-	if err != nil {
-		return
-	}
-	err = json.Unmarshal(b, &themesupport)
-}
 
 var paginate = func() plugins.PageEle {
 	p := plugins.TwentyFifteenPagination()
@@ -48,7 +37,6 @@ func Hook(h *wp.Handle) {
 
 func configs(h *wp.Handle) {
 	conf := config.GetConfig()
-	wphandle.UsePlugins(h)
 	wp.InitPipe(h)
 	h.PushHandler(constraints.PipeMiddleware, constraints.Home,
 		wp.NewHandleFn(widget.IsCategory, 100, "widget.IsCategory"))

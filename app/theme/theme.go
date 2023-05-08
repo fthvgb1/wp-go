@@ -9,9 +9,7 @@ import (
 
 func InitTheme() {
 	AddThemeHookFunc(twentyfifteen.ThemeName, twentyfifteen.Hook)
-	twentyfifteen.Init(TemplateFs)
 	AddThemeHookFunc(twentyseventeen.ThemeName, twentyseventeen.Hook)
-	twentyseventeen.Init(TemplateFs)
 }
 
 func GetCurrentTemplateName() string {

@@ -1,9 +1,9 @@
 package theme
 
 import (
+	"github.com/fthvgb1/wp-go/app/theme/twentyfifteen"
 	"github.com/fthvgb1/wp-go/app/theme/wp"
 	"github.com/fthvgb1/wp-go/safety"
-	"net/http"
 )
 
 var themeMap = safety.NewMap[string, func(*wp.Handle)]()
@@ -21,5 +21,5 @@ func Hook(themeName string, h *wp.Handle) {
 		fn(h)
 		return
 	}
-	h.C.String(http.StatusNotFound, "404")
+	twentyfifteen.Hook(h)
 }
