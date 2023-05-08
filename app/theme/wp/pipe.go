@@ -65,7 +65,7 @@ func (h *Handle) PushDataHandler(scene string, fns ...HandleCall) {
 	h.PushHandler(constraints.PipeData, scene, fns...)
 }
 
-func PipeHandle(pipeScene string, keyFn func(*Handle, string) string, fn func(*Handle, map[string][]HandleCall, string) []HandleCall) func(HandleFn[*Handle], *Handle) {
+func BuildPipe(pipeScene string, keyFn func(*Handle, string) string, fn func(*Handle, map[string][]HandleCall, string) []HandleCall) func(HandleFn[*Handle], *Handle) {
 	return func(next HandleFn[*Handle], h *Handle) {
 		key := keyFn(h, pipeScene)
 		handlers := reload.GetAnyValMapBy("pipeHandlers", key, h, func(h *Handle) []HandleCall {
@@ -139,14 +139,14 @@ func MiddlewareKey(h *Handle, pipScene string) string {
 func PipeMiddlewareHandle(h *Handle, middlewares map[string][]HandleCall, key string) (handlers []HandleCall) {
 	handlers = append(handlers, middlewares[h.scene]...)
 	handlers = append(handlers, middlewares[constraints.AllScene]...)
-	handlers = *h.PipeHandleHook("PipeMiddlewareHandle", &handlers, key)
+	handlers = h.PipeHandleHook("PipeMiddlewareHandle", handlers, middlewares, key)
 	return
 }
 
 func PipeDataHandle(h *Handle, dataHandlers map[string][]HandleCall, key string) (handlers []HandleCall) {
 	handlers = append(handlers, dataHandlers[h.scene]...)
 	handlers = append(handlers, dataHandlers[constraints.AllScene]...)
-	handlers = *h.PipeHandleHook("PipeDataHandle", &handlers, key)
+	handlers = h.PipeHandleHook("PipeDataHandle", handlers, dataHandlers, key)
 	return
 }
 
@@ -155,7 +155,7 @@ func PipeRender(h *Handle, renders map[string][]HandleCall, key string) (handler
 	handlers = append(handlers, renders[h.scene]...)
 	handlers = append(handlers, renders[constraints.AllStats]...)
 	handlers = append(handlers, renders[constraints.AllScene]...)
-	handlers = *h.PipeHandleHook("PipeRender", &handlers, key)
+	handlers = h.PipeHandleHook("PipeRender", handlers, renders, key)
 	return
 }
 
@@ -185,19 +185,19 @@ func (h *Handle) PushPipeHandleHook(name string, fn ...func([]HandleCall) []Hand
 	return PushFnHook("pipeHandleHook", name, fn...)
 }
 
-func (h *Handle) PipeHandleHook(name string, calls *[]HandleCall, key string) *[]HandleCall {
-	fn := GetFnHook[func(*Handle, *[]HandleCall, string) *[]HandleCall]("pipeHandleHook", name)
-	return slice.Reduce(fn, func(t func(*Handle, *[]HandleCall, string) *[]HandleCall, r *[]HandleCall) *[]HandleCall {
-		return t(h, r, key)
+func (h *Handle) PipeHandleHook(name string, calls []HandleCall, m map[string][]HandleCall, key string) []HandleCall {
+	fn := GetFnHook[func(*Handle, []HandleCall, map[string][]HandleCall, string) []HandleCall]("pipeHandleHook", name)
+	return slice.Reduce(fn, func(t func(*Handle, []HandleCall, map[string][]HandleCall, string) []HandleCall, r []HandleCall) []HandleCall {
+		return t(h, r, m, key)
 	}, calls)
 }
 
 func InitPipe(h *Handle) {
 	h.PushPipe(constraints.Home, NewPipe(constraints.PipeMiddleware, 300,
-		PipeHandle(constraints.PipeMiddleware, MiddlewareKey, PipeMiddlewareHandle)))
+		BuildPipe(constraints.PipeMiddleware, MiddlewareKey, PipeMiddlewareHandle)))
 
 	h.PushPipe(constraints.AllScene, NewPipe(constraints.PipeData, 200,
-		PipeHandle(constraints.PipeData, PipeKey, PipeDataHandle)))
+		BuildPipe(constraints.PipeData, PipeKey, PipeDataHandle)))
 	h.PushPipe(constraints.AllScene, NewPipe(constraints.PipeRender, 100,
-		PipeHandle(constraints.PipeRender, PipeKey, PipeRender)))
+		BuildPipe(constraints.PipeRender, PipeKey, PipeRender)))
 }
