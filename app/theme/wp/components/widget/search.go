@@ -45,8 +45,9 @@ func searchArgs() map[string]string {
 	}
 }
 
+var form = html5SearchForm
+
 func Search(h *wp.Handle, id string) string {
-	form := html5SearchForm
 	args := reload.GetAnyValBys("widget-search-args", h, func(h *wp.Handle) map[string]string {
 		search := searchArgs()
 		commonArgs := wp.GetComponentsArgs(h, widgets.Widget, map[string]string{})

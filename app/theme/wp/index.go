@@ -3,6 +3,7 @@ package wp
 import (
 	"database/sql"
 	"fmt"
+	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/pkg/cache"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
@@ -137,10 +138,14 @@ func (i *IndexHandle) BuildIndexData(parm *IndexParams) (err error) {
 }
 
 func (i *IndexHandle) ExecPostsPlugin() {
-	if i.postsPlugin != nil {
-		for j := range i.Posts {
-			i.postsPlugin(i.Handle, &i.Posts[j])
-		}
+	fn := i.postsPlugin
+	if fn == nil {
+		fn = reload.GetAnyValBys("postPlugins", i, func(a *IndexHandle) PostsPlugin {
+			return UsePostsPlugins()
+		})
+	}
+	for j := range i.Posts {
+		fn(i.Handle, &i.Posts[j])
 	}
 }
 

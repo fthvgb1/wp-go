@@ -3,7 +3,6 @@ package twentyseventeen
 import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/app/cmd/reload"
-	"github.com/fthvgb1/wp-go/app/pkg/config"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints/widgets"
 	"github.com/fthvgb1/wp-go/app/pkg/logs"
@@ -36,7 +35,6 @@ func Hook(h *wp.Handle) {
 }
 
 func configs(h *wp.Handle) {
-	conf := config.GetConfig()
 	wp.InitPipe(h)
 	h.PushHandler(constraints.PipeMiddleware, constraints.Home,
 		wp.NewHandleFn(widget.IsCategory, 100, "widget.IsCategory"))
@@ -57,7 +55,7 @@ func configs(h *wp.Handle) {
 	h.CommonComponents()
 	h.Index.SetPageEle(paginate)
 	wp.ReplyCommentJs(h)
-	h.Index.SetListPlugin(wp.PostsPlugins(wp.PostPlugin(postThumbnail), wp.GetListPostPlugins(conf.ListPagePlugins, wp.ListPostPlugins())...))
+	h.PushPostPlugin(postThumbnail)
 	wp.SetComponentsArgsForMap(h, widgets.Search, "{$form}", searchForm)
 	wp.PushIndexHandler(constraints.PipeRender, h, wp.NewHandleFn(wp.IndexRender, 10, "wp.IndexRender"))
 	h.PushRender(constraints.Detail, wp.NewHandleFn(wp.DetailRender, 10, "wp.DetailRender"))

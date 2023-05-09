@@ -1,7 +1,6 @@
 package twentyfifteen
 
 import (
-	"github.com/fthvgb1/wp-go/app/pkg/config"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints/widgets"
 	"github.com/fthvgb1/wp-go/app/plugins"
@@ -19,7 +18,6 @@ func Hook(h *wp.Handle) {
 }
 
 func configs(h *wp.Handle) {
-	conf := config.GetConfig()
 	h.PushComponentFilterFn(widgets.Search, func(h *wp.Handle, s string, args ...any) string {
 		return strings.ReplaceAll(s, `class="search-submit"`, `class="search-submit screen-reader-text"`)
 	})
@@ -31,7 +29,6 @@ func configs(h *wp.Handle) {
 	h.PushCacheGroupHeadScript(constraints.AllScene, "CalCustomBackGround", 10, CalCustomBackGround)
 	h.PushCacheGroupHeadScript(constraints.AllScene, "colorSchemeCss", 10, colorSchemeCss)
 	h.CommonComponents()
-	h.Index.SetListPlugin(wp.PostsPlugins(wp.PostPlugin(), wp.GetListPostPlugins(conf.ListPagePlugins, wp.ListPostPlugins())...))
 	components.WidgetArea(h)
 	wp.ReplyCommentJs(h)
 	h.SetData("customHeader", customHeader(h))

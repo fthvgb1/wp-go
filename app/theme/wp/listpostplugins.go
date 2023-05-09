@@ -1,6 +1,7 @@
 package wp
 
 import (
+	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/pkg/config"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
 	"github.com/fthvgb1/wp-go/app/plugins"
@@ -19,9 +20,14 @@ func PostsPlugins(initial PostsPlugin, calls ...func(PostsPlugin, *Handle, *mode
 	}, initial)
 }
 
-var pluginFns = map[string]func(PostsPlugin, *Handle, *models.Posts){
+var pluginFns = reload.Vars(map[string]func(PostsPlugin, *Handle, *models.Posts){
 	"passwordProject": PasswordProject,
 	"digest":          Digest,
+})
+
+func (h *Handle) PushPostsPlugin(name string, fn func(PostsPlugin, *Handle, *models.Posts)) {
+	m := pluginFns.Load()
+	m[name] = fn
 }
 
 // PasswordProject 标题和内容密码保护
@@ -47,7 +53,15 @@ func Digest(next PostsPlugin, h *Handle, post *models.Posts) {
 	next(h, post)
 }
 
-func PostPlugin(calls ...func(h *Handle, posts *models.Posts)) PostsPlugin {
+var ordinaryPlugin = reload.Vars([]PostsPlugin{})
+
+func (h *Handle) PushPostPlugin(plugin ...PostsPlugin) {
+	p := ordinaryPlugin.Load()
+	p = append(p, plugin...)
+	ordinaryPlugin.Store(p)
+}
+
+func PostPlugin(calls ...PostsPlugin) PostsPlugin {
 	return func(h *Handle, posts *models.Posts) {
 		for _, call := range calls {
 			call(h, posts)
@@ -55,8 +69,21 @@ func PostPlugin(calls ...func(h *Handle, posts *models.Posts)) PostsPlugin {
 	}
 }
 
+func UsePostsPlugins() PostsPlugin {
+	p := config.GetConfig().ListPagePlugins
+	var pluginss []func(PostsPlugin, *Handle, *models.Posts)
+	m := pluginFns.Load()
+	for _, s := range p {
+		f, ok := m[s]
+		if ok {
+			pluginss = append(pluginss, f)
+		}
+	}
+	return PostsPlugins(PostPlugin(ordinaryPlugin.Load()...), pluginss...)
+}
+
 func ListPostPlugins() map[string]func(PostsPlugin, *Handle, *models.Posts) {
-	return maps.Copy(pluginFns)
+	return maps.Copy(pluginFns.Load())
 }
 
 func ProjectTitle(t models.Posts) models.Posts {
