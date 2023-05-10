@@ -34,7 +34,14 @@ func Sort[T any](arr []T, fn func(i, j T) bool) {
 		fn:   fn,
 	}
 	sort.Sort(slice)
-	return
+}
+
+func StableSort[T any](arr []T, fn func(i, j T) bool) {
+	slice := anyArr[T]{
+		data: arr,
+		fn:   fn,
+	}
+	sort.Stable(slice)
 }
 
 func Sorts[T constraints.Ordered](a []T, order int) {

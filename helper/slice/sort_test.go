@@ -102,3 +102,64 @@ func TestSorts(t *testing.T) {
 		})
 	}
 }
+
+func TestStableSort(t *testing.T) {
+	type xy struct {
+		x int
+		y int
+	}
+	type args[T any] struct {
+		arr []T
+		fn  func(i, j T) bool
+	}
+	type testCase[T any] struct {
+		name  string
+		args  args[T]
+		wantR []T
+	}
+	tests := []testCase[xy]{
+		{
+			name: "t1",
+			args: args[xy]{
+				arr: []xy{
+					{1, 2},
+					{3, 4},
+					{1, 3},
+					{2, 1},
+					{1, 6},
+				},
+				fn: func(i, j xy) bool {
+					if i.x < j.x {
+						return true
+					}
+					if i.x == j.x && i.y > i.y {
+						return true
+					}
+					return false
+				},
+			},
+			wantR: []xy{
+				{1, 2},
+				{1, 3},
+				{1, 6},
+				{2, 1},
+				{3, 4},
+			},
+		},
+		{
+			name: "t1",
+			args: args[xy]{
+				arr: []xy{{1, 2}, {1, 3}, {1, 6}},
+				fn: func(i, j xy) bool {
+					return i.x > j.x
+				},
+			},
+			wantR: []xy{{1, 2}, {1, 3}, {1, 6}},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			StableSort(tt.args.arr, tt.args.fn)
+		})
+	}
+}
