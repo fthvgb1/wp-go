@@ -97,4 +97,4 @@ plugins: ["enlightjs"]
 # 插件存放路径
 pluginPath: "./plugins"
 # 列表页面post使用的插件
-listPagePlugins: ["passwordProject","digest","twentyseventeen_postThumbnail"]
+listPagePlugins: ["digest"]

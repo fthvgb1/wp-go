@@ -79,6 +79,7 @@ func UsePostsPlugins() PostsPlugin {
 			pluginss = append(pluginss, f)
 		}
 	}
+	slice.Unshift(&pluginss, PasswordProject)
 	return PostsPlugins(PostPlugin(ordinaryPlugin.Load()...), pluginss...)
 }
 
