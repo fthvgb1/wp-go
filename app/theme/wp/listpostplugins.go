@@ -70,15 +70,11 @@ func PostPlugin(calls ...PostsPlugin) PostsPlugin {
 }
 
 func UsePostsPlugins() PostsPlugin {
-	p := config.GetConfig().ListPagePlugins
-	var pluginss []func(PostsPlugin, *Handle, *models.Posts)
 	m := pluginFns.Load()
-	for _, s := range p {
-		f, ok := m[s]
-		if ok {
-			pluginss = append(pluginss, f)
-		}
-	}
+	pluginss := slice.FilterAndMap(config.GetConfig().ListPagePlugins, func(t string) (func(PostsPlugin, *Handle, *models.Posts), bool) {
+		f, ok := m[t]
+		return f, ok
+	})
 	slice.Unshift(&pluginss, PasswordProject)
 	return PostsPlugins(PostPlugin(ordinaryPlugin.Load()...), pluginss...)
 }
