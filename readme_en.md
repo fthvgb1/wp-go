@@ -30,35 +30,36 @@ A WordPress front-end written in Go, with relatively simple functions,  only the
 
 #### background settings support
 
-- dash board
-    - Exterior
-        - small tools
+- dashboard
+    - Appearance
+        - Widgets
             - search
-            - Regulations
-            - recent articles
+            - categories
+            - recent posts
             - recent comments
-            - Classification
-            - other operations
-- set up-
-    - conventional
+            - archives
+            - meta
+- settings
+    - General Settings
         - site title
         - subtitle
-    - read
-        - The maximum number of blog pages displayed
-        - The most recent quantity is shown in the feed
-    - discuss
-        - Other comment settings - enable comment nesting, up to the number of nesting layers
-        - Show `new|old`comments
+    - reading
+        - Blog pages show at most
+        - Syndication feeds show the most recent
+    - discussion
+        - Other comment settings 
+          - Enable threaded (nested) comments levels deep
+          - Comments should be displayed with the `newer|older`comments
 
 #### Theme support
 
-| twentyfifteen      | twentyseventeen                           |
-|--------------------|-------------------------------------------|
-| site identity      | site identity                             |
-| color              | color                                     |
-| header image       | Header Media (Video is not supported yet) |
-| Background picture | extra css                                 |
-| extra css          |                                           |
+| twentyfifteen    | twentyseventeen                           |
+|------------------|-------------------------------------------|
+| site identity    | site identity                             |
+| colors           | color                                     |
+| header image     | Header Media (Video is not supported yet) |
+| Background image | additional css                            |
+| additional css   |                                           |
 
 #### Plug-in mechanism
 
