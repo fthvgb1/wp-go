@@ -13,6 +13,9 @@
     {{if .footerScript}}
         {{.footerScript|unescaped}}
     {{end}}
+    {{if .externFooter}}
+        {{.externFooter|unescaped}}
+    {{end}}
 {{end}}
 
 

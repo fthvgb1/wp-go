@@ -2,6 +2,7 @@ package wp
 
 import (
 	"github.com/fthvgb1/wp-go/app/cmd/reload"
+	"github.com/fthvgb1/wp-go/app/pkg/config"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints"
 	"github.com/fthvgb1/wp-go/app/pkg/logs"
 	"github.com/fthvgb1/wp-go/app/plugins/wphandle/apply"
@@ -12,6 +13,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"html/template"
 	"net/http"
+	"os"
 )
 
 type Handle struct {
@@ -239,6 +241,29 @@ func (h *Handle) CommonComponents() {
 	h.PushCacheGroupHeadScript(constraints.AllScene, "siteIconAndCustomCss", 0, CalSiteIcon, CalCustomCss)
 	h.PushRender(constraints.AllStats, NewHandleFn(CalComponents, 10, "wp.CalComponents"))
 	h.PushRender(constraints.AllStats, NewHandleFn(PreRenderTemplate, 0, "wp.PreRenderTemplate"))
+	AdditionScript(h)
+}
+
+func AdditionScript(h *Handle) {
+	s := config.GetConfig().ExternScript
+	if len(s) < 1 {
+		return
+	}
+	fn := func(f, name string) {
+		ss, err := os.ReadFile(f)
+		if err != nil {
+			logs.Error(err, str.Join("解析", name, "失败"), f)
+		} else {
+			h.PushComponents(constraints.AllScene, constraints.HeadScript, NewComponent(name, string(ss), false, 0, nil))
+		}
+	}
+	switch len(s) {
+	case 1:
+		fn(s[0], "externHead")
+	case 2:
+		fn(s[0], "externHead")
+		fn(s[1], "externFooter")
+	}
 }
 
 func PreRenderTemplate(h *Handle) {
