@@ -98,3 +98,5 @@ plugins: ["enlightjs"]
 pluginPath: "./plugins"
 # 列表页面post使用的插件
 listPagePlugins: ["digest"]
+# 额外引入的脚本 第一个为head 第二个为footer
+externScript: ["",""]
