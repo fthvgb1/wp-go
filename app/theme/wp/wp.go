@@ -250,6 +250,9 @@ func AdditionScript(h *Handle) {
 		return
 	}
 	fn := func(f, name string) {
+		if f == "" {
+			return
+		}
 		ss, err := os.ReadFile(f)
 		if err != nil {
 			logs.Error(err, str.Join("解析", name, "失败"), f)
