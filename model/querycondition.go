@@ -26,11 +26,13 @@ func FindFromDB[T Model](db dbQuery, ctx context.Context, q QueryCondition) (r [
 }
 
 func finds[T Model](db dbQuery, ctx context.Context, q QueryCondition) (r []T, err error) {
-	sq, args, err := BuildQuerySql[T](q)
+	setTable[T](&q)
+	sq, args, err := BuildQuerySql(q)
 	if err != nil {
 		return
 	}
 	err = db.Select(ctx, &r, sq, args...)
+
 	return
 }
 
@@ -179,7 +181,8 @@ func GetFieldFromDB[T Model](db dbQuery, ctx context.Context, field string, q Qu
 }
 
 func getToStringMap[T Model](db dbQuery, ctx context.Context, q QueryCondition) (r map[string]string, err error) {
-	rawSql, in, err := BuildQuerySql[T](q)
+	setTable[T](&q)
+	rawSql, in, err := BuildQuerySql(q)
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +196,8 @@ func GetToStringMap[T Model](ctx context.Context, q QueryCondition) (r map[strin
 }
 
 func findToStringMap[T Model](db dbQuery, ctx context.Context, q QueryCondition) (r []map[string]string, err error) {
-	rawSql, in, err := BuildQuerySql[T](q)
+	setTable[T](&q)
+	rawSql, in, err := BuildQuerySql(q)
 	if err != nil {
 		return nil, err
 	}
@@ -217,7 +221,7 @@ func GetToStringMapFromDB[T Model](db dbQuery, ctx context.Context, q QueryCondi
 	return
 }
 
-func BuildQuerySql[T Model](q QueryCondition) (r string, args []any, err error) {
+func BuildQuerySql(q QueryCondition) (r string, args []any, err error) {
 	w := ""
 	if q.Where != nil {
 		w, args, err = q.Where.ParseWhere(&q.In)
@@ -251,10 +255,7 @@ func BuildQuerySql[T Model](q QueryCondition) (r string, args []any, err error) 
 	}
 	tp := "select %s from %s %s %s %s %s %s %s"
 	l := ""
-	table := Table[T]()
-	if q.From != "" {
-		table = q.From
-	}
+	table := q.From
 	if q.Limit > 0 {
 		l = fmt.Sprintf(" limit %d", q.Limit)
 	}
@@ -266,7 +267,8 @@ func BuildQuerySql[T Model](q QueryCondition) (r string, args []any, err error) 
 }
 
 func findScanner[T Model](db dbQuery, ctx context.Context, fn func(T), q QueryCondition) (err error) {
-	s, args, err := BuildQuerySql[T](q)
+	setTable[T](&q)
+	s, args, err := BuildQuerySql(q)
 	if err != nil {
 		return
 	}
@@ -295,10 +297,17 @@ func GetsFromDB[T Model](db dbQuery, ctx context.Context, q QueryCondition) (T, 
 }
 
 func gets[T Model](db dbQuery, ctx context.Context, q QueryCondition) (r T, err error) {
-	s, args, err := BuildQuerySql[T](q)
+	setTable[T](&q)
+	s, args, err := BuildQuerySql(q)
 	if err != nil {
 		return
 	}
 	err = db.Get(ctx, &r, s, args...)
+	if err != nil {
+		return
+	}
+	if len(q.Relation) > 0 {
+		err = Relation[T](db, ctx, &r, &q)
+	}
 	return
 }

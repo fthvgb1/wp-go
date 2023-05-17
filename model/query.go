@@ -39,7 +39,10 @@ func pagination[T Model](db dbQuery, ctx context.Context, q QueryCondition, page
 	}
 	if q.Group != "" {
 		qx.Fields = q.Fields
-		sq, in, er := BuildQuerySql[T](qx)
+		if qx.From == "" {
+			qx.From = Table[T]()
+		}
+		sq, in, er := BuildQuerySql(qx)
 		qx.In = [][]any{in}
 		if er != nil {
 			err = er
@@ -91,24 +94,18 @@ func FindOneById[T Model, I constraints.Integer](ctx context.Context, id I) (T, 
 	return gets[T](globalBb, ctx, QueryCondition{
 		Fields: "*",
 		Where: SqlBuilder{
-			{PrimaryKey[T](), "=", number.ToString(id), "int"},
+			{PrimaryKey[T](), "=", number.IntToString(id), "int"},
 		},
 	})
 }
 
-func FirstOne[T Model](ctx context.Context, where ParseWhere, fields string, order SqlBuilder, in ...[]any) (r T, err error) {
-	s, args, err := BuildQuerySql[T](QueryCondition{
-		Where:  where,
-		Fields: fields,
-		Order:  order,
-		In:     in,
-		Limit:  1,
-	})
-	if err != nil {
-		return
-	}
-	err = globalBb.Get(ctx, &r, s, args...)
-	return
+func FirstOne[T Model](ctx context.Context, where ParseWhere, fields string, order SqlBuilder, in ...[]any) (T, error) {
+	return gets[T](globalBb, ctx, Conditions(
+		Where(where),
+		Fields(fields),
+		Order(order),
+		In(in...),
+	))
 }
 
 func LastOne[T Model](ctx context.Context, where ParseWhere, fields string, in ...[]any) (T, error) {
@@ -122,10 +119,11 @@ func LastOne[T Model](ctx context.Context, where ParseWhere, fields string, in .
 }
 
 func SimpleFind[T Model](ctx context.Context, where ParseWhere, fields string, in ...[]any) (r []T, err error) {
-	s, args, err := BuildQuerySql[T](QueryCondition{
+	s, args, err := BuildQuerySql(QueryCondition{
 		Where:  where,
 		Fields: fields,
 		In:     in,
+		From:   Table[T](),
 	})
 	if err != nil {
 		return
@@ -155,8 +153,9 @@ func Find[T Model](ctx context.Context, where ParseWhere, fields, group string, 
 		Having: having,
 		Limit:  limit,
 		In:     in,
+		From:   Table[T](),
 	}
-	s, args, err := BuildQuerySql[T](q)
+	s, args, err := BuildQuerySql(q)
 	if err != nil {
 		return
 	}

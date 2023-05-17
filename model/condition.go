@@ -1,16 +1,17 @@
 package model
 
 type QueryCondition struct {
-	Where  ParseWhere
-	From   string
-	Fields string
-	Group  string
-	Order  SqlBuilder
-	Join   SqlBuilder
-	Having SqlBuilder
-	Limit  int
-	Offset int
-	In     [][]any
+	Where    ParseWhere
+	From     string
+	Fields   string
+	Group    string
+	Order    SqlBuilder
+	Join     SqlBuilder
+	Having   SqlBuilder
+	Limit    int
+	Offset   int
+	In       [][]any
+	Relation map[string]*QueryCondition
 }
 
 func Conditions(fns ...Condition) QueryCondition {
@@ -22,6 +23,16 @@ func Conditions(fns ...Condition) QueryCondition {
 		r.Fields = "*"
 	}
 	return r
+}
+func WithConditions(fns ...Condition) *QueryCondition {
+	r := QueryCondition{}
+	for _, fn := range fns {
+		fn(&r)
+	}
+	if r.Fields == "" {
+		r.Fields = "*"
+	}
+	return &r
 }
 
 type Condition func(c *QueryCondition)
@@ -82,5 +93,14 @@ func Offset(offset int) Condition {
 func In(in ...[]any) Condition {
 	return func(c *QueryCondition) {
 		c.In = append(c.In, in...)
+	}
+}
+
+func With(tableTag string, q *QueryCondition) Condition {
+	return func(c *QueryCondition) {
+		if c.Relation == nil {
+			c.Relation = map[string]*QueryCondition{}
+		}
+		c.Relation[tableTag] = q
 	}
 }
