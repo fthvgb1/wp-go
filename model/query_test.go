@@ -41,6 +41,12 @@ type post struct {
 	PostMeta            *[]models.PostMeta `table:"wp_postmeta meta" foreignKey:"post_id" local:"ID"  relation:"hasMany"`
 }
 
+type TermRelationships struct {
+	ObjectID       uint64 `db:"object_id"`
+	TermTaxonomyId uint64 `db:"term_taxonomy_id"`
+	TermOrder      int64  `db:"term_order"`
+}
+
 type user struct {
 	Id                uint64    `gorm:"column:ID" db:"ID" json:"ID"`
 	UserLogin         string    `gorm:"column:user_login" db:"user_login" json:"user_login"`
@@ -329,6 +335,30 @@ func TestFindOneById(t *testing.T) {
 	}
 }
 
+func TestGets2(t *testing.T) {
+	t.Run("hasOne", func(t *testing.T) {
+		{
+			q := Conditions(
+				Where(SqlBuilder{{"id = 190"}}),
+				With("user", Conditions(
+					Fields("ID,user_login,user_pass"),
+				)),
+				Fields("posts.*"),
+				From("wp_posts posts"),
+				With("meta", Conditions(
+					WithJoin(true),
+				)),
+			)
+			ctx = context.WithValue(ctx, "ancestorsQueryCondition", q)
+			got, err := Gets[post](ctx, q)
+			_ = got
+			if err != nil {
+				t.Errorf("err:%v", err)
+			}
+		}
+	})
+}
+
 func TestFirstOne(t *testing.T) {
 	type args struct {
 		where  ParseWhere
@@ -365,18 +395,6 @@ func TestFirstOne(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := FirstOne[post](ctx, tt.args.where, tt.args.fields, tt.args.order, tt.args.in...)
-			gott, err := Gets[post](ctx, Conditions(
-				Where(SqlBuilder{{"post_status", "publish"}}),
-				Order([][]string{{"ID", "desc"}}),
-				With("user", WithConditions(
-					Fields("ID,user_login,user_pass"),
-					Where(SqlBuilder{
-						{"user.ID", ">", "0", "int"},
-					}),
-				)),
-				With("meta", nil),
-			))
-			_ = gott
 			if (err != nil) != tt.wantErr {
 				t.Errorf("FirstOne() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -483,7 +501,7 @@ func Test_pagination(t *testing.T) {
 	type args struct {
 		db       dbQuery
 		ctx      context.Context
-		q        QueryCondition
+		q        *QueryCondition
 		page     int
 		pageSize int
 	}
@@ -500,7 +518,7 @@ func Test_pagination(t *testing.T) {
 			args: args{
 				db:  glob,
 				ctx: ctx,
-				q: QueryCondition{
+				q: &QueryCondition{
 					Fields: "post_type,count(*) ID",
 					Group:  "post_type",
 					Having: SqlBuilder{{"ID", ">", "1", "int"}},
@@ -541,7 +559,7 @@ func Test_paginationToMap(t *testing.T) {
 	type args struct {
 		db       dbQuery
 		ctx      context.Context
-		q        QueryCondition
+		q        *QueryCondition
 		page     int
 		pageSize int
 	}
@@ -557,7 +575,7 @@ func Test_paginationToMap(t *testing.T) {
 			args: args{
 				db:  glob,
 				ctx: ctx,
-				q: QueryCondition{
+				q: &QueryCondition{
 					Fields: "ID",
 					Where:  SqlBuilder{{"ID < 200"}},
 				},
@@ -572,7 +590,7 @@ func Test_paginationToMap(t *testing.T) {
 			args: args{
 				db:  glob,
 				ctx: ctx,
-				q: QueryCondition{
+				q: &QueryCondition{
 					Fields: "ID",
 					Where:  SqlBuilder{{"ID < 200"}},
 				},

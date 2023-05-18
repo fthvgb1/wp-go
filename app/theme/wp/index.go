@@ -79,7 +79,7 @@ func (i *IndexHandle) ParseIndex(parm *IndexParams) (err error) {
 
 func (i *IndexHandle) GetIndexData() (posts []models.Posts, totalRaw int, err error) {
 
-	q := model.QueryCondition{
+	q := &model.QueryCondition{
 		Where: i.Param.Where,
 		Order: model.SqlBuilder{{i.Param.OrderBy, i.Param.Order}},
 		Join:  i.Param.Join,

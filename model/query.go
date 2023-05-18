@@ -23,7 +23,7 @@ func (c count[T]) Table() string {
 	return c.t.Table()
 }
 
-func pagination[T Model](db dbQuery, ctx context.Context, q QueryCondition, page, pageSize int) (r []T, total int, err error) {
+func pagination[T Model](db dbQuery, ctx context.Context, q *QueryCondition, page, pageSize int) (r []T, total int, err error) {
 	if page < 1 || pageSize < 1 {
 		return
 	}
@@ -42,7 +42,7 @@ func pagination[T Model](db dbQuery, ctx context.Context, q QueryCondition, page
 		if qx.From == "" {
 			qx.From = Table[T]()
 		}
-		sq, in, er := BuildQuerySql(qx)
+		sq, in, er := BuildQuerySql(&qx)
 		qx.In = [][]any{in}
 		if er != nil {
 			err = er
@@ -55,7 +55,7 @@ func pagination[T Model](db dbQuery, ctx context.Context, q QueryCondition, page
 			Fields: "count(*) n",
 		}
 	}
-	n, err := gets[count[T]](db, ctx, qx)
+	n, err := gets[count[T]](db, ctx, &qx)
 	total = n.N
 	if err != nil || total < 1 {
 		return
@@ -77,21 +77,21 @@ func pagination[T Model](db dbQuery, ctx context.Context, q QueryCondition, page
 	return
 }
 
-func paginationToMap[T Model](db dbQuery, ctx context.Context, q QueryCondition, page, pageSize int) (r []map[string]string, total int, err error) {
+func paginationToMap[T Model](db dbQuery, ctx context.Context, q *QueryCondition, page, pageSize int) (r []map[string]string, total int, err error) {
 	ctx = context.WithValue(ctx, "handle=>toMap", &r)
 	_, total, err = pagination[T](db, ctx, q, page, pageSize)
 	return
 }
 
-func PaginationToMap[T Model](ctx context.Context, q QueryCondition, page, pageSize int) (r []map[string]string, total int, err error) {
+func PaginationToMap[T Model](ctx context.Context, q *QueryCondition, page, pageSize int) (r []map[string]string, total int, err error) {
 	return paginationToMap[T](globalBb, ctx, q, page, pageSize)
 }
-func PaginationToMapFromDB[T Model](db dbQuery, ctx context.Context, q QueryCondition, page, pageSize int) (r []map[string]string, total int, err error) {
+func PaginationToMapFromDB[T Model](db dbQuery, ctx context.Context, q *QueryCondition, page, pageSize int) (r []map[string]string, total int, err error) {
 	return paginationToMap[T](db, ctx, q, page, pageSize)
 }
 
 func FindOneById[T Model, I constraints.Integer](ctx context.Context, id I) (T, error) {
-	return gets[T](globalBb, ctx, QueryCondition{
+	return gets[T](globalBb, ctx, &QueryCondition{
 		Fields: "*",
 		Where: SqlBuilder{
 			{PrimaryKey[T](), "=", number.IntToString(id), "int"},
@@ -119,7 +119,7 @@ func LastOne[T Model](ctx context.Context, where ParseWhere, fields string, in .
 }
 
 func SimpleFind[T Model](ctx context.Context, where ParseWhere, fields string, in ...[]any) (r []T, err error) {
-	s, args, err := BuildQuerySql(QueryCondition{
+	s, args, err := BuildQuerySql(&QueryCondition{
 		Where:  where,
 		Fields: fields,
 		In:     in,
@@ -144,7 +144,7 @@ func Select[T Model](ctx context.Context, sql string, params ...any) ([]T, error
 }
 
 func Find[T Model](ctx context.Context, where ParseWhere, fields, group string, order SqlBuilder, join SqlBuilder, having SqlBuilder, limit int, in ...[]any) (r []T, err error) {
-	q := QueryCondition{
+	q := &QueryCondition{
 		Where:  where,
 		Fields: fields,
 		Group:  group,

@@ -12,27 +12,18 @@ type QueryCondition struct {
 	Offset   int
 	In       [][]any
 	Relation map[string]*QueryCondition
+	WithJoin bool
 }
 
-func Conditions(fns ...Condition) QueryCondition {
-	r := QueryCondition{}
+func Conditions(fns ...Condition) *QueryCondition {
+	r := &QueryCondition{}
 	for _, fn := range fns {
-		fn(&r)
+		fn(r)
 	}
 	if r.Fields == "" {
 		r.Fields = "*"
 	}
 	return r
-}
-func WithConditions(fns ...Condition) *QueryCondition {
-	r := QueryCondition{}
-	for _, fn := range fns {
-		fn(&r)
-	}
-	if r.Fields == "" {
-		r.Fields = "*"
-	}
-	return &r
 }
 
 type Condition func(c *QueryCondition)
@@ -102,5 +93,11 @@ func With(tableTag string, q *QueryCondition) Condition {
 			c.Relation = map[string]*QueryCondition{}
 		}
 		c.Relation[tableTag] = q
+	}
+}
+
+func WithJoin(isJoin bool) Condition {
+	return func(c *QueryCondition) {
+		c.WithJoin = isJoin
 	}
 }

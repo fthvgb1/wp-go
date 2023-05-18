@@ -94,7 +94,7 @@ func GetPostsByIds(a ...any) (m map[uint64]models.Posts, err error) {
 
 func SearchPostIds(args ...any) (ids PostIds, err error) {
 	ctx := args[0].(context.Context)
-	q := args[1].(model.QueryCondition)
+	q := args[1].(*model.QueryCondition)
 	page := args[2].(int)
 	pageSize := args[3].(int)
 	q.Fields = "ID"

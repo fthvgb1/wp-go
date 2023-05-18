@@ -15,7 +15,7 @@ import (
 func TestFinds(t *testing.T) {
 	type args struct {
 		ctx context.Context
-		q   QueryCondition
+		q   *QueryCondition
 	}
 	type testCase[T Model] struct {
 		name    string
@@ -66,7 +66,7 @@ func TestChunkFind(t *testing.T) {
 	type args struct {
 		ctx      context.Context
 		perLimit int
-		q        QueryCondition
+		q        *QueryCondition
 	}
 	type testCase[T Model] struct {
 		name    string
@@ -118,7 +118,7 @@ func TestChunk(t *testing.T) {
 		ctx      context.Context
 		perLimit int
 		fn       func(rows T) (R, bool)
-		q        QueryCondition
+		q        *QueryCondition
 	}
 	type testCase[T Model, R any] struct {
 		name    string
@@ -179,7 +179,7 @@ func TestChunk(t *testing.T) {
 func TestPagination(t *testing.T) {
 	type args struct {
 		ctx      context.Context
-		q        QueryCondition
+		q        *QueryCondition
 		page     int
 		pageSize int
 	}
@@ -238,7 +238,7 @@ func TestColumn(t *testing.T) {
 	type args[V Model, T any] struct {
 		ctx context.Context
 		fn  func(V) (T, bool)
-		q   QueryCondition
+		q   *QueryCondition
 	}
 	type testCase[V Model, T any] struct {
 		name    string
@@ -354,7 +354,7 @@ func Test_getToStringMap(t *testing.T) {
 	type args struct {
 		db  dbQuery
 		ctx context.Context
-		q   QueryCondition
+		q   *QueryCondition
 	}
 	tests := []struct {
 		name    string
@@ -409,7 +409,7 @@ func Test_findToStringMap(t *testing.T) {
 	type args struct {
 		db  dbQuery
 		ctx context.Context
-		q   QueryCondition
+		q   *QueryCondition
 	}
 	tests := []struct {
 		name    string
@@ -484,7 +484,7 @@ func Test_findScanner(t *testing.T) {
 		db  dbQuery
 		ctx context.Context
 		fn  func(T)
-		q   QueryCondition
+		q   *QueryCondition
 	}
 	type testCase[T Model] struct {
 		name    string
@@ -547,7 +547,7 @@ func Test_gets(t *testing.T) {
 	type args struct {
 		db  dbQuery
 		ctx context.Context
-		q   QueryCondition
+		q   *QueryCondition
 	}
 	type testCase[T Model] struct {
 		name    string
@@ -585,7 +585,7 @@ func Test_finds(t *testing.T) {
 	type args struct {
 		db  dbQuery
 		ctx context.Context
-		q   QueryCondition
+		q   *QueryCondition
 	}
 	type testCase[T Model] struct {
 		name    string
@@ -648,7 +648,7 @@ func Test_finds(t *testing.T) {
 func TestGets(t *testing.T) {
 	type args struct {
 		ctx context.Context
-		q   QueryCondition
+		q   *QueryCondition
 	}
 	type testCase[T Model] struct {
 		name    string
