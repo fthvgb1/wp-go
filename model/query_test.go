@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
 	"github.com/fthvgb1/wp-go/safety"
@@ -14,31 +15,74 @@ import (
 )
 
 type post struct {
-	Id                  uint64             `gorm:"column:ID" db:"ID" json:"ID" form:"ID"`
-	PostAuthor          uint64             `gorm:"column:post_author" db:"post_author" json:"post_author" form:"post_author"`
-	PostDate            time.Time          `gorm:"column:post_date" db:"post_date" json:"post_date" form:"post_date"`
-	PostDateGmt         time.Time          `gorm:"column:post_date_gmt" db:"post_date_gmt" json:"post_date_gmt" form:"post_date_gmt"`
-	PostContent         string             `gorm:"column:post_content" db:"post_content" json:"post_content" form:"post_content"`
-	PostTitle           string             `gorm:"column:post_title" db:"post_title" json:"post_title" form:"post_title"`
-	PostExcerpt         string             `gorm:"column:post_excerpt" db:"post_excerpt" json:"post_excerpt" form:"post_excerpt"`
-	PostStatus          string             `gorm:"column:post_status" db:"post_status" json:"post_status" form:"post_status"`
-	CommentStatus       string             `gorm:"column:comment_status" db:"comment_status" json:"comment_status" form:"comment_status"`
-	PingStatus          string             `gorm:"column:ping_status" db:"ping_status" json:"ping_status" form:"ping_status"`
-	PostPassword        string             `gorm:"column:post_password" db:"post_password" json:"post_password" form:"post_password"`
-	PostName            string             `gorm:"column:post_name" db:"post_name" json:"post_name" form:"post_name"`
-	ToPing              string             `gorm:"column:to_ping" db:"to_ping" json:"to_ping" form:"to_ping"`
-	Pinged              string             `gorm:"column:pinged" db:"pinged" json:"pinged" form:"pinged"`
-	PostModified        time.Time          `gorm:"column:post_modified" db:"post_modified" json:"post_modified" form:"post_modified"`
-	PostModifiedGmt     time.Time          `gorm:"column:post_modified_gmt" db:"post_modified_gmt" json:"post_modified_gmt" form:"post_modified_gmt"`
-	PostContentFiltered string             `gorm:"column:post_content_filtered" db:"post_content_filtered" json:"post_content_filtered" form:"post_content_filtered"`
-	PostParent          uint64             `gorm:"column:post_parent" db:"post_parent" json:"post_parent" form:"post_parent"`
-	Guid                string             `gorm:"column:guid" db:"guid" json:"guid" form:"guid"`
-	MenuOrder           int                `gorm:"column:menu_order" db:"menu_order" json:"menu_order" form:"menu_order"`
-	PostType            string             `gorm:"column:post_type" db:"post_type" json:"post_type" form:"post_type"`
-	PostMimeType        string             `gorm:"column:post_mime_type" db:"post_mime_type" json:"post_mime_type" form:"post_mime_type"`
-	CommentCount        int64              `gorm:"column:comment_count" db:"comment_count" json:"comment_count" form:"comment_count"`
-	User                *user              `table:"wp_users user" foreignKey:"ID" local:"post_author" relation:"hasOne"`
-	PostMeta            *[]models.PostMeta `table:"wp_postmeta meta" foreignKey:"post_id" local:"ID"  relation:"hasMany"`
+	Id                  uint64    `gorm:"column:ID" db:"ID" json:"ID" form:"ID"`
+	PostAuthor          uint64    `gorm:"column:post_author" db:"post_author" json:"post_author" form:"post_author"`
+	PostDate            time.Time `gorm:"column:post_date" db:"post_date" json:"post_date" form:"post_date"`
+	PostDateGmt         time.Time `gorm:"column:post_date_gmt" db:"post_date_gmt" json:"post_date_gmt" form:"post_date_gmt"`
+	PostContent         string    `gorm:"column:post_content" db:"post_content" json:"post_content" form:"post_content"`
+	PostTitle           string    `gorm:"column:post_title" db:"post_title" json:"post_title" form:"post_title"`
+	PostExcerpt         string    `gorm:"column:post_excerpt" db:"post_excerpt" json:"post_excerpt" form:"post_excerpt"`
+	PostStatus          string    `gorm:"column:post_status" db:"post_status" json:"post_status" form:"post_status"`
+	CommentStatus       string    `gorm:"column:comment_status" db:"comment_status" json:"comment_status" form:"comment_status"`
+	PingStatus          string    `gorm:"column:ping_status" db:"ping_status" json:"ping_status" form:"ping_status"`
+	PostPassword        string    `gorm:"column:post_password" db:"post_password" json:"post_password" form:"post_password"`
+	PostName            string    `gorm:"column:post_name" db:"post_name" json:"post_name" form:"post_name"`
+	ToPing              string    `gorm:"column:to_ping" db:"to_ping" json:"to_ping" form:"to_ping"`
+	Pinged              string    `gorm:"column:pinged" db:"pinged" json:"pinged" form:"pinged"`
+	PostModified        time.Time `gorm:"column:post_modified" db:"post_modified" json:"post_modified" form:"post_modified"`
+	PostModifiedGmt     time.Time `gorm:"column:post_modified_gmt" db:"post_modified_gmt" json:"post_modified_gmt" form:"post_modified_gmt"`
+	PostContentFiltered string    `gorm:"column:post_content_filtered" db:"post_content_filtered" json:"post_content_filtered" form:"post_content_filtered"`
+	PostParent          uint64    `gorm:"column:post_parent" db:"post_parent" json:"post_parent" form:"post_parent"`
+	Guid                string    `gorm:"column:guid" db:"guid" json:"guid" form:"guid"`
+	MenuOrder           int       `gorm:"column:menu_order" db:"menu_order" json:"menu_order" form:"menu_order"`
+	PostType            string    `gorm:"column:post_type" db:"post_type" json:"post_type" form:"post_type"`
+	PostMimeType        string    `gorm:"column:post_mime_type" db:"post_mime_type" json:"post_mime_type" form:"post_mime_type"`
+	CommentCount        int64     `gorm:"column:comment_count" db:"comment_count" json:"comment_count" form:"comment_count"`
+	User                *user
+	PostMeta            *[]models.PostMeta
+}
+
+func PostAuthor() (func(any) []any, func(posts, users any) error, any, Relationship) {
+	var u user
+	return func(a any) []any {
+			return []any{a.(*post).PostAuthor}
+		}, func(posts, users any) error {
+			u := users.(*user)
+			postss, ok := posts.(*post)
+			if !ok {
+				postsss, ok := posts.(*[]post)
+				if !ok {
+					return errors.New("无法识别post的类型")
+				}
+				for i := 0; i < len(*postsss); i++ {
+					(*postsss)[i].User = u
+				}
+			}
+			postss.User = u
+			return nil
+
+		}, &u, Relationship{
+			RelationType: "hasOne",
+			Table:        "wp_users user",
+			ForeignKey:   "ID",
+			Local:        "post_author",
+		}
+}
+func PostMetas() (func(any) []any, func(posts, users any) error, any, Relationship) {
+	var u []models.PostMeta
+	return func(a any) []any {
+			return []any{a.(*post).Id}
+		}, func(posts, meta any) error {
+			postss := posts.(*post)
+			u := meta.(*[]models.PostMeta)
+			postss.PostMeta = u
+			return nil
+		}, &u, Relationship{
+			RelationType: "hasMany",
+			Table:        "wp_postmeta meta",
+			ForeignKey:   "post_id",
+			Local:        "ID",
+		}
 }
 
 type TermRelationships struct {
@@ -339,18 +383,36 @@ func TestGets2(t *testing.T) {
 	t.Run("hasOne", func(t *testing.T) {
 		{
 			q := Conditions(
-				Where(SqlBuilder{{"id = 190"}}),
-				With("user", Conditions(
+				Where(SqlBuilder{{"posts.id = 190"}}),
+				WithCtx(&ctx),
+				WithFn(true, true, Conditions(
 					Fields("ID,user_login,user_pass"),
-				)),
+				), PostAuthor),
 				Fields("posts.*"),
 				From("wp_posts posts"),
-				With("meta", Conditions(
-					WithJoin(true),
-				)),
+				WithFn(false, true, nil, PostMetas),
 			)
-			ctx = context.WithValue(ctx, "ancestorsQueryCondition", q)
 			got, err := Gets[post](ctx, q)
+			_ = got
+			if err != nil {
+				t.Errorf("err:%v", err)
+			}
+		}
+	})
+	t.Run("hasOne", func(t *testing.T) {
+		{
+			q := Conditions(
+				Where(SqlBuilder{{"posts.id", "in", ""}}),
+				In([]any{190, 2978}),
+				WithCtx(&ctx),
+				WithFn(true, true, Conditions(
+					Fields("ID,user_login,user_pass"),
+				), PostAuthor),
+				Fields("posts.*"),
+				From("wp_posts posts"),
+				WithFn(false, false, nil, PostMetas),
+			)
+			got, err := Finds[post](ctx, q)
 			_ = got
 			if err != nil {
 				t.Errorf("err:%v", err)

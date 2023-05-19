@@ -2,9 +2,9 @@ package model
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper"
-	"reflect"
 	"strings"
 )
 
@@ -14,89 +14,73 @@ func setTable[T Model](q *QueryCondition) {
 	}
 }
 
+type Relationship struct {
+	RelationType string
+	Table        string
+	ForeignKey   string
+	Local        string
+	On           string
+}
+
 func Relation(db dbQuery, ctx context.Context, r any, q *QueryCondition) ([]func(), []func() error) {
 	var fn []func()
 	var fns []func() error
-	t := reflect.TypeOf(r).Elem()
-	v := reflect.ValueOf(r).Elem()
-	for tableTag, relation := range q.Relation {
-		if tableTag == "" {
-			continue
-		}
-		tableTag := tableTag
-		relation := relation
-		for i := 0; i < t.NumField(); i++ {
-			i := i
-			tag := t.Field(i).Tag
-			table, ok := tag.Lookup("table")
-			if !ok || table == "" {
-				continue
-			}
-			tables := strings.Split(table, " ")
-			if tables[len(tables)-1] != tableTag {
-				continue
-			}
-			foreignKey := tag.Get("foreignKey")
-			if foreignKey == "" {
-				continue
-			}
-			localKey := tag.Get("local")
-			if localKey == "" {
-				continue
-			}
-			if relation == nil {
-				relation = &QueryCondition{
-					Fields: "*",
-				}
-			}
-			relation.From = table
-			id := ""
-			j := 0
-			for ; j < t.NumField(); j++ {
-				vvv, ok := t.Field(j).Tag.Lookup("db")
-				if ok && vvv == tag.Get("local") {
-					break
-				}
-			}
-			if relation.WithJoin {
+	for _, f := range q.RelationFn {
+		getVal, isJoin, qq, ff := f()
+		idFn, assignment, rr, ship := ff()
+		if isJoin {
+			fn = append(fn, func() {
+				tables := strings.Split(ship.Table, " ")
 				from := strings.Split(q.From, " ")
-				fn = append(fn, func() {
-					qq := helper.GetContextVal(ctx, "ancestorsQueryCondition", q)
-					qq.Join = append(q.Join, SqlBuilder{
-						{"left join", table, fmt.Sprintf("%s.%s=%s.%s", tables[len(tables)-1], foreignKey, from[len(from)-1], localKey)},
-					}...)
-				})
-			}
-			fns = append(fns, func() error {
-				{
-					var w any = relation.Where
-					if w == nil {
-						w = SqlBuilder{}
-					}
-					ww, ok := w.(SqlBuilder)
-					if ok {
-						id = fmt.Sprintf("%v", v.Field(j).Interface())
-						ww = append(ww, SqlBuilder{{
-							foreignKey, "=", id, "int",
-						}}...)
-						relation.Where = ww
-					}
+				on := ""
+				if ship.On != "" {
+					on = fmt.Sprintf("and %s", on)
 				}
-				var err error
-				vv := reflect.New(v.Field(i).Type().Elem()).Interface()
-				switch tag.Get("relation") {
-				case "hasOne":
-					err = parseRelation(false, db, ctx, vv, relation)
-				case "hasMany":
-					err = parseRelation(true, db, ctx, vv, relation)
-				}
-				if err != nil {
-					return err
-				}
-				v.Field(i).Set(reflect.ValueOf(vv))
-				return nil
+				qq := helper.GetContextVal(ctx, "ancestorsQueryCondition", q)
+				qq.Join = append(qq.Join, []string{
+					"left join", ship.Table, fmt.Sprintf("%s.%s=%s.%s %s", tables[len(tables)-1], ship.ForeignKey, from[len(from)-1], ship.Local, on)})
 			})
 		}
+		if !getVal {
+			continue
+		}
+		fns = append(fns, func() error {
+			var err error
+			{
+				if qq == nil {
+					qq = &QueryCondition{
+						Fields: "*",
+					}
+				}
+				var w any = qq.Where
+				if w == nil {
+					w = SqlBuilder{}
+				}
+				ww, ok := w.(SqlBuilder)
+				if ok {
+					ww = append(ww, SqlBuilder{{
+						ship.ForeignKey, "in", "",
+					}}...)
+					qq.In = [][]any{idFn(r)}
+					qq.Where = ww
+				}
+				if qq.From == "" {
+					qq.From = ship.Table
+				}
+			}
+			// todo finds的情况
+			switch ship.RelationType {
+			case "hasOne":
+				err = parseRelation(false, db, ctx, rr, qq)
+			case "hasMany":
+				err = parseRelation(true, db, ctx, rr, qq)
+			}
+			if err != nil && err != sql.ErrNoRows {
+				return err
+			}
+			err = assignment(r, rr)
+			return err
+		})
 	}
 	return fn, fns
 }

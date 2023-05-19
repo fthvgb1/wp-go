@@ -1,18 +1,19 @@
 package model
 
+import "context"
+
 type QueryCondition struct {
-	Where    ParseWhere
-	From     string
-	Fields   string
-	Group    string
-	Order    SqlBuilder
-	Join     SqlBuilder
-	Having   SqlBuilder
-	Limit    int
-	Offset   int
-	In       [][]any
-	Relation map[string]*QueryCondition
-	WithJoin bool
+	Where      ParseWhere
+	From       string
+	Fields     string
+	Group      string
+	Order      SqlBuilder
+	Join       SqlBuilder
+	Having     SqlBuilder
+	Limit      int
+	Offset     int
+	In         [][]any
+	RelationFn []func() (bool, bool, *QueryCondition, func() (func(any) []any, func(any, any) error, any, Relationship))
 }
 
 func Conditions(fns ...Condition) *QueryCondition {
@@ -87,17 +88,16 @@ func In(in ...[]any) Condition {
 	}
 }
 
-func With(tableTag string, q *QueryCondition) Condition {
+func WithCtx(ctx *context.Context) Condition {
 	return func(c *QueryCondition) {
-		if c.Relation == nil {
-			c.Relation = map[string]*QueryCondition{}
-		}
-		c.Relation[tableTag] = q
+		*ctx = context.WithValue(*ctx, "ancestorsQueryCondition", c)
 	}
 }
 
-func WithJoin(isJoin bool) Condition {
+func WithFn(getVal, isJoin bool, q *QueryCondition, fn func() (func(any) []any, func(any, any) error, any, Relationship)) Condition {
 	return func(c *QueryCondition) {
-		c.WithJoin = isJoin
+		c.RelationFn = append(c.RelationFn, func() (bool, bool, *QueryCondition, func() (func(any) []any, func(any, any) error, any, Relationship)) {
+			return getVal, isJoin, q, fn
+		})
 	}
 }

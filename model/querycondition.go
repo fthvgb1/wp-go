@@ -27,12 +27,16 @@ func FindFromDB[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r 
 
 func finds[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r []T, err error) {
 	setTable[T](q)
-	sq, args, err := BuildQuerySql(q)
-	if err != nil {
+	if len(q.RelationFn) < 1 {
+		sq, args, er := BuildQuerySql(q)
+		if err != nil {
+			err = er
+			return
+		}
+		err = db.Select(ctx, &r, sq, args...)
 		return
 	}
-	err = db.Select(ctx, &r, sq, args...)
-
+	err = parseRelation(true, db, ctx, &r, q)
 	return
 }
 
@@ -304,7 +308,7 @@ func GetsFromDB[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (T,
 
 func gets[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r T, err error) {
 	setTable[T](q)
-	if len(q.Relation) < 1 {
+	if len(q.RelationFn) < 1 {
 		s, args, er := BuildQuerySql(q)
 		if er != nil {
 			err = er
