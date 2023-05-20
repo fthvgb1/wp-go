@@ -322,7 +322,7 @@ func gets[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r T, err
 }
 
 func parseRelation(isMultiple bool, db dbQuery, ctx context.Context, r any, q *QueryCondition) (err error) {
-	fn, fns := Relation(db, ctx, r, q)
+	fn, fns := Relation(isMultiple, db, ctx, r, q)
 	for _, f := range fn {
 		f()
 	}

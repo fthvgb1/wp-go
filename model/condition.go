@@ -13,8 +13,10 @@ type QueryCondition struct {
 	Limit      int
 	Offset     int
 	In         [][]any
-	RelationFn []func() (bool, bool, *QueryCondition, func() (func(any) []any, func(any, any) error, any, Relationship))
+	RelationFn []func() (bool, bool, *QueryCondition, RelationFn)
 }
+
+type RelationFn func() (func(any) []any, func(any, any), any, any, Relationship)
 
 func Conditions(fns ...Condition) *QueryCondition {
 	r := &QueryCondition{}
@@ -94,9 +96,9 @@ func WithCtx(ctx *context.Context) Condition {
 	}
 }
 
-func WithFn(getVal, isJoin bool, q *QueryCondition, fn func() (func(any) []any, func(any, any) error, any, Relationship)) Condition {
+func WithFn(getVal, isJoin bool, q *QueryCondition, fn func() (func(any) []any, func(any, any), any, any, Relationship)) Condition {
 	return func(c *QueryCondition) {
-		c.RelationFn = append(c.RelationFn, func() (bool, bool, *QueryCondition, func() (func(any) []any, func(any, any) error, any, Relationship)) {
+		c.RelationFn = append(c.RelationFn, func() (bool, bool, *QueryCondition, RelationFn) {
 			return getVal, isJoin, q, fn
 		})
 	}

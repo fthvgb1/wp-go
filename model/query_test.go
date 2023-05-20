@@ -3,7 +3,6 @@ package model
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"fmt"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
 	"github.com/fthvgb1/wp-go/safety"
@@ -40,49 +39,6 @@ type post struct {
 	CommentCount        int64     `gorm:"column:comment_count" db:"comment_count" json:"comment_count" form:"comment_count"`
 	User                *user
 	PostMeta            *[]models.PostMeta
-}
-
-func PostAuthor() (func(any) []any, func(posts, users any) error, any, Relationship) {
-	var u user
-	return func(a any) []any {
-			return []any{a.(*post).PostAuthor}
-		}, func(posts, users any) error {
-			u := users.(*user)
-			postss, ok := posts.(*post)
-			if !ok {
-				postsss, ok := posts.(*[]post)
-				if !ok {
-					return errors.New("无法识别post的类型")
-				}
-				for i := 0; i < len(*postsss); i++ {
-					(*postsss)[i].User = u
-				}
-			}
-			postss.User = u
-			return nil
-
-		}, &u, Relationship{
-			RelationType: "hasOne",
-			Table:        "wp_users user",
-			ForeignKey:   "ID",
-			Local:        "post_author",
-		}
-}
-func PostMetas() (func(any) []any, func(posts, users any) error, any, Relationship) {
-	var u []models.PostMeta
-	return func(a any) []any {
-			return []any{a.(*post).Id}
-		}, func(posts, meta any) error {
-			postss := posts.(*post)
-			u := meta.(*[]models.PostMeta)
-			postss.PostMeta = u
-			return nil
-		}, &u, Relationship{
-			RelationType: "hasMany",
-			Table:        "wp_postmeta meta",
-			ForeignKey:   "post_id",
-			Local:        "ID",
-		}
 }
 
 type TermRelationships struct {
@@ -377,48 +333,6 @@ func TestFindOneById(t *testing.T) {
 			}
 		})
 	}
-}
-
-func TestGets2(t *testing.T) {
-	t.Run("hasOne", func(t *testing.T) {
-		{
-			q := Conditions(
-				Where(SqlBuilder{{"posts.id = 190"}}),
-				WithCtx(&ctx),
-				WithFn(true, true, Conditions(
-					Fields("ID,user_login,user_pass"),
-				), PostAuthor),
-				Fields("posts.*"),
-				From("wp_posts posts"),
-				WithFn(false, true, nil, PostMetas),
-			)
-			got, err := Gets[post](ctx, q)
-			_ = got
-			if err != nil {
-				t.Errorf("err:%v", err)
-			}
-		}
-	})
-	t.Run("hasOne", func(t *testing.T) {
-		{
-			q := Conditions(
-				Where(SqlBuilder{{"posts.id", "in", ""}}),
-				In([]any{190, 2978}),
-				WithCtx(&ctx),
-				WithFn(true, true, Conditions(
-					Fields("ID,user_login,user_pass"),
-				), PostAuthor),
-				Fields("posts.*"),
-				From("wp_posts posts"),
-				WithFn(false, false, nil, PostMetas),
-			)
-			got, err := Finds[post](ctx, q)
-			_ = got
-			if err != nil {
-				t.Errorf("err:%v", err)
-			}
-		}
-	})
 }
 
 func TestFirstOne(t *testing.T) {

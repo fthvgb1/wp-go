@@ -5,6 +5,8 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/helper/slice"
+	"golang.org/x/exp/constraints"
 	"strings"
 )
 
@@ -22,12 +24,12 @@ type Relationship struct {
 	On           string
 }
 
-func Relation(db dbQuery, ctx context.Context, r any, q *QueryCondition) ([]func(), []func() error) {
+func Relation(isMultiple bool, db dbQuery, ctx context.Context, r any, q *QueryCondition) ([]func(), []func() error) {
 	var fn []func()
 	var fns []func() error
 	for _, f := range q.RelationFn {
 		getVal, isJoin, qq, ff := f()
-		idFn, assignment, rr, ship := ff()
+		idFn, assignment, rr, rrs, ship := ff()
 		if isJoin {
 			fn = append(fn, func() {
 				tables := strings.Split(ship.Table, " ")
@@ -45,6 +47,10 @@ func Relation(db dbQuery, ctx context.Context, r any, q *QueryCondition) ([]func
 			continue
 		}
 		fns = append(fns, func() error {
+			ids := idFn(r)
+			if len(ids) < 1 {
+				return nil
+			}
 			var err error
 			{
 				if qq == nil {
@@ -61,26 +67,93 @@ func Relation(db dbQuery, ctx context.Context, r any, q *QueryCondition) ([]func
 					ww = append(ww, SqlBuilder{{
 						ship.ForeignKey, "in", "",
 					}}...)
-					qq.In = [][]any{idFn(r)}
+					qq.In = [][]any{ids}
 					qq.Where = ww
 				}
 				if qq.From == "" {
 					qq.From = ship.Table
 				}
 			}
-			// todo finds的情况
-			switch ship.RelationType {
-			case "hasOne":
-				err = parseRelation(false, db, ctx, rr, qq)
-			case "hasMany":
-				err = parseRelation(true, db, ctx, rr, qq)
-			}
+			err = parseRelation(isMultiple || ship.RelationType == "hasMany", db, ctx, helper.Or(isMultiple, rrs, rr), qq)
 			if err != nil && err != sql.ErrNoRows {
 				return err
 			}
-			err = assignment(r, rr)
+			assignment(r, helper.Or(isMultiple, rrs, rr))
+
 			return err
 		})
 	}
 	return fn, fns
+}
+
+func GetWithID[T, V any](fn func(*T) V) func(any) []any {
+	return func(a any) []any {
+		one, ok := a.(*T)
+		if ok {
+			return []any{fn(one)}
+		}
+		return slice.ToAnySlice(slice.Unique(slice.Map(*a.(*[]T), func(t T) any {
+			return fn(&t)
+		})))
+	}
+}
+
+func SetHasOne[T, V any, K comparable](fn func(*T, *V), idFn func(*T) K, iddFn func(*V) K) func(any, any) {
+	return func(m, v any) {
+		one, ok := m.(*T)
+		if ok {
+			fn(one, v.(*V))
+			return
+		}
+		r := m.(*[]T)
+		vv := v.(*[]V)
+		mm := slice.SimpleToMap(*vv, func(v V) K {
+			return iddFn(&v)
+		})
+		for i := 0; i < len(*r); i++ {
+			val := &(*r)[i]
+			id := idFn(val)
+			v, ok := mm[id]
+			if ok {
+				fn(val, &v)
+			}
+		}
+	}
+}
+
+func SetHasMany[T, V any, K comparable](fn func(*T, *[]V), idFn func(*T) K, iddFn func(*V) K) func(any, any) {
+	return func(m, v any) {
+		one, ok := m.(*T)
+		if ok {
+			fn(one, v.(*[]V))
+			return
+		}
+		r := m.(*[]T)
+		vv := v.(*[]V)
+		mm := slice.GroupBy(*vv, func(t V) (K, V) {
+			return iddFn(&t), t
+		})
+		for i := 0; i < len(*r); i++ {
+			val := &(*r)[i]
+			id := idFn(val)
+			v, ok := mm[id]
+			if ok {
+				fn(val, &v)
+			}
+		}
+	}
+}
+
+func RelationHasOne[M, P any, I constraints.Integer | uint64](fId func(*M) I, pId func(*P) I, setVal func(*M, *P), r Relationship) RelationFn {
+	return func() (func(any) []any, func(any, any), any, any, Relationship) {
+		var s P
+		var ss []P
+		return GetWithID(fId), SetHasOne(setVal, fId, pId), &s, &ss, r
+	}
+}
+func RelationHasMany[M, P any, I constraints.Integer | uint64](mId func(*M) I, pId func(*P) I, setVal func(*M, *[]P), r Relationship) RelationFn {
+	return func() (func(any) []any, func(any, any), any, any, Relationship) {
+		var ss []P
+		return GetWithID(mId), SetHasMany(setVal, mId, pId), &ss, &ss, r
+	}
 }
