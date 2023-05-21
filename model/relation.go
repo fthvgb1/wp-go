@@ -16,6 +16,20 @@ func setTable[T Model](q *QueryCondition) {
 	}
 }
 
+const (
+	HasOne  = "hasOne"
+	HasMany = "hasMany"
+)
+
+// Relationship join table
+//
+// # RelationType HasOne| HasMany
+//
+// eg: hasOne, post has a user. ForeignKey is user's id , Local is post's userId field
+//
+// eg: hasMany, post has many comments,ForeignKey is comment's postId field, Local is post's id field
+//
+// On is additional join on conditions
 type Relationship struct {
 	RelationType string
 	Table        string
@@ -24,7 +38,7 @@ type Relationship struct {
 	On           string
 }
 
-func Relation(isMultiple bool, db dbQuery, ctx context.Context, r any, q *QueryCondition) ([]func(), []func() error) {
+func Relation(isPlural bool, db dbQuery, ctx context.Context, r any, q *QueryCondition) ([]func(), []func() error) {
 	var beforeFn []func()
 	var afterFn []func() error
 	for _, f := range q.RelationFn {
@@ -72,7 +86,7 @@ func Relation(isMultiple bool, db dbQuery, ctx context.Context, r any, q *QueryC
 			if qq.From == "" {
 				qq.From = ship.Table
 			}
-			err = ParseRelation(isMultiple || ship.RelationType == "hasMany", db, ctx, helper.Or(isMultiple, rrs, rr), qq)
+			err = ParseRelation(isPlural || ship.RelationType == HasMany, db, ctx, helper.Or(isPlural, rrs, rr), qq)
 			if err != nil {
 				if err == sql.ErrNoRows {
 					err = nil
@@ -80,7 +94,7 @@ func Relation(isMultiple bool, db dbQuery, ctx context.Context, r any, q *QueryC
 					return err
 				}
 			}
-			assignmentFn(r, helper.Or(isMultiple, rrs, rr))
+			assignmentFn(r, helper.Or(isPlural, rrs, rr))
 			return err
 		})
 	}
@@ -150,16 +164,31 @@ func SetHasMany[T, V any, K comparable](assignmentFn func(*T, *[]V), pIdFn func(
 	}
 }
 
+// RelationHasOne
+// eg: post has a user. fId is post's userId, pId is user's id
 func RelationHasOne[M, P any, I constraints.Integer | uint64](fId func(*M) I, pId func(*P) I, setVal func(*M, *P), r Relationship) RelationFn {
+	idFn := GetWithID(fId)
+	setFn := SetHasOne(setVal, fId, pId)
 	return func() (func(any) []any, func(any, any), any, any, Relationship) {
 		var s P
 		var ss []P
-		return GetWithID(fId), SetHasOne(setVal, fId, pId), &s, &ss, r
+		return idFn, setFn, &s, &ss, r
 	}
 }
+
+// RelationHasMany
+// eg: post has many comments,mId is comment's postId, pId is post's id
 func RelationHasMany[M, P any, I constraints.Integer | uint64](mId func(*M) I, pId func(*P) I, setVal func(*M, *[]P), r Relationship) RelationFn {
+	idFn := GetWithID(mId)
+	setFn := SetHasMany(setVal, mId, pId)
 	return func() (func(any) []any, func(any, any), any, any, Relationship) {
 		var ss []P
-		return GetWithID(mId), SetHasMany(setVal, mId, pId), &ss, &ss, r
+		return idFn, setFn, &ss, &ss, r
+	}
+}
+
+func AddRelationFn(getVal, join bool, q *QueryCondition, r RelationFn) func() (bool, bool, *QueryCondition, RelationFn) {
+	return func() (bool, bool, *QueryCondition, RelationFn) {
+		return getVal, join, q, r
 	}
 }

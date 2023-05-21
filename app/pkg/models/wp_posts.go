@@ -40,6 +40,7 @@ type Posts struct {
 	IsSticky           bool
 	Thumbnail          PostThumbnail
 	AttachmentMetadata WpAttachmentMetadata
+	Author             *Users
 }
 
 type PostThumbnail struct {

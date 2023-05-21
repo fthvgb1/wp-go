@@ -17,9 +17,6 @@ func userId(u *user) uint64 {
 	return u.Id
 }
 
-func metaId(m *models.PostMeta) uint64 {
-	return m.MetaId
-}
 func metasPostId(m *models.PostMeta) uint64 {
 	return m.PostId
 }
@@ -39,7 +36,7 @@ func PostAuthor() (func(any) []any, func(any, any), any, any, Relationship) {
 		}),
 		&u, &uu,
 		Relationship{
-			RelationType: "hasOne",
+			RelationType: HasOne,
 			Table:        "wp_users user",
 			ForeignKey:   "ID",
 			Local:        "post_author",
@@ -56,7 +53,7 @@ func PostMetas() (func(any) []any, func(any, any), any, any, Relationship) {
 		}, func(m *models.PostMeta) uint64 {
 			return m.PostId
 		}), &u, &u, Relationship{
-			RelationType: "hasMany",
+			RelationType: HasMany,
 			Table:        "wp_postmeta meta",
 			ForeignKey:   "post_id",
 			Local:        "ID",
@@ -75,7 +72,7 @@ func Meta2() RelationFn {
 }
 
 func PostAuthor2() RelationFn {
-	return RelationHasOne[post, user](postAuthorId, userId, func(p *post, u *user) {
+	return RelationHasOne(postAuthorId, userId, func(p *post, u *user) {
 		p.User = u
 	}, Relationship{
 		RelationType: "hasOne",

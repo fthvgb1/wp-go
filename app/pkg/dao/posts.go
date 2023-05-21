@@ -5,7 +5,9 @@ import (
 	"database/sql"
 	"fmt"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
+	"github.com/fthvgb1/wp-go/app/pkg/models/relation"
 	"github.com/fthvgb1/wp-go/app/wpconfig"
+	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/model"
 	"strings"
@@ -17,7 +19,7 @@ func GetPostsByIds(a ...any) (m map[uint64]models.Posts, err error) {
 	ctx := a[0].(context.Context)
 	m = make(map[uint64]models.Posts)
 	ids := a[1].([]uint64)
-	rawPosts, err := model.Finds[models.Posts](ctx, model.Conditions(
+	q := model.Conditions(
 		model.Where(model.SqlBuilder{{"Id", "in", ""}}),
 		model.Join(model.SqlBuilder{
 			{"a", "left join", "wp_term_relationships b", "a.Id=b.object_id"},
@@ -26,7 +28,11 @@ func GetPostsByIds(a ...any) (m map[uint64]models.Posts, err error) {
 		}),
 		model.Fields("a.*,ifnull(d.name,'') category_name,ifnull(c.term_id,0) terms_id,ifnull(taxonomy,'') `taxonomy`"),
 		model.In(slice.ToAnySlice(ids)),
-	))
+	)
+	if helper.GetContextVal(ctx, "getPostAuthor", false) {
+		q.RelationFn = append(q.RelationFn, model.AddRelationFn(true, false, helper.GetContextVal[*model.QueryCondition](ctx, "postAuthorQueryCondition", nil), relation.PostsWithAuthor))
+	}
+	rawPosts, err := model.Finds[models.Posts](ctx, q)
 
 	if err != nil {
 		return m, err
