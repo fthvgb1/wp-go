@@ -36,7 +36,7 @@ func finds[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r []T, 
 		err = db.Select(ctx, &r, sq, args...)
 		return
 	}
-	err = parseRelation(true, db, ctx, &r, q)
+	err = ParseRelation(true, db, ctx, &r, q)
 	return
 }
 
@@ -317,14 +317,14 @@ func gets[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r T, err
 		err = db.Get(ctx, &r, s, args...)
 		return
 	}
-	err = parseRelation(false, db, ctx, &r, q)
+	err = ParseRelation(false, db, ctx, &r, q)
 	return
 }
 
-func parseRelation(isMultiple bool, db dbQuery, ctx context.Context, r any, q *QueryCondition) (err error) {
-	fn, fns := Relation(isMultiple, db, ctx, r, q)
-	for _, f := range fn {
-		f()
+func ParseRelation(isMultiple bool, db dbQuery, ctx context.Context, r any, q *QueryCondition) (err error) {
+	before, after := Relation(isMultiple, db, ctx, r, q)
+	for _, fn := range before {
+		fn()
 	}
 	s, args, err := BuildQuerySql(q)
 	if err != nil {
@@ -339,8 +339,8 @@ func parseRelation(isMultiple bool, db dbQuery, ctx context.Context, r any, q *Q
 	if err != nil {
 		return
 	}
-	for _, f := range fns {
-		err = f()
+	for _, fn := range after {
+		err = fn()
 		if err != nil {
 			return
 		}

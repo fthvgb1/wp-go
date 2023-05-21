@@ -25,13 +25,13 @@ type Relationship struct {
 }
 
 func Relation(isMultiple bool, db dbQuery, ctx context.Context, r any, q *QueryCondition) ([]func(), []func() error) {
-	var fn []func()
-	var fns []func() error
+	var beforeFn []func()
+	var afterFn []func() error
 	for _, f := range q.RelationFn {
-		getVal, isJoin, qq, ff := f()
-		idFn, assignment, rr, rrs, ship := ff()
+		getVal, isJoin, qq, relationship := f()
+		idFn, assignmentFn, rr, rrs, ship := relationship()
 		if isJoin {
-			fn = append(fn, func() {
+			beforeFn = append(beforeFn, func() {
 				tables := strings.Split(ship.Table, " ")
 				from := strings.Split(q.From, " ")
 				on := ""
@@ -46,44 +46,45 @@ func Relation(isMultiple bool, db dbQuery, ctx context.Context, r any, q *QueryC
 		if !getVal {
 			continue
 		}
-		fns = append(fns, func() error {
+		afterFn = append(afterFn, func() error {
 			ids := idFn(r)
 			if len(ids) < 1 {
 				return nil
 			}
 			var err error
-			{
-				if qq == nil {
-					qq = &QueryCondition{
-						Fields: "*",
-					}
-				}
-				var w any = qq.Where
-				if w == nil {
-					w = SqlBuilder{}
-				}
-				ww, ok := w.(SqlBuilder)
-				if ok {
-					ww = append(ww, SqlBuilder{{
-						ship.ForeignKey, "in", "",
-					}}...)
-					qq.In = [][]any{ids}
-					qq.Where = ww
-				}
-				if qq.From == "" {
-					qq.From = ship.Table
+			if qq == nil {
+				qq = &QueryCondition{
+					Fields: "*",
 				}
 			}
-			err = parseRelation(isMultiple || ship.RelationType == "hasMany", db, ctx, helper.Or(isMultiple, rrs, rr), qq)
-			if err != nil && err != sql.ErrNoRows {
-				return err
+			var w any = qq.Where
+			if w == nil {
+				w = SqlBuilder{}
 			}
-			assignment(r, helper.Or(isMultiple, rrs, rr))
-
+			ww, ok := w.(SqlBuilder)
+			if ok {
+				ww = append(ww, SqlBuilder{{
+					ship.ForeignKey, "in", "",
+				}}...)
+				qq.In = [][]any{ids}
+				qq.Where = ww
+			}
+			if qq.From == "" {
+				qq.From = ship.Table
+			}
+			err = ParseRelation(isMultiple || ship.RelationType == "hasMany", db, ctx, helper.Or(isMultiple, rrs, rr), qq)
+			if err != nil {
+				if err == sql.ErrNoRows {
+					err = nil
+				} else {
+					return err
+				}
+			}
+			assignmentFn(r, helper.Or(isMultiple, rrs, rr))
 			return err
 		})
 	}
-	return fn, fns
+	return beforeFn, afterFn
 }
 
 func GetWithID[T, V any](fn func(*T) V) func(any) []any {
@@ -98,47 +99,52 @@ func GetWithID[T, V any](fn func(*T) V) func(any) []any {
 	}
 }
 
-func SetHasOne[T, V any, K comparable](fn func(*T, *V), idFn func(*T) K, iddFn func(*V) K) func(any, any) {
-	return func(m, v any) {
+// SetHasOne mIdFn is main , pIdFn is part
+//
+// eg: post has a user. mIdFn is post's userId, iddFn is user's id
+func SetHasOne[T, V any, K comparable](assignmentFn func(*T, *V), mIdFn func(*T) K, pIdFn func(*V) K) func(any, any) {
+	return func(m, p any) {
 		one, ok := m.(*T)
 		if ok {
-			fn(one, v.(*V))
+			assignmentFn(one, p.(*V))
 			return
 		}
-		r := m.(*[]T)
-		vv := v.(*[]V)
-		mm := slice.SimpleToMap(*vv, func(v V) K {
-			return iddFn(&v)
+		mSlice := m.(*[]T)
+		pSLice := p.(*[]V)
+		mm := slice.SimpleToMap(*pSLice, func(v V) K {
+			return pIdFn(&v)
 		})
-		for i := 0; i < len(*r); i++ {
-			val := &(*r)[i]
-			id := idFn(val)
-			v, ok := mm[id]
+		for i := 0; i < len(*mSlice); i++ {
+			m := &(*mSlice)[i]
+			id := mIdFn(m)
+			p, ok := mm[id]
 			if ok {
-				fn(val, &v)
+				assignmentFn(m, &p)
 			}
 		}
 	}
 }
 
-func SetHasMany[T, V any, K comparable](fn func(*T, *[]V), idFn func(*T) K, iddFn func(*V) K) func(any, any) {
-	return func(m, v any) {
+// SetHasMany
+// eg: post has many comments,pIdFn is comment's postId, mIdFn is post's id
+func SetHasMany[T, V any, K comparable](assignmentFn func(*T, *[]V), pIdFn func(*T) K, mIdFn func(*V) K) func(any, any) {
+	return func(m, p any) {
 		one, ok := m.(*T)
 		if ok {
-			fn(one, v.(*[]V))
+			assignmentFn(one, p.(*[]V))
 			return
 		}
 		r := m.(*[]T)
-		vv := v.(*[]V)
+		vv := p.(*[]V)
 		mm := slice.GroupBy(*vv, func(t V) (K, V) {
-			return iddFn(&t), t
+			return mIdFn(&t), t
 		})
 		for i := 0; i < len(*r); i++ {
-			val := &(*r)[i]
-			id := idFn(val)
-			v, ok := mm[id]
+			m := &(*r)[i]
+			id := pIdFn(m)
+			p, ok := mm[id]
 			if ok {
-				fn(val, &v)
+				assignmentFn(m, &p)
 			}
 		}
 	}

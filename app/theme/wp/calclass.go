@@ -50,20 +50,20 @@ func (h *Handle) BodyClass() string {
 		if cate.Slug[0] != '%' {
 			class = append(class, str.Join("category-", cate.Slug))
 		}
-		class = append(class, str.Join("category-", number.ToString(cate.Terms.TermId)))
+		class = append(class, str.Join("category-", number.IntToString(cate.Terms.TermId)))
 
 	case constraints.Author:
 		class = append(class, "archive", "author")
 		author := h.Index.Param.Author
 		user, _ := cache.GetUserByName(h.C, author)
-		class = append(class, str.Join("author-", number.ToString(user.Id)))
+		class = append(class, str.Join("author-", number.IntToString(user.Id)))
 		if user.UserLogin[0] != '%' {
 			class = append(class, str.Join("author-", user.UserLogin))
 		}
 
 	case constraints.Detail:
 		class = append(class, "post-template-default", "single", "single-post")
-		class = append(class, str.Join("postid-", number.ToString(h.Detail.Post.Id)))
+		class = append(class, str.Join("postid-", number.IntToString(h.Detail.Post.Id)))
 		if len(h.themeMods.ThemeSupport.PostFormats) > 0 {
 			class = append(class, "single-format-standard")
 		}

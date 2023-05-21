@@ -34,7 +34,7 @@ func PostComments(args ...any) ([]uint64, error) {
 	r, err := model.Finds[models.Comments](ctx, model.Conditions(
 		model.Where(model.SqlBuilder{
 			{"comment_approved", "1"},
-			{"comment_post_ID", "=", number.ToString(postId), "int"},
+			{"comment_post_ID", "=", number.IntToString(postId), "int"},
 		}),
 		model.Fields("comment_ID"),
 		model.Order(model.SqlBuilder{

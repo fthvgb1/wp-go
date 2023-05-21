@@ -48,7 +48,7 @@ func pagination[T Model](db dbQuery, ctx context.Context, q *QueryCondition, pag
 			err = er
 			return
 		}
-		qx.From = str.Join("( ", sq, " ) ", "table", number.ToString(rand.Int()))
+		qx.From = str.Join("( ", sq, " ) ", "table", number.IntToString(rand.Int()))
 		qx = QueryCondition{
 			From:   qx.From,
 			In:     qx.In,
