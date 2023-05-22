@@ -5,7 +5,7 @@ import (
 	"github.com/fthvgb1/wp-go/model"
 )
 
-var hasUser = model.RelationHasOne(func(m *models.Posts) uint64 {
+var PostsWithAuthor = model.RelationHasOne(func(m *models.Posts) uint64 {
 	return m.PostAuthor
 }, func(p *models.Users) uint64 {
 	return p.Id
@@ -17,7 +17,3 @@ var hasUser = model.RelationHasOne(func(m *models.Posts) uint64 {
 	ForeignKey:   "ID",
 	Local:        "post_author",
 })
-
-func PostsWithAuthor() (func(any) []any, func(any, any), any, any, model.Relationship) {
-	return hasUser()
-}
