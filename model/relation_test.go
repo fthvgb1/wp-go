@@ -60,6 +60,25 @@ func PostMetas() (func(any) []any, func(any, any), any, any, Relationship) {
 		}
 }
 
+var term = RelationHasMany(func(m *post) uint64 {
+	return m.Id
+}, func(p *models.TermTaxonomy) uint64 {
+	return p.TermTaxonomyId
+}, func(m *post, i *[]models.TermTaxonomy) {
+	m.TermTaxonomy = i
+}, Relationship{
+	RelationType: HasOne,
+	Table:        "wp_term_taxonomy taxonomy",
+	ForeignKey:   "term_taxonomy_id",
+	Local:        "term_taxonomy_id",
+	Middle: &Relationship{
+		RelationType: HasMany,
+		Table:        "wp_term_relationships",
+		ForeignKey:   "ID",
+		Local:        "object_id",
+	},
+})
+
 func Meta2() RelationFn {
 	return RelationHasMany(postId, metasPostId, func(m *post, i *[]models.PostMeta) {
 		m.PostMeta = i
@@ -93,7 +112,8 @@ func TestGets2(t *testing.T) {
 				), PostAuthor2()),
 				Fields("posts.*"),
 				From("wp_posts posts"),
-				WithFn(true, true, nil, Meta2()),
+				WithFn(true, false, nil, Meta2()),
+				WithFn(true, false, nil, term),
 			)
 			got, err := Gets[post](ctx, q)
 			_ = got
@@ -106,7 +126,7 @@ func TestGets2(t *testing.T) {
 		{
 			q := Conditions(
 				Where(SqlBuilder{{"posts.id", "in", ""}}),
-				In([]any{190, 3022}),
+				In([]any{190, 3022, 291}),
 				WithCtx(&ctx),
 				WithFn(true, false, Conditions(
 					Fields("ID,user_login,user_pass"),
@@ -114,6 +134,7 @@ func TestGets2(t *testing.T) {
 				Fields("posts.*"),
 				From("wp_posts posts"),
 				WithFn(true, false, nil, Meta2()),
+				WithFn(true, false, nil, term),
 			)
 			got, err := Finds[post](ctx, q)
 			_ = got

@@ -39,6 +39,7 @@ type post struct {
 	CommentCount        int64     `gorm:"column:comment_count" db:"comment_count" json:"comment_count" form:"comment_count"`
 	User                *user
 	PostMeta            *[]models.PostMeta
+	TermTaxonomy        *[]models.TermTaxonomy
 }
 
 type TermRelationships struct {
