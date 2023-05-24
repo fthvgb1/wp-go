@@ -88,6 +88,7 @@ func (w SqlBuilder) ParseWhere(in *[][]any) (string, []any, error) {
 			args = append(args, ss[1])
 		case 3, 4:
 			w.parseWhereField(ss, &s)
+			s.WriteString(" ")
 			s.WriteString(ss[1])
 			if w.parseIn(ss, &s, &c, &args, in) {
 				s.WriteString(" and ")

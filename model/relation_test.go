@@ -5,6 +5,63 @@ import (
 	"testing"
 )
 
+type TermTaxonomy struct {
+	TermTaxonomyId uint64 `gorm:"column:term_taxonomy_id" db:"term_taxonomy_id" json:"term_taxonomy_id" form:"term_taxonomy_id"`
+	TermId         uint64 `gorm:"column:term_id" db:"term_id" json:"term_id" form:"term_id"`
+	Taxonomy       string `gorm:"column:taxonomy" db:"taxonomy" json:"taxonomy" form:"taxonomy"`
+	Description    string `gorm:"column:description" db:"description" json:"description" form:"description"`
+	Parent         uint64 `gorm:"column:parent" db:"parent" json:"parent" form:"parent"`
+	Count          int64  `gorm:"column:count" db:"count" json:"count" form:"count"`
+	Term           *models.Terms
+}
+
+var termMyHasOneTerm = RelationHasOne(func(m *TermTaxonomy) uint64 {
+	return m.TermTaxonomyId
+}, func(p *models.Terms) uint64 {
+	return p.TermId
+}, func(m *TermTaxonomy, p *models.Terms) {
+	m.Term = p
+}, Relationship{
+	RelationType: HasOne,
+	Table:        "wp_terms",
+	ForeignKey:   "term_id",
+	Local:        "term_id",
+})
+
+var postHasManyShip = RelationHasMany(func(m *post) uint64 {
+	return m.Id
+}, func(p *TermRelationships) uint64 {
+	return p.ObjectID
+}, func(m *post, i *[]TermRelationships) {
+	m.Ships = i
+}, Relationship{
+	RelationType: HasMany,
+	Table:        "wp_term_relationships",
+	ForeignKey:   "object_id",
+	Local:        "ID",
+})
+
+var shipHasManyTermMy = RelationHasMany(func(m *TermRelationships) uint64 {
+	return m.TermTaxonomyId
+}, func(p *TermTaxonomy) uint64 {
+	return p.TermTaxonomyId
+}, func(m *TermRelationships, i *[]TermTaxonomy) {
+	m.TermTaxonomy = i
+}, Relationship{
+	RelationType: HasMany,
+	Table:        "wp_term_taxonomy",
+	ForeignKey:   "term_taxonomy_id",
+	Local:        "term_taxonomy_id",
+})
+
+func (w TermTaxonomy) PrimaryKey() string {
+	return "term_taxonomy_id"
+}
+
+func (w TermTaxonomy) Table() string {
+	return "wp_term_taxonomy"
+}
+
 func postAuthorId(p *post) uint64 {
 	return p.PostAuthor
 }
@@ -94,6 +151,12 @@ func TestGets2(t *testing.T) {
 				Fields("posts.*"),
 				From("wp_posts posts"),
 				WithFn(true, true, nil, Meta2()),
+				WithFn(true, false, Conditions(
+					WithFn(true, false, Conditions(
+						WithFn(true, false, nil, termMyHasOneTerm),
+					), shipHasManyTermMy),
+				), postHasManyShip),
+				//WithFn(true, false, nil, term),
 			)
 			got, err := Gets[post](ctx, q)
 			_ = got
@@ -106,7 +169,7 @@ func TestGets2(t *testing.T) {
 		{
 			q := Conditions(
 				Where(SqlBuilder{{"posts.id", "in", ""}}),
-				In([]any{190, 3022}),
+				In([]any{190, 3022, 291}),
 				WithCtx(&ctx),
 				WithFn(true, false, Conditions(
 					Fields("ID,user_login,user_pass"),
@@ -114,6 +177,12 @@ func TestGets2(t *testing.T) {
 				Fields("posts.*"),
 				From("wp_posts posts"),
 				WithFn(true, false, nil, Meta2()),
+				WithFn(true, false, Conditions(
+					WithFn(true, false, Conditions(
+						WithFn(true, false, nil, termMyHasOneTerm),
+					), shipHasManyTermMy),
+				), postHasManyShip),
+				//WithFn(true, false, nil, term),
 			)
 			got, err := Finds[post](ctx, q)
 			_ = got
