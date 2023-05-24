@@ -23,7 +23,7 @@ const (
 
 // Relationship join table
 //
-// RelationType HasOne| HasMany
+// # RelationType HasOne| HasMany
 //
 // eg: hasOne, post has a user. ForeignKey is user's id , Local is post's userId field
 //
@@ -166,7 +166,7 @@ func SetHasMany[T, V any, K comparable](assignmentFn func(*T, *[]V), pIdFn func(
 
 // RelationHasOne
 // eg: post has a user. fId is post's userId, pId is user's id
-func RelationHasOne[M, P any, I constraints.Integer | uint64](fId func(*M) I, pId func(*P) I, setVal func(*M, *P), r Relationship) RelationFn {
+func RelationHasOne[M, P any, I constraints.Integer | constraints.Unsigned](fId func(*M) I, pId func(*P) I, setVal func(*M, *P), r Relationship) RelationFn {
 	idFn := GetWithID(fId)
 	setFn := SetHasOne(setVal, fId, pId)
 	return func() (func(any) []any, func(any, any), any, any, Relationship) {
@@ -177,8 +177,8 @@ func RelationHasOne[M, P any, I constraints.Integer | uint64](fId func(*M) I, pI
 }
 
 // RelationHasMany
-// eg: post has many comments,mId is comment's postId, pId is post's id
-func RelationHasMany[M, P any, I constraints.Integer | uint64](mId func(*M) I, pId func(*P) I, setVal func(*M, *[]P), r Relationship) RelationFn {
+// eg: post has many comments,mId is post's id, pId is comment's postId
+func RelationHasMany[M, P any, I constraints.Integer | constraints.Unsigned](mId func(*M) I, pId func(*P) I, setVal func(*M, *[]P), r Relationship) RelationFn {
 	idFn := GetWithID(mId)
 	setFn := SetHasMany(setVal, mId, pId)
 	return func() (func(any) []any, func(any, any), any, any, Relationship) {
