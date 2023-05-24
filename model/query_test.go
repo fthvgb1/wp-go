@@ -38,14 +38,16 @@ type post struct {
 	PostMimeType        string    `gorm:"column:post_mime_type" db:"post_mime_type" json:"post_mime_type" form:"post_mime_type"`
 	CommentCount        int64     `gorm:"column:comment_count" db:"comment_count" json:"comment_count" form:"comment_count"`
 	User                *user
+	Ships               *[]TermRelationships
 	PostMeta            *[]models.PostMeta
-	TermTaxonomy        *[]models.TermTaxonomy
+	TermTaxonomy        *[]TermTaxonomy
 }
 
 type TermRelationships struct {
 	ObjectID       uint64 `db:"object_id"`
 	TermTaxonomyId uint64 `db:"term_taxonomy_id"`
 	TermOrder      int64  `db:"term_order"`
+	TermTaxonomy   *[]TermTaxonomy
 }
 
 type user struct {

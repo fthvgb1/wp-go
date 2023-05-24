@@ -44,19 +44,12 @@ func parseBeforeJoin(qq *QueryCondition, ship Relationship) {
 	var fromTable, foreignKey, local string
 	if ship.Middle != nil {
 		parseBeforeJoin(qq, *ship.Middle)
-		fromTable = ship.Middle.Table
-		foreignKey = ship.ForeignKey
 		local = ship.Local
 	} else {
 		fromTable = qq.From
-		if ship.RelationType == HasMany {
-			foreignKey = ship.Local
-			local = ship.ForeignKey
-		} else {
-			foreignKey = ship.ForeignKey
-			local = ship.Local
-		}
 	}
+	foreignKey = ship.ForeignKey
+	local = ship.Local
 	tables := strings.Split(ship.Table, " ")
 	from := strings.Split(fromTable, " ")
 	on := ""
