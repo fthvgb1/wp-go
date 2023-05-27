@@ -41,6 +41,7 @@ type post struct {
 	Ships               *[]TermRelationships
 	PostMeta            *[]models.PostMeta
 	TermTaxonomy        *[]TermTaxonomy
+	Terms               *[]models.Terms
 }
 
 type TermRelationships struct {

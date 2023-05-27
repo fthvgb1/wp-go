@@ -45,6 +45,7 @@ func parseBeforeJoin(qq *QueryCondition, ship Relationship) {
 	if ship.Middle != nil {
 		parseBeforeJoin(qq, *ship.Middle)
 		local = ship.Local
+		fromTable = ship.Middle.Table
 	} else {
 		fromTable = qq.From
 	}
@@ -64,37 +65,34 @@ func parseBeforeJoin(qq *QueryCondition, ship Relationship) {
 
 }
 
-func parseAfterJoin(ids [][]any, qq *QueryCondition, ship Relationship) bool {
+func parseAfterJoin(fromTable string, ids [][]any, qq *QueryCondition, ship Relationship) bool {
 	tables := strings.Split(ship.Middle.Table, " ")
-	from := strings.Split(qq.From, " ")
+	from := strings.Split(fromTable, " ")
 	on := ""
 	if ship.On != "" {
 		on = fmt.Sprintf("and %s", on)
 	}
 	foreignKey := ship.ForeignKey
 	local := ship.Local
-	if ship.RelationType == HasMany {
-		foreignKey = ship.Local
-		local = ship.ForeignKey
-	}
 	qq.Join = append(qq.Join, []string{
 		"left join", ship.Middle.Table,
 		fmt.Sprintf("%s.%s=%s.%s %s",
 			tables[len(tables)-1], foreignKey, from[len(from)-1], local, on,
 		),
 	})
-	if ship.Middle.Middle != nil {
-		return parseAfterJoin(ids, qq, *ship.Middle.Middle)
+	if ship.Middle != nil && ship.Middle.Middle != nil {
+		return parseAfterJoin(tables[len(tables)-1], ids, qq, *ship.Middle)
 	} else {
+		from := strings.Split(qq.From, " ")
 		ww, ok := qq.Where.(SqlBuilder)
 		if ok {
 			ww = append(ww, []string{fmt.Sprintf("%s.%s",
-				tables[len(tables)-1], ship.Middle.Local), "in", ""},
+				tables[len(tables)-1], ship.Middle.ForeignKey), "in", ""},
 			)
 			qq.Where = ww
 		}
 		if qq.Fields == "" || qq.Fields == "*" {
-			qq.Fields = str.Join(from[len(from)-1], ".", "*")
+			qq.Fields = str.Join(from[len(from)-1], ".", "*", ",", tables[len(tables)-1], ".", ship.Middle.ForeignKey)
 		}
 		qq.In = ids
 		return ship.Middle.RelationType == HasMany
@@ -139,7 +137,7 @@ func Relation(isPlural bool, db dbQuery, ctx context.Context, r any, q *QueryCon
 			in := [][]any{ids}
 			if ok {
 				if ship.Middle != nil {
-					isPlural = parseAfterJoin(in, qq, ship)
+					isPlural = parseAfterJoin(qq.From, in, qq, ship)
 				} else {
 					ww = append(ww, SqlBuilder{{
 						ship.ForeignKey, "in", "",

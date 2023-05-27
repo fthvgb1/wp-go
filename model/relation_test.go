@@ -2,6 +2,7 @@ package model
 
 import (
 	"github.com/fthvgb1/wp-go/app/pkg/models"
+	"github.com/fthvgb1/wp-go/helper/slice"
 	"testing"
 )
 
@@ -117,22 +118,40 @@ func PostMetas() (func(any) []any, func(any, any), any, any, Relationship) {
 		}
 }
 
-var term = RelationHasMany(func(m *post) uint64 {
+var postHaveManyTerms = RelationHasMany(func(m *post) uint64 {
 	return m.Id
-}, func(p *TermTaxonomy) uint64 {
-	return p.TermTaxonomyId
-}, func(m *post, i *[]TermTaxonomy) {
-	m.TermTaxonomy = i
+}, func(p *struct {
+	ObjectId uint64 `db:"object_id"`
+	models.Terms
+}) uint64 {
+	return p.ObjectId
+}, func(m *post, i *[]struct {
+	ObjectId uint64 `db:"object_id"`
+	models.Terms
+}) {
+	v := slice.Map(*i, func(t struct {
+		ObjectId uint64 `db:"object_id"`
+		models.Terms
+	}) models.Terms {
+		return t.Terms
+	})
+	m.Terms = &v
 }, Relationship{
 	RelationType: HasOne,
-	Table:        "wp_term_taxonomy taxonomy",
-	ForeignKey:   "term_taxonomy_id",
-	Local:        "term_taxonomy_id",
+	Table:        "wp_terms",
+	ForeignKey:   "term_id",
+	Local:        "term_id",
 	Middle: &Relationship{
-		RelationType: HasMany,
-		Table:        "wp_term_relationships",
-		ForeignKey:   "ID",
-		Local:        "object_id",
+		RelationType: HasOne,
+		Table:        "wp_term_taxonomy taxonomy",
+		ForeignKey:   "term_taxonomy_id",
+		Local:        "term_taxonomy_id",
+		Middle: &Relationship{
+			RelationType: HasMany,
+			Table:        "wp_term_relationships",
+			ForeignKey:   "object_id",
+			Local:        "ID",
+		},
 	},
 })
 
@@ -175,7 +194,7 @@ func TestGets2(t *testing.T) {
 						WithFn(true, false, nil, termMyHasOneTerm),
 					), shipHasManyTermMy),
 				), postHasManyShip),
-				//WithFn(true, false, nil, term),
+				WithFn(true, false, nil, postHaveManyTerms),
 			)
 			got, err := Gets[post](ctx, q)
 			_ = got
@@ -196,12 +215,12 @@ func TestGets2(t *testing.T) {
 				Fields("posts.*"),
 				From("wp_posts posts"),
 				WithFn(true, false, nil, Meta2()),
-				WithFn(true, false, Conditions(
+				/*WithFn(true, false, Conditions(
 					WithFn(true, false, Conditions(
 						WithFn(true, false, nil, termMyHasOneTerm),
 					), shipHasManyTermMy),
-				), postHasManyShip),
-				//WithFn(true, false, nil, term),
+				), postHasManyShip),*/
+				WithFn(true, false, nil, postHaveManyTerms),
 			)
 			got, err := Finds[post](ctx, q)
 			_ = got
