@@ -42,6 +42,7 @@ type post struct {
 	PostMeta            *[]models.PostMeta
 	TermTaxonomy        *[]TermTaxonomy
 	Terms               *[]models.Terms
+	CommentMetas        *[]CommentMeta
 }
 
 type TermRelationships struct {

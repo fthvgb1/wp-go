@@ -16,6 +16,13 @@ type TermTaxonomy struct {
 	Term           *models.Terms
 }
 
+type CommentMeta struct {
+	MetaId    uint64 `db:"meta_id"`
+	CommentId uint64 `db:"comment_id"`
+	MetaKey   string `db:"meta_key"`
+	MetaValue string `db:"meta_value"`
+}
+
 var termMyHasOneTerm = RelationHasOne(func(m *TermTaxonomy) uint64 {
 	return m.TermTaxonomyId
 }, func(p *models.Terms) uint64 {
@@ -155,6 +162,34 @@ var postHaveManyTerms = RelationHasMany(func(m *post) uint64 {
 	},
 })
 
+var postHaveManyCommentMetas = func() RelationFn {
+	type metas struct {
+		CommentPostID uint64 `db:"comment_post_ID"`
+		CommentMeta
+	}
+	return RelationHasMany(func(m *post) uint64 {
+		return m.Id
+	}, func(p *metas) uint64 {
+		return p.CommentPostID
+	}, func(m *post, i *[]metas) {
+		v := slice.Map(*i, func(t metas) CommentMeta {
+			return t.CommentMeta
+		})
+		m.CommentMetas = &v
+	}, Relationship{
+		RelationType: HasOne,
+		Table:        "wp_commentmeta",
+		ForeignKey:   "comment_id",
+		Local:        "comment_ID",
+		Middle: &Relationship{
+			RelationType: HasMany,
+			Table:        "wp_comments comments",
+			ForeignKey:   "comment_post_ID",
+			Local:        "ID",
+		},
+	})
+}()
+
 func Meta2() RelationFn {
 	return RelationHasMany(postId, metasPostId, func(m *post, i *[]models.PostMeta) {
 		m.PostMeta = i
@@ -207,7 +242,7 @@ func TestGets2(t *testing.T) {
 		{
 			q := Conditions(
 				Where(SqlBuilder{{"posts.id", "in", ""}}),
-				In([]any{190, 3022, 291}),
+				In([]any{190, 3022, 291, 2858}),
 				WithCtx(&ctx),
 				WithFn(true, false, Conditions(
 					Fields("ID,user_login,user_pass"),
@@ -221,6 +256,7 @@ func TestGets2(t *testing.T) {
 					), shipHasManyTermMy),
 				), postHasManyShip),*/
 				WithFn(true, false, nil, postHaveManyTerms),
+				WithFn(true, false, nil, postHaveManyCommentMetas),
 			)
 			got, err := Finds[post](ctx, q)
 			_ = got
