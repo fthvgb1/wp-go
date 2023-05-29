@@ -40,6 +40,9 @@ type post struct {
 	User                *user
 	Ships               *[]TermRelationships
 	PostMeta            *[]models.PostMeta
+	TermTaxonomy        *[]TermTaxonomy
+	Terms               *[]models.Terms
+	CommentMetas        *[]CommentMeta
 }
 
 type TermRelationships struct {

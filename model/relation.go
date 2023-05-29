@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/helper/slice"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"golang.org/x/exp/constraints"
 	"strings"
 )
@@ -36,25 +37,79 @@ type Relationship struct {
 	ForeignKey   string
 	Local        string
 	On           string
+	Middle       *Relationship
+}
+
+func parseBeforeJoin(qq *QueryCondition, ship Relationship) {
+	var fromTable, foreignKey, local string
+	if ship.Middle != nil {
+		parseBeforeJoin(qq, *ship.Middle)
+		local = ship.Local
+		fromTable = ship.Middle.Table
+	} else {
+		fromTable = qq.From
+	}
+	foreignKey = ship.ForeignKey
+	local = ship.Local
+	tables := strings.Split(ship.Table, " ")
+	from := strings.Split(fromTable, " ")
+	on := ""
+	if ship.On != "" {
+		on = fmt.Sprintf("and %s", on)
+	}
+	qq.Join = append(qq.Join, []string{
+		"left join", ship.Table,
+		fmt.Sprintf("%s.%s=%s.%s %s",
+			tables[len(tables)-1], foreignKey, from[len(from)-1], local, on,
+		)})
+
+}
+
+func parseAfterJoin(fromTable string, ids [][]any, qq *QueryCondition, ship Relationship) bool {
+	tables := strings.Split(ship.Middle.Table, " ")
+	from := strings.Split(fromTable, " ")
+	on := ""
+	if ship.On != "" {
+		on = fmt.Sprintf("and %s", on)
+	}
+	foreignKey := ship.ForeignKey
+	local := ship.Local
+	qq.Join = append(qq.Join, []string{
+		"left join", ship.Middle.Table,
+		fmt.Sprintf("%s.%s=%s.%s %s",
+			tables[len(tables)-1], foreignKey, from[len(from)-1], local, on,
+		),
+	})
+	if ship.Middle != nil && ship.Middle.Middle != nil {
+		return parseAfterJoin(tables[len(tables)-1], ids, qq, *ship.Middle)
+	} else {
+		from := strings.Split(qq.From, " ")
+		ww, ok := qq.Where.(SqlBuilder)
+		if ok {
+			ww = append(ww, []string{fmt.Sprintf("%s.%s",
+				tables[len(tables)-1], ship.Middle.ForeignKey), "in", ""},
+			)
+			qq.Where = ww
+		}
+		if qq.Fields == "" || qq.Fields == "*" {
+			qq.Fields = str.Join(from[len(from)-1], ".", "*", ",", tables[len(tables)-1], ".", ship.Middle.ForeignKey)
+		}
+		qq.In = ids
+		return ship.Middle.RelationType == HasMany
+	}
 }
 
 func Relation(isPlural bool, db dbQuery, ctx context.Context, r any, q *QueryCondition) ([]func(), []func() error) {
 	var beforeFn []func()
 	var afterFn []func() error
+	qx := helper.GetContextVal(ctx, "ancestorsQueryCondition", q)
+
 	for _, f := range q.RelationFn {
 		getVal, isJoin, qq, relationship := f()
 		idFn, assignmentFn, rr, rrs, ship := relationship()
 		if isJoin {
 			beforeFn = append(beforeFn, func() {
-				tables := strings.Split(ship.Table, " ")
-				from := strings.Split(q.From, " ")
-				on := ""
-				if ship.On != "" {
-					on = fmt.Sprintf("and %s", on)
-				}
-				qq := helper.GetContextVal(ctx, "ancestorsQueryCondition", q)
-				qq.Join = append(qq.Join, []string{
-					"left join", ship.Table, fmt.Sprintf("%s.%s=%s.%s %s", tables[len(tables)-1], ship.ForeignKey, from[len(from)-1], ship.Local, on)})
+				parseBeforeJoin(qx, ship)
 			})
 		}
 		if !getVal {
@@ -71,20 +126,25 @@ func Relation(isPlural bool, db dbQuery, ctx context.Context, r any, q *QueryCon
 					Fields: "*",
 				}
 			}
-			var w any = qq.Where
-			if w == nil {
-				w = SqlBuilder{}
-			}
-			ww, ok := w.(SqlBuilder)
-			if ok {
-				ww = append(ww, SqlBuilder{{
-					ship.ForeignKey, "in", "",
-				}}...)
-				qq.In = [][]any{ids}
-				qq.Where = ww
-			}
 			if qq.From == "" {
 				qq.From = ship.Table
+			}
+			var w any = qq.Where
+			if w == nil {
+				qq.Where = SqlBuilder{}
+			}
+			ww, ok := qq.Where.(SqlBuilder)
+			in := [][]any{ids}
+			if ok {
+				if ship.Middle != nil {
+					isPlural = parseAfterJoin(qq.From, in, qq, ship)
+				} else {
+					ww = append(ww, SqlBuilder{{
+						ship.ForeignKey, "in", "",
+					}}...)
+					qq.In = in
+					qq.Where = ww
+				}
 			}
 			err = ParseRelation(isPlural || ship.RelationType == HasMany, db, ctx, helper.Or(isPlural, rrs, rr), qq)
 			if err != nil {
