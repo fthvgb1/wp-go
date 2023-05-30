@@ -24,7 +24,7 @@ const (
 
 // Relationship join table
 //
-// RelationType HasOne| HasMany
+// # RelationType HasOne| HasMany
 //
 // eg: hasOne, post has a user. ForeignKey is user's id , Local is post's userId field
 //
@@ -81,7 +81,8 @@ func parseAfterJoin(fromTable string, ids [][]any, qq *QueryCondition, ship Rela
 		),
 	})
 	if ship.Middle != nil && ship.Middle.Middle != nil {
-		return parseAfterJoin(tables[len(tables)-1], ids, qq, *ship.Middle)
+		r := parseAfterJoin(tables[len(tables)-1], ids, qq, *ship.Middle)
+		return ship.RelationType == HasMany || r
 	} else {
 		from := strings.Split(qq.From, " ")
 		ww, ok := qq.Where.(SqlBuilder)
@@ -107,7 +108,7 @@ func parseAfterJoin(fromTable string, ids [][]any, qq *QueryCondition, ship Rela
 			qq.Fields = str.Join(from[len(from)-1], ".", "*", ",", tables[len(tables)-1], ".", ship.Middle.ForeignKey)
 		}
 		qq.In = ids
-		return ship.Middle.RelationType == HasMany
+		return ship.RelationType == HasMany || ship.Middle.RelationType == HasMany
 	}
 }
 
