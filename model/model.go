@@ -22,6 +22,10 @@ type ParseWhere interface {
 	ParseWhere(*[][]any) (string, []any, error)
 }
 
+type AndWhere interface {
+	AndWhere(field, operator, val, fieldType string) ParseWhere
+}
+
 type dbQuery interface {
 	Select(context.Context, any, string, ...any) error
 	Get(context.Context, any, string, ...any) error

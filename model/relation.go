@@ -24,7 +24,7 @@ const (
 
 // Relationship join table
 //
-// RelationType HasOne| HasMany
+// # RelationType HasOne| HasMany
 //
 // eg: hasOne, post has a user. ForeignKey is user's id , Local is post's userId field
 //
@@ -90,6 +90,18 @@ func parseAfterJoin(fromTable string, ids [][]any, qq *QueryCondition, ship Rela
 				tables[len(tables)-1], ship.Middle.ForeignKey), "in", ""},
 			)
 			qq.Where = ww
+		} else {
+			aw, ok := helper.IsImplements[AndWhere](qq.Where)
+			if ok {
+				vv := aw.AndWhere(fmt.Sprintf("%s.%s",
+					tables[len(tables)-1], ship.Middle.ForeignKey), "in", strings.Join(slice.DecompressBy(ids, func(t any) (string, bool) {
+					return fmt.Sprintf("%v", t), true
+				}), ","), "int")
+				wa, ok := helper.IsImplements[ParseWhere](vv)
+				if ok {
+					qq.Where = wa
+				}
+			}
 		}
 		if qq.Fields == "" || qq.Fields == "*" {
 			qq.Fields = str.Join(from[len(from)-1], ".", "*", ",", tables[len(tables)-1], ".", ship.Middle.ForeignKey)
@@ -133,18 +145,26 @@ func Relation(isPlural bool, db dbQuery, ctx context.Context, r any, q *QueryCon
 			if w == nil {
 				qq.Where = SqlBuilder{}
 			}
-			ww, ok := qq.Where.(SqlBuilder)
 			in := [][]any{ids}
-			if ok {
-				if ship.Middle != nil {
-					isPlural = parseAfterJoin(qq.From, in, qq, ship)
-				} else {
+			if ship.Middle != nil {
+				isPlural = parseAfterJoin(qq.From, in, qq, ship)
+			} else {
+				ww, ok := qq.Where.(SqlBuilder)
+				if ok {
 					ww = append(ww, SqlBuilder{{
 						ship.ForeignKey, "in", "",
 					}}...)
-					qq.In = in
 					qq.Where = ww
+				} else {
+					aw, ok := helper.IsImplements[AndWhere](qq.Where)
+					if ok {
+						ww := aw.AndWhere(ship.ForeignKey, "in", strings.Join(slice.Map(ids, func(t any) string {
+							return fmt.Sprintf("%v", t)
+						}), ","), "int")
+						qq.Where = ww
+					}
 				}
+				qq.In = in
 			}
 			err = ParseRelation(isPlural || ship.RelationType == HasMany, db, ctx, helper.Or(isPlural, rrs, rr), qq)
 			if err != nil {

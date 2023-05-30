@@ -114,3 +114,9 @@ func GetContextVal[V, K any](ctx context.Context, k K, defaults V) V {
 	}
 	return vv
 }
+
+func IsImplements[T, A any](i A) (T, bool) {
+	var a any = i
+	t, ok := a.(T)
+	return t, ok
+}

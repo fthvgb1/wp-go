@@ -186,3 +186,10 @@ func (w SqlBuilder) parseJoin() string {
 	}
 	return s.String()
 }
+
+func (w SqlBuilder) AndWhere(field, operator, val, fieldType string) ParseWhere {
+	ww := append(w, []string{
+		field, operator, val, fieldType,
+	})
+	return ww
+}

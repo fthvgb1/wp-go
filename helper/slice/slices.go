@@ -71,3 +71,23 @@ func Unshift[T any](a *[]T, e ...T) {
 func Push[T any](a *[]T, e ...T) {
 	*a = append(*a, e...)
 }
+
+func Decompress[T any](a [][]T) (r []T) {
+	for _, ts := range a {
+		for _, t := range ts {
+			r = append(r, t)
+		}
+	}
+	return
+}
+func DecompressBy[T, R any](a [][]T, fn func(T) (R, bool)) (r []R) {
+	for _, ts := range a {
+		for _, t := range ts {
+			v, ok := fn(t)
+			if ok {
+				r = append(r, v)
+			}
+		}
+	}
+	return
+}
