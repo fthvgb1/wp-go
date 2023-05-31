@@ -9,6 +9,7 @@ import (
 	"github.com/fthvgb1/wp-go/app/static"
 	"github.com/fthvgb1/wp-go/app/theme"
 	"github.com/fthvgb1/wp-go/app/wpconfig"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-contrib/pprof"
 	"github.com/gin-contrib/sessions"
@@ -54,19 +55,29 @@ func SetupRouter() *gin.Engine {
 	}
 
 	f := static.Fs{FS: static.FsDir, Path: "wp-includes"}
-	r.StaticFileFS("/favicon.ico", "favicon.ico", http.FS(static.FsDir))
-	r.StaticFS("/wp-includes", http.FS(f))
-	r.StaticFS("/wp-content/plugins", http.FS(static.Fs{
-		FS:   static.FsDir,
-		Path: "wp-content/plugins",
-	}))
-	r.StaticFS("/wp-content/themes", http.FS(static.Fs{
-		FS:   static.FsDir,
-		Path: "wp-content/themes",
-	}))
-	if c.UploadDir != "" {
-		r.Static("/wp-content/uploads", c.UploadDir)
+	if c.WpDir != "" {
+		r.Static("/wp-content/uploads", str.Join(c.WpDir, "/wp-content/uploads"))
+		r.Static("/wp-content/themes", str.Join(c.WpDir, "/wp-content/themes"))
+		r.Static("/wp-content/plugins", str.Join(c.WpDir, "/wp-content/plugins"))
+		r.Static("/wp-includes/css", str.Join(c.WpDir, "/wp-includes/css"))
+		r.Static("/wp-includes/fonts", str.Join(c.WpDir, "/wp-includes/fonts"))
+		r.Static("/wp-includes/js", str.Join(c.WpDir, "/wp-includes/js"))
+	} else {
+		r.StaticFileFS("/favicon.ico", "favicon.ico", http.FS(static.FsDir))
+		r.StaticFS("/wp-includes", http.FS(f))
+		r.StaticFS("/wp-content/plugins", http.FS(static.Fs{
+			FS:   static.FsDir,
+			Path: "wp-content/plugins",
+		}))
+		r.StaticFS("/wp-content/themes", http.FS(static.Fs{
+			FS:   static.FsDir,
+			Path: "wp-content/themes",
+		}))
+		if c.UploadDir != "" {
+			r.Static("/wp-content/uploads", c.UploadDir)
+		}
 	}
+
 	store := cookie.NewStore([]byte("secret"))
 	r.Use(sessions.Sessions("go-wp", store))
 	r.GET("/", middleware.SearchLimit(c.SingleIpSearchNum), actions.ThemeHook(constraints.Home))

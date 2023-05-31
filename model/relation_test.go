@@ -175,7 +175,7 @@ var postHaveManyCommentMetas = func() RelationFn {
 		v := slice.Map(*i, func(t metas) CommentMeta {
 			return t.CommentMeta
 		})
-		m.CommentMetas = &v
+		m.CommentMetas = v
 	}, Relationship{
 		RelationType: HasOne,
 		Table:        "wp_commentmeta",

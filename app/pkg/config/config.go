@@ -1,10 +1,16 @@
 package config
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/fthvgb1/wp-go/safety"
 	"gopkg.in/yaml.v2"
+	"io"
+	"net/http"
 	"os"
+	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -39,6 +45,7 @@ type Config struct {
 	ShowQuerySql       bool      `yaml:"showQuerySql" json:"showQuerySql,omitempty"`
 	Plugins            []string  `yaml:"plugins" json:"plugins,omitempty"`
 	LogOutput          string    `yaml:"logOutput" json:"logOutput,omitempty"`
+	WpDir              string    `yaml:"wpDir" json:"wpDir"`
 }
 
 type CacheTime struct {
@@ -84,12 +91,39 @@ func InitConfig(conf string) error {
 	if conf == "" {
 		conf = "config.yaml"
 	}
-	file, err := os.ReadFile(conf)
+	var file []byte
+	var err error
+	if strings.Contains(conf, "http") {
+		get, err := http.Get(conf)
+		if err != nil {
+			return err
+		}
+		file, err = io.ReadAll(get.Body)
+	} else {
+		file, err = os.ReadFile(conf)
+	}
 	if err != nil {
 		return err
 	}
 	var c Config
-	err = yaml.Unmarshal(file, &c)
+	switch strings.ToLower(filepath.Ext(conf)) {
+	case ".yaml":
+		err = yaml.Unmarshal(file, &c)
+	case ".json":
+		err = json.Unmarshal(file, &c)
+	default:
+		err = yaml.Unmarshal(file, &c)
+		if err != nil {
+			err = json.Unmarshal(file, &c)
+			if err == nil {
+				break
+			}
+		} else {
+			break
+		}
+		return errors.New("invalid suffix config file")
+	}
+
 	if err != nil {
 		return err
 	}
