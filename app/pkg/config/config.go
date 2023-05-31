@@ -113,12 +113,11 @@ func InitConfig(conf string) error {
 		err = json.Unmarshal(file, &c)
 	default:
 		err = yaml.Unmarshal(file, &c)
-		if err != nil {
-			err = json.Unmarshal(file, &c)
-			if err == nil {
-				break
-			}
-		} else {
+		if err == nil {
+			break
+		}
+		err = json.Unmarshal(file, &c)
+		if err == nil {
 			break
 		}
 		return errors.New("invalid suffix config file")
