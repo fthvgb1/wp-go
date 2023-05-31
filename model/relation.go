@@ -24,7 +24,7 @@ const (
 
 // Relationship join table
 //
-// # RelationType HasOne| HasMany
+// RelationType HasOne| HasMany
 //
 // eg: hasOne, post has a user. ForeignKey is user's id , Local is post's userId field
 //
