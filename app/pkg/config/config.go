@@ -2,14 +2,12 @@ package config
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/fthvgb1/wp-go/safety"
 	"gopkg.in/yaml.v2"
 	"io"
 	"net/http"
 	"os"
-	"path/filepath"
 	"strings"
 	"time"
 )
@@ -106,23 +104,7 @@ func InitConfig(conf string) error {
 		return err
 	}
 	var c Config
-	switch strings.ToLower(filepath.Ext(conf)) {
-	case ".yaml":
-		err = yaml.Unmarshal(file, &c)
-	case ".json":
-		err = jsonToYaml(file, &c)
-	default:
-		err = yaml.Unmarshal(file, &c)
-		if err == nil {
-			break
-		}
-		err = jsonToYaml(file, &c)
-		if err == nil {
-			break
-		}
-		return errors.Join(errors.New("can't parse the config"), err)
-	}
-
+	err = yaml.Unmarshal(file, &c)
 	if err != nil {
 		return err
 	}
@@ -145,12 +127,12 @@ func jsonToYaml[T any](b []byte, c T) error {
 }
 
 type Dsn struct {
-	Host     string      `yaml:"host" json:"host,omitempty"`
-	Port     json.Number `yaml:"port" json:"port,omitempty"`
-	Db       string      `yaml:"db" json:"db,omitempty"`
-	User     string      `yaml:"user" json:"user,omitempty"`
-	Password string      `yaml:"password" json:"password,omitempty"`
-	Charset  string      `yaml:"charset" json:"charset,omitempty"`
+	Host     string `yaml:"host" json:"host,omitempty"`
+	Port     string `yaml:"port" json:"port,omitempty"`
+	Db       string `yaml:"db" json:"db,omitempty"`
+	User     string `yaml:"user" json:"user,omitempty"`
+	Password string `yaml:"password" json:"password,omitempty"`
+	Charset  string `yaml:"charset" json:"charset,omitempty"`
 }
 
 func (m Dsn) GetDsn() string {
