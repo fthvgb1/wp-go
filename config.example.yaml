@@ -19,9 +19,9 @@ Mail:
   user: xx@163.com
   alias: xx
   pass:
-  Host: smtp.163.com
-  Port: 465
-  Ssl: true
+  host: smtp.163.com
+  port: 465
+  insecureSkipVerify: false
 
 ssl:
   cert: ""

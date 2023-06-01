@@ -1,0 +1,82 @@
+{
+  "mysql": {
+    "dsn": {
+      "host": "localhost",
+      "port": 3306,
+      "db": "wordpress",
+      "user": "root",
+      "password": "root",
+      "charset": "utf8mb4"
+    },
+    "pool": {
+      "connMaxIdleTime": 60,
+      "maxOpenConn": 100,
+      "maxIdleConn": 10,
+      "connMaxLifetime": 236
+    }
+  },
+  "Mail": {
+    "user": "xx@163.com",
+    "alias": "xx",
+    "pass": null,
+    "host": "smtp.163.com",
+    "port": 465,
+    "insecureSkipVerify": false
+  },
+  "ssl": {
+    "cert": "",
+    "key": ""
+  },
+  "cacheTime": {
+    "cacheControl": "72h",
+    "recentPostCacheTime": "5m",
+    "categoryCacheTime": "5m",
+    "contextPostCacheTime": "10h",
+    "recentCommentsCacheTime": "5m",
+    "digestCacheTime": "5m",
+    "postListCacheTime": "1h",
+    "searchPostCacheTime": "5m",
+    "monthPostCacheTime": "1h",
+    "postDataCacheTime": "1h",
+    "postCommentsCacheTime": "5m",
+    "crontabClearCacheTime": "5m",
+    "maxPostIdCacheTime": "1h",
+    "userInfoCacheTime": "24h",
+    "commentsCacheTime": "24h",
+    "sleepTime": [
+      "1s",
+      "3s"
+    ]
+  },
+  "digestWordCount": 300,
+  "digestTag": "<a><b><blockquote><br><cite><code><dd><del><div><dl><dt><em><h1><h2><h3><h4><h5><h6><i><img><li><ol><p><pre><span><strong><ul>",
+  "maxRequestSleepNum": 100,
+  "maxRequestNum": 500,
+  "singleIpSearchNum": 10,
+  "logOutput": "err.log",
+  "gzip": false,
+  "postCommentUrl": "http://127.0.0.1/wp-comments-post.php",
+  "trustIps": [],
+  "paginationStep": 1,
+  "showQuerySql": false,
+  "trustServerNames": [
+    "xy.test",
+    "blog.xy.test"
+  ],
+  "theme": "twentyfifteen",
+  "postOrder": "desc",
+  "wpDir": "/var/www/wordpress",
+  "uploadDir": "",
+  "pprof": "/debug/pprof",
+  "plugins": [
+    "enlightjs"
+  ],
+  "pluginPath": "./plugins",
+  "listPagePlugins": [
+    "digest"
+  ],
+  "externScript": [
+    "",
+    ""
+  ]
+}

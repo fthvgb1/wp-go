@@ -2,7 +2,6 @@ package config
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"github.com/fthvgb1/wp-go/safety"
 	"gopkg.in/yaml.v2"
@@ -74,12 +73,12 @@ type Ssl struct {
 }
 
 type Mail struct {
-	User  string `yaml:"user" json:"user,omitempty"`
-	Alias string `yaml:"alias" json:"alias,omitempty"`
-	Pass  string `yaml:"pass" json:"pass,omitempty"`
-	Host  string `yaml:"host" json:"host,omitempty"`
-	Port  int    `yaml:"port" json:"port,omitempty"`
-	Ssl   bool   `yaml:"ssl" json:"ssl,omitempty"`
+	User               string `yaml:"user" json:"user,omitempty"`
+	Alias              string `yaml:"alias" json:"alias,omitempty"`
+	Pass               string `yaml:"pass" json:"pass,omitempty"`
+	Host               string `yaml:"host" json:"host,omitempty"`
+	Port               int    `yaml:"port" json:"port,omitempty"`
+	InsecureSkipVerify bool   `yaml:"insecureSkipVerify" json:"insecureSkipVerify,omitempty"`
 }
 
 type Mysql struct {
@@ -110,7 +109,15 @@ func InitConfig(conf string) error {
 	case ".yaml":
 		err = yaml.Unmarshal(file, &c)
 	case ".json":
-		err = json.Unmarshal(file, &c)
+		var v map[string]any
+		err = json.Unmarshal(file, &v)
+		if err == nil {
+			marshal, er := yaml.Marshal(v)
+			if er != nil {
+				return er
+			}
+			err = yaml.Unmarshal(marshal, &c)
+		}
 	default:
 		err = yaml.Unmarshal(file, &c)
 		if err == nil {
@@ -120,7 +127,6 @@ func InitConfig(conf string) error {
 		if err == nil {
 			break
 		}
-		return errors.New("invalid suffix config file")
 	}
 
 	if err != nil {
@@ -131,12 +137,12 @@ func InitConfig(conf string) error {
 }
 
 type Dsn struct {
-	Host     string `yaml:"host" json:"host,omitempty"`
-	Port     string `yaml:"port" json:"port,omitempty"`
-	Db       string `yaml:"db" json:"db,omitempty"`
-	User     string `yaml:"user" json:"user,omitempty"`
-	Password string `yaml:"password" json:"password,omitempty"`
-	Charset  string `yaml:"charset" json:"charset,omitempty"`
+	Host     string      `yaml:"host" json:"host,omitempty"`
+	Port     json.Number `yaml:"port" json:"port,omitempty"`
+	Db       string      `yaml:"db" json:"db,omitempty"`
+	User     string      `yaml:"user" json:"user,omitempty"`
+	Password string      `yaml:"password" json:"password,omitempty"`
+	Charset  string      `yaml:"charset" json:"charset,omitempty"`
 }
 
 func (m Dsn) GetDsn() string {

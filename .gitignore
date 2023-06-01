@@ -1,5 +1,6 @@
 .idea
-wp-go.iml
-config.yaml
+/wp-go.iml
+/config.yaml
 err.log
 /plugins/
+/config.json

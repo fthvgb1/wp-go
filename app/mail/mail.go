@@ -45,7 +45,7 @@ func SendMail(mailTo []string, subject string, body string, files ...string) err
 		c.Mail.User,
 		c.Mail.Pass,
 	)
-	if !c.Mail.Ssl {
+	if c.Mail.InsecureSkipVerify {
 		d.TLSConfig = &tls.Config{InsecureSkipVerify: true}
 	}
 	err := d.DialAndSend(m)
