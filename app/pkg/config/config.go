@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/fthvgb1/wp-go/safety"
 	"gopkg.in/yaml.v2"
@@ -109,24 +110,17 @@ func InitConfig(conf string) error {
 	case ".yaml":
 		err = yaml.Unmarshal(file, &c)
 	case ".json":
-		var v map[string]any
-		err = json.Unmarshal(file, &v)
-		if err == nil {
-			marshal, er := yaml.Marshal(v)
-			if er != nil {
-				return er
-			}
-			err = yaml.Unmarshal(marshal, &c)
-		}
+		err = jsonToYaml(file, &c)
 	default:
 		err = yaml.Unmarshal(file, &c)
 		if err == nil {
 			break
 		}
-		err = json.Unmarshal(file, &c)
+		err = jsonToYaml(file, &c)
 		if err == nil {
 			break
 		}
+		return errors.Join(errors.New("can't parse the config"), err)
 	}
 
 	if err != nil {
@@ -134,6 +128,20 @@ func InitConfig(conf string) error {
 	}
 	config.Store(c)
 	return nil
+}
+
+func jsonToYaml[T any](b []byte, c T) error {
+	var v map[string]any
+	err := json.Unmarshal(b, &v)
+	if err != nil {
+		return err
+	}
+	marshal, er := yaml.Marshal(v)
+	if er != nil {
+		return er
+	}
+	err = yaml.Unmarshal(marshal, c)
+	return err
 }
 
 type Dsn struct {
