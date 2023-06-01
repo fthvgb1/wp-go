@@ -1,7 +1,6 @@
 package config
 
 import (
-	"encoding/json"
 	"fmt"
 	"github.com/fthvgb1/wp-go/safety"
 	"gopkg.in/yaml.v2"
@@ -110,20 +109,6 @@ func InitConfig(conf string) error {
 	}
 	config.Store(c)
 	return nil
-}
-
-func jsonToYaml[T any](b []byte, c T) error {
-	var v map[string]any
-	err := json.Unmarshal(b, &v)
-	if err != nil {
-		return err
-	}
-	marshal, er := yaml.Marshal(v)
-	if er != nil {
-		return er
-	}
-	err = yaml.Unmarshal(marshal, c)
-	return err
 }
 
 type Dsn struct {
