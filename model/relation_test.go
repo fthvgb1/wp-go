@@ -266,3 +266,21 @@ func TestGets2(t *testing.T) {
 		}
 	})
 }
+
+func TestWithOther(t *testing.T) {
+	t.Run("hasMany", func(t *testing.T) {
+		r, err := Finds[post](ctx, Conditions(
+			Where(SqlBuilder{{"id", "in", ""}}),
+			In([]any{190, 3022, 291, 2858}),
+		))
+		if err != nil {
+			t.Fatalf("fatal:%v", err)
+		}
+		if err = WithOther(ctx, &r, Conditions(
+			WithFn(true, false, nil, postHaveManyTerms),
+			WithFn(true, false, nil, postHaveManyCommentMetas),
+		)); err != nil {
+			t.Errorf("WithOther() error = %v", err)
+		}
+	})
+}

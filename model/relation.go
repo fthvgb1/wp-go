@@ -273,3 +273,21 @@ func AddRelationFn(getVal, join bool, q *QueryCondition, r RelationFn) func() (b
 		return getVal, join, q, r
 	}
 }
+
+func withOther(db dbQuery, ctx context.Context, r any, q *QueryCondition) error {
+	_, after := Relation(true, db, ctx, r, q)
+	for _, fn := range after {
+		err := fn()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+func DBWithOther(db dbQuery, ctx context.Context, r any, q *QueryCondition) error {
+	return withOther(db, ctx, r, q)
+}
+
+func WithOther(ctx context.Context, r any, q *QueryCondition) error {
+	return withOther(globalBb, ctx, r, q)
+}
