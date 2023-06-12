@@ -131,7 +131,7 @@ func CustomVideo(h *Handle) (ok bool) {
 		"/wp-includes/js/dist/hooks.min.js",
 		"/wp-includes/js/dist/i18n.min.js",
 		"/wp-includes/js/dist/a11y.min.js",
-		"/wp-includes/js/wp-custom-header.js",
+		"/wp-includes/js/wp-custom-header.min.js",
 	}
 	scripts = slice.Map(scripts, func(t string) string {
 		return fmt.Sprintf(`<script src="%s" id="wp-%s-js"></script>
@@ -144,7 +144,7 @@ func CustomVideo(h *Handle) (ok bool) {
 			{"wp-", ""},
 		}))
 	})
-	h.PushGroupFooterScript(constraints.AllScene, "wp-custom-header", 10, scripts[0:len(scripts)-2]...)
+	h.PushGroupFooterScript(constraints.Home, "wp-custom-header", 10, scripts[0:len(scripts)-2]...)
 	var tr = `<script id="wp-i18n-js-after">
 wp.i18n.setLocaleData( { 'text direction\u0004ltr': [ 'ltr' ] } );
 </script>
@@ -157,7 +157,7 @@ wp.i18n.setLocaleData( { 'text direction\u0004ltr': [ 'ltr' ] } );
 </script>
 <script src='/wp-includes/js/dist/a11y.min.js?ver=ecce20f002eda4c19664' id='wp-a11y-js'></script>
 `
-	h.PushFooterScript(constraints.AllScene,
+	h.PushFooterScript(constraints.Home,
 		NewComponent("wp-a11y-js-translations", tr, true, 10, nil),
 		NewComponent("VideoSetting", hs, true, 10, nil),
 		NewComponent("header-script", scripts[len(scripts)-1], true, 10, nil),

@@ -34,7 +34,7 @@ func CalComponents(h *Handle) {
 		}, nil, h.components[h.scene], h.components[constraints.AllScene])
 	})
 	for k, components := range componentss {
-		key := str.Join("calComponents-", k)
+		key := str.Join("calComponents-", h.scene, "-", k)
 		key = h.ComponentFilterFnHook("calComponents", key, k)
 		ss := reload.GetAnyValMapBy("calComponents", key, h, func(h *Handle) []Components[string] {
 			r := slice.FilterAndMap(components, func(t Components[string]) (Components[string], bool) {
