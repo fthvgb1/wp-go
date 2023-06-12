@@ -53,13 +53,13 @@ A WordPress front-end written in Go, with relatively simple functions,  only the
 
 #### Theme support
 
-| twentyfifteen    | twentyseventeen                           |
-|------------------|-------------------------------------------|
-| site identity    | site identity                             |
-| colors           | color                                     |
-| header image     | Header Media (Video is not supported yet) |
-| Background image | additional css                            |
-| additional css   |                                           |
+| twentyfifteen    | twentyseventeen |
+|------------------|-----------------|
+| site identity    | site identity   |
+| colors           | color           |
+| header image     | Header Media    |
+| Background image | additional css  |
+| additional css   |                 |
 
 #### Plug-in mechanism
 

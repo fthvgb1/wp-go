@@ -93,6 +93,18 @@ func Replace(s string, replace map[string]string) string {
 	}
 	return s
 }
+func Replaces(s string, replace [][]string) string {
+	for _, v := range replace {
+		if len(v) < 1 {
+			continue
+		} else if len(v) == 1 {
+			s = strings.ReplaceAll(s, v[0], "")
+		} else {
+			s = strings.ReplaceAll(s, v[0], v[1])
+		}
+	}
+	return s
+}
 func (b *Builder) Sprintf(format string, a ...any) int {
 	i, _ := fmt.Fprintf(b, format, a...)
 	return i

@@ -1,22 +1,25 @@
 package wp
 
 import (
+	"encoding/json"
 	"fmt"
 	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/pkg/cache"
+	"github.com/fthvgb1/wp-go/app/pkg/constraints"
 	"github.com/fthvgb1/wp-go/app/pkg/logs"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
 	"github.com/fthvgb1/wp-go/app/wpconfig"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/model"
+	"regexp"
 )
 
 func (h *Handle) DisplayHeaderText() bool {
 	return h.themeMods.ThemeSupport.CustomHeader.HeaderText && "blank" != h.themeMods.HeaderTextcolor
 }
 
-func (h *Handle) GetCustomHeader() (r models.PostThumbnail, isRand bool) {
+func (h *Handle) GetCustomHeaderImg() (r models.PostThumbnail, isRand bool) {
 	var err error
 	img := reload.GetAnyValBys("headerImages", h.theme, func(theme string) []models.PostThumbnail {
 		hs, er := h.GetHeaderImages(h.theme)
@@ -39,6 +42,127 @@ func (h *Handle) GetCustomHeader() (r models.PostThumbnail, isRand bool) {
 		isRand = true
 	}
 	r, _ = slice.RandPop(&hs)
+	return
+}
+
+type VideoPlay struct {
+	Pause      string `json:"pause,omitempty"`
+	Play       string `json:"play,omitempty"`
+	PauseSpeak string `json:"pauseSpeak,omitempty"`
+	PlaySpeak  string `json:"playSpeak,omitempty"`
+}
+
+type VideoSetting struct {
+	MimeType  string    `json:"mimeType,omitempty"`
+	PosterUrl string    `json:"posterUrl,omitempty"`
+	VideoUrl  string    `json:"videoUrl,omitempty"`
+	Width     int       `json:"width,omitempty"`
+	Height    int       `json:"height,omitempty"`
+	MinWidth  int       `json:"minWidth,omitempty"`
+	MinHeight int       `json:"minHeight,omitempty"`
+	L10n      VideoPlay `json:"l10n"`
+}
+
+var videoReg = regexp.MustCompile(`^https?://(?:www\.)?(?:youtube\.com/watch|youtu\.be/)`)
+
+func GetVideoSetting(h *Handle, u string) (string, error) {
+
+	img, _ := h.GetCustomHeaderImg()
+	v := VideoSetting{
+		MimeType:  GetMimeType(u),
+		PosterUrl: img.Path,
+		VideoUrl:  u,
+		Width:     img.Width,
+		Height:    img.Height,
+		MinWidth:  900,
+		MinHeight: 500,
+		L10n: VideoPlay{
+			Pause:      "暂停",
+			Play:       "播放",
+			PauseSpeak: "视频已暂停",
+			PlaySpeak:  "视频正在播放",
+		},
+	}
+	if is := videoReg.FindString(u); is != "" {
+		v.MimeType = "video/x-youtube"
+	}
+	_ = h.ComponentFilterFnHook("videoSetting", "", &v)
+	s, err := json.Marshal(v)
+	if err != nil {
+		return "", err
+	}
+	setting := fmt.Sprintf(`var %s = %s`, "_wpCustomHeaderSettings", string(s))
+	script := str.Join(`<script id="wp-custom-header-js-extra">`, setting, "</script>\n")
+	return script, nil
+}
+
+func CustomVideo(h *Handle) (ok bool) {
+	mod, err := wpconfig.GetThemeMods(h.theme)
+	if err != nil {
+		logs.Error(err, "getThemeMods fail", h.theme)
+		return
+	}
+	if !mod.ThemeSupport.CustomHeader.Video || (mod.HeaderVideo < 1 && mod.ExternalHeaderVideo == "") {
+		return
+	}
+	u := ""
+	if mod.HeaderVideo > 0 {
+		post, err := cache.GetPostById(h.C, uint64(mod.HeaderVideo))
+		if err != nil {
+			logs.Error(err, "get headerVideo fail", mod.HeaderVideo)
+			return
+		}
+		u = post.Metas["_wp_attached_file"].(string)
+		u = str.Join("/wp-content/uploads/", u)
+	} else {
+		u = mod.ExternalHeaderVideo
+	}
+
+	hs, err := GetVideoSetting(h, u)
+	if err != nil {
+		logs.Error(err, "get headerVideo fail", mod.HeaderVideo)
+		return
+	}
+	scripts := []string{
+		"/wp-includes/js/dist/vendor/wp-polyfill-inert.min.js",
+		"/wp-includes/js/dist/vendor/regenerator-runtime.min.js",
+		"/wp-includes/js/dist/vendor/wp-polyfill.min.js",
+		"/wp-includes/js/dist/dom-ready.min.js",
+		"/wp-includes/js/dist/hooks.min.js",
+		"/wp-includes/js/dist/i18n.min.js",
+		"/wp-includes/js/dist/a11y.min.js",
+		"/wp-includes/js/wp-custom-header.js",
+	}
+	scripts = slice.Map(scripts, func(t string) string {
+		return fmt.Sprintf(`<script src="%s" id="wp-%s-js"></script>
+`, t, str.Replaces(t, [][]string{
+			{"/wp-includes/js/dist/vendor/"},
+			{"/wp-includes/js/dist/"},
+			{"/wp-includes/js/"},
+			{".min.js"},
+			{".js"},
+			{"wp-", ""},
+		}))
+	})
+	h.PushGroupFooterScript(constraints.AllScene, "wp-custom-header", 10, scripts[0:len(scripts)-2]...)
+	var tr = `<script id="wp-i18n-js-after">
+wp.i18n.setLocaleData( { 'text direction\u0004ltr': [ 'ltr' ] } );
+</script>
+<script id='wp-a11y-js-translations'>
+( function( domain, translations ) {
+	var localeData = translations.locale_data[ domain ] || translations.locale_data.messages;
+	localeData[""].domain = domain;
+	wp.i18n.setLocaleData( localeData, domain );
+} )( "default", {"translation-revision-date":"2023-04-23 22:48:55+0000","generator":"GlotPress/4.0.0-alpha.4","domain":"messages","locale_data":{"messages":{"":{"domain":"messages","plural-forms":"nplurals=1; plural=0;","lang":"zh_CN"},"Notifications":["u901au77e5"]}},"comment":{"reference":"wp-includes/js/dist/a11y.js"}} );
+</script>
+<script src='/wp-includes/js/dist/a11y.min.js?ver=ecce20f002eda4c19664' id='wp-a11y-js'></script>
+`
+	h.PushFooterScript(constraints.AllScene,
+		NewComponent("wp-a11y-js-translations", tr, true, 10, nil),
+		NewComponent("VideoSetting", hs, true, 10, nil),
+		NewComponent("header-script", scripts[len(scripts)-1], true, 10, nil),
+	)
+	ok = true
 	return
 }
 

@@ -83,8 +83,8 @@ var imgStyle = `.site-header {
 
 var header = reload.Vars(constraints.Defaults)
 
-func calCustomHeader(h *wp.Handle) (r string, rand bool) {
-	img, rand := h.GetCustomHeader()
+func calCustomHeaderImg(h *wp.Handle) (r string, rand bool) {
+	img, rand := h.GetCustomHeaderImg()
 	if img.Path == "" && h.DisplayHeaderText() {
 		return
 	}
@@ -112,7 +112,7 @@ func customHeader(h *wp.Handle) func() string {
 	return func() string {
 		headers := header.Load()
 		if headers == constraints.Defaults {
-			headerss, rand := calCustomHeader(h)
+			headerss, rand := calCustomHeaderImg(h)
 			headers = headerss
 			if !rand {
 				header.Store(headers)

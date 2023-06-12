@@ -22,6 +22,7 @@ type WpAttachmentMetadata struct {
 	FileSize  int                         `json:"filesize,omitempty"`
 	Sizes     map[string]MetaDataFileSize `json:"sizes,omitempty"`
 	ImageMeta ImageMeta                   `json:"image_meta"`
+	VideoMeta
 }
 
 type ImageMeta struct {
@@ -37,6 +38,16 @@ type ImageMeta struct {
 	Title            string   `json:"title,omitempty"`
 	Orientation      string   `json:"orientation,omitempty"`
 	Keywords         []string `json:"keywords,omitempty"`
+}
+
+type VideoMeta struct {
+	Bitrate          int    `json:"bitrate,omitempty"`
+	MimeType         string `json:"mime_type,omitempty"`
+	Length           int    `json:"length,omitempty"`
+	LengthFormatted  string `json:"length_formatted,omitempty"`
+	FileFormat       string `json:"fileformat,omitempty"`
+	DataFormat       string `json:"dataformat,omitempty"`
+	CreatedTimestamp int64  `json:"created_timestamp"`
 }
 
 type MetaDataFileSize struct {

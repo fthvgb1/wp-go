@@ -42,7 +42,7 @@ func configs(h *wp.Handle) {
 	h.PushCacheGroupHeadScript(constraints.AllScene, "colorScheme-customHeader", 10, colorScheme, customHeader)
 	components.WidgetArea(h)
 	pushScripts(h)
-	h.PushRender(constraints.AllStats, wp.NewHandleFn(headerImage, 10, "headerImage"))
+	h.PushRender(constraints.AllStats, wp.NewHandleFn(calCustomHeader, 10, "calCustomHeader"))
 	h.SetComponentsArgs(widgets.Widget, map[string]string{
 		"{$before_widget}": `<section id="%s" class="%s">`,
 		"{$after_widget}":  `</section>`,
@@ -51,6 +51,7 @@ func configs(h *wp.Handle) {
 		wp.NewHandleFn(wp.PreTemplate, 70, "wp.PreTemplate"),
 		wp.NewHandleFn(errorsHandle, 80, "errorsHandle"),
 	)
+	videoHeader(h)
 	h.Detail.CommentRender = commentFormat
 	h.CommonComponents()
 	h.Index.SetPageEle(paginate)
@@ -124,7 +125,7 @@ func postThumbnail(h *wp.Handle, posts *models.Posts) {
 
 var header = reload.Vars(models.PostThumbnail{})
 
-func headerImage(h *wp.Handle) {
+func calCustomHeader(h *wp.Handle) {
 	h.SetData("HeaderImage", getHeaderImage(h))
 }
 
@@ -133,7 +134,7 @@ func getHeaderImage(h *wp.Handle) (r models.PostThumbnail) {
 	if img.Path != "" {
 		return img
 	}
-	image, rand := h.GetCustomHeader()
+	image, rand := h.GetCustomHeaderImg()
 	if image.Path != "" {
 		r = image
 		r.Sizes = "100vw"
@@ -172,4 +173,26 @@ func calClass(h *wp.Handle, s string, _ ...any) string {
 		}
 	}
 	return strings.Join(class, " ")
+}
+
+func videoHeader(h *wp.Handle) {
+	h.PushComponentFilterFn("videoSetting", videoPlay)
+	wp.CustomVideo(h)
+}
+
+func videoPlay(h *wp.Handle, _ string, a ...any) string {
+	if len(a) < 1 {
+		return ""
+	}
+	v, ok := a[0].(*wp.VideoSetting)
+	if !ok {
+		return ""
+	}
+	img := getHeaderImage(h)
+	v.Width = img.Width
+	v.Height = img.Height
+	v.PosterUrl = img.Path
+	v.L10n.Play = `<span class="screen-reader-text">播放背景视频</span><svg class="icon icon-play" aria-hidden="true" role="img"> <use href="#icon-play" xlink:href="#icon-play"></use> </svg>`
+	v.L10n.Pause = `<span class="screen-reader-text">暂停背景视频</span><svg class="icon icon-pause" aria-hidden="true" role="img"> <use href="#icon-pause" xlink:href="#icon-pause"></use> </svg>`
+	return ""
 }

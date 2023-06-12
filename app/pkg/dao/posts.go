@@ -66,6 +66,7 @@ func GetPostsByIds(a ...any) (m map[uint64]models.Posts, err error) {
 		}
 		mm, ok := meta[pp.Id]
 		if ok {
+			pp.Metas = mm
 			attMeta, ok := mm["_wp_attachment_metadata"]
 			if ok {
 				att, ok := attMeta.(models.WpAttachmentMetadata)
