@@ -89,7 +89,7 @@ func (h *Handle) PushComponents(scene, componentType string, components ...Compo
 func (h *Handle) PushGroupComponentStr(scene, componentType, name string, order int, strs ...string) {
 	var component = Components[string]{
 		Val: strings.Join(slice.FilterAndMap(strs, func(t string) (string, bool) {
-			t = strings.Trim(t, "\n\r\t\v\x00")
+			t = strings.Trim(t, " \n\r\t\v\x00")
 			if t == "" {
 				return "", false
 			}
