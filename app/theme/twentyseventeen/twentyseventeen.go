@@ -177,7 +177,7 @@ func calClass(h *wp.Handle, s string, _ ...any) string {
 
 func videoHeader(h *wp.Handle) {
 	h.PushComponentFilterFn("videoSetting", videoPlay)
-	wp.CustomVideo(h)
+	wp.CustomVideo(h, constraints.Home)
 }
 
 func videoPlay(h *wp.Handle, _ string, a ...any) string {

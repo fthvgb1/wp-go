@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/pkg/cache"
-	"github.com/fthvgb1/wp-go/app/pkg/constraints"
 	"github.com/fthvgb1/wp-go/app/pkg/logs"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
 	"github.com/fthvgb1/wp-go/app/wpconfig"
@@ -96,7 +95,7 @@ func GetVideoSetting(h *Handle, u string) (string, error) {
 	return script, nil
 }
 
-func CustomVideo(h *Handle) (ok bool) {
+func CustomVideo(h *Handle, scene ...string) (ok bool) {
 	mod, err := wpconfig.GetThemeMods(h.theme)
 	if err != nil {
 		logs.Error(err, "getThemeMods fail", h.theme)
@@ -144,7 +143,7 @@ func CustomVideo(h *Handle) (ok bool) {
 			{"wp-", ""},
 		}))
 	})
-	h.PushGroupFooterScript(constraints.Home, "wp-custom-header", 10, scripts[0:len(scripts)-2]...)
+
 	var tr = `<script id="wp-i18n-js-after">
 wp.i18n.setLocaleData( { 'text direction\u0004ltr': [ 'ltr' ] } );
 </script>
@@ -157,11 +156,15 @@ wp.i18n.setLocaleData( { 'text direction\u0004ltr': [ 'ltr' ] } );
 </script>
 <script src='/wp-includes/js/dist/a11y.min.js?ver=ecce20f002eda4c19664' id='wp-a11y-js'></script>
 `
-	h.PushFooterScript(constraints.Home,
+	c := []Components[string]{
 		NewComponent("wp-a11y-js-translations", tr, true, 10, nil),
 		NewComponent("VideoSetting", hs, true, 10, nil),
 		NewComponent("header-script", scripts[len(scripts)-1], true, 10, nil),
-	)
+	}
+	for _, s := range scene {
+		h.PushGroupFooterScript(s, "wp-custom-header", 10, scripts[0:len(scripts)-2]...)
+		h.PushFooterScript(s, c...)
+	}
 	ok = true
 	return
 }

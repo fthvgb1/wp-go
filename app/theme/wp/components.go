@@ -35,7 +35,6 @@ func CalComponents(h *Handle) {
 	})
 	for k, components := range componentss {
 		key := str.Join("calComponents-", h.scene, "-", k)
-		key = h.ComponentFilterFnHook("calComponents", key, k)
 		ss := reload.GetAnyValMapBy("calComponents", key, h, func(h *Handle) []Components[string] {
 			r := slice.FilterAndMap(components, func(t Components[string]) (Components[string], bool) {
 				fns, ok := h.componentHook[k]
@@ -88,15 +87,18 @@ func (h *Handle) PushComponents(scene, componentType string, components ...Compo
 }
 
 func (h *Handle) PushGroupComponentStr(scene, componentType, name string, order int, strs ...string) {
-	var components []Components[string]
-	for _, val := range strs {
-		components = append(components, Components[string]{
-			Val:   val,
-			Order: order,
-			Name:  name,
-		})
+	var component = Components[string]{
+		Val: strings.Join(slice.FilterAndMap(strs, func(t string) (string, bool) {
+			t = strings.Trim(t, "\n\r\t\v\x00")
+			if t == "" {
+				return "", false
+			}
+			return t, true
+		}), "\n"),
+		Order: order,
+		Name:  name,
 	}
-	h.PushComponents(scene, componentType, components...)
+	h.PushComponents(scene, componentType, component)
 }
 
 func (h *Handle) PushCacheGroupHeadScript(scene, name string, order int, fns ...func(*Handle) string) {

@@ -103,12 +103,12 @@ func InitHandle(fn func(*Handle), h *Handle) {
 		h.ginH = gin.H{}
 		fnMap = map[string]map[string]any{}
 		fnHook = map[string]map[string]any{}
+		fn(h)
 		v := apply.UsePlugins()
 		pluginFn, ok := v.(func(*Handle))
 		if ok {
 			pluginFn(h)
 		}
-		fn(h)
 		h.C.Set("inited", true)
 		inited = true
 		return *h
