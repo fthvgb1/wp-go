@@ -37,19 +37,19 @@ func Hook(h *wp.Handle) {
 func configs(h *wp.Handle) {
 	wp.InitPipe(h)
 	h.PushHandler(constraints.PipeMiddleware, constraints.Home,
-		wp.NewHandleFn(widget.IsCategory, 100, "widget.IsCategory"))
+		wp.NewHandleFn(widget.IsCategory, 100.006, "widget.IsCategory"))
 	h.PushComponentFilterFn("bodyClass", calClass)
 	h.PushCacheGroupHeadScript(constraints.AllScene, "colorScheme-customHeader", 10, colorScheme, customHeader)
 	components.WidgetArea(h)
 	pushScripts(h)
-	h.PushRender(constraints.AllStats, wp.NewHandleFn(calCustomHeader, 10, "calCustomHeader"))
+	h.PushRender(constraints.AllStats, wp.NewHandleFn(calCustomHeader, 10.005, "calCustomHeader"))
 	h.SetComponentsArgs(widgets.Widget, map[string]string{
 		"{$before_widget}": `<section id="%s" class="%s">`,
 		"{$after_widget}":  `</section>`,
 	})
 	h.PushRender(constraints.AllStats,
-		wp.NewHandleFn(wp.PreTemplate, 70, "wp.PreTemplate"),
-		wp.NewHandleFn(errorsHandle, 80, "errorsHandle"),
+		wp.NewHandleFn(wp.PreTemplate, 70.005, "wp.PreTemplate"),
+		wp.NewHandleFn(errorsHandle, 80.005, "errorsHandle"),
 	)
 	videoHeader(h)
 	h.Detail.CommentRender = commentFormat
@@ -58,11 +58,11 @@ func configs(h *wp.Handle) {
 	wp.ReplyCommentJs(h)
 	h.PushPostPlugin(postThumbnail)
 	wp.SetComponentsArgsForMap(h, widgets.Search, "{$form}", searchForm)
-	wp.PushIndexHandler(constraints.PipeRender, h, wp.NewHandleFn(wp.IndexRender, 10, "wp.IndexRender"))
-	h.PushRender(constraints.Detail, wp.NewHandleFn(wp.DetailRender, 10, "wp.DetailRender"))
-	h.PushDataHandler(constraints.Detail, wp.NewHandleFn(wp.Detail, 100, "wp.Detail"), wp.NewHandleFn(postThumb, 90, "{theme}.postThumb"))
-	wp.PushIndexHandler(constraints.PipeData, h, wp.NewHandleFn(wp.Index, 100, "wp.Index"))
-	h.PushDataHandler(constraints.AllScene, wp.NewHandleFn(wp.PreCodeAndStats, 90, "wp.PreCodeAndStats"))
+	wp.PushIndexHandler(constraints.PipeRender, h, wp.NewHandleFn(wp.IndexRender, 10.005, "wp.IndexRender"))
+	h.PushRender(constraints.Detail, wp.NewHandleFn(wp.DetailRender, 10.005, "wp.DetailRender"))
+	h.PushDataHandler(constraints.Detail, wp.NewHandleFn(wp.Detail, 100.005, "wp.Detail"), wp.NewHandleFn(postThumb, 90.005, "{theme}.postThumb"))
+	wp.PushIndexHandler(constraints.PipeData, h, wp.NewHandleFn(wp.Index, 100.005, "wp.Index"))
+	h.PushDataHandler(constraints.AllScene, wp.NewHandleFn(wp.PreCodeAndStats, 90.005, "wp.PreCodeAndStats"))
 }
 
 var searchForm = `<form role="search" method="get" class="search-form" action="/">

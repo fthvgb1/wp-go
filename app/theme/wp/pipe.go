@@ -12,11 +12,11 @@ type HandlePipeFn[T any] func(HandleFn[T], T)
 
 type Pipe struct {
 	Name  string
-	Order int
+	Order float64
 	Fn    HandlePipeFn[*Handle]
 }
 
-func NewPipe(name string, order int, fn HandlePipeFn[*Handle]) Pipe {
+func NewPipe(name string, order float64, fn HandlePipeFn[*Handle]) Pipe {
 	return Pipe{Name: name, Order: order, Fn: fn}
 }
 

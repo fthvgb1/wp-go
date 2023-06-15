@@ -31,6 +31,7 @@ func WidgetArea(h *wp.Handle) {
 
 func sidebars() []wp.Components[string] {
 	v := wpconfig.GetPHPArrayVal("sidebars_widgets", []any{}, "sidebar-1")
+	var i = 10.5
 	return slice.FilterAndMap(v, func(t any) (wp.Components[string], bool) {
 		vv := t.(string)
 		ss := strings.Split(vv, "-")
@@ -53,7 +54,8 @@ func sidebars() []wp.Components[string] {
 			component.Name = widgetComponents.name
 			component.Cached = widgetComponents.cached
 		}
-		component.Order = 10
+		i -= 0.001
+		component.Order = i
 		return component, true
 	})
 }

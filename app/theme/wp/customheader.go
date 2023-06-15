@@ -157,12 +157,12 @@ wp.i18n.setLocaleData( { 'text direction\u0004ltr': [ 'ltr' ] } );
 <script src='/wp-includes/js/dist/a11y.min.js?ver=ecce20f002eda4c19664' id='wp-a11y-js'></script>
 `
 	c := []Components[string]{
-		NewComponent("wp-a11y-js-translations", tr, true, 10, nil),
-		NewComponent("VideoSetting", hs, true, 10, nil),
-		NewComponent("header-script", scripts[len(scripts)-1], true, 10, nil),
+		NewComponent("wp-a11y-js-translations", tr, true, 10.0065, nil),
+		NewComponent("VideoSetting", hs, true, 10.0064, nil),
+		NewComponent("header-script", scripts[len(scripts)-1], true, 10.0063, nil),
 	}
 	for _, s := range scene {
-		h.PushGroupFooterScript(s, "wp-custom-header", 10, scripts[0:len(scripts)-2]...)
+		h.PushGroupFooterScript(s, "wp-custom-header", 10.0066, scripts[0:len(scripts)-2]...)
 		h.PushFooterScript(s, c...)
 	}
 	ok = true

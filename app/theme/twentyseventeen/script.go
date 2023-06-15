@@ -15,7 +15,7 @@ func pushScripts(h *wp.Handle) {
 		}
 		return head
 	})
-	h.PushGroupFooterScript(constraints.AllScene, "{theme}.footer", 20, footerScript)
+	h.PushGroupFooterScript(constraints.AllScene, "{theme}.footer", 20.005, footerScript)
 
 }
 

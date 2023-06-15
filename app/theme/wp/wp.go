@@ -80,7 +80,7 @@ type Components[T any] struct {
 	Name   string
 	Val    T
 	Fn     func(*Handle) T
-	Order  int
+	Order  float64
 	Cached bool
 }
 
@@ -88,7 +88,7 @@ type HandleFn[T any] func(T)
 
 type HandleCall struct {
 	Fn    HandleFn[*Handle]
-	Order int
+	Order float64
 	Name  string
 }
 
@@ -239,7 +239,7 @@ func (h *Handle) PushHandlers(pipeScene string, call HandleCall, statsOrScene ..
 
 func (h *Handle) CommonComponents() {
 	h.PushCacheGroupHeadScript(constraints.AllScene, "siteIconAndCustomCss", 0, CalSiteIcon, CalCustomCss)
-	h.PushRender(constraints.AllStats, NewHandleFn(CalComponents, 10, "wp.CalComponents"))
+	h.PushRender(constraints.AllStats, NewHandleFn(CalComponents, 10.001, "wp.CalComponents"))
 	h.PushRender(constraints.AllStats, NewHandleFn(PreRenderTemplate, 0, "wp.PreRenderTemplate"))
 	AdditionScript(h)
 }
@@ -274,7 +274,7 @@ func PreRenderTemplate(h *Handle) {
 	h.Abort()
 }
 
-func NewHandleFn(fn HandleFn[*Handle], order int, name string) HandleCall {
+func NewHandleFn(fn HandleFn[*Handle], order float64, name string) HandleCall {
 	return HandleCall{Fn: fn, Order: order, Name: name}
 }
 

@@ -86,7 +86,7 @@ func (h *Handle) PushComponents(scene, componentType string, components ...Compo
 	c[componentType] = append(c[componentType], components...)
 }
 
-func (h *Handle) PushGroupComponentStr(scene, componentType, name string, order int, strs ...string) {
+func (h *Handle) PushGroupComponentStr(scene, componentType, name string, order float64, strs ...string) {
 	var component = Components[string]{
 		Val: strings.Join(slice.FilterAndMap(strs, func(t string) (string, bool) {
 			t = strings.Trim(t, " \n\r\t\v\x00")
@@ -101,7 +101,7 @@ func (h *Handle) PushGroupComponentStr(scene, componentType, name string, order 
 	h.PushComponents(scene, componentType, component)
 }
 
-func (h *Handle) PushCacheGroupHeadScript(scene, name string, order int, fns ...func(*Handle) string) {
+func (h *Handle) PushCacheGroupHeadScript(scene, name string, order float64, fns ...func(*Handle) string) {
 	h.PushGroupCacheComponentFn(scene, constraints.HeadScript, name, order, fns...)
 }
 
@@ -109,14 +109,14 @@ func (h *Handle) PushFooterScript(scene string, components ...Components[string]
 	h.PushComponents(scene, constraints.FooterScript, components...)
 }
 
-func (h *Handle) PushGroupFooterScript(scene, name string, order int, strs ...string) {
+func (h *Handle) PushGroupFooterScript(scene, name string, order float64, strs ...string) {
 	h.PushGroupComponentStr(scene, constraints.FooterScript, name, order, strs...)
 }
 
-func (h *Handle) PushCacheGroupFooterScript(scene, name string, order int, fns ...func(*Handle) string) {
+func (h *Handle) PushCacheGroupFooterScript(scene, name string, order float64, fns ...func(*Handle) string) {
 	h.PushGroupCacheComponentFn(scene, constraints.FooterScript, name, order, fns...)
 }
-func (h *Handle) PushGroupCacheComponentFn(scene, componentType, name string, order int, fns ...func(*Handle) string) {
+func (h *Handle) PushGroupCacheComponentFn(scene, componentType, name string, order float64, fns ...func(*Handle) string) {
 	h.PushComponents(scene, componentType, NewComponent(name, "", true, order, func(h *Handle) string {
 		return strings.Join(slice.Map(fns, func(t func(*Handle) string) string {
 			return t(h)
@@ -124,18 +124,18 @@ func (h *Handle) PushGroupCacheComponentFn(scene, componentType, name string, or
 	}))
 }
 
-func NewComponent(name, val string, cached bool, order int, fn func(handle *Handle) string) Components[string] {
+func NewComponent(name, val string, cached bool, order float64, fn func(handle *Handle) string) Components[string] {
 	return Components[string]{Fn: fn, Name: name, Cached: cached, Order: order, Val: val}
 }
 
-func (h *Handle) AddCacheComponent(scene, componentType, name string, order int, fn func(*Handle) string) {
+func (h *Handle) AddCacheComponent(scene, componentType, name string, order float64, fn func(*Handle) string) {
 	h.PushComponents(scene, componentType, NewComponent(name, "", true, order, fn))
 }
 
 func (h *Handle) PushHeadScript(scene string, components ...Components[string]) {
 	h.PushComponents(scene, constraints.HeadScript, components...)
 }
-func (h *Handle) PushGroupHeadScript(scene, name string, order int, str ...string) {
+func (h *Handle) PushGroupHeadScript(scene, name string, order float64, str ...string) {
 	h.PushGroupComponentStr(scene, constraints.HeadScript, name, order, str...)
 }
 
