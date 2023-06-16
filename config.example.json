@@ -65,8 +65,7 @@
   ],
   "theme": "twentyfifteen",
   "postOrder": "desc",
-  "wpDir": "/var/www/wordpress",
-  "uploadDir": "",
+  "wpDir": "/var/www/html/wordpress",
   "pprof": "/debug/pprof",
   "plugins": [
     "enlightjs"
