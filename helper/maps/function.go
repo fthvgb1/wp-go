@@ -106,3 +106,30 @@ func GetAnyAnyValWithDefaults[T any](m map[any]any, defaults T, key ...any) (r T
 	r = v
 	return
 }
+
+func RecursiveSetStrVal[T any](m map[string]any, k string, v T) {
+	kk := strings.Split(k, ".")
+	if len(kk) < 1 {
+		return
+	} else if len(kk) < 2 {
+		m[k] = v
+		return
+	}
+	for i, _ := range kk[0 : len(kk)-1] {
+		key := strings.Join(kk[0:i+1], ".")
+		mm, ok := GetStrAnyVal[map[string]any](m, key)
+		if !ok {
+			mm = map[string]any{}
+			preKey := strings.Join(kk[0:i], ".")
+			if preKey == "" {
+				RecursiveSetStrVal(m, key, mm)
+			} else {
+				m, _ := GetStrAnyVal[map[string]any](m, preKey)
+				RecursiveSetStrVal(m, kk[i], mm)
+			}
+		}
+	}
+	key := strings.Join(kk[0:len(kk)-1], ".")
+	mm, _ := GetStrAnyVal[map[string]any](m, key)
+	mm[kk[len(kk)-1]] = v
+}
