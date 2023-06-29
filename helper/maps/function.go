@@ -133,3 +133,29 @@ func RecursiveSetStrVal[T any](m map[string]any, k string, v T) {
 	mm, _ := GetStrAnyVal[map[string]any](m, key)
 	mm[kk[len(kk)-1]] = v
 }
+
+func RecursiveSetAnyVal[T any](m map[any]any, v T, k ...any) {
+	if len(k) < 1 {
+		return
+	} else if len(k) == 1 {
+		m[k[0]] = v
+		return
+	}
+	for i, _ := range k[0 : len(k)-1] {
+		key := k[0 : i+1]
+		mm, ok := GetAnyAnyMapVal[map[any]any](m, key...)
+		if !ok {
+			mm = map[any]any{}
+			preKey := k[0:i]
+			if len(preKey) == 0 {
+				RecursiveSetAnyVal(m, mm, key...)
+			} else {
+				m, _ := GetAnyAnyMapVal[map[any]any](m, preKey...)
+				RecursiveSetAnyVal(m, mm, k[i])
+			}
+		}
+	}
+	key := k[0 : len(k)-1]
+	mm, _ := GetAnyAnyMapVal[map[any]any](m, key...)
+	mm[k[len(k)-1]] = v
+}

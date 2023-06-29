@@ -216,3 +216,65 @@ func TestGetAnyAnyValWithDefaults(t *testing.T) {
 		}
 	})
 }
+
+func TestRecursiveSetAnyVal(t *testing.T) {
+	type args[T any] struct {
+		m map[any]any
+		v T
+		k []any
+	}
+	type testCase[T any] struct {
+		name string
+		args args[T]
+	}
+	tests := []testCase[float64]{
+		{
+			name: "t1",
+			args: args[float64]{
+				m: map[any]any{},
+				v: 3.4,
+				k: []any{"m", 3, "key"},
+			},
+		},
+	}
+	target := map[any]any{"m": map[any]any{3: map[any]any{"key": 3.4}}}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			RecursiveSetAnyVal(tt.args.m, tt.args.v, tt.args.k...)
+			if !reflect.DeepEqual(tt.args.m, target) {
+				t.Fatalf("not equal target")
+			}
+		})
+	}
+}
+
+func TestRecursiveSetStrVal(t *testing.T) {
+	type args[T any] struct {
+		m map[string]any
+		k string
+		v T
+	}
+	type testCase[T any] struct {
+		name string
+		args args[T]
+	}
+	tests := []testCase[int]{
+		{
+			name: "t1",
+			args: args[int]{
+				m: map[string]any{},
+				k: "aa.bb.cc",
+				v: 1,
+			},
+		},
+	}
+	target := map[string]any{"aa": map[string]any{"bb": map[string]any{"cc": 1}}}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			RecursiveSetStrVal(tt.args.m, tt.args.k, tt.args.v)
+			if !reflect.DeepEqual(target, tt.args.m) {
+				t.Fatal()
+			}
+		})
+	}
+}
