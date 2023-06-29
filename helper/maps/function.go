@@ -2,14 +2,18 @@ package maps
 
 import "strings"
 
-func GetStrAnyVal[T any](m map[string]any, key string) (r T, o bool) {
-	k := strings.Split(key, ".")
+func GetStrAnyVal[T any](m map[string]any, key string, delimiter ...string) (r T, o bool) {
+	separator := "."
+	if len(delimiter) > 0 && delimiter[0] != "" {
+		separator = delimiter[0]
+	}
+	k := strings.Split(key, separator)
 	if len(k) > 1 {
 		val, ok := m[k[0]]
 		if ok {
 			vx, ok := val.(map[string]any)
 			if ok {
-				r, o = GetStrAnyVal[T](vx, strings.Join(k[1:], "."))
+				r, o = GetStrAnyVal[T](vx, strings.Join(k[1:], separator))
 			}
 		}
 	} else {
@@ -107,31 +111,41 @@ func GetAnyAnyValWithDefaults[T any](m map[any]any, defaults T, key ...any) (r T
 	return
 }
 
-func RecursiveSetStrVal[T any](m map[string]any, k string, v T) {
-	kk := strings.Split(k, ".")
+func RecursiveSetStrVal[T any](m map[string]any, k string, v T, delimiter ...string) {
+	del := "."
+	if len(delimiter) > 0 && delimiter[0] != "" {
+		del = delimiter[0]
+	}
+	kk := strings.Split(k, del)
 	if len(kk) < 1 {
 		return
 	} else if len(kk) < 2 {
 		m[k] = v
 		return
 	}
-	for i, _ := range kk[0 : len(kk)-1] {
-		key := strings.Join(kk[0:i+1], ".")
-		mm, ok := GetStrAnyVal[map[string]any](m, key)
+	mm, ok := GetStrAnyVal[map[string]any](m, strings.Join(kk[0:len(kk)-1], del))
+	if ok {
+		mm[kk[len(kk)-1]] = v
+		return
+	}
+	mx, ok := GetStrAnyVal[map[string]any](m, kk[0])
+	if !ok {
+		m[kk[0]] = map[string]any{}
+		mx = m[kk[0]].(map[string]any)
+	}
+	for i, _ := range kk[0 : len(kk)-2] {
+		key := kk[i+1]
+		mm, ok := mx[key]
 		if !ok {
-			mm = map[string]any{}
-			preKey := strings.Join(kk[0:i], ".")
-			if preKey == "" {
-				RecursiveSetStrVal(m, key, mm)
-			} else {
-				m, _ := GetStrAnyVal[map[string]any](m, preKey)
-				RecursiveSetStrVal(m, kk[i], mm)
-			}
+			mmm := map[string]any{}
+			mx[key] = mmm
+			mx = mmm
+
+		} else {
+			mx = mm.(map[string]any)
 		}
 	}
-	key := strings.Join(kk[0:len(kk)-1], ".")
-	mm, _ := GetStrAnyVal[map[string]any](m, key)
-	mm[kk[len(kk)-1]] = v
+	mx[kk[len(kk)-1]] = v
 }
 
 func RecursiveSetAnyVal[T any](m map[any]any, v T, k ...any) {

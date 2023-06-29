@@ -267,6 +267,22 @@ func TestRecursiveSetStrVal(t *testing.T) {
 				v: 1,
 			},
 		},
+		{
+			name: "t2",
+			args: args[int]{
+				m: map[string]any{"aa": map[string]any{}},
+				k: "aa.bb.cc",
+				v: 1,
+			},
+		},
+		{
+			name: "t3",
+			args: args[int]{
+				m: map[string]any{"aa": map[string]any{"bb": map[string]any{}}},
+				k: "aa.bb.cc",
+				v: 1,
+			},
+		},
 	}
 	target := map[string]any{"aa": map[string]any{"bb": map[string]any{"cc": 1}}}
 	for _, tt := range tests {
