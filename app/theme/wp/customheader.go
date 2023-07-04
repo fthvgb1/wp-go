@@ -134,14 +134,9 @@ func CustomVideo(h *Handle, scene ...string) (ok bool) {
 	}
 	scripts = slice.Map(scripts, func(t string) string {
 		return fmt.Sprintf(`<script src="%s" id="wp-%s-js"></script>
-`, t, str.Replaces(t, [][]string{
-			{"/wp-includes/js/dist/vendor/"},
-			{"/wp-includes/js/dist/"},
-			{"/wp-includes/js/"},
-			{".min.js"},
-			{".js"},
-			{"wp-", ""},
-		}))
+`, t, str.Replaces(t, [][]string{{
+			"/wp-includes/js/dist/vendor/", "/wp-includes/js/dist/", "/wp-includes/js/", ".min.js", ".js", "wp-", "",
+		}}))
 	})
 
 	var tr = `<script id="wp-i18n-js-after">

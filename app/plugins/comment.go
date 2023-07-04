@@ -6,7 +6,6 @@ import (
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/gin-gonic/gin"
-	"net/url"
 	"strconv"
 	"strings"
 )
@@ -32,13 +31,12 @@ type CommentHtml interface {
 
 func FormatComments(c *gin.Context, i CommentHtml, comments []models.Comments, maxDepth int) string {
 	tree := treeComments(comments)
-	u := c.Request.Header.Get("Referer")
+
 	var isTls bool
-	if u != "" {
-		uu, _ := url.Parse(u)
-		if uu.Scheme == "https" {
-			isTls = true
-		}
+	if c.Request.TLS != nil {
+		isTls = true
+	} else {
+		isTls = "https" == strings.ToLower(c.Request.Header.Get("X-Forwarded-Proto"))
 	}
 	h := CommentHandler{
 		Context:  c,

@@ -9,7 +9,7 @@ import (
 	"strings"
 )
 
-var sizes = []string{"site_icon-270", "site_icon-32", "site_icon-192", "site_icon-180"}
+var iconSizes = []string{"site_icon-270", "site_icon-32", "site_icon-192", "site_icon-180"}
 
 func CalSiteIcon(h *Handle) (r string) {
 	id := str.ToInteger[uint64](wpconfig.GetOption("site_icon"), 0)
@@ -21,7 +21,7 @@ func CalSiteIcon(h *Handle) (r string) {
 		return
 	}
 	m := strings.Join(strings.Split(icon.AttachmentMetadata.File, "/")[:2], "/")
-	size := slice.FilterAndMap(sizes, func(t string) (string, bool) {
+	size := slice.FilterAndMap(iconSizes, func(t string) (string, bool) {
 		s, ok := icon.AttachmentMetadata.Sizes[t]
 		if !ok {
 			return "", false

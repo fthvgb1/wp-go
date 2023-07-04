@@ -1,6 +1,10 @@
 package maps
 
-import "strings"
+import (
+	"github.com/fthvgb1/wp-go/helper/slice"
+	"golang.org/x/exp/constraints"
+	"strings"
+)
 
 func GetStrAnyVal[T any](m map[string]any, key string, delimiter ...string) (r T, o bool) {
 	separator := "."
@@ -111,7 +115,7 @@ func GetAnyAnyValWithDefaults[T any](m map[any]any, defaults T, key ...any) (r T
 	return
 }
 
-func RecursiveSetStrVal[T any](m map[string]any, k string, v T, delimiter ...string) {
+func SetStrAnyVal[T any](m map[string]any, k string, v T, delimiter ...string) {
 	del := "."
 	if len(delimiter) > 0 && delimiter[0] != "" {
 		del = delimiter[0]
@@ -148,7 +152,7 @@ func RecursiveSetStrVal[T any](m map[string]any, k string, v T, delimiter ...str
 	mx[kk[len(kk)-1]] = v
 }
 
-func RecursiveSetAnyVal[T any](m map[any]any, v T, k ...any) {
+func SetAnyAnyVal[T any](m map[any]any, v T, k ...any) {
 	if len(k) < 1 {
 		return
 	} else if len(k) == 1 {
@@ -162,14 +166,37 @@ func RecursiveSetAnyVal[T any](m map[any]any, v T, k ...any) {
 			mm = map[any]any{}
 			preKey := k[0:i]
 			if len(preKey) == 0 {
-				RecursiveSetAnyVal(m, mm, key...)
+				SetAnyAnyVal(m, mm, key...)
 			} else {
 				m, _ := GetAnyAnyMapVal[map[any]any](m, preKey...)
-				RecursiveSetAnyVal(m, mm, k[i])
+				SetAnyAnyVal(m, mm, k[i])
 			}
 		}
 	}
 	key := k[0 : len(k)-1]
 	mm, _ := GetAnyAnyMapVal[map[any]any](m, key...)
 	mm[k[len(k)-1]] = v
+}
+
+func AscEahByKey[K constraints.Ordered, V any](m map[K]V, fn func(K, V)) {
+	orderedEahByKey(m, slice.ASC, fn)
+}
+func DescEahByKey[K constraints.Ordered, V any](m map[K]V, fn func(K, V)) {
+	orderedEahByKey(m, slice.ASC, fn)
+}
+
+func orderedEahByKey[K constraints.Ordered, V any](m map[K]V, ordered int, fn func(K, V)) {
+	keys := Keys(m)
+	slice.Sorts(keys, ordered)
+	for _, key := range keys {
+		fn(key, m[key])
+	}
+}
+
+func Flip[K, V comparable](m map[K]V) map[V]K {
+	mm := make(map[V]K, len(m))
+	for k, v := range m {
+		mm[v] = k
+	}
+	return mm
 }

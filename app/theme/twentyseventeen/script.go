@@ -8,6 +8,21 @@ import (
 )
 
 func pushScripts(h *wp.Handle) {
+	wp.AddStaticLocalize("twentyseventeen-skip-link-focus-fix", "twentyseventeenScreenReaderText", map[string]any{
+		"quote": `<svg class="icon icon-quote-right" aria-hidden="true" role="img"> <use href="#icon-quote-right" xlink:href="#icon-quote-right"></use> </svg>`,
+	})
+	wp.AddStaticLocalize("wp-custom-header", "_wpCustomHeaderSettings", map[string]any{
+		"mimeType":  `video/mp4`,
+		"posterUrl": `/wp-content/uploads/2023/01/cropped-wallhaven-9dm7dd-1.png`,
+		"videoUrl":  `/wp-content/uploads/2023/06/BloodMoon_GettyRM_495644264_1080_HD_ZH-CN.mp4`,
+		"width":     `2000`,
+		"height":    `1199`,
+		"minWidth":  `900`,
+		"minHeight": `500`,
+		"l10n": map[string]any{
+			"pause": `<span class="screen-reader-text">暂停背景视频</span><svg class="icon icon-pause" aria-hidden="true" role="img"> <use href="#icon-pause" xlink:href="#icon-pause"></use> </svg>`, "play": `<span class="screen-reader-text">播放背景视频</span><svg class="icon icon-play" aria-hidden="true" role="img"> <use href="#icon-play" xlink:href="#icon-play"></use> </svg>`, "pauseSpeak": `视频已暂停。`, "playSpeak": `视频正在播放。`,
+		},
+	})
 	h.PushCacheGroupHeadScript(constraints.AllScene, "{theme}.head", 30, func(h *wp.Handle) string {
 		head := headScript
 		if "dark" == wpconfig.GetThemeModsVal(ThemeName, "colorscheme", "light") {

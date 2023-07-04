@@ -240,7 +240,7 @@ func TestRecursiveSetAnyVal(t *testing.T) {
 	target := map[any]any{"m": map[any]any{3: map[any]any{"key": 3.4}}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			RecursiveSetAnyVal(tt.args.m, tt.args.v, tt.args.k...)
+			SetAnyAnyVal(tt.args.m, tt.args.v, tt.args.k...)
 			if !reflect.DeepEqual(tt.args.m, target) {
 				t.Fatalf("not equal target")
 			}
@@ -287,7 +287,7 @@ func TestRecursiveSetStrVal(t *testing.T) {
 	target := map[string]any{"aa": map[string]any{"bb": map[string]any{"cc": 1}}}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			RecursiveSetStrVal(tt.args.m, tt.args.k, tt.args.v)
+			SetStrAnyVal(tt.args.m, tt.args.k, tt.args.v)
 			if !reflect.DeepEqual(target, tt.args.m) {
 				t.Fatal()
 			}

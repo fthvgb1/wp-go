@@ -14,6 +14,7 @@ import (
 	"html/template"
 	"net/http"
 	"os"
+	"strings"
 )
 
 type Handle struct {
@@ -280,4 +281,11 @@ func NewHandleFn(fn HandleFn[*Handle], order float64, name string) HandleCall {
 
 func NothingToDo(h *Handle) {
 	h.Abort()
+}
+
+func (h *Handle) IsHttps() bool {
+	if h.C.Request.TLS != nil {
+		return true
+	}
+	return "https" == strings.ToLower(h.C.Request.Header.Get("X-Forwarded-Proto"))
 }

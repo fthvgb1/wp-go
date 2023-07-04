@@ -2,11 +2,15 @@ package wpconfig
 
 import (
 	"context"
+	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/phphelper"
+	"github.com/fthvgb1/wp-go/app/pkg/config"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/model"
 	"github.com/fthvgb1/wp-go/safety"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -31,7 +35,31 @@ func InitOptions() error {
 	for _, option := range ops {
 		options.Store(option["k"], option["v"])
 	}
+	themeJson = reload.VarsBy(hasThemeJson)
 	return nil
+}
+
+var themeJson *safety.Var[bool]
+
+func HasThemeJson() bool {
+	if themeJson == nil {
+		return false
+	}
+	return themeJson.Load()
+}
+
+func hasThemeJson() bool {
+	styleSheet := GetOption("stylesheet")
+	rootDir := config.GetConfig().WpDir
+	dir := filepath.Join(rootDir, "wp-content/themes", styleSheet, "theme.json")
+	_, err := os.Stat(dir)
+	if err == nil {
+		return true
+	}
+	template := GetOption("template")
+	dir = filepath.Join(rootDir, "wp-content/themes", template, "theme.json")
+	_, err = os.Stat(dir)
+	return err == nil
 }
 
 func GetOption(k string) string {
@@ -39,7 +67,11 @@ func GetOption(k string) string {
 	if ok {
 		return v
 	}
-	vv, err := model.GetField[models.Options](ctx, "option_value", model.Conditions(model.Where(model.SqlBuilder{{"option_name", k}})))
+	vv, err := model.GetField[models.Options](ctx, "option_value", model.Conditions(
+		model.Where(
+			model.SqlBuilder{{"option_name", k}}),
+	),
+	)
 	options.Store(k, vv)
 	if err != nil {
 		return ""

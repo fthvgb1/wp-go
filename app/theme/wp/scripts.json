@@ -1,0 +1,1605 @@
+{
+  "utils": {
+    "handle": "utils",
+    "src": "/wp-includes/js/utils.min.js",
+    "deps": [],
+    "ver": false,
+    "extra": {
+      "data": "var userSettings \u003d {\"url\":\"\\/\",\"uid\":\"0\",\"time\":\"1687343531\",\"secure\":\"\"};"
+    }
+  },
+  "common": {
+    "handle": "common",
+    "src": "/wp-admin/js/common.min.js",
+    "deps": [
+      "jquery",
+      "hoverIntent",
+      "utils",
+      "wp-i18n"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": [],
+    "textdomain": "default",
+    "translations_path": ""
+  },
+  "wp-sanitize": {
+    "handle": "wp-sanitize",
+    "src": "/wp-includes/js/wp-sanitize.min.js",
+    "deps": [],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "sack": {
+    "handle": "sack",
+    "src": "/wp-includes/js/tw-sack.min.js",
+    "deps": [],
+    "ver": "1.6.1",
+    "args": 1,
+    "extra": []
+  },
+  "quicktags": {
+    "handle": "quicktags",
+    "src": "/wp-includes/js/quicktags.min.js",
+    "deps": [],
+    "ver": false,
+    "args": 1,
+    "extra": {
+      "data": "var quicktagsL10n \u003d {\"closeAllOpenTags\":\"\\u5173\\u95ed\\u6240\\u6709\\u6253\\u5f00\\u7684\\u6807\\u7b7e\",\"closeTags\":\"\\u5173\\u95ed\\u6807\\u7b7e\",\"enterURL\":\"\\u8f93\\u5165URL\",\"enterImageURL\":\"\\u8f93\\u5165\\u56fe\\u7247URL\",\"enterImageDescription\":\"\\u8f93\\u5165\\u56fe\\u7247\\u7684\\u63cf\\u8ff0\",\"textdirection\":\"\\u6587\\u672c\\u65b9\\u5411\",\"toggleTextdirection\":\"\\u5207\\u6362\\u7f16\\u8f91\\u5668\\u6587\\u672c\\u4e66\\u5199\\u65b9\\u5411\",\"dfw\":\"\\u514d\\u6253\\u6270\\u5199\\u4f5c\\u6a21\\u5f0f\",\"strong\":\"\\u7c97\\u4f53\",\"strongClose\":\"\\u5173\\u95ed\\u7c97\\u4f53\\u6807\\u7b7e\",\"em\":\"\\u659c\\u4f53\",\"emClose\":\"\\u5173\\u95ed\\u659c\\u4f53\\u6807\\u7b7e\",\"link\":\"\\u63d2\\u5165\\u94fe\\u63a5\",\"blockquote\":\"\\u6bb5\\u843d\\u5f15\\u7528\",\"blockquoteClose\":\"\\u5173\\u95ed\\u6bb5\\u843d\\u5f15\\u7528\\u6807\\u7b7e\",\"del\":\"\\u5220\\u9664\\u7684\\u6587\\u5b57\\uff08\\u5220\\u9664\\u7ebf\\uff09\",\"delClose\":\"\\u5173\\u95ed\\u5220\\u9664\\u7ebf\\u6807\\u7b7e\",\"ins\":\"\\u63d2\\u5165\\u7684\\u6587\\u5b57\",\"insClose\":\"\\u5173\\u95ed\\u63d2\\u5165\\u7684\\u6587\\u5b57\\u6807\\u7b7e\",\"image\":\"\\u63d2\\u5165\\u56fe\\u7247\",\"ul\":\"\\u9879\\u76ee\\u7b26\\u53f7\\u5217\\u8868\",\"ulClose\":\"\\u5173\\u95ed\\u9879\\u76ee\\u7b26\\u53f7\\u5217\\u8868\\u6807\\u7b7e\",\"ol\":\"\\u7f16\\u53f7\\u5217\\u8868\",\"olClose\":\"\\u5173\\u95ed\\u7f16\\u53f7\\u5217\\u8868\\u6807\\u7b7e\",\"li\":\"\\u5217\\u8868\\u9879\\u76ee\",\"liClose\":\"\\u5173\\u95ed\\u5217\\u8868\\u9879\\u76ee\\u6807\\u7b7e\",\"code\":\"\\u4ee3\\u7801\",\"codeClose\":\"\\u5173\\u95ed\\u4ee3\\u7801\\u6807\\u7b7e\",\"more\":\"\\u63d2\\u5165\\u201cMore\\u201d\\u6807\\u7b7e\"};"
+    }
+  },
+  "colorpicker": {
+    "handle": "colorpicker",
+    "src": "/wp-includes/js/colorpicker.min.js",
+    "deps": [
+      "prototype"
+    ],
+    "ver": "3517m",
+    "extra": []
+  },
+  "editor": {
+    "handle": "editor",
+    "src": "/wp-admin/js/editor.min.js",
+    "deps": [
+      "utils",
+      "jquery"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "clipboard": {
+    "handle": "clipboard",
+    "src": "/wp-includes/js/clipboard.min.js",
+    "deps": [],
+    "ver": "2.0.11",
+    "args": 1,
+    "extra": []
+  },
+  "wp-ajax-response": {
+    "handle": "wp-ajax-response",
+    "src": "/wp-includes/js/wp-ajax-response.min.js",
+    "deps": [
+      "jquery",
+      "wp-a11y"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": {
+      "data": "var wpAjax \u003d {\"noPerm\":\"\\u62b1\\u6b49\\uff0c\\u60a8\\u4e0d\\u80fd\\u8fd9\\u4e48\\u505a\\u3002\",\"broken\":\"\\u51fa\\u73b0\\u4e86\\u95ee\\u9898\\u3002\"};"
+    }
+  },
+  "wp-api-request": {
+    "handle": "wp-api-request",
+    "src": "/wp-includes/js/api-request.min.js",
+    "deps": [
+      "jquery"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": {
+      "data": "var wpApiSettings \u003d {\"root\":\"http:\\/\\/wp.test\\/wp-json\\/\",\"nonce\":\"80e72e77d3\",\"versionString\":\"wp\\/v2\\/\"};"
+    }
+  },
+  "wp-pointer": {
+    "handle": "wp-pointer",
+    "src": "/wp-includes/js/wp-pointer.min.js",
+    "deps": [
+      "jquery-ui-core",
+      "wp-i18n"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": [],
+    "textdomain": "default",
+    "translations_path": ""
+  },
+  "autosave": {
+    "handle": "autosave",
+    "src": "/wp-includes/js/autosave.min.js",
+    "deps": [
+      "heartbeat"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "heartbeat": {
+    "handle": "heartbeat",
+    "src": "/wp-includes/js/heartbeat.min.js",
+    "deps": [
+      "jquery",
+      "wp-hooks"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": {
+      "data": "var heartbeatSettings \u003d {\"ajaxurl\":\"\\/wp-admin\\/admin-ajax.php\"};"
+    }
+  },
+  "wp-auth-check": {
+    "handle": "wp-auth-check",
+    "src": "/wp-includes/js/wp-auth-check.min.js",
+    "deps": [
+      "heartbeat",
+      "wp-i18n"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": [],
+    "textdomain": "default",
+    "translations_path": ""
+  },
+  "wp-lists": {
+    "handle": "wp-lists",
+    "src": "/wp-includes/js/wp-lists.min.js",
+    "deps": [
+      "wp-ajax-response",
+      "jquery-color"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "prototype": {
+    "handle": "prototype",
+    "src": "https://ajax.googleapis.com/ajax/libs/prototype/1.7.1.0/prototype.js",
+    "deps": [],
+    "ver": "1.7.1",
+    "extra": []
+  },
+  "scriptaculous-root": {
+    "handle": "scriptaculous-root",
+    "src": "https://ajax.googleapis.com/ajax/libs/scriptaculous/1.9.0/scriptaculous.js",
+    "deps": [
+      "prototype"
+    ],
+    "ver": "1.9.0",
+    "extra": []
+  },
+  "scriptaculous-builder": {
+    "handle": "scriptaculous-builder",
+    "src": "https://ajax.googleapis.com/ajax/libs/scriptaculous/1.9.0/builder.js",
+    "deps": [
+      "scriptaculous-root"
+    ],
+    "ver": "1.9.0",
+    "extra": []
+  },
+  "scriptaculous-dragdrop": {
+    "handle": "scriptaculous-dragdrop",
+    "src": "https://ajax.googleapis.com/ajax/libs/scriptaculous/1.9.0/dragdrop.js",
+    "deps": [
+      "scriptaculous-builder",
+      "scriptaculous-effects"
+    ],
+    "ver": "1.9.0",
+    "extra": []
+  },
+  "scriptaculous-effects": {
+    "handle": "scriptaculous-effects",
+    "src": "https://ajax.googleapis.com/ajax/libs/scriptaculous/1.9.0/effects.js",
+    "deps": [
+      "scriptaculous-root"
+    ],
+    "ver": "1.9.0",
+    "extra": []
+  },
+  "scriptaculous-slider": {
+    "handle": "scriptaculous-slider",
+    "src": "https://ajax.googleapis.com/ajax/libs/scriptaculous/1.9.0/slider.js",
+    "deps": [
+      "scriptaculous-effects"
+    ],
+    "ver": "1.9.0",
+    "extra": []
+  },
+  "scriptaculous-sound": {
+    "handle": "scriptaculous-sound",
+    "src": "https://ajax.googleapis.com/ajax/libs/scriptaculous/1.9.0/sound.js",
+    "deps": [
+      "scriptaculous-root"
+    ],
+    "ver": "1.9.0",
+    "extra": []
+  },
+  "scriptaculous-controls": {
+    "handle": "scriptaculous-controls",
+    "src": "https://ajax.googleapis.com/ajax/libs/scriptaculous/1.9.0/controls.js",
+    "deps": [
+      "scriptaculous-root"
+    ],
+    "ver": "1.9.0",
+    "extra": []
+  },
+  "scriptaculous": {
+    "handle": "scriptaculous",
+    "src": false,
+    "deps": [
+      "scriptaculous-dragdrop",
+      "scriptaculous-slider",
+      "scriptaculous-controls"
+    ],
+    "ver": false,
+    "extra": []
+  },
+  "cropper": {
+    "handle": "cropper",
+    "src": "/wp-includes/js/crop/cropper.js",
+    "deps": [
+      "scriptaculous-dragdrop"
+    ],
+    "ver": false,
+    "extra": []
+  },
+  "jquery": {
+    "handle": "jquery",
+    "src": false,
+    "deps": [
+      "jquery-core",
+      "jquery-migrate"
+    ],
+    "ver": "3.6.4",
+    "extra": []
+  },
+  "jquery-core": {
+    "handle": "jquery-core",
+    "src": "/wp-includes/js/jquery/jquery.min.js",
+    "deps": [],
+    "ver": "3.6.4",
+    "extra": []
+  },
+  "jquery-migrate": {
+    "handle": "jquery-migrate",
+    "src": "/wp-includes/js/jquery/jquery-migrate.min.js",
+    "deps": [],
+    "ver": "3.4.0",
+    "extra": []
+  },
+  "jquery-ui-core": {
+    "handle": "jquery-ui-core",
+    "src": "/wp-includes/js/jquery/ui/core.min.js",
+    "deps": [
+      "jquery"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-effects-core": {
+    "handle": "jquery-effects-core",
+    "src": "/wp-includes/js/jquery/ui/effect.min.js",
+    "deps": [
+      "jquery"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-effects-blind": {
+    "handle": "jquery-effects-blind",
+    "src": "/wp-includes/js/jquery/ui/effect-blind.min.js",
+    "deps": [
+      "jquery-effects-core"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-effects-bounce": {
+    "handle": "jquery-effects-bounce",
+    "src": "/wp-includes/js/jquery/ui/effect-bounce.min.js",
+    "deps": [
+      "jquery-effects-core"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-effects-clip": {
+    "handle": "jquery-effects-clip",
+    "src": "/wp-includes/js/jquery/ui/effect-clip.min.js",
+    "deps": [
+      "jquery-effects-core"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-effects-drop": {
+    "handle": "jquery-effects-drop",
+    "src": "/wp-includes/js/jquery/ui/effect-drop.min.js",
+    "deps": [
+      "jquery-effects-core"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-effects-explode": {
+    "handle": "jquery-effects-explode",
+    "src": "/wp-includes/js/jquery/ui/effect-explode.min.js",
+    "deps": [
+      "jquery-effects-core"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-effects-fade": {
+    "handle": "jquery-effects-fade",
+    "src": "/wp-includes/js/jquery/ui/effect-fade.min.js",
+    "deps": [
+      "jquery-effects-core"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-effects-fold": {
+    "handle": "jquery-effects-fold",
+    "src": "/wp-includes/js/jquery/ui/effect-fold.min.js",
+    "deps": [
+      "jquery-effects-core"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-effects-highlight": {
+    "handle": "jquery-effects-highlight",
+    "src": "/wp-includes/js/jquery/ui/effect-highlight.min.js",
+    "deps": [
+      "jquery-effects-core"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-effects-puff": {
+    "handle": "jquery-effects-puff",
+    "src": "/wp-includes/js/jquery/ui/effect-puff.min.js",
+    "deps": [
+      "jquery-effects-core",
+      "jquery-effects-scale"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-effects-pulsate": {
+    "handle": "jquery-effects-pulsate",
+    "src": "/wp-includes/js/jquery/ui/effect-pulsate.min.js",
+    "deps": [
+      "jquery-effects-core"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-effects-scale": {
+    "handle": "jquery-effects-scale",
+    "src": "/wp-includes/js/jquery/ui/effect-scale.min.js",
+    "deps": [
+      "jquery-effects-core",
+      "jquery-effects-size"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-effects-shake": {
+    "handle": "jquery-effects-shake",
+    "src": "/wp-includes/js/jquery/ui/effect-shake.min.js",
+    "deps": [
+      "jquery-effects-core"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-effects-size": {
+    "handle": "jquery-effects-size",
+    "src": "/wp-includes/js/jquery/ui/effect-size.min.js",
+    "deps": [
+      "jquery-effects-core"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-effects-slide": {
+    "handle": "jquery-effects-slide",
+    "src": "/wp-includes/js/jquery/ui/effect-slide.min.js",
+    "deps": [
+      "jquery-effects-core"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-effects-transfer": {
+    "handle": "jquery-effects-transfer",
+    "src": "/wp-includes/js/jquery/ui/effect-transfer.min.js",
+    "deps": [
+      "jquery-effects-core"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-ui-accordion": {
+    "handle": "jquery-ui-accordion",
+    "src": "/wp-includes/js/jquery/ui/accordion.min.js",
+    "deps": [
+      "jquery-ui-core"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-ui-autocomplete": {
+    "handle": "jquery-ui-autocomplete",
+    "src": "/wp-includes/js/jquery/ui/autocomplete.min.js",
+    "deps": [
+      "jquery-ui-menu",
+      "wp-a11y"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": {
+      "data": "var uiAutocompleteL10n \u003d {\"noResults\":\"\\u672a\\u627e\\u5230\\u7ed3\\u679c\\u3002\",\"oneResult\":\"\\u627e\\u52301\\u4e2a\\u7ed3\\u679c\\u3002\\u4f7f\\u7528\\u4e0a\\u4e0b\\u65b9\\u5411\\u952e\\u6765\\u5bfc\\u822a\\u3002\",\"manyResults\":\"\\u627e\\u5230%d\\u4e2a\\u7ed3\\u679c\\u3002\\u4f7f\\u7528\\u4e0a\\u4e0b\\u65b9\\u5411\\u952e\\u6765\\u5bfc\\u822a\\u3002\",\"itemSelected\":\"\\u5df2\\u9009\\u62e9\\u9879\\u76ee\\u3002\"};"
+    }
+  },
+  "jquery-ui-button": {
+    "handle": "jquery-ui-button",
+    "src": "/wp-includes/js/jquery/ui/button.min.js",
+    "deps": [
+      "jquery-ui-core",
+      "jquery-ui-controlgroup",
+      "jquery-ui-checkboxradio"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-ui-datepicker": {
+    "handle": "jquery-ui-datepicker",
+    "src": "/wp-includes/js/jquery/ui/datepicker.min.js",
+    "deps": [
+      "jquery-ui-core"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-ui-dialog": {
+    "handle": "jquery-ui-dialog",
+    "src": "/wp-includes/js/jquery/ui/dialog.min.js",
+    "deps": [
+      "jquery-ui-resizable",
+      "jquery-ui-draggable",
+      "jquery-ui-button"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-ui-menu": {
+    "handle": "jquery-ui-menu",
+    "src": "/wp-includes/js/jquery/ui/menu.min.js",
+    "deps": [
+      "jquery-ui-core"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-ui-mouse": {
+    "handle": "jquery-ui-mouse",
+    "src": "/wp-includes/js/jquery/ui/mouse.min.js",
+    "deps": [
+      "jquery-ui-core"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-ui-progressbar": {
+    "handle": "jquery-ui-progressbar",
+    "src": "/wp-includes/js/jquery/ui/progressbar.min.js",
+    "deps": [
+      "jquery-ui-core"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-ui-selectmenu": {
+    "handle": "jquery-ui-selectmenu",
+    "src": "/wp-includes/js/jquery/ui/selectmenu.min.js",
+    "deps": [
+      "jquery-ui-menu"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-ui-slider": {
+    "handle": "jquery-ui-slider",
+    "src": "/wp-includes/js/jquery/ui/slider.min.js",
+    "deps": [
+      "jquery-ui-mouse"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-ui-spinner": {
+    "handle": "jquery-ui-spinner",
+    "src": "/wp-includes/js/jquery/ui/spinner.min.js",
+    "deps": [
+      "jquery-ui-button"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-ui-tabs": {
+    "handle": "jquery-ui-tabs",
+    "src": "/wp-includes/js/jquery/ui/tabs.min.js",
+    "deps": [
+      "jquery-ui-core"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-ui-tooltip": {
+    "handle": "jquery-ui-tooltip",
+    "src": "/wp-includes/js/jquery/ui/tooltip.min.js",
+    "deps": [
+      "jquery-ui-core"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-ui-checkboxradio": {
+    "handle": "jquery-ui-checkboxradio",
+    "src": "/wp-includes/js/jquery/ui/checkboxradio.min.js",
+    "deps": [
+      "jquery-ui-core"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-ui-controlgroup": {
+    "handle": "jquery-ui-controlgroup",
+    "src": "/wp-includes/js/jquery/ui/controlgroup.min.js",
+    "deps": [
+      "jquery-ui-core"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-ui-draggable": {
+    "handle": "jquery-ui-draggable",
+    "src": "/wp-includes/js/jquery/ui/draggable.min.js",
+    "deps": [
+      "jquery-ui-mouse"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-ui-droppable": {
+    "handle": "jquery-ui-droppable",
+    "src": "/wp-includes/js/jquery/ui/droppable.min.js",
+    "deps": [
+      "jquery-ui-draggable"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-ui-resizable": {
+    "handle": "jquery-ui-resizable",
+    "src": "/wp-includes/js/jquery/ui/resizable.min.js",
+    "deps": [
+      "jquery-ui-mouse"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-ui-selectable": {
+    "handle": "jquery-ui-selectable",
+    "src": "/wp-includes/js/jquery/ui/selectable.min.js",
+    "deps": [
+      "jquery-ui-mouse"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-ui-sortable": {
+    "handle": "jquery-ui-sortable",
+    "src": "/wp-includes/js/jquery/ui/sortable.min.js",
+    "deps": [
+      "jquery-ui-mouse"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-ui-position": {
+    "handle": "jquery-ui-position",
+    "src": false,
+    "deps": [
+      "jquery-ui-core"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-ui-widget": {
+    "handle": "jquery-ui-widget",
+    "src": false,
+    "deps": [
+      "jquery-ui-core"
+    ],
+    "ver": "1.13.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-form": {
+    "handle": "jquery-form",
+    "src": "/wp-includes/js/jquery/jquery.form.min.js",
+    "deps": [
+      "jquery"
+    ],
+    "ver": "4.3.0",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-color": {
+    "handle": "jquery-color",
+    "src": "/wp-includes/js/jquery/jquery.color.min.js",
+    "deps": [
+      "jquery"
+    ],
+    "ver": "2.2.0",
+    "args": 1,
+    "extra": []
+  },
+  "schedule": {
+    "handle": "schedule",
+    "src": "/wp-includes/js/jquery/jquery.schedule.js",
+    "deps": [
+      "jquery"
+    ],
+    "ver": "20m",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-query": {
+    "handle": "jquery-query",
+    "src": "/wp-includes/js/jquery/jquery.query.js",
+    "deps": [
+      "jquery"
+    ],
+    "ver": "2.2.3",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-serialize-object": {
+    "handle": "jquery-serialize-object",
+    "src": "/wp-includes/js/jquery/jquery.serialize-object.js",
+    "deps": [
+      "jquery"
+    ],
+    "ver": "0.2-wp",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-hotkeys": {
+    "handle": "jquery-hotkeys",
+    "src": "/wp-includes/js/jquery/jquery.hotkeys.min.js",
+    "deps": [
+      "jquery"
+    ],
+    "ver": "0.0.2m",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-table-hotkeys": {
+    "handle": "jquery-table-hotkeys",
+    "src": "/wp-includes/js/jquery/jquery.table-hotkeys.min.js",
+    "deps": [
+      "jquery",
+      "jquery-hotkeys"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "jquery-touch-punch": {
+    "handle": "jquery-touch-punch",
+    "src": "/wp-includes/js/jquery/jquery.ui.touch-punch.js",
+    "deps": [
+      "jquery-ui-core",
+      "jquery-ui-mouse"
+    ],
+    "ver": "0.2.2",
+    "args": 1,
+    "extra": []
+  },
+  "suggest": {
+    "handle": "suggest",
+    "src": "/wp-includes/js/jquery/suggest.min.js",
+    "deps": [
+      "jquery"
+    ],
+    "ver": "1.1-20110113",
+    "args": 1,
+    "extra": []
+  },
+  "imagesloaded": {
+    "handle": "imagesloaded",
+    "src": "/wp-includes/js/imagesloaded.min.js",
+    "deps": [],
+    "ver": "4.1.4",
+    "args": 1,
+    "extra": []
+  },
+  "masonry": {
+    "handle": "masonry",
+    "src": "/wp-includes/js/masonry.min.js",
+    "deps": [
+      "imagesloaded"
+    ],
+    "ver": "4.2.2",
+    "args": 1,
+    "extra": []
+  },
+  "jquery-masonry": {
+    "handle": "jquery-masonry",
+    "src": "/wp-includes/js/jquery/jquery.masonry.min.js",
+    "deps": [
+      "jquery",
+      "masonry"
+    ],
+    "ver": "3.1.2b",
+    "args": 1,
+    "extra": []
+  },
+  "thickbox": {
+    "handle": "thickbox",
+    "src": "/wp-includes/js/thickbox/thickbox.js",
+    "deps": [
+      "jquery"
+    ],
+    "ver": "3.1-20121105",
+    "args": 1,
+    "extra": {
+      "data": "var thickboxL10n \u003d {\"next\":\"\\u4e0b\\u4e00\\u9875 \u003e\",\"prev\":\"\u003c \\u4e0a\\u4e00\\u9875\",\"image\":\"\\u56fe\\u7247\",\"of\":\"\\/\",\"close\":\"\\u5173\\u95ed\",\"noiframes\":\"\\u8fd9\\u4e2a\\u529f\\u80fd\\u9700\\u8981iframe\\u7684\\u652f\\u6301\\u3002\\u60a8\\u53ef\\u80fd\\u7981\\u6b62\\u4e86iframe\\u7684\\u663e\\u793a\\uff0c\\u6216\\u60a8\\u7684\\u6d4f\\u89c8\\u5668\\u4e0d\\u652f\\u6301\\u6b64\\u529f\\u80fd\\u3002\",\"loadingAnimation\":\"http:\\/\\/wp.test\\/wp-includes\\/js\\/thickbox\\/loadingAnimation.gif\"};"
+    }
+  },
+  "jcrop": {
+    "handle": "jcrop",
+    "src": "/wp-includes/js/jcrop/jquery.Jcrop.min.js",
+    "deps": [
+      "jquery"
+    ],
+    "ver": "0.9.15",
+    "extra": []
+  },
+  "swfobject": {
+    "handle": "swfobject",
+    "src": "/wp-includes/js/swfobject.js",
+    "deps": [],
+    "ver": "2.2-20120417",
+    "extra": []
+  },
+  "moxiejs": {
+    "handle": "moxiejs",
+    "src": "/wp-includes/js/plupload/moxie.min.js",
+    "deps": [],
+    "ver": "1.3.5",
+    "extra": []
+  },
+  "plupload": {
+    "handle": "plupload",
+    "src": "/wp-includes/js/plupload/plupload.min.js",
+    "deps": [
+      "moxiejs"
+    ],
+    "ver": "2.1.9",
+    "extra": []
+  },
+  "plupload-all": {
+    "handle": "plupload-all",
+    "src": false,
+    "deps": [
+      "plupload"
+    ],
+    "ver": "2.1.1",
+    "extra": []
+  },
+  "plupload-html5": {
+    "handle": "plupload-html5",
+    "src": false,
+    "deps": [
+      "plupload"
+    ],
+    "ver": "2.1.1",
+    "extra": []
+  },
+  "plupload-flash": {
+    "handle": "plupload-flash",
+    "src": false,
+    "deps": [
+      "plupload"
+    ],
+    "ver": "2.1.1",
+    "extra": []
+  },
+  "plupload-silverlight": {
+    "handle": "plupload-silverlight",
+    "src": false,
+    "deps": [
+      "plupload"
+    ],
+    "ver": "2.1.1",
+    "extra": []
+  },
+  "plupload-html4": {
+    "handle": "plupload-html4",
+    "src": false,
+    "deps": [
+      "plupload"
+    ],
+    "ver": "2.1.1",
+    "extra": []
+  },
+  "plupload-handlers": {
+    "handle": "plupload-handlers",
+    "src": "/wp-includes/js/plupload/handlers.min.js",
+    "deps": [
+      "clipboard",
+      "jquery",
+      "plupload",
+      "underscore",
+      "wp-a11y",
+      "wp-i18n"
+    ],
+    "ver": false,
+    "extra": {
+      "data": "var pluploadL10n \u003d {\"queue_limit_exceeded\":\"\\u60a8\\u5411\\u961f\\u5217\\u4e2d\\u6dfb\\u52a0\\u7684\\u6587\\u4ef6\\u8fc7\\u591a\\u3002\",\"file_exceeds_size_limit\":\"%s\\u8d85\\u8fc7\\u4e86\\u7ad9\\u70b9\\u7684\\u6700\\u5927\\u4e0a\\u4f20\\u9650\\u5236\\u3002\",\"zero_byte_file\":\"\\u6587\\u4ef6\\u4e3a\\u7a7a\\uff0c\\u8bf7\\u9009\\u62e9\\u5176\\u4ed6\\u6587\\u4ef6\\u3002\",\"invalid_filetype\":\"\\u62b1\\u6b49\\uff0c\\u60a8\\u65e0\\u6743\\u4e0a\\u4f20\\u6b64\\u6587\\u4ef6\\u7c7b\\u578b\\u3002\",\"not_an_image\":\"\\u8be5\\u6587\\u4ef6\\u4e0d\\u662f\\u56fe\\u7247\\uff0c\\u8bf7\\u9009\\u62e9\\u5176\\u4ed6\\u6587\\u4ef6\\u3002\",\"image_memory_exceeded\":\"\\u8fbe\\u5230\\u5185\\u5b58\\u9650\\u5236\\uff0c\\u8bf7\\u4f7f\\u7528\\u5c0f\\u4e00\\u4e9b\\u7684\\u6587\\u4ef6\\u3002\",\"image_dimensions_exceeded\":\"\\u8be5\\u6587\\u4ef6\\u8d85\\u8fc7\\u4e86\\u6700\\u5927\\u5927\\u5c0f\\uff0c\\u8bf7\\u9009\\u62e9\\u5176\\u4ed6\\u6587\\u4ef6\\u3002\",\"default_error\":\"\\u4e0a\\u4f20\\u65f6\\u53d1\\u751f\\u4e86\\u9519\\u8bef\\u3002\\u8bf7\\u7a0d\\u540e\\u518d\\u8bd5\\u3002\",\"missing_upload_url\":\"\\u914d\\u7f6e\\u6709\\u8bef\\u3002\\u8bf7\\u8054\\u7cfb\\u60a8\\u7684\\u670d\\u52a1\\u5668\\u7ba1\\u7406\\u5458\\u3002\",\"upload_limit_exceeded\":\"\\u60a8\\u53ea\\u80fd\\u4e0a\\u4f20\\u4e00\\u4e2a\\u6587\\u4ef6\\u3002\",\"http_error\":\"\\u4ece\\u670d\\u52a1\\u5668\\u6536\\u5230\\u9884\\u6599\\u4e4b\\u5916\\u7684\\u54cd\\u5e94\\u3002\\u6b64\\u6587\\u4ef6\\u53ef\\u80fd\\u5df2\\u88ab\\u6210\\u529f\\u4e0a\\u4f20\\u3002\\u8bf7\\u68c0\\u67e5\\u5a92\\u4f53\\u5e93\\u6216\\u5237\\u65b0\\u672c\\u9875\\u3002\",\"http_error_image\":\"\\u670d\\u52a1\\u5668\\u65e0\\u6cd5\\u5904\\u7406\\u56fe\\u7247\\u3002\\u5982\\u679c\\u670d\\u52a1\\u5668\\u7e41\\u5fd9\\u6216\\u6ca1\\u6709\\u8db3\\u591f\\u7684\\u8d44\\u6e90\\u6765\\u5b8c\\u6210\\u4efb\\u52a1\\uff0c\\u5c31\\u4f1a\\u53d1\\u751f\\u8fd9\\u79cd\\u60c5\\u51b5\\u3002\\u4e0a\\u4f20\\u8f83\\u5c0f\\u7684\\u56fe\\u7247\\u53ef\\u80fd\\u4f1a\\u6709\\u6240\\u5e2e\\u52a9\\u3002\\u5efa\\u8bae\\u7684\\u6700\\u5927\\u5c3a\\u5bf8\\u4e3a 2560 \\u50cf\\u7d20\\u3002\",\"upload_failed\":\"\\u4e0a\\u4f20\\u5931\\u8d25\\u3002\",\"big_upload_failed\":\"\\u8bf7\\u5c1d\\u8bd5\\u4f7f\\u7528%1$s\\u6807\\u51c6\\u7684\\u6d4f\\u89c8\\u5668\\u4e0a\\u4f20\\u5de5\\u5177%2$s\\u6765\\u4e0a\\u4f20\\u8fd9\\u4e2a\\u6587\\u4ef6\\u3002\",\"big_upload_queued\":\"%s\\u8d85\\u51fa\\u4e86\\u60a8\\u6d4f\\u89c8\\u5668\\u5bf9\\u9ad8\\u7ea7\\u591a\\u6587\\u4ef6\\u4e0a\\u4f20\\u5de5\\u5177\\u6240\\u505a\\u7684\\u5927\\u5c0f\\u9650\\u5236\\u3002\",\"io_error\":\"IO\\u9519\\u8bef\\u3002\",\"security_error\":\"\\u5b89\\u5168\\u9519\\u8bef\\u3002\",\"file_cancelled\":\"\\u6587\\u4ef6\\u5df2\\u53d6\\u6d88\\u3002\",\"upload_stopped\":\"\\u4e0a\\u4f20\\u505c\\u6b62\\u3002\",\"dismiss\":\"\\u4e0d\\u518d\\u663e\\u793a\",\"crunching\":\"\\u5904\\u7406\\u4e2d\\u2026\",\"deleted\":\"\\u79fb\\u52a8\\u81f3\\u56de\\u6536\\u7ad9\\u3002\",\"error_uploading\":\"\\u201c%s\\u201d\\u4e0a\\u4f20\\u5931\\u8d25\\u3002\",\"unsupported_image\":\"\\u6b64\\u56fe\\u7247\\u65e0\\u6cd5\\u5728\\u7f51\\u9875\\u6d4f\\u89c8\\u5668\\u4e2d\\u663e\\u793a\\u3002 \\u4e3a\\u4e86\\u8fbe\\u5230\\u6700\\u4f73\\u6548\\u679c\\uff0c\\u8bf7\\u5728\\u4e0a\\u4f20\\u524d\\u5c06\\u5176\\u8f6c\\u6362\\u4e3aJPEG\\u683c\\u5f0f\\u3002\",\"noneditable_image\":\"web \\u670d\\u52a1\\u5668\\u65e0\\u6cd5\\u5904\\u7406\\u8be5\\u56fe\\u7247\\uff0c\\u8bf7\\u5728\\u4e0a\\u4f20\\u524d\\u5c06\\u5176\\u8f6c\\u6362\\u4e3aJPEG\\u6216PNG \\u683c\\u5f0f\\u3002\",\"file_url_copied\":\"\\u6587\\u4ef6URL\\u5df2\\u590d\\u5236\\u81f3\\u526a\\u8d34\\u677f\"};"
+    }
+  },
+  "wp-plupload": {
+    "handle": "wp-plupload",
+    "src": "/wp-includes/js/plupload/wp-plupload.min.js",
+    "deps": [
+      "plupload",
+      "jquery",
+      "json2",
+      "media-models"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": {
+      "data": "var pluploadL10n \u003d {\"queue_limit_exceeded\":\"\\u60a8\\u5411\\u961f\\u5217\\u4e2d\\u6dfb\\u52a0\\u7684\\u6587\\u4ef6\\u8fc7\\u591a\\u3002\",\"file_exceeds_size_limit\":\"%s\\u8d85\\u8fc7\\u4e86\\u7ad9\\u70b9\\u7684\\u6700\\u5927\\u4e0a\\u4f20\\u9650\\u5236\\u3002\",\"zero_byte_file\":\"\\u6587\\u4ef6\\u4e3a\\u7a7a\\uff0c\\u8bf7\\u9009\\u62e9\\u5176\\u4ed6\\u6587\\u4ef6\\u3002\",\"invalid_filetype\":\"\\u62b1\\u6b49\\uff0c\\u60a8\\u65e0\\u6743\\u4e0a\\u4f20\\u6b64\\u6587\\u4ef6\\u7c7b\\u578b\\u3002\",\"not_an_image\":\"\\u8be5\\u6587\\u4ef6\\u4e0d\\u662f\\u56fe\\u7247\\uff0c\\u8bf7\\u9009\\u62e9\\u5176\\u4ed6\\u6587\\u4ef6\\u3002\",\"image_memory_exceeded\":\"\\u8fbe\\u5230\\u5185\\u5b58\\u9650\\u5236\\uff0c\\u8bf7\\u4f7f\\u7528\\u5c0f\\u4e00\\u4e9b\\u7684\\u6587\\u4ef6\\u3002\",\"image_dimensions_exceeded\":\"\\u8be5\\u6587\\u4ef6\\u8d85\\u8fc7\\u4e86\\u6700\\u5927\\u5927\\u5c0f\\uff0c\\u8bf7\\u9009\\u62e9\\u5176\\u4ed6\\u6587\\u4ef6\\u3002\",\"default_error\":\"\\u4e0a\\u4f20\\u65f6\\u53d1\\u751f\\u4e86\\u9519\\u8bef\\u3002\\u8bf7\\u7a0d\\u540e\\u518d\\u8bd5\\u3002\",\"missing_upload_url\":\"\\u914d\\u7f6e\\u6709\\u8bef\\u3002\\u8bf7\\u8054\\u7cfb\\u60a8\\u7684\\u670d\\u52a1\\u5668\\u7ba1\\u7406\\u5458\\u3002\",\"upload_limit_exceeded\":\"\\u60a8\\u53ea\\u80fd\\u4e0a\\u4f20\\u4e00\\u4e2a\\u6587\\u4ef6\\u3002\",\"http_error\":\"\\u4ece\\u670d\\u52a1\\u5668\\u6536\\u5230\\u9884\\u6599\\u4e4b\\u5916\\u7684\\u54cd\\u5e94\\u3002\\u6b64\\u6587\\u4ef6\\u53ef\\u80fd\\u5df2\\u88ab\\u6210\\u529f\\u4e0a\\u4f20\\u3002\\u8bf7\\u68c0\\u67e5\\u5a92\\u4f53\\u5e93\\u6216\\u5237\\u65b0\\u672c\\u9875\\u3002\",\"http_error_image\":\"\\u670d\\u52a1\\u5668\\u65e0\\u6cd5\\u5904\\u7406\\u56fe\\u7247\\u3002\\u5982\\u679c\\u670d\\u52a1\\u5668\\u7e41\\u5fd9\\u6216\\u6ca1\\u6709\\u8db3\\u591f\\u7684\\u8d44\\u6e90\\u6765\\u5b8c\\u6210\\u4efb\\u52a1\\uff0c\\u5c31\\u4f1a\\u53d1\\u751f\\u8fd9\\u79cd\\u60c5\\u51b5\\u3002\\u4e0a\\u4f20\\u8f83\\u5c0f\\u7684\\u56fe\\u7247\\u53ef\\u80fd\\u4f1a\\u6709\\u6240\\u5e2e\\u52a9\\u3002\\u5efa\\u8bae\\u7684\\u6700\\u5927\\u5c3a\\u5bf8\\u4e3a 2560 \\u50cf\\u7d20\\u3002\",\"upload_failed\":\"\\u4e0a\\u4f20\\u5931\\u8d25\\u3002\",\"big_upload_failed\":\"\\u8bf7\\u5c1d\\u8bd5\\u4f7f\\u7528%1$s\\u6807\\u51c6\\u7684\\u6d4f\\u89c8\\u5668\\u4e0a\\u4f20\\u5de5\\u5177%2$s\\u6765\\u4e0a\\u4f20\\u8fd9\\u4e2a\\u6587\\u4ef6\\u3002\",\"big_upload_queued\":\"%s\\u8d85\\u51fa\\u4e86\\u60a8\\u6d4f\\u89c8\\u5668\\u5bf9\\u9ad8\\u7ea7\\u591a\\u6587\\u4ef6\\u4e0a\\u4f20\\u5de5\\u5177\\u6240\\u505a\\u7684\\u5927\\u5c0f\\u9650\\u5236\\u3002\",\"io_error\":\"IO\\u9519\\u8bef\\u3002\",\"security_error\":\"\\u5b89\\u5168\\u9519\\u8bef\\u3002\",\"file_cancelled\":\"\\u6587\\u4ef6\\u5df2\\u53d6\\u6d88\\u3002\",\"upload_stopped\":\"\\u4e0a\\u4f20\\u505c\\u6b62\\u3002\",\"dismiss\":\"\\u4e0d\\u518d\\u663e\\u793a\",\"crunching\":\"\\u5904\\u7406\\u4e2d\\u2026\",\"deleted\":\"\\u79fb\\u52a8\\u81f3\\u56de\\u6536\\u7ad9\\u3002\",\"error_uploading\":\"\\u201c%s\\u201d\\u4e0a\\u4f20\\u5931\\u8d25\\u3002\",\"unsupported_image\":\"\\u6b64\\u56fe\\u7247\\u65e0\\u6cd5\\u5728\\u7f51\\u9875\\u6d4f\\u89c8\\u5668\\u4e2d\\u663e\\u793a\\u3002 \\u4e3a\\u4e86\\u8fbe\\u5230\\u6700\\u4f73\\u6548\\u679c\\uff0c\\u8bf7\\u5728\\u4e0a\\u4f20\\u524d\\u5c06\\u5176\\u8f6c\\u6362\\u4e3aJPEG\\u683c\\u5f0f\\u3002\",\"noneditable_image\":\"web \\u670d\\u52a1\\u5668\\u65e0\\u6cd5\\u5904\\u7406\\u8be5\\u56fe\\u7247\\uff0c\\u8bf7\\u5728\\u4e0a\\u4f20\\u524d\\u5c06\\u5176\\u8f6c\\u6362\\u4e3aJPEG\\u6216PNG \\u683c\\u5f0f\\u3002\",\"file_url_copied\":\"\\u6587\\u4ef6URL\\u5df2\\u590d\\u5236\\u81f3\\u526a\\u8d34\\u677f\"};"
+    }
+  },
+  "swfupload": {
+    "handle": "swfupload",
+    "src": "/wp-includes/js/swfupload/swfupload.js",
+    "deps": [],
+    "ver": "2201-20110113",
+    "extra": []
+  },
+  "swfupload-all": {
+    "handle": "swfupload-all",
+    "src": false,
+    "deps": [
+      "swfupload"
+    ],
+    "ver": "2201",
+    "extra": []
+  },
+  "swfupload-handlers": {
+    "handle": "swfupload-handlers",
+    "src": "/wp-includes/js/swfupload/handlers.min.js",
+    "deps": [
+      "swfupload-all",
+      "jquery"
+    ],
+    "ver": "2201-20110524",
+    "extra": {
+      "data": "var swfuploadL10n \u003d {\"queue_limit_exceeded\":\"\\u60a8\\u5411\\u961f\\u5217\\u4e2d\\u6dfb\\u52a0\\u7684\\u6587\\u4ef6\\u8fc7\\u591a\\u3002\",\"file_exceeds_size_limit\":\"%s\\u8d85\\u8fc7\\u4e86\\u7ad9\\u70b9\\u7684\\u6700\\u5927\\u4e0a\\u4f20\\u9650\\u5236\\u3002\",\"zero_byte_file\":\"\\u6587\\u4ef6\\u4e3a\\u7a7a\\uff0c\\u8bf7\\u9009\\u62e9\\u5176\\u4ed6\\u6587\\u4ef6\\u3002\",\"invalid_filetype\":\"\\u62b1\\u6b49\\uff0c\\u60a8\\u65e0\\u6743\\u4e0a\\u4f20\\u6b64\\u6587\\u4ef6\\u7c7b\\u578b\\u3002\",\"not_an_image\":\"\\u8be5\\u6587\\u4ef6\\u4e0d\\u662f\\u56fe\\u7247\\uff0c\\u8bf7\\u9009\\u62e9\\u5176\\u4ed6\\u6587\\u4ef6\\u3002\",\"image_memory_exceeded\":\"\\u8fbe\\u5230\\u5185\\u5b58\\u9650\\u5236\\uff0c\\u8bf7\\u4f7f\\u7528\\u5c0f\\u4e00\\u4e9b\\u7684\\u6587\\u4ef6\\u3002\",\"image_dimensions_exceeded\":\"\\u8be5\\u6587\\u4ef6\\u8d85\\u8fc7\\u4e86\\u6700\\u5927\\u5927\\u5c0f\\uff0c\\u8bf7\\u9009\\u62e9\\u5176\\u4ed6\\u6587\\u4ef6\\u3002\",\"default_error\":\"\\u4e0a\\u4f20\\u65f6\\u53d1\\u751f\\u4e86\\u9519\\u8bef\\u3002\\u8bf7\\u7a0d\\u540e\\u518d\\u8bd5\\u3002\",\"missing_upload_url\":\"\\u914d\\u7f6e\\u6709\\u8bef\\u3002\\u8bf7\\u8054\\u7cfb\\u60a8\\u7684\\u670d\\u52a1\\u5668\\u7ba1\\u7406\\u5458\\u3002\",\"upload_limit_exceeded\":\"\\u60a8\\u53ea\\u80fd\\u4e0a\\u4f20\\u4e00\\u4e2a\\u6587\\u4ef6\\u3002\",\"http_error\":\"\\u4ece\\u670d\\u52a1\\u5668\\u6536\\u5230\\u9884\\u6599\\u4e4b\\u5916\\u7684\\u54cd\\u5e94\\u3002\\u6b64\\u6587\\u4ef6\\u53ef\\u80fd\\u5df2\\u88ab\\u6210\\u529f\\u4e0a\\u4f20\\u3002\\u8bf7\\u68c0\\u67e5\\u5a92\\u4f53\\u5e93\\u6216\\u5237\\u65b0\\u672c\\u9875\\u3002\",\"http_error_image\":\"\\u670d\\u52a1\\u5668\\u65e0\\u6cd5\\u5904\\u7406\\u56fe\\u7247\\u3002\\u5982\\u679c\\u670d\\u52a1\\u5668\\u7e41\\u5fd9\\u6216\\u6ca1\\u6709\\u8db3\\u591f\\u7684\\u8d44\\u6e90\\u6765\\u5b8c\\u6210\\u4efb\\u52a1\\uff0c\\u5c31\\u4f1a\\u53d1\\u751f\\u8fd9\\u79cd\\u60c5\\u51b5\\u3002\\u4e0a\\u4f20\\u8f83\\u5c0f\\u7684\\u56fe\\u7247\\u53ef\\u80fd\\u4f1a\\u6709\\u6240\\u5e2e\\u52a9\\u3002\\u5efa\\u8bae\\u7684\\u6700\\u5927\\u5c3a\\u5bf8\\u4e3a 2560 \\u50cf\\u7d20\\u3002\",\"upload_failed\":\"\\u4e0a\\u4f20\\u5931\\u8d25\\u3002\",\"big_upload_failed\":\"\\u8bf7\\u5c1d\\u8bd5\\u4f7f\\u7528%1$s\\u6807\\u51c6\\u7684\\u6d4f\\u89c8\\u5668\\u4e0a\\u4f20\\u5de5\\u5177%2$s\\u6765\\u4e0a\\u4f20\\u8fd9\\u4e2a\\u6587\\u4ef6\\u3002\",\"big_upload_queued\":\"%s\\u8d85\\u51fa\\u4e86\\u60a8\\u6d4f\\u89c8\\u5668\\u5bf9\\u9ad8\\u7ea7\\u591a\\u6587\\u4ef6\\u4e0a\\u4f20\\u5de5\\u5177\\u6240\\u505a\\u7684\\u5927\\u5c0f\\u9650\\u5236\\u3002\",\"io_error\":\"IO\\u9519\\u8bef\\u3002\",\"security_error\":\"\\u5b89\\u5168\\u9519\\u8bef\\u3002\",\"file_cancelled\":\"\\u6587\\u4ef6\\u5df2\\u53d6\\u6d88\\u3002\",\"upload_stopped\":\"\\u4e0a\\u4f20\\u505c\\u6b62\\u3002\",\"dismiss\":\"\\u4e0d\\u518d\\u663e\\u793a\",\"crunching\":\"\\u5904\\u7406\\u4e2d\\u2026\",\"deleted\":\"\\u79fb\\u52a8\\u81f3\\u56de\\u6536\\u7ad9\\u3002\",\"error_uploading\":\"\\u201c%s\\u201d\\u4e0a\\u4f20\\u5931\\u8d25\\u3002\",\"unsupported_image\":\"\\u6b64\\u56fe\\u7247\\u65e0\\u6cd5\\u5728\\u7f51\\u9875\\u6d4f\\u89c8\\u5668\\u4e2d\\u663e\\u793a\\u3002 \\u4e3a\\u4e86\\u8fbe\\u5230\\u6700\\u4f73\\u6548\\u679c\\uff0c\\u8bf7\\u5728\\u4e0a\\u4f20\\u524d\\u5c06\\u5176\\u8f6c\\u6362\\u4e3aJPEG\\u683c\\u5f0f\\u3002\",\"noneditable_image\":\"web \\u670d\\u52a1\\u5668\\u65e0\\u6cd5\\u5904\\u7406\\u8be5\\u56fe\\u7247\\uff0c\\u8bf7\\u5728\\u4e0a\\u4f20\\u524d\\u5c06\\u5176\\u8f6c\\u6362\\u4e3aJPEG\\u6216PNG \\u683c\\u5f0f\\u3002\",\"file_url_copied\":\"\\u6587\\u4ef6URL\\u5df2\\u590d\\u5236\\u81f3\\u526a\\u8d34\\u677f\"};"
+    }
+  },
+  "comment-reply": {
+    "handle": "comment-reply",
+    "src": "/wp-includes/js/comment-reply.min.js",
+    "deps": [],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "json2": {
+    "handle": "json2",
+    "src": "/wp-includes/js/json2.min.js",
+    "deps": [],
+    "ver": "2015-05-03",
+    "extra": {
+      "conditional": "lt IE 8"
+    }
+  },
+  "underscore": {
+    "handle": "underscore",
+    "src": "/wp-includes/js/underscore.min.js",
+    "deps": [],
+    "ver": "1.13.4",
+    "args": 1,
+    "extra": []
+  },
+  "backbone": {
+    "handle": "backbone",
+    "src": "/wp-includes/js/backbone.min.js",
+    "deps": [
+      "underscore",
+      "jquery"
+    ],
+    "ver": "1.4.1",
+    "args": 1,
+    "extra": []
+  },
+  "wp-util": {
+    "handle": "wp-util",
+    "src": "/wp-includes/js/wp-util.min.js",
+    "deps": [
+      "underscore",
+      "jquery"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": {
+      "data": "var _wpUtilSettings \u003d {\"ajax\":{\"url\":\"\\/wp-admin\\/admin-ajax.php\"}};"
+    }
+  },
+  "wp-backbone": {
+    "handle": "wp-backbone",
+    "src": "/wp-includes/js/wp-backbone.min.js",
+    "deps": [
+      "backbone",
+      "wp-util"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "revisions": {
+    "handle": "revisions",
+    "src": "/wp-admin/js/revisions.min.js",
+    "deps": [
+      "wp-backbone",
+      "jquery-ui-slider",
+      "hoverIntent"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "imgareaselect": {
+    "handle": "imgareaselect",
+    "src": "/wp-includes/js/imgareaselect/jquery.imgareaselect.min.js",
+    "deps": [
+      "jquery"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "mediaelement": {
+    "handle": "mediaelement",
+    "src": false,
+    "deps": [
+      "jquery",
+      "mediaelement-core",
+      "mediaelement-migrate"
+    ],
+    "ver": "4.2.17",
+    "args": 1,
+    "extra": {
+      "data": "var _wpmejsSettings \u003d {\"pluginPath\":\"\\/wp-includes\\/js\\/mediaelement\\/\",\"classPrefix\":\"mejs-\",\"stretching\":\"responsive\",\"audioShortcodeLibrary\":\"mediaelement\",\"videoShortcodeLibrary\":\"mediaelement\"};"
+    }
+  },
+  "mediaelement-core": {
+    "handle": "mediaelement-core",
+    "src": "/wp-includes/js/mediaelement/mediaelement-and-player.min.js",
+    "deps": [],
+    "ver": "4.2.17",
+    "args": 1,
+    "extra": {
+      "before": [
+        false,
+        "var mejsL10n \u003d {\"language\":\"zh\",\"strings\":{\"mejs.download-file\":\"\\u4e0b\\u8f7d\\u6587\\u4ef6\",\"mejs.install-flash\":\"\\u60a8\\u6b63\\u5728\\u4f7f\\u7528\\u7684\\u6d4f\\u89c8\\u5668\\u672a\\u5b89\\u88c5\\u6216\\u542f\\u7528Flash\\u64ad\\u653e\\u5668\\uff0c\\u8bf7\\u542f\\u7528\\u60a8\\u7684Flash\\u64ad\\u653e\\u5668\\u63d2\\u4ef6\\uff0c\\u6216\\u4ece https:\\/\\/get.adobe.com\\/flashplayer\\/ \\u4e0b\\u8f7d\\u6700\\u65b0\\u7248\\u3002\",\"mejs.fullscreen\":\"\\u5168\\u5c4f\",\"mejs.play\":\"\\u64ad\\u653e\",\"mejs.pause\":\"\\u6682\\u505c\",\"mejs.time-slider\":\"\\u65f6\\u95f4\\u8f74\",\"mejs.time-help-text\":\"\\u4f7f\\u7528\\u5de6\\/\\u53f3\\u7bad\\u5934\\u952e\\u6765\\u524d\\u8fdb\\u4e00\\u79d2\\uff0c\\u4e0a\\/\\u4e0b\\u7bad\\u5934\\u952e\\u6765\\u524d\\u8fdb\\u5341\\u79d2\\u3002\",\"mejs.live-broadcast\":\"\\u73b0\\u573a\\u76f4\\u64ad\",\"mejs.volume-help-text\":\"\\u4f7f\\u7528\\u4e0a\\/\\u4e0b\\u7bad\\u5934\\u952e\\u6765\\u589e\\u9ad8\\u6216\\u964d\\u4f4e\\u97f3\\u91cf\\u3002\",\"mejs.unmute\":\"\\u53d6\\u6d88\\u9759\\u97f3\",\"mejs.mute\":\"\\u9759\\u97f3\",\"mejs.volume-slider\":\"\\u97f3\\u91cf\",\"mejs.video-player\":\"\\u89c6\\u9891\\u64ad\\u653e\\u5668\",\"mejs.audio-player\":\"\\u97f3\\u9891\\u64ad\\u653e\\u5668\",\"mejs.captions-subtitles\":\"\\u8bf4\\u660e\\u6587\\u5b57\\u6216\\u5b57\\u5e55\",\"mejs.captions-chapters\":\"\\u7ae0\\u8282\",\"mejs.none\":\"\\u65e0\",\"mejs.afrikaans\":\"\\u5357\\u975e\\u8377\\u5170\\u8bed\",\"mejs.albanian\":\"\\u963f\\u5c14\\u5df4\\u5c3c\\u4e9a\\u8bed\",\"mejs.arabic\":\"\\u963f\\u62c9\\u4f2f\\u8bed\",\"mejs.belarusian\":\"\\u767d\\u4fc4\\u7f57\\u65af\\u8bed\",\"mejs.bulgarian\":\"\\u4fdd\\u52a0\\u5229\\u4e9a\\u8bed\",\"mejs.catalan\":\"\\u52a0\\u6cf0\\u7f57\\u5c3c\\u4e9a\\u8bed\",\"mejs.chinese\":\"\\u4e2d\\u6587\",\"mejs.chinese-simplified\":\"\\u4e2d\\u6587\\uff08\\u7b80\\u4f53\\uff09\",\"mejs.chinese-traditional\":\"\\u4e2d\\u6587(\\uff08\\u7e41\\u4f53\\uff09\",\"mejs.croatian\":\"\\u514b\\u7f57\\u5730\\u4e9a\\u8bed\",\"mejs.czech\":\"\\u6377\\u514b\\u8bed\",\"mejs.danish\":\"\\u4e39\\u9ea6\\u8bed\",\"mejs.dutch\":\"\\u8377\\u5170\\u8bed\",\"mejs.english\":\"\\u82f1\\u8bed\",\"mejs.estonian\":\"\\u7231\\u6c99\\u5c3c\\u4e9a\\u8bed\",\"mejs.filipino\":\"\\u83f2\\u5f8b\\u5bbe\\u8bed\",\"mejs.finnish\":\"\\u82ac\\u5170\\u8bed\",\"mejs.french\":\"\\u6cd5\\u8bed\",\"mejs.galician\":\"\\u52a0\\u5229\\u897f\\u4e9a\\u8bed\",\"mejs.german\":\"\\u5fb7\\u8bed\",\"mejs.greek\":\"\\u5e0c\\u814a\\u8bed\",\"mejs.haitian-creole\":\"\\u6d77\\u5730\\u514b\\u91cc\\u5965\\u5c14\\u8bed\",\"mejs.hebrew\":\"\\u5e0c\\u4f2f\\u6765\\u8bed\",\"mejs.hindi\":\"\\u5370\\u5730\\u8bed\",\"mejs.hungarian\":\"\\u5308\\u7259\\u5229\\u8bed\",\"mejs.icelandic\":\"\\u51b0\\u5c9b\\u8bed\",\"mejs.indonesian\":\"\\u5370\\u5ea6\\u5c3c\\u897f\\u4e9a\\u8bed\",\"mejs.irish\":\"\\u7231\\u5c14\\u5170\\u8bed\",\"mejs.italian\":\"\\u610f\\u5927\\u5229\\u8bed\",\"mejs.japanese\":\"\\u65e5\\u8bed\",\"mejs.korean\":\"\\u97e9\\u8bed\",\"mejs.latvian\":\"\\u62c9\\u8131\\u7ef4\\u4e9a\\u8bed\",\"mejs.lithuanian\":\"\\u7acb\\u9676\\u5b9b\\u8bed\",\"mejs.macedonian\":\"\\u9a6c\\u5176\\u987f\\u8bed\",\"mejs.malay\":\"\\u9a6c\\u6765\\u8bed\",\"mejs.maltese\":\"\\u9a6c\\u8033\\u4ed6\\u8bed\",\"mejs.norwegian\":\"\\u632a\\u5a01\\u8bed\",\"mejs.persian\":\"\\u6ce2\\u65af\\u8bed\",\"mejs.polish\":\"\\u6ce2\\u5170\\u8bed\",\"mejs.portuguese\":\"\\u8461\\u8404\\u7259\\u8bed\",\"mejs.romanian\":\"\\u7f57\\u9a6c\\u5c3c\\u4e9a\\u8bed\",\"mejs.russian\":\"\\u4fc4\\u8bed\",\"mejs.serbian\":\"\\u585e\\u5c14\\u7ef4\\u4e9a\\u8bed\",\"mejs.slovak\":\"\\u65af\\u6d1b\\u4f10\\u514b\\u8bed\",\"mejs.slovenian\":\"\\u65af\\u6d1b\\u6587\\u5c3c\\u4e9a\\u8bed\",\"mejs.spanish\":\"\\u897f\\u73ed\\u7259\\u8bed\",\"mejs.swahili\":\"\\u65af\\u74e6\\u5e0c\\u91cc\\u8bed\",\"mejs.swedish\":\"\\u745e\\u5178\\u8bed\",\"mejs.tagalog\":\"\\u4ed6\\u52a0\\u7984\\u8bed\",\"mejs.thai\":\"\\u6cf0\\u8bed\",\"mejs.turkish\":\"\\u571f\\u8033\\u5176\\u8bed\",\"mejs.ukrainian\":\"\\u4e4c\\u514b\\u5170\\u8bed\",\"mejs.vietnamese\":\"\\u8d8a\\u5357\\u8bed\",\"mejs.welsh\":\"\\u5a01\\u5c14\\u58eb\\u8bed\",\"mejs.yiddish\":\"\\u610f\\u7b2c\\u7eea\\u8bed\"}};"
+      ]
+    }
+  },
+  "mediaelement-migrate": {
+    "handle": "mediaelement-migrate",
+    "src": "/wp-includes/js/mediaelement/mediaelement-migrate.min.js",
+    "deps": [],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "mediaelement-vimeo": {
+    "handle": "mediaelement-vimeo",
+    "src": "/wp-includes/js/mediaelement/renderers/vimeo.min.js",
+    "deps": [
+      "mediaelement"
+    ],
+    "ver": "4.2.17",
+    "args": 1,
+    "extra": []
+  },
+  "wp-mediaelement": {
+    "handle": "wp-mediaelement",
+    "src": "/wp-includes/js/mediaelement/wp-mediaelement.min.js",
+    "deps": [
+      "mediaelement"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "wp-codemirror": {
+    "handle": "wp-codemirror",
+    "src": "/wp-includes/js/codemirror/codemirror.min.js",
+    "deps": [],
+    "ver": "5.29.1-alpha-ee20357",
+    "extra": []
+  },
+  "csslint": {
+    "handle": "csslint",
+    "src": "/wp-includes/js/codemirror/csslint.js",
+    "deps": [],
+    "ver": "1.0.5",
+    "extra": []
+  },
+  "esprima": {
+    "handle": "esprima",
+    "src": "/wp-includes/js/codemirror/esprima.js",
+    "deps": [],
+    "ver": "4.0.0",
+    "extra": []
+  },
+  "jshint": {
+    "handle": "jshint",
+    "src": "/wp-includes/js/codemirror/fakejshint.js",
+    "deps": [
+      "esprima"
+    ],
+    "ver": "2.9.5",
+    "extra": []
+  },
+  "jsonlint": {
+    "handle": "jsonlint",
+    "src": "/wp-includes/js/codemirror/jsonlint.js",
+    "deps": [],
+    "ver": "1.6.2",
+    "extra": []
+  },
+  "htmlhint": {
+    "handle": "htmlhint",
+    "src": "/wp-includes/js/codemirror/htmlhint.js",
+    "deps": [],
+    "ver": "0.9.14-xwp",
+    "extra": []
+  },
+  "htmlhint-kses": {
+    "handle": "htmlhint-kses",
+    "src": "/wp-includes/js/codemirror/htmlhint-kses.js",
+    "deps": [
+      "htmlhint"
+    ],
+    "ver": false,
+    "extra": []
+  },
+  "code-editor": {
+    "handle": "code-editor",
+    "src": "/wp-admin/js/code-editor.min.js",
+    "deps": [
+      "jquery",
+      "wp-codemirror",
+      "underscore"
+    ],
+    "ver": false,
+    "extra": []
+  },
+  "wp-theme-plugin-editor": {
+    "handle": "wp-theme-plugin-editor",
+    "src": "/wp-admin/js/theme-plugin-editor.min.js",
+    "deps": [
+      "common",
+      "wp-util",
+      "wp-sanitize",
+      "jquery",
+      "jquery-ui-core",
+      "wp-a11y",
+      "underscore",
+      "wp-i18n"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": [],
+    "textdomain": "default",
+    "translations_path": ""
+  },
+  "wp-playlist": {
+    "handle": "wp-playlist",
+    "src": "/wp-includes/js/mediaelement/wp-playlist.min.js",
+    "deps": [
+      "wp-util",
+      "backbone",
+      "mediaelement"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "zxcvbn-async": {
+    "handle": "zxcvbn-async",
+    "src": "/wp-includes/js/zxcvbn-async.min.js",
+    "deps": [],
+    "ver": "1.0",
+    "extra": {
+      "data": "var _zxcvbnSettings \u003d {\"src\":\"http:\\/\\/wp.test\\/wp-includes\\/js\\/zxcvbn.min.js\"};"
+    }
+  },
+  "password-strength-meter": {
+    "handle": "password-strength-meter",
+    "src": "/wp-admin/js/password-strength-meter.min.js",
+    "deps": [
+      "jquery",
+      "zxcvbn-async",
+      "wp-i18n"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": {
+      "data": "var pwsL10n \u003d {\"unknown\":\"\\u5bc6\\u7801\\u5f3a\\u5ea6\\u672a\\u77e5\",\"short\":\"\\u975e\\u5e38\\u5f31\",\"bad\":\"\\u5f31\",\"good\":\"\\u4e2d\\u7b49\",\"strong\":\"\\u5f3a\",\"mismatch\":\"\\u4e0d\\u5339\\u914d\"};"
+    },
+    "textdomain": "default",
+    "translations_path": ""
+  },
+  "application-passwords": {
+    "handle": "application-passwords",
+    "src": "/wp-admin/js/application-passwords.min.js",
+    "deps": [
+      "jquery",
+      "wp-util",
+      "wp-api-request",
+      "wp-date",
+      "wp-i18n",
+      "wp-hooks"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": [],
+    "textdomain": "default",
+    "translations_path": ""
+  },
+  "auth-app": {
+    "handle": "auth-app",
+    "src": "/wp-admin/js/auth-app.min.js",
+    "deps": [
+      "jquery",
+      "wp-api-request",
+      "wp-i18n",
+      "wp-hooks"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": [],
+    "textdomain": "default",
+    "translations_path": ""
+  },
+  "user-profile": {
+    "handle": "user-profile",
+    "src": "/wp-admin/js/user-profile.min.js",
+    "deps": [
+      "jquery",
+      "password-strength-meter",
+      "wp-util",
+      "wp-i18n"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": {
+      "data": "var userProfileL10n \u003d {\"user_id\":\"0\",\"nonce\":\"c166979845\"};"
+    },
+    "textdomain": "default",
+    "translations_path": ""
+  },
+  "language-chooser": {
+    "handle": "language-chooser",
+    "src": "/wp-admin/js/language-chooser.min.js",
+    "deps": [
+      "jquery"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "user-suggest": {
+    "handle": "user-suggest",
+    "src": "/wp-admin/js/user-suggest.min.js",
+    "deps": [
+      "jquery-ui-autocomplete"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "admin-bar": {
+    "handle": "admin-bar",
+    "src": "/wp-includes/js/admin-bar.min.js",
+    "deps": [
+      "hoverintent-js"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "wplink": {
+    "handle": "wplink",
+    "src": "/wp-includes/js/wplink.min.js",
+    "deps": [
+      "jquery",
+      "wp-a11y"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": {
+      "data": "var wpLinkL10n \u003d {\"title\":\"\\u63d2\\u5165\\u6216\\u7f16\\u8f91\\u94fe\\u63a5\",\"update\":\"\\u66f4\\u65b0\",\"save\":\"\\u6dfb\\u52a0\\u94fe\\u63a5\",\"noTitle\":\"\\uff08\\u65e0\\u6807\\u9898\\uff09\",\"noMatchesFound\":\"\\u672a\\u627e\\u5230\\u7ed3\\u679c\\u3002\",\"linkSelected\":\"\\u94fe\\u63a5\\u5df2\\u9009\\u62e9\\u3002\",\"linkInserted\":\"\\u94fe\\u63a5\\u5df2\\u63d2\\u5165\\u3002\",\"minInputLength\":\"3\"};"
+    }
+  },
+  "wpdialogs": {
+    "handle": "wpdialogs",
+    "src": "/wp-includes/js/wpdialog.min.js",
+    "deps": [
+      "jquery-ui-dialog"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "word-count": {
+    "handle": "word-count",
+    "src": "/wp-admin/js/word-count.min.js",
+    "deps": [],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "media-upload": {
+    "handle": "media-upload",
+    "src": "/wp-admin/js/media-upload.min.js",
+    "deps": [
+      "thickbox",
+      "shortcode"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "hoverIntent": {
+    "handle": "hoverIntent",
+    "src": "/wp-includes/js/hoverIntent.min.js",
+    "deps": [
+      "jquery"
+    ],
+    "ver": "1.10.2",
+    "args": 1,
+    "extra": []
+  },
+  "hoverintent-js": {
+    "handle": "hoverintent-js",
+    "src": "/wp-includes/js/hoverintent-js.min.js",
+    "deps": [],
+    "ver": "2.2.1",
+    "args": 1,
+    "extra": []
+  },
+  "customize-base": {
+    "handle": "customize-base",
+    "src": "/wp-includes/js/customize-base.min.js",
+    "deps": [
+      "jquery",
+      "json2",
+      "underscore"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "customize-loader": {
+    "handle": "customize-loader",
+    "src": "/wp-includes/js/customize-loader.min.js",
+    "deps": [
+      "customize-base"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "customize-preview": {
+    "handle": "customize-preview",
+    "src": "/wp-includes/js/customize-preview.min.js",
+    "deps": [
+      "wp-a11y",
+      "customize-base"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "customize-models": {
+    "handle": "customize-models",
+    "src": "/wp-includes/js/customize-models.js",
+    "deps": [
+      "underscore",
+      "backbone"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "customize-views": {
+    "handle": "customize-views",
+    "src": "/wp-includes/js/customize-views.js",
+    "deps": [
+      "jquery",
+      "underscore",
+      "imgareaselect",
+      "customize-models",
+      "media-editor",
+      "media-views"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "customize-controls": {
+    "handle": "customize-controls",
+    "src": "/wp-admin/js/customize-controls.min.js",
+    "deps": [
+      "customize-base",
+      "wp-a11y",
+      "wp-util",
+      "jquery-ui-core"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": {
+      "data": "var _wpCustomizeControlsL10n \u003d {\"activate\":\"\\u542f\\u7528\\u5e76\\u53d1\\u5e03\",\"save\":\"\\u4fdd\\u5b58\\u5e76\\u53d1\\u5e03\",\"publish\":\"\\u53d1\\u5e03\",\"published\":\"\\u5df2\\u53d1\\u5e03\",\"saveDraft\":\"\\u4fdd\\u5b58\\u8349\\u7a3f\",\"draftSaved\":\"\\u8349\\u7a3f\\u5df2\\u4fdd\\u5b58\",\"updating\":\"\\u6b63\\u5728\\u66f4\\u65b0\",\"schedule\":\"\\u8ba1\\u5212\",\"scheduled\":\"\\u5df2\\u6392\\u5165\\u8ba1\\u5212\",\"invalid\":\"\\u65e0\\u6548\",\"saveBeforeShare\":\"\\u8981\\u5206\\u4eab\\u9884\\u89c8\\uff0c\\u8bf7\\u5148\\u4fdd\\u5b58\\u60a8\\u7684\\u4fee\\u6539\\u3002\",\"futureDateError\":\"\\u60a8\\u5fc5\\u987b\\u63d0\\u4f9b\\u4e00\\u4e2a\\u5c06\\u6765\\u7684\\u65e5\\u671f\\u6765\\u8ba1\\u5212\\u53d1\\u5e03\\u3002\",\"saveAlert\":\"\\u79bb\\u5f00\\u8fd9\\u4e2a\\u9875\\u9762\\uff0c\\u60a8\\u6240\\u505a\\u7684\\u66f4\\u6539\\u5c06\\u4e22\\u5931\\u3002\",\"saved\":\"\\u5df2\\u4fdd\\u5b58\",\"cancel\":\"\\u53d6\\u6d88\",\"close\":\"\\u5173\\u95ed\",\"action\":\"\\u64cd\\u4f5c\",\"discardChanges\":\"\\u653e\\u5f03\\u4fee\\u6539\",\"cheatin\":\"\\u51fa\\u73b0\\u4e86\\u95ee\\u9898\\u3002\",\"notAllowedHeading\":\"\\u60a8\\u9700\\u8981\\u66f4\\u9ad8\\u7ea7\\u522b\\u7684\\u6743\\u9650\\u3002\",\"notAllowed\":\"\\u62b1\\u6b49\\uff0c\\u60a8\\u4e0d\\u80fd\\u81ea\\u5b9a\\u4e49\\u6b64\\u7ad9\\u70b9\\u3002\",\"previewIframeTitle\":\"\\u7ad9\\u70b9\\u9884\\u89c8\",\"loginIframeTitle\":\"\\u4f1a\\u8bdd\\u5df2\\u8fc7\\u671f\",\"collapseSidebar\":\"\\u9690\\u85cf\\u63a7\\u5236\\u680f\",\"expandSidebar\":\"\\u663e\\u793a\\u63a7\\u5236\\u680f\",\"untitledBlogName\":\"\\u672a\\u547d\\u540d\",\"unknownRequestFail\":\"\\u770b\\u6765\\u51fa\\u73b0\\u4e86\\u95ee\\u9898\\u3002\\u8bf7\\u7b49\\u5f85\\u51e0\\u79d2\\u5e76\\u91cd\\u8bd5\\u3002\",\"themeDownloading\":\"\\u6b63\\u5728\\u4e0b\\u8f7d\\u60a8\\u7684\\u65b0\\u4e3b\\u9898\\u2026\",\"themePreviewWait\":\"\\u6b63\\u5728\\u8bbe\\u7f6e\\u5b9e\\u65f6\\u9884\\u89c8\\uff0c\\u8bf7\\u7a0d\\u7b49\\u3002\",\"revertingChanges\":\"\\u56de\\u6eda\\u672a\\u53d1\\u5e03\\u7684\\u4fee\\u6539\\u2026\",\"trashConfirm\":\"\\u60a8\\u786e\\u5b9a\\u8981\\u4e22\\u5f03\\u672a\\u53d1\\u5e03\\u7684\\u4fee\\u6539\\u5417\\uff1f\",\"takenOverMessage\":\"%s\\u5df2\\u63a5\\u7ba1\\u5e76\\u6b63\\u5728\\u5b9a\\u5236\\u3002\",\"autosaveNotice\":\"\\u6709\\u6bd4\\u60a8\\u6b63\\u5728\\u9884\\u89c8\\u7684\\u4fee\\u6539\\u66f4\\u65b0\\u7684\\u81ea\\u52a8\\u4fdd\\u5b58\\u3002\u003ca href\u003d\\\"%s\\\"\u003e\\u6062\\u590d\\u81ea\\u52a8\\u4fdd\\u5b58\u003c\\/a\u003e\",\"videoHeaderNotice\":\"\\u6b64\\u4e3b\\u9898\\u5728\\u6b64\\u9875\\u4e0d\\u652f\\u6301\\u89c6\\u9891\\u9875\\u7709\\u3002\\u8bf7\\u8bbf\\u95ee\\u9996\\u9875\\u6216\\u5176\\u4ed6\\u652f\\u6301\\u89c6\\u9891\\u9875\\u7709\\u7684\\u9875\\u9762\\u3002\",\"allowedFiles\":\"\\u5141\\u8bb8\\u7684\\u6587\\u4ef6\",\"customCssError\":{\"singular\":\"\\u5728\\u60a8\\u4fdd\\u5b58\\u524d\\u5fc5\\u987b\\u4fee\\u6b63%d\\u4e2a\\u9519\\u8bef\\u3002\",\"plural\":\"\\u5728\\u60a8\\u4fdd\\u5b58\\u524d\\u5fc5\\u987b\\u4fee\\u6b63%d\\u4e2a\\u9519\\u8bef\\u3002\"},\"pageOnFrontError\":\"\\u4e3b\\u9875\\u548c\\u6587\\u7ae0\\u9875\\u5fc5\\u987b\\u4e0d\\u540c\\u3002\",\"saveBlockedError\":{\"singular\":\"\\u7531\\u4e8e %s \\u4e2a\\u8bbe\\u7f6e\\u65e0\\u6548\\uff0c\\u65e0\\u6cd5\\u4fdd\\u5b58\\u3002\",\"plural\":\"\\u7531\\u4e8e %s \\u4e2a\\u8bbe\\u7f6e\\u65e0\\u6548\\uff0c\\u65e0\\u6cd5\\u4fdd\\u5b58\\u3002\"},\"scheduleDescription\":\"\\u8ba1\\u5212\\u60a8\\u7684\\u5b9a\\u5236\\u4fee\\u6539\\u6765\\u5728\\u5c06\\u6765\\u7684\\u65e5\\u671f\\u53d1\\u5e03\\u3002\",\"themePreviewUnavailable\":\"\\u62b1\\u6b49\\uff0c\\u5f53\\u60a8\\u8ba1\\u5212\\u66f4\\u6539\\u6216\\u4fdd\\u5b58\\u4e3a\\u8349\\u7a3f\\u65f6\\u65e0\\u6cd5\\u9884\\u89c8\\u65b0\\u4e3b\\u9898\\u3002\\u8bf7\\u53d1\\u5e03\\u60a8\\u7684\\u66f4\\u6539\\u6216\\u7b49\\u5f85\\u5176\\u53d1\\u5e03\\u540e\\u518d\\u8fdb\\u884c\\u9884\\u89c8\\u3002\",\"themeInstallUnavailable\":\"\\u7531\\u4e8e\\u5b89\\u88c5\\u9700\\u8981SFTP\\u51ed\\u636e\\uff0c\\u56e0\\u6b64\\u60a8\\u8fd8\\u65e0\\u6cd5\\u4ece\\u6b64\\u5904\\u5b89\\u88c5\\u65b0\\u4e3b\\u9898\\u3002\\u8bf7\u003ca href\u003d\\\"http:\\/\\/wp.test\\/wp-admin\\/theme-install.php\\\"\u003e\\u5728\\u7ba1\\u7406\\u754c\\u9762\\u6dfb\\u52a0\\u4e3b\\u9898\u003c\\/a\u003e\\u3002\",\"publishSettings\":\"\\u53d1\\u5e03\\u8bbe\\u7f6e\",\"invalidDate\":\"\\u65e0\\u6548\\u65e5\\u671f\\u3002\",\"invalidValue\":\"\\u65e0\\u6548\\u503c\\u3002\",\"blockThemeNotification\":\"\\u597d\\u8036\\uff01\\u60a8\\u7684\\u4e3b\\u9898\\u652f\\u6301\\u5e26\\u6709\\u533a\\u5757\\u7684\\u7ad9\\u70b9\\u7f16\\u8f91\\u3002\u003ca href\u003d\\\"https:\\/\\/wordpress.org\\/documentation\\/article\\/site-editor\\/\\\"\u003e\\u4e86\\u89e3\\u66f4\\u591a\u003c\\/a\u003e\\u3002 \u003cbutton type\u003d\\\"button\\\" data-action\u003d\\\"http:\\/\\/wp.test\\/wp-admin\\/site-editor.php\\\" class\u003d\\\"button switch-to-editor\\\"\u003e\\u4f7f\\u7528\\u7ad9\\u70b9\\u7f16\\u8f91\\u5668\u003c\\/button\u003e\"};"
+    }
+  },
+  "customize-selective-refresh": {
+    "handle": "customize-selective-refresh",
+    "src": "/wp-includes/js/customize-selective-refresh.min.js",
+    "deps": [
+      "jquery",
+      "wp-util",
+      "customize-preview"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "customize-widgets": {
+    "handle": "customize-widgets",
+    "src": "/wp-admin/js/customize-widgets.min.js",
+    "deps": [
+      "jquery",
+      "jquery-ui-sortable",
+      "jquery-ui-droppable",
+      "wp-backbone",
+      "customize-controls"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "customize-preview-widgets": {
+    "handle": "customize-preview-widgets",
+    "src": "/wp-includes/js/customize-preview-widgets.min.js",
+    "deps": [
+      "jquery",
+      "wp-util",
+      "customize-preview",
+      "customize-selective-refresh"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "customize-nav-menus": {
+    "handle": "customize-nav-menus",
+    "src": "/wp-admin/js/customize-nav-menus.min.js",
+    "deps": [
+      "jquery",
+      "wp-backbone",
+      "customize-controls",
+      "accordion",
+      "nav-menu",
+      "wp-sanitize"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "customize-preview-nav-menus": {
+    "handle": "customize-preview-nav-menus",
+    "src": "/wp-includes/js/customize-preview-nav-menus.min.js",
+    "deps": [
+      "jquery",
+      "wp-util",
+      "customize-preview",
+      "customize-selective-refresh"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "wp-custom-header": {
+    "handle": "wp-custom-header",
+    "src": "/wp-includes/js/wp-custom-header.min.js",
+    "deps": [
+      "wp-a11y"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "accordion": {
+    "handle": "accordion",
+    "src": "/wp-admin/js/accordion.min.js",
+    "deps": [
+      "jquery"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "shortcode": {
+    "handle": "shortcode",
+    "src": "/wp-includes/js/shortcode.min.js",
+    "deps": [
+      "underscore"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "media-models": {
+    "handle": "media-models",
+    "src": "/wp-includes/js/media-models.min.js",
+    "deps": [
+      "wp-backbone"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": {
+      "data": "var _wpMediaModelsL10n \u003d {\"settings\":{\"ajaxurl\":\"\\/wp-admin\\/admin-ajax.php\",\"post\":{\"id\":0}}};"
+    }
+  },
+  "wp-embed": {
+    "handle": "wp-embed",
+    "src": "/wp-includes/js/wp-embed.min.js",
+    "deps": [],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "media-views": {
+    "handle": "media-views",
+    "src": "/wp-includes/js/media-views.min.js",
+    "deps": [
+      "utils",
+      "media-models",
+      "wp-plupload",
+      "jquery-ui-sortable",
+      "wp-mediaelement",
+      "wp-api-request",
+      "wp-a11y",
+      "clipboard",
+      "wp-i18n"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": [],
+    "textdomain": "default",
+    "translations_path": ""
+  },
+  "media-editor": {
+    "handle": "media-editor",
+    "src": "/wp-includes/js/media-editor.min.js",
+    "deps": [
+      "shortcode",
+      "media-views",
+      "wp-i18n"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": [],
+    "textdomain": "default",
+    "translations_path": ""
+  },
+  "media-audiovideo": {
+    "handle": "media-audiovideo",
+    "src": "/wp-includes/js/media-audiovideo.min.js",
+    "deps": [
+      "media-editor"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "mce-view": {
+    "handle": "mce-view",
+    "src": "/wp-includes/js/mce-view.min.js",
+    "deps": [
+      "shortcode",
+      "jquery",
+      "media-views",
+      "media-audiovideo"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  },
+  "wp-api": {
+    "handle": "wp-api",
+    "src": "/wp-includes/js/wp-api.min.js",
+    "deps": [
+      "jquery",
+      "backbone",
+      "underscore",
+      "wp-api-request"
+    ],
+    "ver": false,
+    "args": 1,
+    "extra": []
+  }
+}

@@ -169,6 +169,19 @@ func VarsBy[T any](fn func() T) *safety.Var[T] {
 	})
 	return ss
 }
+func MapBy[K comparable, T any](fn func(*safety.Map[K, T])) *safety.Map[K, T] {
+	m := safety.NewMap[K, T]()
+	if fn != nil {
+		fn(m)
+	}
+	calls = append(calls, func() {
+		m.Flush()
+		if fn != nil {
+			fn(m)
+		}
+	})
+	return m
+}
 
 func Push(fn ...func()) {
 	calls = append(calls, fn...)
