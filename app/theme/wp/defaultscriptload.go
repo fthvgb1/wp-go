@@ -679,10 +679,10 @@ func __blockSelectors(m map[string]any) {
 	selector, ok := maps.GetStrAnyVal[string](m, "supports.__experimentalSelector")
 	if !ok {
 		vv, _ := maps.GetStrAnyVal[string](m, "name")
-		selector = str.Join(".wp-block-", str.Replaces(vv, [][]string{
-			{"core/", ""},
-			{"/", "-"},
-		}))
+		selector = str.Join(".wp-block-", str.Replaces(vv,
+			[]string{"core/", ""},
+			[]string{"/", "-"},
+		))
 	}
 	var features = map[string]string{}
 	maps.SetStrAnyVal(m, "supports.selector", selector)

@@ -113,7 +113,7 @@ func TestGetStrMapAnyValWithAny(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotR, gotO := GetStrMapAnyValWithAny(tt.args.key, tt.args.v)
+			gotR, gotO := GetStrMapAnyValWithAny(tt.args.v, tt.args.key)
 			if !reflect.DeepEqual(gotR, tt.wantR) {
 				t.Errorf("GetStrMapAnyValWithAny() gotR = %v, want %v", gotR, tt.wantR)
 			}

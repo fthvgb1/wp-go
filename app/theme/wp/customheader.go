@@ -122,7 +122,7 @@ func CustomVideo(h *Handle, scene ...string) (ok bool) {
 		logs.Error(err, "get headerVideo fail", mod.HeaderVideo)
 		return
 	}
-	scripts := []string{
+	scriptss := []string{
 		"/wp-includes/js/dist/vendor/wp-polyfill-inert.min.js",
 		"/wp-includes/js/dist/vendor/regenerator-runtime.min.js",
 		"/wp-includes/js/dist/vendor/wp-polyfill.min.js",
@@ -132,11 +132,11 @@ func CustomVideo(h *Handle, scene ...string) (ok bool) {
 		"/wp-includes/js/dist/a11y.min.js",
 		"/wp-includes/js/wp-custom-header.min.js",
 	}
-	scripts = slice.Map(scripts, func(t string) string {
+	scriptss = slice.Map(scriptss, func(t string) string {
 		return fmt.Sprintf(`<script src="%s" id="wp-%s-js"></script>
-`, t, str.Replaces(t, [][]string{{
+`, t, str.Replaces(t, []string{
 			"/wp-includes/js/dist/vendor/", "/wp-includes/js/dist/", "/wp-includes/js/", ".min.js", ".js", "wp-", "",
-		}}))
+		}))
 	})
 
 	var tr = `<script id="wp-i18n-js-after">
@@ -154,10 +154,10 @@ wp.i18n.setLocaleData( { 'text direction\u0004ltr': [ 'ltr' ] } );
 	c := []Components[string]{
 		NewComponent("wp-a11y-js-translations", tr, true, 10.0065, nil),
 		NewComponent("VideoSetting", hs, true, 10.0064, nil),
-		NewComponent("header-script", scripts[len(scripts)-1], true, 10.0063, nil),
+		NewComponent("header-script", scriptss[len(scriptss)-1], true, 10.0063, nil),
 	}
 	for _, s := range scene {
-		h.PushGroupFooterScript(s, "wp-custom-header", 10.0066, scripts[0:len(scripts)-2]...)
+		h.PushGroupFooterScript(s, "wp-custom-header", 10.0066, scriptss[0:len(scriptss)-2]...)
 		h.PushFooterScript(s, c...)
 	}
 	ok = true

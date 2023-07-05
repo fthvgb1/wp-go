@@ -44,14 +44,14 @@ func GetStrAnyValWithDefaults[T any](m map[string]any, key string, defaults T) (
 }
 
 // GetStrMapAnyValWithAny 使用"." 分隔层级
-func GetStrMapAnyValWithAny(key string, v map[string]any) (r any, o bool) {
+func GetStrMapAnyValWithAny(v map[string]any, key string) (r any, o bool) {
 	k := strings.Split(key, ".")
 	if len(k) > 1 {
 		val, ok := v[k[0]]
 		if ok {
 			vx, ok := val.(map[string]any)
 			if ok {
-				r, o = GetStrMapAnyValWithAny(strings.Join(k[1:], "."), vx)
+				r, o = GetStrMapAnyValWithAny(vx, strings.Join(k[1:], "."))
 			}
 		}
 	} else {

@@ -96,8 +96,8 @@ func Replace(s string, replace map[string]string) string {
 
 // Replaces replace string by slice as order
 //
-// [][]string sub []string like {old1,old2,old3,....,newString} all old[x] will be replaced by lasted newString
-func Replaces(s string, replace [][]string) string {
+// []string sub []string like {old1,old2,old3,....,newString} all old[x] will be replaced by lasted newString
+func Replaces(s string, replace ...[]string) string {
 	for _, v := range replace {
 		if len(v) < 1 {
 			continue

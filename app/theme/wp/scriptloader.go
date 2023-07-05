@@ -11,7 +11,9 @@ import (
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/safety"
+	"html"
 	"math"
+	"regexp"
 	"strconv"
 	"strings"
 )
@@ -188,6 +190,7 @@ const RootBlockSelector = "body"
 type node struct {
 	Path     []string
 	Selector string
+	Name     string
 }
 
 var __validElementPseudoSelectors = map[string][]string{
@@ -235,9 +238,9 @@ func scopeSelector(scope, selector string) string {
 	selectors := strings.Split(selector, ",")
 	var a []string
 	for _, outer := range scopes {
-		outer = strings.Trim(outer, " \t\n\r\x00\x0B")
+		outer = strings.TrimSpace(outer)
 		for _, inner := range selectors {
-			inner = strings.Trim(inner, " \t\n\r\x00\x0B")
+			inner = strings.TrimSpace(inner)
 			if outer != "" && inner != "" {
 				a = append(a, str.Join(outer, " ", inner))
 			} else if outer == "" {
@@ -339,6 +342,282 @@ func getSettingNodes(m, setting map[string]any) []node {
 type ThemeJson struct {
 	blocksMetaData map[string]any
 	themeJson      map[string]any
+}
+
+var validOrigins = []string{"default", "blocks", "theme", "custom"}
+
+var layoutSelectorReg = regexp.MustCompile(`^[a-zA-Z0-9\-. *+>:()]*$`)
+
+func (j ThemeJson) LayoutStyles(nodes node) string {
+	//todo current theme supports disable-layout-styles
+	var blockType map[string]any
+	var s strings.Builder
+	if nodes.Name != "" {
+		v, ok := maps.GetStrAnyVal[map[string]any](j.blocksMetaData, nodes.Name)
+		if ok {
+			vv, ok := maps.GetStrAnyVal[map[string]any](v, "supports.__experimentalLayout")
+			if ok && vv == nil {
+				return ""
+			}
+			blockType = vv
+		}
+	}
+	gap, hasBlockGapSupport := maps.GetStrAnyVal[map[string]any](j.themeJson, "settings.spacing.blockGap")
+	if gap == nil {
+		hasBlockGapSupport = false
+	}
+	_, ok := maps.GetStrAnyVal[map[string]any](j.themeJson, strings.Join(nodes.Path, "."))
+	if !ok {
+		return ""
+	}
+	layoutDefinitions, ok := maps.GetStrAnyVal[map[string]any](j.themeJson, "settings.layout.definitions")
+	if !ok {
+		return ""
+	}
+	blockGapValue := ""
+	if !hasBlockGapSupport {
+		if RootBlockSelector == nodes.Selector {
+			blockGapValue = "0.5em"
+		}
+		if blockType != nil {
+			blockGapValue, _ = maps.GetStrAnyVal[string](blockType, "supports.spacing.blockGap.__experimentalDefault")
+		}
+	} else {
+		//todo getPropertyValue()
+	}
+	if blockGapValue != "" {
+		for key, v := range layoutDefinitions {
+			definition, ok := v.(map[string]any)
+			if !ok {
+				continue
+			}
+			if !hasBlockGapSupport && "flex" == key {
+				continue
+			}
+			className := maps.GetStrAnyValWithDefaults(definition, "className", "")
+			spacingRules := maps.GetStrAnyValWithDefaults(definition, "spacingStyles", []any{})
+			if className == "" || spacingRules == nil {
+				continue
+			}
+			for _, rule := range spacingRules {
+				var declarations []declaration
+				spacingRule, ok := rule.(map[string]any)
+				if !ok {
+					continue
+				}
+				selector := maps.GetStrAnyValWithDefaults(spacingRule, "selector", "")
+				if selector == "" || !layoutSelectorReg.MatchString(selector) {
+					continue
+				}
+				rules := maps.GetStrAnyValWithDefaults(spacingRule, "selector", map[string]any(nil))
+				if rules == nil {
+					rules := maps.GetStrAnyValWithDefaults(spacingRule, "selector", map[string]string(nil))
+					if rules == nil {
+						continue
+					} else {
+
+					}
+
+				}
+				for property, v := range rules {
+					value, ok := v.(string)
+					if !ok || value == "" {
+						value = blockGapValue
+					}
+					if isSafeCssDeclaration(property, value) {
+						declarations = append(declarations, declaration{property, value})
+					}
+				}
+				format := ""
+				if !hasBlockGapSupport { //stylesNode
+					format = helper.Or(RootBlockSelector == nodes.Selector, ":where(.%2$s%3$s)", ":where(%1$s.%2$s%3$s)")
+				} else {
+					format = helper.Or(RootBlockSelector == nodes.Selector, "%s .%s%s", "%s.%s%s")
+				}
+				layoutSelector := fmt.Sprintf(format, nodes.Selector, className, selector)
+				s.WriteString(toRuleset(layoutSelector, declarations))
+			}
+		}
+	}
+
+	return s.String()
+}
+
+func isSafeCssDeclaration(name, value string) bool {
+	css := str.Join(name, ":", value)
+	css = KsesNoNull(css)
+	css = strings.TrimSpace(css)
+	css = str.Replaces(css, []string{"\n", "\r", "\t", ""})
+	cssArr := strings.Split(css, ";")
+	s := safeCSSFilterAttr(cssArr)
+	return "" != html.EscapeString(s)
+}
+
+var kses = regexp.MustCompile(`[\x00-\x08\x0B\x0C\x0E-\x1F]`)
+var ksesop = regexp.MustCompile(`\\\\+0+`)
+
+func KsesNoNull(s string, op ...bool) string {
+	s = kses.ReplaceAllString(s, "")
+	ops := true
+	if len(op) > 0 {
+		ops = op[0]
+	}
+	if ops {
+		s = ksesop.ReplaceAllString(s, "")
+	}
+	return s
+}
+
+var allowedProtocols = []string{
+	"http", "https", "ftp", "ftps", "mailto", "news", "irc", "irc6", "ircs", "gopher", "nntp",
+	"feed", "telnet", "mms", "rtsp", "sms", "svn", "tel", "fax", "xmpp", "webcal", "urn",
+}
+
+var allowCssAttr = []string{
+	"background", "background-color", "background-image", "background-position", "background-size", "background-attachment", "background-blend-mode",
+	"border", "border-radius", "border-width", "border-color", "border-style", "border-right", "border-right-color",
+	"border-right-style", "border-right-width", "border-bottom", "border-bottom-color", "border-bottom-left-radius",
+	"border-bottom-right-radius", "border-bottom-style", "border-bottom-width", "border-bottom-right-radius",
+	"border-bottom-left-radius", "border-left", "border-left-color", "border-left-style", "border-left-width",
+	"border-top", "border-top-color", "border-top-left-radius", "border-top-right-radius", "border-top-style",
+	"border-top-width", "border-top-left-radius", "border-top-right-radius", "border-spacing", "border-collapse",
+	"caption-side", "columns", "column-count", "column-fill", "column-gap", "column-rule", "column-span", "column-width",
+	"color", "filter", "font", "font-family", "font-size", "font-style", "font-variant", "font-weight",
+	"letter-spacing", "line-height", "text-align", "text-decoration", "text-indent", "text-transform", "height",
+	"min-height", "max-height", "width", "min-width", "max-width", "margin", "margin-right", "margin-bottom",
+	"margin-left", "margin-top", "margin-block-start", "margin-block-end", "margin-inline-start", "margin-inline-end",
+	"padding", "padding-right", "padding-bottom", "padding-left", "padding-top", "padding-block-start",
+	"padding-block-end", "padding-inline-start", "padding-inline-end", "flex", "flex-basis", "flex-direction",
+	"flex-flow", "flex-grow", "flex-shrink", "flex-wrap", "gap", "column-gap", "row-gap", "grid-template-columns",
+	"grid-auto-columns", "grid-column-start", "grid-column-end", "grid-column-gap", "grid-template-rows",
+	"grid-auto-rows", "grid-row-start", "grid-row-end", "grid-row-gap", "grid-gap", "justify-content", "justify-items",
+	"justify-self", "align-content", "align-items", "align-self", "clear", "cursor", "direction", "float",
+	"list-style-type", "object-fit", "object-position", "overflow", "vertical-align", "position", "top", "right",
+	"bottom", "left", "z-index", "aspect-ratio", "--*",
+}
+var allowCssAttrMap = slice.FilterAndToMap(allowCssAttr, func(t string) (string, struct{}, bool) {
+	return t, struct{}{}, true
+})
+
+var __strReg = regexp.MustCompile(`^--[a-zA-Z0-9-_]+$`)
+var cssUrlDataTypes = []string{"background", "background-image", "cursor", "list-style", "list-style-image"}
+var cssGradientDataTypes = []string{"background", "background-image"}
+var __allowCSSReg = regexp.MustCompile(`\b(?:var|calc|min|max|minmax|clamp)(\((?:[^()]|(?!1))*\))`)
+var __disallowCSSReg = regexp.MustCompile(`[\\(&=}]|/\*`)
+
+func safeCSSFilterAttr(cssArr []string) string {
+	var isCustomVar, found, urlAttr, gradientAttr bool
+	var cssValue string
+	var ss strings.Builder
+	for _, s := range cssArr {
+		parts := strings.SplitN(s, ":", 2)
+		selector := strings.TrimSpace(parts[0])
+
+		if maps.IsExists(allowCssAttrMap, "--*") {
+			i := __strReg.FindStringIndex(selector)
+			if len(i) > 0 && i[0] > 0 {
+				isCustomVar = true
+				allowCssAttr = append(allowCssAttr, selector)
+			}
+			if maps.IsExists(allowCssAttrMap, selector) {
+				found = true
+				urlAttr = slice.IsContained(cssUrlDataTypes, selector)
+				gradientAttr = slice.IsContained(cssGradientDataTypes, selector)
+			}
+			if isCustomVar {
+				cssValue = strings.TrimSpace(parts[1])
+				urlAttr = cssValue[0:4] == "url("
+				gradientAttr = strings.Contains(cssValue, "-gradient(")
+			}
+			if found {
+				//todo wtf 🤮
+				if urlAttr {
+
+				}
+				if gradientAttr {
+
+				}
+				cssTest := __allowCSSReg.ReplaceAllString(s, "")
+				isAllow := !__disallowCSSReg.MatchString(cssTest)
+				if isAllow {
+					ss.WriteString(s)
+					ss.WriteString(";")
+				}
+			}
+
+		}
+	}
+	return strings.TrimRight(ss.String(), ";")
+}
+
+func (j ThemeJson) StyletSheet(types, origins []string, options map[string]string) string {
+	if origins == nil {
+		origins = append(validOrigins)
+	}
+	styleNodes := getStyleNodes(j)
+	settingsNodes := getSettingNodes(j.blocksMetaData, j.themeJson)
+	rootStyleKey, _ := slice.SearchFirst(styleNodes, func(n node) bool {
+		return n.Selector == RootBlockSelector
+	})
+	rootSettingsKey, _ := slice.SearchFirst(settingsNodes, func(n node) bool {
+		return n.Selector == RootBlockSelector
+	})
+	if os, ok := options["scope"]; ok {
+		for i := range settingsNodes {
+			settingsNodes[i].Selector = scopeSelector(os, settingsNodes[i].Selector)
+		}
+		for i := range styleNodes {
+			styleNodes[i].Selector = scopeSelector(os, styleNodes[i].Selector)
+		}
+	}
+	if or, ok := options["root_selector"]; ok && or != "" {
+		if rootSettingsKey > -1 {
+			settingsNodes[rootSettingsKey].Selector = or
+		}
+		if rootStyleKey > -1 && rootStyleKey < len(settingsNodes) {
+			settingsNodes[rootStyleKey].Selector = or
+		}
+	}
+	stylesSheet := ""
+	if slice.IsContained(types, "variables") {
+		stylesSheet = j.getCssVariables(settingsNodes, origins)
+	}
+
+	if slice.IsContained(types, "styles") {
+		stylesSheet = j.getCssVariables(settingsNodes, origins)
+		if rootStyleKey > -1 {
+			//todo getRootLayoutRules
+			stylesSheet = str.Join(stylesSheet)
+		} else if slice.IsContained(types, "base-layout-styles") {
+			rootSelector := RootBlockSelector
+			columnsSelector := ".wp-block-columns"
+			scope, ok := options["scope"]
+			if ok && scope != "" {
+				rootSelector = scopeSelector(scope, rootSelector)
+				columnsSelector = scopeSelector(scope, columnsSelector)
+			}
+			rs, ok := options["root_selector"]
+			if ok && rs != "" {
+				rootSelector = rs
+			}
+			baseStylesNodes := []node{
+				{
+					Path:     []string{"styles"},
+					Selector: rootSelector,
+				},
+				{
+					Path:     []string{"styles", "blocks", "core/columns"},
+					Selector: columnsSelector,
+					Name:     "core/columns",
+				},
+			}
+			for _, stylesNode := range baseStylesNodes {
+				stylesSheet = str.Join(j.LayoutStyles(stylesNode))
+			}
+		}
+	}
+
+	return stylesSheet
 }
 
 var presetsMetadata = []presetMeta{
@@ -641,7 +920,7 @@ func toRuleset(selector string, declarations []declaration) string {
 
 func getStyleNodes(t ThemeJson) []node {
 	var styleNodes = []node{
-		{[]string{"styles"}, "body"},
+		{[]string{"styles"}, "body", ""},
 	}
 	m := maps.GetStrAnyValWithDefaults[map[string]any](t.themeJson, "styles.elements", nil)
 	if len(m) < 1 {
@@ -652,7 +931,7 @@ func getStyleNodes(t ThemeJson) []node {
 		if !ok {
 			continue
 		}
-		styleNodes = append(styleNodes, node{[]string{"styles", "elements", e}, s})
+		styleNodes = append(styleNodes, node{[]string{"styles", "elements", e}, s, ""})
 		ss, ok := __validElementPseudoSelectors[e]
 		if ok {
 			for _, sel := range ss {
@@ -679,49 +958,26 @@ func getStyleNodes(t ThemeJson) []node {
 	return styleNodes
 }
 
-var validOrigins = []string{"default", "theme", "custom"}
-
 func GetStyletSheet(t ThemeJson, types, origins []string, options map[string]string) string {
-	styleNodes := getStyleNodes(t)
-	settingsNodes := getSettingNodes(t.blocksMetaData, t.themeJson)
 	if types == nil && !wpconfig.HasThemeJson() {
 		types = []string{"variables", "presets", "base-layout-styles"}
 	} else if types == nil {
 		types = []string{"variables", "styles", "presets"}
 	}
-	if origins == nil {
-		origins = validOrigins
-	}
-	rootStyleKey, _ := slice.SearchFirst(styleNodes, func(n node) bool {
-		return n.Selector == RootBlockSelector
-	})
-	rootSettingsKey, _ := slice.SearchFirst(settingsNodes, func(n node) bool {
-		return n.Selector == RootBlockSelector
-	})
-	if os, ok := options["scope"]; ok {
-		for i := range settingsNodes {
-			settingsNodes[i].Selector = scopeSelector(os, settingsNodes[i].Selector)
-		}
-		for i := range styleNodes {
-			styleNodes[i].Selector = scopeSelector(os, styleNodes[i].Selector)
-		}
-	}
-	if or, ok := options["root_selector"]; ok && or != "" {
-		if rootSettingsKey > -1 {
-			settingsNodes[rootSettingsKey].Selector = or
-		}
-		if rootStyleKey > -1 && rootStyleKey < len(settingsNodes) {
-			settingsNodes[rootStyleKey].Selector = or
-		}
-	}
-	var s string
+	styleSheet := ""
 	if slice.IsContained(types, "variables") {
-		s = t.getCssVariables(settingsNodes, origins)
+		origins = []string{"default", "theme", "custom"}
+		styleSheet = t.StyletSheet([]string{"variables"}, origins, nil)
 		slice.Delete(&types, slice.IndexOf(types, "variables"))
 	}
-	if slice.IsContained(types, "styles") {
-		s = t.getCssVariables(settingsNodes, origins)
+
+	if len(types) > 0 {
+		origins = []string{"default", "theme", "custm"}
+		if !wpconfig.HasThemeJson() {
+			origins = []string{"default"}
+		}
+		styleSheet = str.Join(styleSheet, t.StyletSheet(types, origins, nil))
 	}
 
-	return s
+	return styleSheet
 }
