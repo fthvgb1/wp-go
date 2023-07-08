@@ -351,7 +351,7 @@ var layoutSelectorReg = regexp.MustCompile(`^[a-zA-Z0-9\-. *+>:()]*$`)
 
 var validDisplayModes = []string{"block", "flex", "grid"}
 
-func (j ThemeJson) LayoutStyles(nodes node) string {
+func (j ThemeJson) getLayoutStyles(nodes node) string {
 	//todo current theme supports disable-layout-styles
 	var blockType map[string]any
 	var s strings.Builder
@@ -593,7 +593,7 @@ func safeCSSFilterAttr(css string) string {
 	return strings.TrimRight(ss.String(), ";")
 }
 
-func (j ThemeJson) StyletSheet(types, origins []string, options map[string]string) string {
+func (j ThemeJson) getStyletSheet(types, origins []string, options map[string]string) string {
 	if origins == nil {
 		origins = append(validOrigins)
 	}
@@ -656,16 +656,126 @@ func (j ThemeJson) StyletSheet(types, origins []string, options map[string]strin
 			},
 		}
 		for _, stylesNode := range baseStylesNodes {
-			stylesSheet = str.Join(stylesSheet, j.LayoutStyles(stylesNode))
+			stylesSheet = str.Join(stylesSheet, j.getLayoutStyles(stylesNode))
 		}
 	}
 
 	if slice.IsContained(types, "presets") {
-		//stylesSheet = str.Join(stylesSheet,j.l)
+		stylesSheet = str.Join(stylesSheet, j.getPresetClasses(settingsNodes, origins))
 	}
 
 	return stylesSheet
 }
+
+func (j ThemeJson) getPresetClasses(nodes []node, origins []string) string {
+	var presetRules strings.Builder
+	for _, n := range nodes {
+		if n.Selector == "" {
+			continue
+		}
+		no, ok := maps.GetStrAnyVal[map[string]any](j.themeJson, strings.Join(n.Path, "."))
+		if !ok {
+			continue
+		}
+		presetRules.WriteString(computePresetClasses(no, n.Selector, origins))
+	}
+	return presetRules.String()
+}
+
+func computePresetClasses(m map[string]any, selector string, origins []string) string {
+	if selector == RootBlockSelector {
+		selector = ""
+	}
+	var s strings.Builder
+	for _, meta := range presetsMetadata {
+		slugs := getSettingsSlugs(m, meta, origins)
+		for class, property := range meta.classes {
+			for _, slug := range slugs {
+				cssVar := strings.ReplaceAll(meta.cssVars, "$slug", slug)
+				className := strings.ReplaceAll(class, "$slug", slug)
+				s.WriteString(toRuleset(appendToSelector(selector, className, ""), []declaration{
+					{property, str.Join("var(", cssVar, ") !important")},
+				}))
+			}
+		}
+	}
+	return s.String()
+}
+
+func getSettingsSlugs(settings map[string]any, meta presetMeta, origins []string) map[string]string {
+	if origins == nil {
+		origins = validOrigins
+	}
+
+	presetPerOrigin, ok := maps.GetStrAnyVal[map[string]any](settings, strings.Join(meta.path, "."))
+	if !ok {
+		return nil
+	}
+	m := map[string]string{}
+	for _, origin := range origins {
+		o, ok := maps.GetStrAnyVal[[]map[string]string](presetPerOrigin, origin)
+		if !ok {
+			continue
+		}
+		for _, mm := range o {
+			slug := toKebabCase(mm["slug"])
+			m[slug] = slug
+		}
+	}
+	return m
+}
+
+func toKebabCase(s string) string {
+	s = strings.ReplaceAll(s, "'", "")
+	r, err := __kebabCaseReg.FindStringMatch(s)
+	if err != nil {
+		return s
+	}
+	var ss []string
+	for r != nil {
+		if r.GroupCount() < 1 {
+			break
+		}
+
+		ss = append(ss, r.Groups()[0].String())
+		r, _ = __kebabCaseReg.FindNextMatch(r)
+	}
+
+	return strings.ToLower(strings.Join(ss, "-"))
+}
+
+var __kebabCaseReg = func() *regexp2.Regexp {
+	rsLowerRange := "a-z\\xdf-\\xf6\\xf8-\\xff"
+	rsNonCharRange := "\\x00-\\x2f\\x3a-\\x40\\x5b-\\x60\\x7b-\\xbf"
+	rsPunctuationRange := "\\x{2000}-\\x{206f}"
+	rsSpaceRange := " \\t\\x0b\\f\\xa0\\x{feff}\\n\\r\\x{2028}\\x{2029}\\x{1680}\\x{180e}\\x{2000}\\x{2001}\\x{2002}\\x{2003}\\x{2004}\\x{2005}\\x{2006}\\x{2007}\\x{2008}\\x{2009}\\x{200a}\\x{202f}\\x{205f}\\x{3000}"
+	rsUpperRange := "A-Z\\xc0-\\xd6\\xd8-\\xde"
+	rsBreakRange := rsNonCharRange + rsPunctuationRange + rsSpaceRange
+
+	/** Used to compose unicode capture groups. */
+	rsBreak := "[" + rsBreakRange + "]"
+	rsDigits := "\\d+" // The last lodash version in GitHub uses a single digit here and expands it when in use.
+	rsLower := "[" + rsLowerRange + "]"
+	rsMisc := "[^" + rsBreakRange + rsDigits + rsLowerRange + rsUpperRange + "]"
+	rsUpper := "[" + rsUpperRange + "]"
+
+	/** Used to compose unicode regexes. */
+	rsMiscLower := "(?:" + rsLower + "|" + rsMisc + ")"
+	rsMiscUpper := "(?:" + rsUpper + "|" + rsMisc + ")"
+	rsOrdLower := "\\d*(?:1st|2nd|3rd|(?![123])\\dth)(?=\\b|[A-Z_])"
+	rsOrdUpper := "\\d*(?:1ST|2ND|3RD|(?![123])\\dTH)(?=\\b|[a-z_])"
+
+	reg := strings.Join([]string{
+		rsUpper + "?" + rsLower + "+(?=" + strings.Join([]string{rsBreak, rsUpper, "$"}, "|") + ")",
+		rsMiscUpper + "+(?=" + strings.Join([]string{rsBreak, rsUpper + rsMiscLower, "$"}, "|") + ")",
+		rsUpper + "?" + rsMiscLower + "+",
+		rsUpper + "+",
+		rsOrdUpper,
+		rsOrdLower,
+		rsDigits,
+	}, "|")
+	return regexp2.MustCompile(reg, regexp2.Unicode)
+}()
 
 var presetsMetadata = []presetMeta{
 	{
@@ -1015,7 +1125,7 @@ func GetStyletSheet(t ThemeJson, types, origins []string, options map[string]str
 	styleSheet := ""
 	if slice.IsContained(types, "variables") {
 		origins = []string{"default", "theme", "custom"}
-		styleSheet = t.StyletSheet([]string{"variables"}, origins, nil)
+		styleSheet = t.getStyletSheet([]string{"variables"}, origins, nil)
 		slice.Delete(&types, slice.IndexOf(types, "variables"))
 	}
 
@@ -1024,8 +1134,29 @@ func GetStyletSheet(t ThemeJson, types, origins []string, options map[string]str
 		if !wpconfig.HasThemeJson() {
 			origins = []string{"default"}
 		}
-		styleSheet = str.Join(styleSheet, t.StyletSheet(types, origins, nil))
+		styleSheet = str.Join(styleSheet, t.getStyletSheet(types, origins, nil))
 	}
 
 	return styleSheet
 }
+
+/*func (j ThemeJson) getStylesForBlock(blockMeta map[string]any) {
+	path, _ := maps.GetStrAnyVal[[]string](blockMeta, "path")
+	node, _ := maps.GetStrAnyVal[map[string]any](j.themeJson, strings.Join(path, "."))
+	useRootPadding := maps.GetStrAnyValWithDefaults(j.themeJson, "settings.useRootPaddingAwareAlignments", false)
+	settings, _ := maps.GetStrAnyVal(j.themeJson, "settings")
+	is_processing_element := slice.IsContained(path, "elements")
+	currentElement := ""
+	if is_processing_element {
+		currentElement = path[len(path)-1]
+	}
+	element_pseudo_allowed := __validElementPseudoSelectors[currentElement]
+
+}
+
+func computeStyleProperties(styles, settings, properties, themeJson map[string]any, selector string, useRootPadding bool) {
+	if properties == nil {
+		//properties =
+	}
+}
+*/
