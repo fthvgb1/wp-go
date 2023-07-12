@@ -4,14 +4,29 @@ import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints"
 	"github.com/fthvgb1/wp-go/app/theme/wp"
+	"github.com/fthvgb1/wp-go/app/theme/wp/scriptloader"
 	"github.com/fthvgb1/wp-go/app/wpconfig"
 )
 
 func pushScripts(h *wp.Handle) {
-	wp.AddStaticLocalize("twentyseventeen-skip-link-focus-fix", "twentyseventeenScreenReaderText", map[string]any{
+	scriptloader.EnqueueStyle("twentyseventeen-style", scriptloader.GetStylesheetUri(), nil, "20230328", "")
+	scriptloader.EnqueueStyles("twentyseventeen-block-style", "/assets/css/blocks.css", []string{"twentyseventeen-style"}, "20220912", "")
+
+	if "dark" == wpconfig.GetThemeModsVal(ThemeName, "colorscheme", "light") {
+		scriptloader.EnqueueStyles("twentyseventeen-colors-dark", "/assets/css/colors-dark.css",
+			[]string{"twentyseventeen-style"}, "20191025", "")
+	}
+
+	scriptloader.AddData("twentyseventeen-ie8", "conditional", "lt IE 9")
+	scriptloader.EnqueueScripts("html5", "/assets/js/html5.js", nil, "20161020", false)
+	scriptloader.AddData("html5", "conditional", "lt IE 9")
+
+	scriptloader.EnqueueScripts("twentyseventeen-skip-link-focus-fix", "/assets/js/skip-link-focus-fix.js", nil, "20161114", true)
+
+	scriptloader.AddStaticLocalize("twentyseventeen-skip-link-focus-fix", "twentyseventeenScreenReaderText", map[string]any{
 		"quote": `<svg class="icon icon-quote-right" aria-hidden="true" role="img"> <use href="#icon-quote-right" xlink:href="#icon-quote-right"></use> </svg>`,
 	})
-	wp.AddStaticLocalize("wp-custom-header", "_wpCustomHeaderSettings", map[string]any{
+	scriptloader.AddStaticLocalize("wp-custom-header", "_wpCustomHeaderSettings", map[string]any{
 		"mimeType":  `video/mp4`,
 		"posterUrl": `/wp-content/uploads/2023/01/cropped-wallhaven-9dm7dd-1.png`,
 		"videoUrl":  `/wp-content/uploads/2023/06/BloodMoon_GettyRM_495644264_1080_HD_ZH-CN.mp4`,

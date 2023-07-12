@@ -1,17 +1,16 @@
-package wp
+package scriptloader
 
 import (
 	"encoding/json"
+	"github.com/fthvgb1/wp-go/app/pkg/config"
 	"github.com/fthvgb1/wp-go/app/pkg/logs"
 	"github.com/fthvgb1/wp-go/helper/maps"
-	"github.com/fthvgb1/wp-go/helper/number"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/safety"
 	"os"
 	"path/filepath"
 	"regexp"
 	"strings"
-	"time"
 )
 
 func defaultScripts(m *safety.Map[string, *Script], suffix string) {
@@ -241,13 +240,13 @@ func defaultScripts(m *safety.Map[string, *Script], suffix string) {
 	m.Store("wp-wordcount", NewScript("wp-wordcount", "/wp-includes/js/dist/wordcount"+suffix+".js", []string{"wp-polyfill"}, "feb9569307aec24292f2", 1))
 }
 
-func defaultLocalize(h *Handle) {
-	AddDynamicLocalize(h, "utils", "userSettings", map[string]any{
+func defaultLocalize() {
+	/*AddDynamicLocalize(h, "utils", "userSettings", map[string]any{
 		"url":    h.C.Request.RequestURI,
 		"uid":    "0",
 		"time":   number.IntToString(time.Now().Unix()),
 		"secure": h.IsHttps(),
-	})
+	})*/
 
 	AddStaticLocalize("wp-ajax-response", "wpAjax", map[string]any{
 		"noPerm": `抱歉，您不能这么做。`,
@@ -367,121 +366,121 @@ func defaultTranslate() {
 }
 
 func defaultAddData() {
-	addData("json2", "conditional", `lt IE 8`)
-	addData("wp-embed-template-ie", "conditional", `lte IE 8`)
-	addData("wp-block-library-theme", "path", `wp-includes/css/dist/block-library/theme.min.css`)
-	addData("wp-block-editor", "path", `/wp-includes/css/dist/block-editor/style.min.css`)
-	addData("wp-block-library", "path", `/wp-includes/css/dist/block-library/style.min.css`)
-	addData("wp-block-directory", "path", `/wp-includes/css/dist/block-directory/style.min.css`)
-	addData("wp-components", "path", `/wp-includes/css/dist/components/style.min.css`)
-	addData("wp-edit-post", "path", `/wp-includes/css/dist/edit-post/style.min.css`)
-	addData("wp-editor", "path", `/wp-includes/css/dist/editor/style.min.css`)
-	addData("wp-format-library", "path", `/wp-includes/css/dist/format-library/style.min.css`)
-	addData("wp-list-reusable-blocks", "path", `/wp-includes/css/dist/list-reusable-blocks/style.min.css`)
-	addData("wp-reusable-blocks", "path", `/wp-includes/css/dist/reusable-blocks/style.min.css`)
-	addData("wp-nux", "path", `/wp-includes/css/dist/nux/style.min.css`)
-	addData("wp-widgets", "path", `/wp-includes/css/dist/widgets/style.min.css`)
-	addData("wp-edit-widgets", "path", `/wp-includes/css/dist/edit-widgets/style.min.css`)
-	addData("wp-customize-widgets", "path", `/wp-includes/css/dist/customize-widgets/style.min.css`)
-	addData("wp-edit-site", "path", `/wp-includes/css/dist/edit-site/style.min.css`)
-	addData("common", "rtl", `replace`)
-	addData("common", "suffix", `.min`)
-	addData("forms", "rtl", `replace`)
-	addData("forms", "suffix", `.min`)
-	addData("admin-menu", "rtl", `replace`)
-	addData("admin-menu", "suffix", `.min`)
-	addData("dashboard", "rtl", `replace`)
-	addData("dashboard", "suffix", `.min`)
-	addData("list-tables", "rtl", `replace`)
-	addData("list-tables", "suffix", `.min`)
-	addData("edit", "rtl", `replace`)
-	addData("edit", "suffix", `.min`)
-	addData("revisions", "rtl", `replace`)
-	addData("revisions", "suffix", `.min`)
-	addData("media", "rtl", `replace`)
-	addData("media", "suffix", `.min`)
-	addData("themes", "rtl", `replace`)
-	addData("themes", "suffix", `.min`)
-	addData("about", "rtl", `replace`)
-	addData("about", "suffix", `.min`)
-	addData("nav-menus", "rtl", `replace`)
-	addData("nav-menus", "suffix", `.min`)
-	addData("widgets", "rtl", `replace`)
-	addData("widgets", "suffix", `.min`)
-	addData("site-icon", "rtl", `replace`)
-	addData("site-icon", "suffix", `.min`)
-	addData("l10n", "rtl", `replace`)
-	addData("l10n", "suffix", `.min`)
-	addData("install", "rtl", `replace`)
-	addData("install", "suffix", `.min`)
-	addData("wp-color-picker", "rtl", `replace`)
-	addData("wp-color-picker", "suffix", `.min`)
-	addData("customize-controls", "rtl", `replace`)
-	addData("customize-controls", "suffix", `.min`)
-	addData("customize-widgets", "rtl", `replace`)
-	addData("customize-widgets", "suffix", `.min`)
-	addData("customize-nav-menus", "rtl", `replace`)
-	addData("customize-nav-menus", "suffix", `.min`)
-	addData("customize-preview", "rtl", `replace`)
-	addData("customize-preview", "suffix", `.min`)
-	addData("login", "rtl", `replace`)
-	addData("login", "suffix", `.min`)
-	addData("site-health", "rtl", `replace`)
-	addData("site-health", "suffix", `.min`)
-	addData("buttons", "rtl", `replace`)
-	addData("buttons", "suffix", `.min`)
-	addData("admin-bar", "rtl", `replace`)
-	addData("admin-bar", "suffix", `.min`)
-	addData("wp-auth-check", "rtl", `replace`)
-	addData("wp-auth-check", "suffix", `.min`)
-	addData("editor-buttons", "rtl", `replace`)
-	addData("editor-buttons", "suffix", `.min`)
-	addData("media-views", "rtl", `replace`)
-	addData("media-views", "suffix", `.min`)
-	addData("wp-pointer", "rtl", `replace`)
-	addData("wp-pointer", "suffix", `.min`)
-	addData("wp-jquery-ui-dialog", "rtl", `replace`)
-	addData("wp-jquery-ui-dialog", "suffix", `.min`)
-	addData("wp-reset-editor-styles", "rtl", `replace`)
-	addData("wp-reset-editor-styles", "suffix", `.min`)
-	addData("wp-editor-classic-layout-styles", "rtl", `replace`)
-	addData("wp-editor-classic-layout-styles", "suffix", `.min`)
-	addData("wp-block-library-theme", "rtl", `replace`)
-	addData("wp-block-library-theme", "suffix", `.min`)
-	addData("wp-edit-blocks", "rtl", `replace`)
-	addData("wp-edit-blocks", "suffix", `.min`)
-	addData("wp-block-editor", "rtl", `replace`)
-	addData("wp-block-editor", "suffix", `.min`)
-	addData("wp-block-library", "rtl", `replace`)
-	addData("wp-block-library", "suffix", `.min`)
-	addData("wp-block-directory", "rtl", `replace`)
-	addData("wp-block-directory", "suffix", `.min`)
-	addData("wp-components", "rtl", `replace`)
-	addData("wp-components", "suffix", `.min`)
-	addData("wp-customize-widgets", "rtl", `replace`)
-	addData("wp-customize-widgets", "suffix", `.min`)
-	addData("wp-edit-post", "rtl", `replace`)
-	addData("wp-edit-post", "suffix", `.min`)
-	addData("wp-edit-site", "rtl", `replace`)
-	addData("wp-edit-site", "suffix", `.min`)
-	addData("wp-edit-widgets", "rtl", `replace`)
-	addData("wp-edit-widgets", "suffix", `.min`)
-	addData("wp-editor", "rtl", `replace`)
-	addData("wp-editor", "suffix", `.min`)
-	addData("wp-format-library", "rtl", `replace`)
-	addData("wp-format-library", "suffix", `.min`)
-	addData("wp-list-reusable-blocks", "rtl", `replace`)
-	addData("wp-list-reusable-blocks", "suffix", `.min`)
-	addData("wp-reusable-blocks", "rtl", `replace`)
-	addData("wp-reusable-blocks", "suffix", `.min`)
-	addData("wp-nux", "rtl", `replace`)
-	addData("wp-nux", "suffix", `.min`)
-	addData("wp-widgets", "rtl", `replace`)
-	addData("wp-widgets", "suffix", `.min`)
-	addData("deprecated-media", "rtl", `replace`)
-	addData("deprecated-media", "suffix", `.min`)
-	addData("farbtastic", "rtl", `replace`)
-	addData("farbtastic", "suffix", `.min`)
+	AddData("json2", "conditional", `lt IE 8`)
+	AddData("wp-embed-template-ie", "conditional", `lte IE 8`)
+	AddData("wp-block-library-theme", "path", `wp-includes/css/dist/block-library/theme.min.css`)
+	AddData("wp-block-editor", "path", `/wp-includes/css/dist/block-editor/style.min.css`)
+	AddData("wp-block-library", "path", `/wp-includes/css/dist/block-library/style.min.css`)
+	AddData("wp-block-directory", "path", `/wp-includes/css/dist/block-directory/style.min.css`)
+	AddData("wp-components", "path", `/wp-includes/css/dist/components/style.min.css`)
+	AddData("wp-edit-post", "path", `/wp-includes/css/dist/edit-post/style.min.css`)
+	AddData("wp-editor", "path", `/wp-includes/css/dist/editor/style.min.css`)
+	AddData("wp-format-library", "path", `/wp-includes/css/dist/format-library/style.min.css`)
+	AddData("wp-list-reusable-blocks", "path", `/wp-includes/css/dist/list-reusable-blocks/style.min.css`)
+	AddData("wp-reusable-blocks", "path", `/wp-includes/css/dist/reusable-blocks/style.min.css`)
+	AddData("wp-nux", "path", `/wp-includes/css/dist/nux/style.min.css`)
+	AddData("wp-widgets", "path", `/wp-includes/css/dist/widgets/style.min.css`)
+	AddData("wp-edit-widgets", "path", `/wp-includes/css/dist/edit-widgets/style.min.css`)
+	AddData("wp-customize-widgets", "path", `/wp-includes/css/dist/customize-widgets/style.min.css`)
+	AddData("wp-edit-site", "path", `/wp-includes/css/dist/edit-site/style.min.css`)
+	AddData("common", "rtl", `replace`)
+	AddData("common", "suffix", `.min`)
+	AddData("forms", "rtl", `replace`)
+	AddData("forms", "suffix", `.min`)
+	AddData("admin-menu", "rtl", `replace`)
+	AddData("admin-menu", "suffix", `.min`)
+	AddData("dashboard", "rtl", `replace`)
+	AddData("dashboard", "suffix", `.min`)
+	AddData("list-tables", "rtl", `replace`)
+	AddData("list-tables", "suffix", `.min`)
+	AddData("edit", "rtl", `replace`)
+	AddData("edit", "suffix", `.min`)
+	AddData("revisions", "rtl", `replace`)
+	AddData("revisions", "suffix", `.min`)
+	AddData("media", "rtl", `replace`)
+	AddData("media", "suffix", `.min`)
+	AddData("themes", "rtl", `replace`)
+	AddData("themes", "suffix", `.min`)
+	AddData("about", "rtl", `replace`)
+	AddData("about", "suffix", `.min`)
+	AddData("nav-menus", "rtl", `replace`)
+	AddData("nav-menus", "suffix", `.min`)
+	AddData("widgets", "rtl", `replace`)
+	AddData("widgets", "suffix", `.min`)
+	AddData("site-icon", "rtl", `replace`)
+	AddData("site-icon", "suffix", `.min`)
+	AddData("l10n", "rtl", `replace`)
+	AddData("l10n", "suffix", `.min`)
+	AddData("install", "rtl", `replace`)
+	AddData("install", "suffix", `.min`)
+	AddData("wp-color-picker", "rtl", `replace`)
+	AddData("wp-color-picker", "suffix", `.min`)
+	AddData("customize-controls", "rtl", `replace`)
+	AddData("customize-controls", "suffix", `.min`)
+	AddData("customize-widgets", "rtl", `replace`)
+	AddData("customize-widgets", "suffix", `.min`)
+	AddData("customize-nav-menus", "rtl", `replace`)
+	AddData("customize-nav-menus", "suffix", `.min`)
+	AddData("customize-preview", "rtl", `replace`)
+	AddData("customize-preview", "suffix", `.min`)
+	AddData("login", "rtl", `replace`)
+	AddData("login", "suffix", `.min`)
+	AddData("site-health", "rtl", `replace`)
+	AddData("site-health", "suffix", `.min`)
+	AddData("buttons", "rtl", `replace`)
+	AddData("buttons", "suffix", `.min`)
+	AddData("admin-bar", "rtl", `replace`)
+	AddData("admin-bar", "suffix", `.min`)
+	AddData("wp-auth-check", "rtl", `replace`)
+	AddData("wp-auth-check", "suffix", `.min`)
+	AddData("editor-buttons", "rtl", `replace`)
+	AddData("editor-buttons", "suffix", `.min`)
+	AddData("media-views", "rtl", `replace`)
+	AddData("media-views", "suffix", `.min`)
+	AddData("wp-pointer", "rtl", `replace`)
+	AddData("wp-pointer", "suffix", `.min`)
+	AddData("wp-jquery-ui-dialog", "rtl", `replace`)
+	AddData("wp-jquery-ui-dialog", "suffix", `.min`)
+	AddData("wp-reset-editor-styles", "rtl", `replace`)
+	AddData("wp-reset-editor-styles", "suffix", `.min`)
+	AddData("wp-editor-classic-layout-styles", "rtl", `replace`)
+	AddData("wp-editor-classic-layout-styles", "suffix", `.min`)
+	AddData("wp-block-library-theme", "rtl", `replace`)
+	AddData("wp-block-library-theme", "suffix", `.min`)
+	AddData("wp-edit-blocks", "rtl", `replace`)
+	AddData("wp-edit-blocks", "suffix", `.min`)
+	AddData("wp-block-editor", "rtl", `replace`)
+	AddData("wp-block-editor", "suffix", `.min`)
+	AddData("wp-block-library", "rtl", `replace`)
+	AddData("wp-block-library", "suffix", `.min`)
+	AddData("wp-block-directory", "rtl", `replace`)
+	AddData("wp-block-directory", "suffix", `.min`)
+	AddData("wp-components", "rtl", `replace`)
+	AddData("wp-components", "suffix", `.min`)
+	AddData("wp-customize-widgets", "rtl", `replace`)
+	AddData("wp-customize-widgets", "suffix", `.min`)
+	AddData("wp-edit-post", "rtl", `replace`)
+	AddData("wp-edit-post", "suffix", `.min`)
+	AddData("wp-edit-site", "rtl", `replace`)
+	AddData("wp-edit-site", "suffix", `.min`)
+	AddData("wp-edit-widgets", "rtl", `replace`)
+	AddData("wp-edit-widgets", "suffix", `.min`)
+	AddData("wp-editor", "rtl", `replace`)
+	AddData("wp-editor", "suffix", `.min`)
+	AddData("wp-format-library", "rtl", `replace`)
+	AddData("wp-format-library", "suffix", `.min`)
+	AddData("wp-list-reusable-blocks", "rtl", `replace`)
+	AddData("wp-list-reusable-blocks", "suffix", `.min`)
+	AddData("wp-reusable-blocks", "rtl", `replace`)
+	AddData("wp-reusable-blocks", "suffix", `.min`)
+	AddData("wp-nux", "rtl", `replace`)
+	AddData("wp-nux", "suffix", `.min`)
+	AddData("wp-widgets", "rtl", `replace`)
+	AddData("wp-widgets", "suffix", `.min`)
+	AddData("deprecated-media", "rtl", `replace`)
+	AddData("deprecated-media", "suffix", `.min`)
+	AddData("farbtastic", "rtl", `replace`)
+	AddData("farbtastic", "suffix", `.min`)
 
 }
 
@@ -495,7 +494,7 @@ func defaultAddInLineScript() {
 }
 
 func defaultAddInLineStyle() {
-	AddInlineStyle("global-styles", ``)
+	AddInlineStyle("global-styles", GetGlobalStyletSheet())
 	AddInlineStyle("global-styles", `.wp-block-navigation a:where(:not(.wp-element-button)){color: inherit;}`)
 	AddInlineStyle("global-styles", `:where(.wp-block-columns.is-layout-flex){gap: 2em;}`)
 	AddInlineStyle("global-styles", `.wp-block-pullquote{font-size: 1.5em;line-height: 1.6;}`)
@@ -504,10 +503,18 @@ func defaultAddInLineStyle() {
 var re = regexp.MustCompile(`(?is:\([A-Za-z0-9'.:\-/, ]+\))`)
 var rea = regexp.MustCompile(`array\(array\(.*?\)\)`)
 
-func themeJson() {
+func InitDefaultScriptSetting() {
+	initThemeJson()
+	defaultLocalize()
+	defaultTranslate()
+	defaultAddData()
+	defaultAddInLineScript()
+	defaultAddInLineStyle()
+}
+
+func initThemeJson() {
 	blocksData := __blocksData()
-	//path := config.GetConfig().WpDir
-	path := "/var/www/html/wordpress"
+	path := config.GetConfig().WpDir
 	f, err := os.ReadFile(filepath.Join(path, "wp-includes/theme.json"))
 	if err != nil {
 		logs.Error(err, "can't open theme json", path)
@@ -523,7 +530,7 @@ func themeJson() {
 	t := ThemeJson{blocksData, j}
 	setThemeJson(j)
 	setSpacingSizes(t)
-	GetStyletSheet(t, nil, nil, nil)
+	__themeJson.Store(t)
 }
 
 func setThemeJson(m map[string]any) {
@@ -594,7 +601,8 @@ func __propertyMap(m map[string]any) {
 }
 
 func __blocksData() map[string]any {
-	path := "/var/www/html/wordpress"
+	path := config.GetConfig().WpDir
+	//path := "/var/www/html/wordpress"
 	b, err := os.ReadFile(filepath.Join(path, "wp-includes/blocks/blocks-json.php"))
 	if err != nil {
 		logs.Error(err, "can't open block json", path)

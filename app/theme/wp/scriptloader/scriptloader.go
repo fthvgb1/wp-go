@@ -1,10 +1,11 @@
-package wp
+package scriptloader
 
 import (
 	"encoding/json"
 	"fmt"
 	"github.com/dlclark/regexp2"
 	"github.com/fthvgb1/wp-go/app/cmd/reload"
+	"github.com/fthvgb1/wp-go/app/theme/wp"
 	"github.com/fthvgb1/wp-go/app/wpconfig"
 	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/helper/maps"
@@ -14,6 +15,7 @@ import (
 	"github.com/fthvgb1/wp-go/safety"
 	"html"
 	"math"
+	"path/filepath"
 	"regexp"
 	"strconv"
 	"strings"
@@ -46,9 +48,9 @@ func localize(handle, objectname string, l10n map[string]any) string {
 }
 
 func AddStaticLocalize(handle, objectname string, l10n map[string]any) {
-	addData(handle, "data", localize(handle, objectname, l10n))
+	AddData(handle, "data", localize(handle, objectname, l10n))
 }
-func AddDynamicLocalize(h *Handle, handle, objectname string, l10n map[string]any) {
+func AddDynamicLocalize(h *wp.Handle, handle, objectname string, l10n map[string]any) {
 	AddDynamicData(h, handle, "data", localize(handle, objectname, l10n))
 }
 
@@ -59,7 +61,7 @@ func getData(handle, key string) string {
 	}
 	return strings.Join(h.Extra[key], "\n")
 }
-func GetData(h *Handle, handle, key string) string {
+func GetData(h *wp.Handle, handle, key string) string {
 	hh, ok := scripts.Load(handle)
 	if !ok {
 		return ""
@@ -69,7 +71,7 @@ func GetData(h *Handle, handle, key string) string {
 	return strings.Join(d, "\n")
 }
 
-func addData(handle, key, data string) {
+func AddData(handle, key, data string) {
 	s, ok := scripts.Load(handle)
 	if !ok {
 		s = NewScript(handle, "", nil, "", nil)
@@ -87,14 +89,14 @@ func AddInlineScript(handle, data, position string) {
 	if position != "after" {
 		position = "before"
 	}
-	addData(handle, position, data)
+	AddData(handle, position, data)
 }
 
 func AddInlineStyle(handle, data string) {
 	if handle == "" || data == "" {
 		return
 	}
-	addData(handle, "after", data)
+	AddData(handle, "after", data)
 }
 
 func InlineScripts(handle, position string, display bool) string {
@@ -114,6 +116,69 @@ func AddScript(handle string, src string, deps []string, ver string, args any) {
 	scripts.Store(handle, script)
 }
 
+var scriptQueues = scriptQueue{}
+
+type scriptQueue struct {
+	Register             map[string]struct{}
+	Queue                []string
+	Args                 map[string]string
+	queuedBeforeRegister map[string]string
+}
+
+func EnqueueStyle(handle, src string, deps []string, ver, media string) {
+	if media == "" {
+		media = "all"
+	}
+
+	h := strings.Split(handle, "?")
+	if src != "" {
+		AddScript(h[0], src, deps, ver, media)
+	}
+	enqueue(handle)
+}
+func EnqueueStyles(handle, src string, deps []string, ver, media string) {
+	if src != "" {
+		src = GetThemeFileUri(src)
+	}
+	EnqueueStyle(handle, src, deps, ver, media)
+}
+func EnqueueScript(handle, src string, deps []string, ver string, inFooter bool) {
+	h := strings.Split(handle, "?")
+	if src != "" {
+		AddScript(h[0], src, deps, ver, nil)
+	}
+	if inFooter {
+		AddData(h[0], "group", "1")
+	}
+	enqueue(handle)
+}
+func EnqueueScripts(handle, src string, deps []string, ver string, inFooter bool) {
+	if src != "" {
+		src = GetThemeFileUri(src)
+	}
+	EnqueueScript(handle, src, deps, ver, inFooter)
+}
+
+func enqueue(handle string) {
+	h := strings.Split(handle, "?")
+	if slice.IsContained(scriptQueues.Queue, h[0]) && maps.IsExists(scriptQueues.Register, h[0]) {
+		scriptQueues.Queue = append(scriptQueues.Queue, h[0])
+	} else if maps.IsExists(scriptQueues.Register, h[0]) {
+		scriptQueues.queuedBeforeRegister[h[0]] = ""
+		if len(h) > 1 {
+			scriptQueues.queuedBeforeRegister[h[0]] = h[1]
+		}
+	}
+}
+
+func GetStylesheetUri() string {
+	return GetThemeFileUri("/styles.css")
+}
+
+func GetThemeFileUri(file string) string {
+	return filepath.Join("/wp-content/themes", wpconfig.GetOption("template"), file)
+}
+
 type Script struct {
 	Handle           string              `json:"handle,omitempty"`
 	Src              string              `json:"src,omitempty"`
@@ -129,7 +194,7 @@ func NewScript(handle string, src string, deps []string, ver string, args any) *
 	return &Script{Handle: handle, Src: src, Deps: deps, Ver: ver, Args: args}
 }
 
-func AddDynamicData(h *Handle, handle, key, data string) {
+func AddDynamicData(h *wp.Handle, handle, key, data string) {
 	da := helper.GetContextVal(h.C, "__scriptDynamicData__", map[string]map[string][]string{})
 	m, ok := da[handle]
 	if !ok {
@@ -139,7 +204,7 @@ func AddDynamicData(h *Handle, handle, key, data string) {
 	da[handle] = m
 }
 
-func GetDynamicData(h *Handle, handle, key string) string {
+func GetDynamicData(h *wp.Handle, handle, key string) string {
 	da := helper.GetContextVal(h.C, "__scriptDynamicData__", map[string]map[string][]string{})
 	if len(da) < 1 {
 		return ""
@@ -906,7 +971,7 @@ func wpGetTypographyFontSizeValue(preset map[string]string, m map[string]any) st
 	return size
 }
 
-var __themeJson *safety.Var[ThemeJson]
+var __themeJson = reload.Vars(ThemeJson{})
 
 func GetThemeJson() ThemeJson {
 	return __themeJson.Load()
@@ -1116,7 +1181,9 @@ func getStyleNodes(t ThemeJson) []node {
 	return styleNodes
 }
 
-func GetStyletSheet(t ThemeJson, types, origins []string, options map[string]string) string {
+func GetGlobalStyletSheet() string {
+	t := __themeJson.Load()
+	var types, origins []string
 	if types == nil && !wpconfig.HasThemeJson() {
 		types = []string{"variables", "presets", "base-layout-styles"}
 	} else if types == nil {
