@@ -6,6 +6,10 @@ import (
 	"github.com/fthvgb1/wp-go/app/theme/wp"
 	"github.com/fthvgb1/wp-go/app/theme/wp/scriptloader"
 	"github.com/fthvgb1/wp-go/app/wpconfig"
+	"github.com/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/helper/maps"
+	"github.com/fthvgb1/wp-go/helper/number"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 )
 
 func pushScripts(h *wp.Handle) {
@@ -21,11 +25,23 @@ func pushScripts(h *wp.Handle) {
 	scriptloader.EnqueueScripts("html5", "/assets/js/html5.js", nil, "20161020", false)
 	scriptloader.AddData("html5", "conditional", "lt IE 9")
 
-	scriptloader.EnqueueScripts("twentyseventeen-skip-link-focus-fix", "/assets/js/skip-link-focus-fix.js", nil, "20161114", true)
+	scriptloader.EnqueueScripts("twentyseventeen-skip-link-focus-fix", "/assets/js/skip-link-focus-fix.js",
+		nil, "20161114", true)
 
-	scriptloader.AddStaticLocalize("twentyseventeen-skip-link-focus-fix", "twentyseventeenScreenReaderText", map[string]any{
-		"quote": `<svg class="icon icon-quote-right" aria-hidden="true" role="img"> <use href="#icon-quote-right" xlink:href="#icon-quote-right"></use> </svg>`,
-	})
+	l10n := map[string]any{
+		"quote": svg(h, map[string]string{"icon": "quote-right"}),
+	}
+
+	scriptloader.EnqueueScripts("twentyseventeen-global", "/assets/js/global.js",
+		[]string{"jquery"}, "20211130", true)
+
+	scriptloader.EnqueueScripts("jquery-scrollto", "/assets/js/jquery.scrollTo.js",
+		[]string{"jquery"}, "2.1.3", true)
+	scriptloader.EnqueueScripts("comment-reply", "", nil, "", false)
+
+	//todo  menu top
+
+	scriptloader.AddStaticLocalize("twentyseventeen-skip-link-focus-fix", "twentyseventeenScreenReaderText", l10n)
 	scriptloader.AddStaticLocalize("wp-custom-header", "_wpCustomHeaderSettings", map[string]any{
 		"mimeType":  `video/mp4`,
 		"posterUrl": `/wp-content/uploads/2023/01/cropped-wallhaven-9dm7dd-1.png`,
@@ -71,3 +87,37 @@ var footerScript = `<script id="twentyseventeen-skip-link-focus-fix-js-extra">
     <script src="/wp-content/themes/twentyseventeen/assets/js/skip-link-focus-fix.js?ver=20161114" id="twentyseventeen-skip-link-focus-fix-js"></script>
     <script src="/wp-content/themes/twentyseventeen/assets/js/global.js?ver=20211130" id="twentyseventeen-global-js"></script>
     <script src="/wp-content/themes/twentyseventeen/assets/js/jquery.scrollTo.js?ver=2.1.3" id="jquery-scrollto-js"></script>`
+
+func svg(h *wp.Handle, m map[string]string) string {
+	if !maps.IsExists(m, "icon") {
+		return ""
+	}
+	ariaHidden := ` aria-hidden="true"`
+	ariaLabelledby := ""
+	uniqueId := ""
+	if m["title"] != "" {
+		ariaHidden = ""
+		id := helper.GetContextVal(h.C, "svg", 0)
+		uniqueId = number.IntToString(id)
+		id++
+		h.C.Set("svg", id)
+		ariaLabelledby = str.Join(" aria-labelledby=\"title-", uniqueId, "\"")
+		if m["desc"] != "" {
+			ariaLabelledby = str.Join(" aria-labelledby=\"title-", uniqueId, " desc-", uniqueId, "\"")
+		}
+	}
+	s := str.NewBuilder()
+	s.WriteString("<svg class=\"icon icon-", m["icon"], "\"", ariaHidden, ariaLabelledby, " role=\"img\">")
+	if m["title"] != "" {
+		s.WriteString(`<title id="title-`, uniqueId, `">`, m["title"], "</title>")
+		if m["desc"] != "" {
+			s.WriteString(`<desc id="desc-`, uniqueId, `">`, m["desc"], `</desc>`)
+		}
+	}
+	s.WriteString(` <use href="#icon-`, m["icon"], `" xlink:href="#icon-`, m["icon"], `"></use> `)
+	if m["fallback"] != "" {
+		s.WriteString(`<span class="svg-fallback icon-' . esc_attr( $args['icon'] ) . '"></span>`)
+	}
+	s.WriteString(`<span class="svg-fallback icon-`, m["icon"], `"></span></svg>`)
+	return s.String()
+}

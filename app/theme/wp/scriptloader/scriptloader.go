@@ -21,14 +21,18 @@ import (
 	"strings"
 )
 
-var scripts = reload.MapBy[string, *Script](func(m *safety.Map[string, *Script]) {
+var __styles = reload.MapBy(func(m *safety.Map[string, *Script]) {
+	defaultStyles(m, ".css")
+})
+var __scripts = reload.MapBy[string, *Script](func(m *safety.Map[string, *Script]) {
 	suffix := ".min"
 	defaultScripts(m, suffix)
+
 })
 
 func addScript(handle string, src string, deps []string, ver string, args any) {
 	script := NewScript(handle, src, deps, ver, args)
-	scripts.Store(handle, script)
+	__scripts.Store(handle, script)
 }
 
 func localize(handle, objectname string, l10n map[string]any) string {
@@ -55,14 +59,14 @@ func AddDynamicLocalize(h *wp.Handle, handle, objectname string, l10n map[string
 }
 
 func getData(handle, key string) string {
-	h, ok := scripts.Load(handle)
+	h, ok := __scripts.Load(handle)
 	if !ok {
 		return ""
 	}
 	return strings.Join(h.Extra[key], "\n")
 }
 func GetData(h *wp.Handle, handle, key string) string {
-	hh, ok := scripts.Load(handle)
+	hh, ok := __scripts.Load(handle)
 	if !ok {
 		return ""
 	}
@@ -71,8 +75,14 @@ func GetData(h *wp.Handle, handle, key string) string {
 	return strings.Join(d, "\n")
 }
 
-func AddData(handle, key, data string) {
-	s, ok := scripts.Load(handle)
+func AddData(handle, key, data string, t ...int) {
+	var s *Script
+	var ok bool
+	if t != nil {
+		s, ok = __styles.Load(handle)
+	} else {
+		s, ok = __scripts.Load(handle)
+	}
 	if !ok {
 		s = NewScript(handle, "", nil, "", nil)
 	}
@@ -96,7 +106,7 @@ func AddInlineStyle(handle, data string) {
 	if handle == "" || data == "" {
 		return
 	}
-	AddData(handle, "after", data)
+	AddData(handle, "after", data, style)
 }
 
 func InlineScripts(handle, position string, display bool) string {
@@ -113,10 +123,16 @@ func InlineScripts(handle, position string, display bool) string {
 
 func AddScript(handle string, src string, deps []string, ver string, args any) {
 	script := NewScript(handle, src, deps, ver, args)
-	scripts.Store(handle, script)
+	__scripts.Store(handle, script)
 }
 
-var scriptQueues = scriptQueue{}
+const (
+	style = iota
+	script
+)
+
+var scriptQueues = reload.Vars(scriptQueue{})
+var styleQueues = reload.Vars(scriptQueue{})
 
 type scriptQueue struct {
 	Register             map[string]struct{}
@@ -134,7 +150,7 @@ func EnqueueStyle(handle, src string, deps []string, ver, media string) {
 	if src != "" {
 		AddScript(h[0], src, deps, ver, media)
 	}
-	enqueue(handle)
+	enqueue(handle, style)
 }
 func EnqueueStyles(handle, src string, deps []string, ver, media string) {
 	if src != "" {
@@ -150,7 +166,7 @@ func EnqueueScript(handle, src string, deps []string, ver string, inFooter bool)
 	if inFooter {
 		AddData(h[0], "group", "1")
 	}
-	enqueue(handle)
+	enqueue(handle, script)
 }
 func EnqueueScripts(handle, src string, deps []string, ver string, inFooter bool) {
 	if src != "" {
@@ -159,14 +175,18 @@ func EnqueueScripts(handle, src string, deps []string, ver string, inFooter bool
 	EnqueueScript(handle, src, deps, ver, inFooter)
 }
 
-func enqueue(handle string) {
+func enqueue(handle string, t int) {
 	h := strings.Split(handle, "?")
-	if slice.IsContained(scriptQueues.Queue, h[0]) && maps.IsExists(scriptQueues.Register, h[0]) {
-		scriptQueues.Queue = append(scriptQueues.Queue, h[0])
-	} else if maps.IsExists(scriptQueues.Register, h[0]) {
-		scriptQueues.queuedBeforeRegister[h[0]] = ""
+	ss := styleQueues.Load()
+	if t == 1 {
+		ss = scriptQueues.Load()
+	}
+	if slice.IsContained(ss.Queue, h[0]) && maps.IsExists(ss.Register, h[0]) {
+		ss.Queue = append(ss.Queue, h[0])
+	} else if maps.IsExists(ss.Register, h[0]) {
+		ss.queuedBeforeRegister[h[0]] = ""
 		if len(h) > 1 {
-			scriptQueues.queuedBeforeRegister[h[0]] = h[1]
+			ss.queuedBeforeRegister[h[0]] = h[1]
 		}
 	}
 }
@@ -221,7 +241,7 @@ func GetDynamicData(h *wp.Handle, handle, key string) string {
 }
 
 func SetTranslation(handle, domain, path string) {
-	hh, ok := scripts.Load(handle)
+	hh, ok := __scripts.Load(handle)
 	if !ok {
 		return
 	}
