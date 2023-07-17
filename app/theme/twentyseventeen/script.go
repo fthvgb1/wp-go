@@ -21,9 +21,9 @@ func pushScripts(h *wp.Handle) {
 			[]string{"twentyseventeen-style"}, "20191025", "")
 	}
 
-	scriptloader.AddData("twentyseventeen-ie8", "conditional", "lt IE 9")
+	scriptloader.AddScriptData("twentyseventeen-ie8", "conditional", "lt IE 9")
 	scriptloader.EnqueueScripts("html5", "/assets/js/html5.js", nil, "20161020", false)
-	scriptloader.AddData("html5", "conditional", "lt IE 9")
+	scriptloader.AddScriptData("html5", "conditional", "lt IE 9")
 
 	scriptloader.EnqueueScripts("twentyseventeen-skip-link-focus-fix", "/assets/js/skip-link-focus-fix.js",
 		nil, "20161114", true)

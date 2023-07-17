@@ -190,7 +190,7 @@ func MergeComponentsArgsForMap[K comparable, V any](h *Handle, name string, m ma
 	}
 }
 
-func (h *Handle) SetComponentsArgs(key string, value any) {
+func SetComponentsArgs(h *Handle, key string, value any) {
 	h.componentsArgs[key] = value
 }
 

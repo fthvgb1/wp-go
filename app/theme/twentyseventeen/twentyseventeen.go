@@ -43,7 +43,7 @@ func configs(h *wp.Handle) {
 	components.WidgetArea(h)
 	pushScripts(h)
 	h.PushRender(constraints.AllStats, wp.NewHandleFn(calCustomHeader, 10.005, "calCustomHeader"))
-	h.SetComponentsArgs(widgets.Widget, map[string]string{
+	wp.SetComponentsArgs(h, widgets.Widget, map[string]string{
 		"{$before_widget}": `<section id="%s" class="%s">`,
 		"{$after_widget}":  `</section>`,
 	})
