@@ -235,7 +235,7 @@ func DropdownCategories(h *wp.Handle, args map[string]string, conf map[any]any, 
 	return h.ComponentFilterFnHook("wp_dropdown_cats", s.String())
 }
 
-func IsCategory(h *wp.Handle) {
+func CheckCategory(h *wp.Handle) {
 	name, ok := parseDropdownCate(h)
 	if ok {
 		h.C.Redirect(http.StatusMovedPermanently, fmt.Sprintf("/p/category/%s", name))
@@ -266,4 +266,34 @@ func parseDropdownCate(h *wp.Handle) (cateName string, r bool) {
 	r = true
 	cateName = cc.Name
 	return
+}
+
+func IsCategory(h *wp.Handle) (category models.TermsMy, r bool) {
+	cate := wp.GetComponentsArgs[map[string]string](h, widgets.Categories, categoryArgs())
+	name, ok := cate["{$name}"]
+	if !ok || name == "" {
+		return
+	}
+	cat := h.C.Query(name)
+	if cat == "" {
+		return
+	}
+	id := str.ToInteger[uint64](cat, 0)
+	if id < 1 {
+		return
+	}
+	i, cc := slice.SearchFirst(cache.CategoriesTags(h.C, constraints.Category), func(my models.TermsMy) bool {
+		return id == my.Terms.TermId
+	})
+	if i < 0 {
+		return
+	}
+	r = true
+	category = cc
+	return
+}
+
+func IsTag(h *wp.Handle) (models.TermsMy, bool) {
+	//todo
+	return models.TermsMy{}, false
 }

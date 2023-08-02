@@ -2,10 +2,12 @@ package scriptloader
 
 import (
 	"encoding/json"
+	"fmt"
 	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/pkg/config"
 	"github.com/fthvgb1/wp-go/app/pkg/logs"
 	"github.com/fthvgb1/wp-go/app/theme/wp"
+	"github.com/fthvgb1/wp-go/app/theme/wp/components/widget"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"os"
@@ -111,6 +113,34 @@ func PrintInlineScriptTag(h *wp.Handle, script string, attr map[string]string) {
 	wp.SetComponentsArgs(h, "inlineScript", s.String())
 }
 
-func PrintStyles(h *wp.Handle) {
+func PrintInlineStyles(handle string) string {
+	o, _ := __styles.Load(handle)
+	out := o.getData("after")
+	if out == "" {
+		return ""
+	}
+	return fmt.Sprintf("<style id='%s-inline-css'%s>\n%s\n</style>\n", handle, "", out)
+}
 
+func PrintStyle(h *wp.Handle, s ...string) {
+	out := wp.GetComponentsArgs(h, "wp_style_out", str.NewBuilder())
+	out.WriteString(s...)
+}
+func PrintHead(h *wp.Handle, s ...string) {
+	out := wp.GetComponentsArgs(h, "wp_head", str.NewBuilder())
+	out.WriteString(s...)
+}
+
+func LinkHead(h *wp.Handle) {
+	PrintHead(h, "<link rel=\"https://api.w.org/\" href=\"/wp-json\" />")
+	if s := restGetQueriedResourceRoute(h); s != "" {
+		PrintHead(h, "<link rel=\"alternate\" type=\"application/json\" href=", s, " />")
+	}
+}
+
+func restGetQueriedResourceRoute(h *wp.Handle) string {
+	if cate, ok := widget.IsCategory(h); ok {
+		return fmt.Sprintf("/wp/v2/categories/%d", cate.Terms.TermId)
+	}
+	return ""
 }

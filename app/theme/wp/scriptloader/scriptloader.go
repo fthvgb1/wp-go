@@ -11,6 +11,7 @@ import (
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/safety"
+	"net/url"
 	"path/filepath"
 	"strings"
 )
@@ -86,6 +87,19 @@ func AddScriptData(handle, key, data string) {
 	s.Extra[key] = append(s.Extra[key], data)
 }
 
+func AddStyleData(handle, key, data string) {
+	var s *Style
+	var ok bool
+	s, ok = __styles.Load(handle)
+	if !ok {
+		s = NewStyle(handle, "", nil, "", nil)
+	}
+	if s.Extra == nil {
+		s.Extra = make(map[string][]string)
+	}
+	s.Extra[key] = append(s.Extra[key], data)
+}
+
 func AddInlineScript(handle, data, position string) {
 	if handle == "" || data == "" {
 		return
@@ -100,7 +114,7 @@ func AddInlineStyle(handle, data string) {
 	if handle == "" || data == "" {
 		return
 	}
-	AddScriptData(handle, "after", data, style)
+	AddStyleData(handle, "after", data)
 }
 
 func InlineScripts(handle, position string, display bool) string {
@@ -209,6 +223,10 @@ func NewScript(handle string, src string, deps []string, ver string, args any) *
 	return &Script{Dependencies{Handle: handle, Src: src, Deps: deps, Ver: ver, Args: args}}
 }
 
+func NewStyle(handle string, src string, deps []string, ver string, args any) *Style {
+	return &Style{Dependencies{Handle: handle, Src: src, Deps: deps, Ver: ver, Args: args}}
+}
+
 func AddDynamicData(h *wp.Handle, handle, key, data string) {
 	da := helper.GetContextVal(h.C, "__scriptDynamicData__", map[string]map[string][]string{})
 	m, ok := da[handle]
@@ -287,16 +305,18 @@ func (item *__parseLoadItem) allDeps(handles []string, recursion bool, group int
 }
 
 type __parseLoadItem struct {
-	todo   []string
-	done   []string
-	groups map[string]int
-	args   map[string]string
+	todo          []string
+	done          []string
+	groups        map[string]int
+	args          map[string]string
+	textDirection string
+	concat        string
+	doConcat      bool
 }
 
 func newParseLoadItem() *__parseLoadItem {
 	return &__parseLoadItem{
 		groups: map[string]int{},
-		args:   map[string]string{},
 	}
 }
 
@@ -323,14 +343,21 @@ func DoStyleItems(h *wp.Handle, handles []string, group int) []string {
 	return item.done
 }
 
+func (s *Style) DoHeadItems() {
+
+}
+func (s *Style) DoItems(handle string) {
+
+}
+
 func DoStyleItem(h *wp.Handle, item *__parseLoadItem, handle string, group int) bool {
 	obj, _ := __styles.Load(handle)
 	ver := obj.Ver
-	if v, ok := item.args[handle]; ok {
-		ver = helper.Or(ver == "", v, str.Join(ver, "&amp;", v))
+	if item.args[handle] != "" {
+		str.Join(ver, "&amp;", item.args[handle])
 	}
 	src := obj.Src
-	var condBefore, condAfter, conditional string
+	var condBefore, condAfter, conditional, _ string
 	if v, ok := obj.Extra["conditional"]; ok && v != nil {
 		conditional = v[0]
 	}
@@ -338,12 +365,39 @@ func DoStyleItem(h *wp.Handle, item *__parseLoadItem, handle string, group int) 
 		condBefore = str.Join("<!==[if ", conditional, "]>\n")
 		condAfter = "<![endif]-->\n"
 	}
-	inlineStyle := PrintInline(item, handle)
+	inlineStyle := item.PrintInline(handle)
+	if inlineStyle != "" {
+		_ = fmt.Sprintf("<style id='%s-inline-css'%s>\n%s\n</style>\n", handle, "", inlineStyle)
+	}
+	href := item.CssHref(src, ver)
+	ref := "stylesheet"
+	if v, ok := obj.Extra["alt"]; ok && v != nil {
+		ref = "alternate stylesheet"
+	}
+	title := ""
+	if v, ok := obj.Extra["title"]; ok && v != nil {
+		title = str.Join(" title='", v[len(v)-1], "'")
+	}
+	tag := fmt.Sprintf("<link rel='%s' id='%s-css'%s href='%s'%s media='%s' />\n", ref, handle, title, href, "", item.args)
 
+	if !item.doConcat {
+		PrintStyle(h, condBefore, tag, PrintInlineStyles(handle), condAfter)
+	}
 	return true
 }
 
-func PrintInline(item *__parseLoadItem, handle string) string {
+func (item *__parseLoadItem) CssHref(src, ver string) string {
+	if ver != "" {
+		u, _ := url.Parse(src)
+		v := u.Query()
+		v.Set("ver", ver)
+		u.RawQuery = v.Encode()
+		src = u.String()
+	}
+	return src
+}
+
+func (item *__parseLoadItem) PrintInline(handle string) string {
 	sty, _ := __styles.Load(handle)
 	out := sty.getData("after")
 	if out == "" {

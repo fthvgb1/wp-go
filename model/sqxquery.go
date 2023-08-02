@@ -82,6 +82,9 @@ func Scanner[T any](db *sqlx.DB, v T, s string, params ...any) func(func(T)) err
 
 func ToMapSlice[V any](db *sqlx.DB, dest *[]map[string]V, sql string, params ...any) (err error) {
 	rows, err := db.Query(sql, params...)
+	if err != nil {
+		return err
+	}
 	columns, err := rows.Columns()
 	if err != nil {
 		return err

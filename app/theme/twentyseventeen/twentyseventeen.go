@@ -37,7 +37,7 @@ func Hook(h *wp.Handle) {
 func configs(h *wp.Handle) {
 	wp.InitPipe(h)
 	h.PushHandler(constraints.PipeMiddleware, constraints.Home,
-		wp.NewHandleFn(widget.IsCategory, 100.006, "widget.IsCategory"))
+		wp.NewHandleFn(widget.CheckCategory, 100.006, "widget.CheckCategory"))
 	h.PushComponentFilterFn("bodyClass", calClass)
 	h.PushCacheGroupHeadScript(constraints.AllScene, "colorScheme-customHeader", 10, colorScheme, customHeader)
 	components.WidgetArea(h)
