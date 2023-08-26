@@ -106,3 +106,8 @@ func Counters[T constraints.Integer]() func() T {
 		return count
 	}
 }
+
+func Round(f float64, precision int) float64 {
+	p := math.Pow10(precision)
+	return math.Floor(f*p+0.5) / p
+}

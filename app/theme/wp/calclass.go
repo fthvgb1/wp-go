@@ -77,7 +77,7 @@ func (h *Handle) BodyClass() string {
 	if h.themeMods.ThemeSupport.ResponsiveEmbeds {
 		class = append(class, "wp-embed-responsive")
 	}
-	return h.ComponentFilterFnHook("bodyClass", strings.Join(class, " "))
+	return h.DoActionFilter("bodyClass", strings.Join(class, " "))
 }
 
 func postClass(h *Handle) func(posts models.Posts) string {
@@ -113,7 +113,7 @@ func (h *Handle) PostClass(posts models.Posts) string {
 		class = append(class, TermClass(term))
 	}
 
-	return h.ComponentFilterFnHook("postClass", strings.Join(class, " "))
+	return h.DoActionFilter("postClass", strings.Join(class, " "))
 }
 
 func TermClass(term models.TermsMy) string {

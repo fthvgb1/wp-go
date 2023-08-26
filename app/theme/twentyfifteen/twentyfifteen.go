@@ -18,12 +18,12 @@ func Hook(h *wp.Handle) {
 }
 
 func configs(h *wp.Handle) {
-	h.PushComponentFilterFn(widgets.Search, func(h *wp.Handle, s string, args ...any) string {
+	h.AddActionFilter(widgets.Search, func(h *wp.Handle, s string, args ...any) string {
 		return strings.ReplaceAll(s, `class="search-submit"`, `class="search-submit screen-reader-text"`)
 	})
 	wp.InitPipe(h)
 	h.PushHandler(constraints.PipeMiddleware, constraints.Home,
-		wp.NewHandleFn(widget.IsCategory, 100, "widget.IsCategory"))
+		wp.NewHandleFn(widget.CheckCategory, 100, "widget.CheckCategory"))
 
 	h.Index.SetPageEle(plugins.TwentyFifteenPagination())
 	h.PushCacheGroupHeadScript(constraints.AllScene, "CalCustomBackGround", 10.005, CalCustomBackGround)

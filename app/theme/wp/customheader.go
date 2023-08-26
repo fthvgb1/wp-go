@@ -85,7 +85,7 @@ func GetVideoSetting(h *Handle, u string) (string, error) {
 	if is := videoReg.FindString(u); is != "" {
 		v.MimeType = "video/x-youtube"
 	}
-	_ = h.ComponentFilterFnHook("videoSetting", "", &v)
+	_ = h.DoActionFilter("videoSetting", "", &v)
 	s, err := json.Marshal(v)
 	if err != nil {
 		return "", err
@@ -134,13 +134,14 @@ func CustomVideo(h *Handle, scene ...string) (ok bool) {
 	}
 	scripts = slice.Map(scripts, func(t string) string {
 		return fmt.Sprintf(`<script src="%s" id="wp-%s-js"></script>
-`, t, str.Replaces(t, [][]string{
-			{"/wp-includes/js/dist/vendor/"},
-			{"/wp-includes/js/dist/"},
-			{"/wp-includes/js/"},
-			{".min.js"},
-			{".js"},
-			{"wp-", ""},
+`, t, str.Replaces(t, []string{
+			"/wp-includes/js/dist/vendor/",
+			"/wp-includes/js/dist/",
+			"/wp-includes/js/",
+			".min.js",
+			".js",
+			"wp-",
+			"",
 		}))
 	})
 

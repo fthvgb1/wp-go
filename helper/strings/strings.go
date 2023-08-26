@@ -93,14 +93,20 @@ func Replace(s string, replace map[string]string) string {
 	}
 	return s
 }
-func Replaces(s string, replace [][]string) string {
+
+// Replaces replace string by slice as order
+//
+// []string sub []string like {old1,old2,old3,....,newString} all old[x] will be replaced by lasted newString
+func Replaces(s string, replace ...[]string) string {
 	for _, v := range replace {
 		if len(v) < 1 {
 			continue
 		} else if len(v) == 1 {
 			s = strings.ReplaceAll(s, v[0], "")
 		} else {
-			s = strings.ReplaceAll(s, v[0], v[1])
+			for _, s2 := range v[0 : len(v)-1] {
+				s = strings.ReplaceAll(s, s2, v[len(v)-1])
+			}
 		}
 	}
 	return s

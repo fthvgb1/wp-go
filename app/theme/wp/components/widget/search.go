@@ -77,5 +77,5 @@ func Search(h *wp.Handle, id string) string {
 		val = html.SpecialChars(h.Index.Param.Search)
 	}
 	s = strings.ReplaceAll(s, "{$value}", val)
-	return h.ComponentFilterFnHook(widgets.Search, str.Replace(s, args))
+	return h.DoActionFilter(widgets.Search, str.Replace(s, args))
 }

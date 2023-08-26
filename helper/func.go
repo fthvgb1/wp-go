@@ -5,6 +5,7 @@ import (
 	"fmt"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"net/url"
+	"os"
 	"reflect"
 	"strconv"
 	"strings"
@@ -119,4 +120,9 @@ func IsImplements[T, A any](i A) (T, bool) {
 	var a any = i
 	t, ok := a.(T)
 	return t, ok
+}
+
+func FileExist(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
 }

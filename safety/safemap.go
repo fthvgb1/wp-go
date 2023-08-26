@@ -390,6 +390,15 @@ func (m *Map[K, V]) Range(f func(key K, value V) bool) {
 	}
 }
 
+func (m *Map[K, V]) Keys() []K {
+	var r []K
+	m.Range(func(key K, _ V) bool {
+		r = append(r, key)
+		return true
+	})
+	return r
+}
+
 func (m *Map[K, V]) missLocked() {
 	m.misses++
 	if m.misses < len(m.dirty) {

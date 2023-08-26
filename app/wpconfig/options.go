@@ -39,7 +39,13 @@ func GetOption(k string) string {
 	if ok {
 		return v
 	}
-	vv, err := model.GetField[models.Options](ctx, "option_value", model.Conditions(model.Where(model.SqlBuilder{{"option_name", k}})))
+	vv, err := model.GetField[models.Options](ctx, "option_value",
+		model.Conditions(
+			model.Where(
+				model.SqlBuilder{{"option_name", k}},
+			),
+		),
+	)
 	options.Store(k, vv)
 	if err != nil {
 		return ""

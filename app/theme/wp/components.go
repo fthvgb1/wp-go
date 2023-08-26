@@ -190,7 +190,7 @@ func MergeComponentsArgsForMap[K comparable, V any](h *Handle, name string, m ma
 	}
 }
 
-func (h *Handle) SetComponentsArgs(key string, value any) {
+func SetComponentsArgs(h *Handle, key string, value any) {
 	h.componentsArgs[key] = value
 }
 
@@ -199,10 +199,10 @@ func (h *Handle) ComponentFilterFn(name string) ([]func(*Handle, string, ...any)
 	return fn, ok
 }
 
-func (h *Handle) PushComponentFilterFn(name string, fns ...func(*Handle, string, ...any) string) {
+func (h *Handle) AddActionFilter(name string, fns ...func(*Handle, string, ...any) string) {
 	h.componentFilterFn[name] = append(h.componentFilterFn[name], fns...)
 }
-func (h *Handle) ComponentFilterFnHook(name, s string, args ...any) string {
+func (h *Handle) DoActionFilter(name, s string, args ...any) string {
 	calls, ok := h.componentFilterFn[name]
 	if ok {
 		return slice.Reduce(calls, func(fn func(*Handle, string, ...any) string, r string) string {

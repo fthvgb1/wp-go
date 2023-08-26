@@ -64,5 +64,5 @@ func RecentComments(h *wp.Handle, id string) string {
 	</li>`, t.CommentAuthor, t.CommentPostId, t.CommentId, t.PostTitle)
 	})
 	s := strings.ReplaceAll(recentCommentsTemplate, "{$li}", strings.Join(comments, "\n"))
-	return h.ComponentFilterFnHook(widgets.RecentComments, str.Replace(s, args))
+	return h.DoActionFilter(widgets.RecentComments, str.Replace(s, args))
 }

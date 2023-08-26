@@ -37,13 +37,13 @@ func Hook(h *wp.Handle) {
 func configs(h *wp.Handle) {
 	wp.InitPipe(h)
 	h.PushHandler(constraints.PipeMiddleware, constraints.Home,
-		wp.NewHandleFn(widget.IsCategory, 100.006, "widget.IsCategory"))
-	h.PushComponentFilterFn("bodyClass", calClass)
+		wp.NewHandleFn(widget.CheckCategory, 100.006, "widget.CheckCategory"))
+	h.AddActionFilter("bodyClass", calClass)
 	h.PushCacheGroupHeadScript(constraints.AllScene, "colorScheme-customHeader", 10, colorScheme, customHeader)
 	components.WidgetArea(h)
 	pushScripts(h)
 	h.PushRender(constraints.AllStats, wp.NewHandleFn(calCustomHeader, 10.005, "calCustomHeader"))
-	h.SetComponentsArgs(widgets.Widget, map[string]string{
+	wp.SetComponentsArgs(h, widgets.Widget, map[string]string{
 		"{$before_widget}": `<section id="%s" class="%s">`,
 		"{$after_widget}":  `</section>`,
 	})
@@ -176,7 +176,7 @@ func calClass(h *wp.Handle, s string, _ ...any) string {
 }
 
 func videoHeader(h *wp.Handle) {
-	h.PushComponentFilterFn("videoSetting", videoPlay)
+	h.AddActionFilter("videoSetting", videoPlay)
 	wp.CustomVideo(h, constraints.Home)
 }
 
