@@ -69,7 +69,7 @@ func Category(h *wp.Handle, id string) string {
 	} else {
 		t = strings.ReplaceAll(t, "{$html}", categoryUL(h, args, conf, categories))
 	}
-	return h.ComponentFilterFnHook(widgets.Categories, str.Replace(t, args))
+	return h.DoActionFilter(widgets.Categories, str.Replace(t, args))
 }
 
 func CategoryLi(h *wp.Handle, conf map[any]any, categories []models.TermsMy) string {
@@ -232,7 +232,7 @@ func DropdownCategories(h *wp.Handle, args map[string]string, conf map[any]any, 
 		})
 	}
 	s.WriteString("	</select>\n")
-	return h.ComponentFilterFnHook("wp_dropdown_cats", s.String())
+	return h.DoActionFilter("wp_dropdown_cats", s.String())
 }
 
 func CheckCategory(h *wp.Handle) {
@@ -291,9 +291,4 @@ func IsCategory(h *wp.Handle) (category models.TermsMy, r bool) {
 	r = true
 	category = cc
 	return
-}
-
-func IsTag(h *wp.Handle) (models.TermsMy, bool) {
-	//todo
-	return models.TermsMy{}, false
 }

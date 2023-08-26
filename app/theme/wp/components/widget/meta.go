@@ -57,5 +57,5 @@ func Meta(h *wp.Handle, id string) string {
 	ss.Sprintf(`<li><a href="%s">条目feed</a></li>`, "/feed")
 	ss.Sprintf(`<li><a href="%s">评论feed</a></li>`, "/comments/feed")
 	s := strings.ReplaceAll(metaTemplate, "{$li}", ss.String())
-	return h.ComponentFilterFnHook(widgets.Meta, str.Replace(s, args))
+	return h.DoActionFilter(widgets.Meta, str.Replace(s, args))
 }

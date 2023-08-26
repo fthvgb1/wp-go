@@ -100,7 +100,7 @@ func BuildPipe(pipeScene string, keyFn func(*Handle, string) string, fn func(*Ha
 
 func PipeKey(h *Handle, pipScene string) string {
 	key := str.Join("pipekey", "-", pipScene, "-", h.scene, "-", h.Stats)
-	return h.ComponentFilterFnHook("pipeKey", key, pipScene)
+	return h.DoActionFilter("pipeKey", key, pipScene)
 }
 
 func Run(h *Handle, conf func(*Handle)) {
@@ -133,7 +133,7 @@ func Run(h *Handle, conf func(*Handle)) {
 }
 
 func MiddlewareKey(h *Handle, pipScene string) string {
-	return h.ComponentFilterFnHook("middleware", "middleware", pipScene)
+	return h.DoActionFilter("middleware", "middleware", pipScene)
 }
 
 func PipeMiddlewareHandle(h *Handle, middlewares map[string][]HandleCall, key string) (handlers []HandleCall) {

@@ -18,7 +18,7 @@ func Hook(h *wp.Handle) {
 }
 
 func configs(h *wp.Handle) {
-	h.PushComponentFilterFn(widgets.Search, func(h *wp.Handle, s string, args ...any) string {
+	h.AddActionFilter(widgets.Search, func(h *wp.Handle, s string, args ...any) string {
 		return strings.ReplaceAll(s, `class="search-submit"`, `class="search-submit screen-reader-text"`)
 	})
 	wp.InitPipe(h)

@@ -85,5 +85,5 @@ func RecentPosts(h *wp.Handle, id string) string {
 	</li>`, t.Id, ariaCurrent, t.PostTitle, date)
 	})
 	s := strings.ReplaceAll(recentPostsTemplate, "{$li}", strings.Join(posts, "\n"))
-	return h.ComponentFilterFnHook(widgets.RecentPosts, str.Replace(s, args))
+	return h.DoActionFilter(widgets.RecentPosts, str.Replace(s, args))
 }

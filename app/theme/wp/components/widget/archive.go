@@ -62,7 +62,7 @@ func Archive(h *wp.Handle, id string) string {
 	} else {
 		s = strings.ReplaceAll(s, "{$html}", archiveUl(h, conf, args, cache.Archives(h.C)))
 	}
-	return h.ComponentFilterFnHook(widgets.Archive, str.Replace(s, args))
+	return h.DoActionFilter(widgets.Archive, str.Replace(s, args))
 }
 
 var dropdownScript = `

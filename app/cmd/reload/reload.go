@@ -183,6 +183,14 @@ func MapBy[K comparable, T any](fn func(*safety.Map[K, T])) *safety.Map[K, T] {
 	return m
 }
 
+func SafeMap[K comparable, T any]() *safety.Map[K, T] {
+	m := safety.NewMap[K, T]()
+	calls = append(calls, func() {
+		m.Flush()
+	})
+	return m
+}
+
 func Push(fn ...func()) {
 	calls = append(calls, fn...)
 }

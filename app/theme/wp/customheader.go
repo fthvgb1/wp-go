@@ -85,7 +85,7 @@ func GetVideoSetting(h *Handle, u string) (string, error) {
 	if is := videoReg.FindString(u); is != "" {
 		v.MimeType = "video/x-youtube"
 	}
-	_ = h.ComponentFilterFnHook("videoSetting", "", &v)
+	_ = h.DoActionFilter("videoSetting", "", &v)
 	s, err := json.Marshal(v)
 	if err != nil {
 		return "", err

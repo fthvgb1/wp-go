@@ -5,9 +5,13 @@ import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/pkg/config"
+	"github.com/fthvgb1/wp-go/app/pkg/constraints"
 	"github.com/fthvgb1/wp-go/app/pkg/logs"
 	"github.com/fthvgb1/wp-go/app/theme/wp"
 	"github.com/fthvgb1/wp-go/app/theme/wp/components/widget"
+	"github.com/fthvgb1/wp-go/app/wpconfig"
+	"github.com/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/helper/number"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"os"
@@ -142,5 +146,73 @@ func restGetQueriedResourceRoute(h *wp.Handle) string {
 	if cate, ok := widget.IsCategory(h); ok {
 		return fmt.Sprintf("/wp/v2/categories/%d", cate.Terms.TermId)
 	}
+	if tag, ok := widget.IsTag(h); ok {
+		return fmt.Sprintf("/wp/v2/tags/%d", tag.Terms.TermId)
+	}
 	return ""
+}
+
+func RsdLink(h *wp.Handle) {
+	PrintHead(h, fmt.Sprintf("<link rel=\"EditURI\" type=\"application/rsd+xml\" title=\"RSD\" href=\"%s\" />\n", "xmlrpc.php?rsd"))
+}
+
+func WlwmanifestLink(h *wp.Handle) {
+	PrintHead(h, fmt.Sprintf("<link rel=\"wlwmanifest\" type=\"application/wlwmanifest+xml\" href=\"%s\" />\n", "/wp-includes/wlwmanifest.xml"))
+}
+
+func LocaleStylesheet(h *wp.Handle) {
+	uri := reload.GetAnyValBys("printHead-localStylesheet", h, func(a *wp.Handle) string {
+		ur := str.Join("wp-content/themes", h.Theme(), str.Join(wpconfig.GetLang(), ".css"))
+		path := filepath.Join(config.GetConfig().WpDir, ur)
+		if helper.FileExist(path) {
+			return str.Join("/", ur)
+		}
+		return ""
+	})
+	if uri != "" {
+		PrintHead(h, fmt.Sprintf("<link rel=\"stylesheet\" href=\"%s\"%s media=\"screen\" />", uri, ""))
+	}
+}
+
+func TheGenerator(h *wp.Handle) {
+	PrintHead(h, fmt.Sprintf(`<meta name="generator" content="WordPress %s"/>`, "6.2.2"))
+}
+
+func ShortLinkWpHead(h *wp.Handle) {
+	if h.Scene() != constraints.Detail || h.Detail.Post.Id < 1 {
+		return
+	}
+	shortlink := ""
+	post := h.Detail.Post
+	if post.PostType == "page" && wpconfig.GetOption("page_on_front") == number.IntToString(post.Id) &&
+		wpconfig.GetOption("show_on_front") == "page" {
+		shortlink = "/"
+	} else {
+		shortlink = str.Join("/p/", number.IntToString(post.Id))
+	}
+	if shortlink != "" {
+		PrintHead(h, fmt.Sprintf(`<link rel='shortlink' href="%s" />`, shortlink))
+	}
+}
+
+func customLogoHeaderStyles(h *wp.Handle) {
+	mod := h.CommonThemeMods()
+	if !mod.ThemeSupport.CustomHeader.HeaderText && mod.ThemeSupport.CustomLogo.HeaderText != "" {
+		class := mod.ThemeSupport.CustomLogo.HeaderText
+		attr := ""
+		if !slice.IsContained(mod.ThemeSupport.HTML5, "style") {
+			attr = ` type="text/css"`
+		}
+		PrintHead(h, fmt.Sprintf(`<style id="custom-logo-css"%s>
+	.%s {
+			position: absolute;
+			clip: rect(1px, 1px, 1px, 1px);
+		}
+</style>`, attr, class))
+	}
+}
+
+func PrintHeadToStr(h *wp.Handle) string {
+	h.DoActionFilter("wp_head", "", h)
+	return wp.GetComponentsArgs(h, "wp_head", str.NewBuilder()).String()
 }

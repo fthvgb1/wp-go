@@ -1,6 +1,7 @@
 package wp
 
 import (
+	"errors"
 	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/pkg/config"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints"
@@ -40,6 +41,10 @@ type Handle struct {
 	componentsArgs    map[string]any
 	componentFilterFn map[string][]func(*Handle, string, ...any) string
 	template          *template.Template
+}
+
+func (h *Handle) Theme() string {
+	return h.theme
 }
 
 func (h *Handle) GinH() gin.H {
@@ -153,7 +158,7 @@ func (h *Handle) Err() error {
 }
 
 func (h *Handle) SetErr(err error) {
-	h.err = err
+	h.err = errors.Join(err)
 }
 
 func (h *Handle) SetTempl(templ string) {
