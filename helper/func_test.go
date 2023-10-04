@@ -267,3 +267,16 @@ func TestGetValFromContext(t *testing.T) {
 		})
 	}
 }
+
+func TestGetAnyVal(t *testing.T) {
+	t.Run("string", func(t *testing.T) {
+		want := "string"
+		if got := GetAnyVal(any("string"), "s"); !reflect.DeepEqual(got, want) {
+			t.Errorf("GetAnyVal() = %v, want %v", got, want)
+		}
+		want = "s"
+		if got := GetAnyVal(any(1), "s"); !reflect.DeepEqual(got, want) {
+			t.Errorf("GetAnyVal() = %v, want %v", got, want)
+		}
+	})
+}

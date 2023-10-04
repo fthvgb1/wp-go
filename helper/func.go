@@ -126,3 +126,11 @@ func FileExist(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil
 }
+
+func GetAnyVal[T any](v any, defaults T) T {
+	vv, ok := v.(T)
+	if !ok {
+		return defaults
+	}
+	return vv
+}
