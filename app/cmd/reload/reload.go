@@ -2,11 +2,17 @@ package reload
 
 import (
 	"github.com/fthvgb1/wp-go/helper/number"
+	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/safety"
 	"sync"
 )
 
-var calls []func()
+type queue struct {
+	fn    func()
+	order float64
+}
+
+var calls []queue
 
 var anyMap = safety.NewMap[string, any]()
 
@@ -47,7 +53,7 @@ func GetAnyMapFnBys[K comparable, V, A any](namespace string, fn func(A) V) func
 	}
 }
 
-func safetyMapFn[K comparable, V, A any](namespace string) *safetyMap[K, V, A] {
+func safetyMapFn[K comparable, V, A any](namespace string, order ...float64) *safetyMap[K, V, A] {
 	vv, ok := safetyMaps.Load(namespace)
 	var m *safetyMap[K, V, A]
 	if ok {
@@ -61,7 +67,7 @@ func safetyMapFn[K comparable, V, A any](namespace string) *safetyMap[K, V, A] {
 			m = &safetyMap[K, V, A]{safety.NewMap[K, V](), sync.Mutex{}}
 			Push(func() {
 				m.val.Flush()
-			})
+			}, order...)
 			safetyMaps.Store(namespace, m)
 		}
 		safetyMapLock.Unlock()
@@ -69,8 +75,8 @@ func safetyMapFn[K comparable, V, A any](namespace string) *safetyMap[K, V, A] {
 	return m
 }
 
-func GetAnyValMapBy[K comparable, V, A any](namespace string, key K, a A, fn func(A) V) V {
-	m := safetyMapFn[K, V, A](namespace)
+func GetAnyValMapBy[K comparable, V, A any](namespace string, key K, a A, fn func(A) V, order ...float64) V {
+	m := safetyMapFn[K, V, A](namespace, order...)
 	v, ok := m.val.Load(key)
 	if ok {
 		return v
@@ -87,7 +93,7 @@ func GetAnyValMapBy[K comparable, V, A any](namespace string, key K, a A, fn fun
 	return v
 }
 
-func anyVal[T, A any](namespace string, counter bool) *safetyVar[T, A] {
+func anyVal[T, A any](namespace string, counter bool, order ...float64) *safetyVar[T, A] {
 	var vv *safetyVar[T, A]
 	vvv, ok := safetyMaps.Load(namespace)
 	if ok {
@@ -105,7 +111,7 @@ func anyVal[T, A any](namespace string, counter bool) *safetyVar[T, A] {
 			vv = &safetyVar[T, A]{safety.NewVar(v), sync.Mutex{}}
 			Push(func() {
 				vv.Val.Flush()
-			})
+			}, getOrder(order...))
 			safetyMaps.Store(namespace, vv)
 		}
 		safetyMapLock.Unlock()
@@ -113,8 +119,8 @@ func anyVal[T, A any](namespace string, counter bool) *safetyVar[T, A] {
 	return vv
 }
 
-func GetAnyValBy[T, A any](namespace string, tryTimes int, a A, fn func(A) (T, bool)) T {
-	var vv = anyVal[T, A](namespace, true)
+func GetAnyValBy[T, A any](namespace string, tryTimes int, a A, fn func(A) (T, bool), order ...float64) T {
+	var vv = anyVal[T, A](namespace, true, order...)
 	var ok bool
 	v := vv.Val.Load()
 	if v.ok {
@@ -136,8 +142,8 @@ func GetAnyValBy[T, A any](namespace string, tryTimes int, a A, fn func(A) (T, b
 	return v.v
 }
 
-func GetAnyValBys[T, A any](namespace string, a A, fn func(A) T) T {
-	var vv = anyVal[T, A](namespace, false)
+func GetAnyValBys[T, A any](namespace string, a A, fn func(A) T, order ...float64) T {
+	var vv = anyVal[T, A](namespace, false, order...)
 	v := vv.Val.Load()
 	if v.ok {
 		return v.v
@@ -155,49 +161,69 @@ func GetAnyValBys[T, A any](namespace string, a A, fn func(A) T) T {
 	return v.v
 }
 
-func Vars[T any](defaults T) *safety.Var[T] {
+func Vars[T any](defaults T, order ...float64) *safety.Var[T] {
 	ss := safety.NewVar(defaults)
-	calls = append(calls, func() {
+	ord := getOrder(order...)
+	calls = append(calls, queue{func() {
 		ss.Store(defaults)
-	})
+	}, ord})
 	return ss
 }
-func VarsBy[T any](fn func() T) *safety.Var[T] {
+
+func getOrder(order ...float64) float64 {
+	var ord float64
+	if len(order) > 0 {
+		ord = order[0]
+	}
+	return ord
+}
+func VarsBy[T any](fn func() T, order ...float64) *safety.Var[T] {
 	ss := safety.NewVar(fn())
-	calls = append(calls, func() {
-		ss.Store(fn())
+	ord := getOrder(order...)
+	calls = append(calls, queue{
+		func() {
+			ss.Store(fn())
+		}, ord,
 	})
 	return ss
 }
-func MapBy[K comparable, T any](fn func(*safety.Map[K, T])) *safety.Map[K, T] {
+func MapBy[K comparable, T any](fn func(*safety.Map[K, T]), order ...float64) *safety.Map[K, T] {
 	m := safety.NewMap[K, T]()
 	if fn != nil {
 		fn(m)
 	}
-	calls = append(calls, func() {
-		m.Flush()
-		if fn != nil {
-			fn(m)
-		}
+	ord := getOrder(order...)
+	calls = append(calls, queue{
+		func() {
+			m.Flush()
+			if fn != nil {
+				fn(m)
+			}
+		}, ord,
 	})
 	return m
 }
 
-func SafeMap[K comparable, T any]() *safety.Map[K, T] {
+func SafeMap[K comparable, T any](order ...float64) *safety.Map[K, T] {
 	m := safety.NewMap[K, T]()
-	calls = append(calls, func() {
+	ord := getOrder(order...)
+	calls = append(calls, queue{func() {
 		m.Flush()
-	})
+	}, ord})
 	return m
 }
 
-func Push(fn ...func()) {
-	calls = append(calls, fn...)
+func Push(fn func(), order ...float64) {
+	ord := getOrder(order...)
+	calls = append(calls, queue{fn, ord})
 }
 
 func Reload() {
+	slice.Sort(calls, func(i, j queue) bool {
+		return i.order > j.order
+	})
 	for _, call := range calls {
-		call()
+		call.fn()
 	}
 	anyMap.Flush()
 	safetyMaps.Flush()

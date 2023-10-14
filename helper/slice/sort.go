@@ -27,7 +27,7 @@ func (r anyArr[T]) Less(i, j int) bool {
 	return r.fn(r.data[i], r.data[j])
 }
 
-// Sort fn 中i>j 为降序，反之为升序
+// Sort fn i>j 为降序 desc，反之为升序 asc
 func Sort[T any](arr []T, fn func(i, j T) bool) {
 	slice := anyArr[T]{
 		data: arr,

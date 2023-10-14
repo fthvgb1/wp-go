@@ -12,6 +12,7 @@ import (
 	"regexp"
 	"strings"
 	"time"
+	"unicode/utf8"
 )
 
 var digestCache *cache.MapCache[uint64, string]
@@ -52,6 +53,10 @@ func Digests(content string, id uint64, limit int, fn func(id uint64, content, c
 		tag = "<a><b><blockquote><br><cite><code><dd><del><div><dl><dt><em><h1><h2><h3><h4><h5><h6><i><img><li><ol><p><pre><span><strong><ul>"
 	}
 	content = digest.StripTags(content, tag)
+	length := utf8.RuneCountInString(content) + 1
+	if length <= limit {
+		return content
+	}
 	content, closeTag = digest.Html(content, limit)
 	if fn == nil {
 		return PostsMore(id, content, closeTag)
