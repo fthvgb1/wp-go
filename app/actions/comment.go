@@ -77,7 +77,7 @@ func PostComment(c *gin.Context) {
 	}
 	req.Host = home.Host
 	res, err := cli.Do(req)
-	if err != nil && err != http.ErrUseLastResponse {
+	if err != nil && !errors.Is(err, http.ErrUseLastResponse) {
 		logs.Error(err, "请求评论接口错误")
 		return
 	}
