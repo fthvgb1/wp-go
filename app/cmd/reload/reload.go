@@ -37,7 +37,7 @@ var safetyMapLock = sync.Mutex{}
 
 var flushMapFn = safety.NewMap[string, func(any)]()
 
-func FlushMapVal(namespace string, key any) {
+func FlushMapVal[T any](namespace string, key T) {
 	fn, ok := flushMapFn.Load(namespace)
 	if !ok {
 		return
