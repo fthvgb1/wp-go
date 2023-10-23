@@ -255,12 +255,15 @@ func Push(fn func(), a ...any) {
 }
 
 func Reload() {
+	anyMap.Flush()
+	safetyMaps.Flush()
+	callsM.Flush()
+	flushMapFn.Flush()
 	slice.Sort(calls, func(i, j queue) bool {
 		return i.order > j.order
 	})
 	for _, call := range calls {
 		call.fn()
 	}
-	anyMap.Flush()
-	safetyMaps.Flush()
+	return
 }
