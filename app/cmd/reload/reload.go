@@ -45,12 +45,14 @@ func FlushMapVal[T any](namespace string, key T) {
 	fn(key)
 }
 
-func FlushAnyVal(namespace string) {
-	fn, ok := callsM.Load(namespace)
-	if !ok {
-		return
+func FlushAnyVal(namespaces ...string) {
+	for _, namespace := range namespaces {
+		fn, ok := callsM.Load(namespace)
+		if !ok {
+			return
+		}
+		fn()
 	}
-	fn()
 }
 
 func GetAnyMapFnBys[K comparable, V, A any](namespace string, fn func(A) V) func(key K, args A) V {
