@@ -49,7 +49,7 @@ func FlushAnyVal(namespaces ...string) {
 	for _, namespace := range namespaces {
 		fn, ok := callsM.Load(namespace)
 		if !ok {
-			return
+			continue
 		}
 		fn()
 	}
