@@ -77,7 +77,7 @@ func InitActionsCommonCache() {
 
 	commentsFeedCache = cache.NewVarCache(commentsFeed, time.Hour)
 
-	newCommentCache = cachemanager.NewMemoryMapCache[string, string](nil, nil, 15*time.Minute, "feed-NewComment")
+	newCommentCache = cachemanager.NewMemoryMapCache[string, string](nil, nil, 15*time.Minute, "NewComment")
 
 	InitFeed()
 }
