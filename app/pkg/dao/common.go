@@ -21,17 +21,13 @@ type PostContext struct {
 	Next models.Posts
 }
 
-func CategoriesAndTags(a ...any) (terms []models.TermsMy, err error) {
-	ctx := a[0].(context.Context)
-	t, ok := a[1].(string)
+func CategoriesAndTags(ctx context.Context, t string, _ ...any) (terms []models.TermsMy, err error) {
 	var in = []any{"category", "post_tag"}
-	if ok {
-		switch t {
-		case constraints.Category:
-			in = []any{"category"}
-		case constraints.Tag:
-			in = []any{"post_tag"}
-		}
+	switch t {
+	case constraints.Category:
+		in = []any{"category"}
+	case constraints.Tag:
+		in = []any{"post_tag"}
 	}
 	w := model.SqlBuilder{
 		{"tt.taxonomy", "in", ""},

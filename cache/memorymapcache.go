@@ -11,23 +11,13 @@ type MemoryMapCache[K comparable, V any] struct {
 	*safety.Map[K, mapVal[V]]
 }
 
-func NewMemoryMapCacheByFn[K comparable, V any](fn func(...any) (V, error), expireTime time.Duration) *MapCache[K, V] {
+func NewMemoryMapCacheByFn[K comparable, V any](fn MapSingleFn[K, V], expireTime time.Duration) *MapCache[K, V] {
 	return &MapCache[K, V]{
-		data:       NewMemoryMapCache[K, V](),
+		handle:     NewMemoryMapCache[K, V](),
 		cacheFunc:  fn,
 		expireTime: expireTime,
 		mux:        sync.Mutex{},
 	}
-}
-func NewMemoryMapCacheByBatchFn[K comparable, V any](fn func(...any) (map[K]V, error), expireTime time.Duration) *MapCache[K, V] {
-	r := &MapCache[K, V]{
-		data:         NewMemoryMapCache[K, V](),
-		batchCacheFn: fn,
-		expireTime:   expireTime,
-		mux:          sync.Mutex{},
-	}
-	r.setCacheFn(fn)
-	return r
 }
 
 func NewMemoryMapCache[K comparable, V any]() *MemoryMapCache[K, V] {

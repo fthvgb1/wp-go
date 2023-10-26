@@ -11,10 +11,8 @@ import (
 	"strconv"
 )
 
-func GetPostMetaByPostIds(args ...any) (r map[uint64]map[string]any, err error) {
+func GetPostMetaByPostIds(ctx context.Context, ids []uint64, _ ...any) (r map[uint64]map[string]any, err error) {
 	r = make(map[uint64]map[string]any)
-	ctx := args[0].(context.Context)
-	ids := args[1].([]uint64)
 	rr, err := model.Finds[models.PostMeta](ctx, model.Conditions(
 		model.Where(model.SqlBuilder{{"post_id", "in", ""}}),
 		model.In(slice.ToAnySlice(ids)),

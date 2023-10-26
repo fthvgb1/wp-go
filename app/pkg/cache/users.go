@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"github.com/fthvgb1/wp-go/app/cmd/cachemanager"
 	"github.com/fthvgb1/wp-go/app/pkg/logs"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
 	"github.com/fthvgb1/wp-go/model"
@@ -24,7 +25,7 @@ func GetAllUsername(ctx context.Context) (map[string]struct{}, error) {
 }
 
 func GetUserById(ctx context.Context, uid uint64) models.Users {
-	r, err := usersCache.GetCache(ctx, uid, time.Second, ctx, uid)
+	r, err := cachemanager.Get[models.Users]("userData", ctx, uid, time.Second)
 	logs.IfError(err, "get user", uid)
 	return r
 }

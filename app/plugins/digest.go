@@ -22,17 +22,15 @@ var more = regexp.MustCompile("<!--more(.*?)?-->")
 var removeWpBlock = regexp.MustCompile("<!-- /?wp:.*-->")
 
 func InitDigestCache() {
-	digestCache = cachemanager.MapCacheBy[uint64](digestRaw, config.GetConfig().CacheTime.DigestCacheTime)
+	digestCache = cachemanager.NewMemoryMapCache(nil, digestRaw, config.GetConfig().CacheTime.DigestCacheTime, "digestPlugin")
 }
 
 func RemoveWpBlock(s string) string {
 	return removeWpBlock.ReplaceAllString(s, "")
 }
 
-func digestRaw(arg ...any) (string, error) {
-	ctx := arg[0].(context.Context)
+func digestRaw(ctx context.Context, id uint64, arg ...any) (string, error) {
 	s := arg[1].(string)
-	id := arg[2].(uint64)
 	limit := arg[3].(int)
 	if limit < 0 {
 		return s, nil

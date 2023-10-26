@@ -10,48 +10,79 @@ import (
 )
 
 type MapCache[K comparable, V any] struct {
-	data         Cache[K, V]
+	handle       Cache[K, V]
 	mux          sync.Mutex
-	cacheFunc    func(...any) (V, error)
-	batchCacheFn func(...any) (map[K]V, error)
+	cacheFunc    MapSingleFn[K, V]
+	batchCacheFn MapBatchFn[K, V]
 	expireTime   time.Duration
 }
 
-func (m *MapCache[K, V]) SetCacheFunc(fn func(...any) (V, error)) {
+type MapSingleFn[K, V any] func(context.Context, K, ...any) (V, error)
+type MapBatchFn[K comparable, V any] func(context.Context, []K, ...any) (map[K]V, error)
+
+func NewMapCache[K comparable, V any](data Cache[K, V], cacheFunc MapSingleFn[K, V], batchCacheFn MapBatchFn[K, V], expireTime time.Duration) *MapCache[K, V] {
+	r := &MapCache[K, V]{
+		handle:       data,
+		mux:          sync.Mutex{},
+		cacheFunc:    cacheFunc,
+		batchCacheFn: batchCacheFn,
+		expireTime:   expireTime,
+	}
+	if cacheFunc == nil && batchCacheFn != nil {
+		r.setDefaultCacheFn(batchCacheFn)
+	} else if batchCacheFn == nil && cacheFunc != nil {
+		r.SetDefaultBatchFunc(cacheFunc)
+	}
+	return r
+}
+
+func (m *MapCache[K, V]) SetDefaultBatchFunc(fn MapSingleFn[K, V]) {
+	m.batchCacheFn = func(ctx context.Context, ids []K, a ...any) (map[K]V, error) {
+		var err error
+		rr := make(map[K]V)
+		for _, id := range ids {
+			v, er := fn(ctx, id)
+			if er != nil {
+				err = errors.Join(er)
+				continue
+			}
+			rr[id] = v
+		}
+		return rr, err
+	}
+}
+
+func (m *MapCache[K, V]) SetCacheFunc(fn MapSingleFn[K, V]) {
 	m.cacheFunc = fn
+}
+func (m *MapCache[K, V]) GetHandle() Cache[K, V] {
+	return m.handle
 }
 
 func (m *MapCache[K, V]) Ttl(ctx context.Context, k K) time.Duration {
-	return m.data.Ttl(ctx, k, m.expireTime)
+	return m.handle.Ttl(ctx, k, m.expireTime)
 }
 
 func (m *MapCache[K, V]) GetLastSetTime(ctx context.Context, k K) (t time.Time) {
-	tt := m.data.Ttl(ctx, k, m.expireTime)
+	tt := m.handle.Ttl(ctx, k, m.expireTime)
 	if tt <= 0 {
 		return
 	}
-	return time.Now().Add(m.data.Ttl(ctx, k, m.expireTime)).Add(-m.expireTime)
+	return time.Now().Add(m.handle.Ttl(ctx, k, m.expireTime)).Add(-m.expireTime)
 }
 
-func (m *MapCache[K, V]) SetCacheBatchFn(fn func(...any) (map[K]V, error)) {
+func (m *MapCache[K, V]) SetCacheBatchFn(fn MapBatchFn[K, V]) {
 	m.batchCacheFn = fn
 	if m.cacheFunc == nil {
-		m.setCacheFn(fn)
+		m.setDefaultCacheFn(fn)
 	}
 }
 
-func (m *MapCache[K, V]) setCacheFn(fn func(...any) (map[K]V, error)) {
-	m.cacheFunc = func(a ...any) (V, error) {
+func (m *MapCache[K, V]) setDefaultCacheFn(fn MapBatchFn[K, V]) {
+	m.cacheFunc = func(ctx context.Context, k K, a ...any) (V, error) {
 		var err error
 		var r map[K]V
-		var k K
-		ctx, ok := a[0].(context.Context)
-		if ok {
-			k, ok = a[1].(K)
-			if ok {
-				r, err = fn(ctx, []K{k})
-			}
-		}
+		r, err = fn(ctx, []K{k}, a...)
 
 		if err != nil {
 			var rr V
@@ -61,52 +92,61 @@ func (m *MapCache[K, V]) setCacheFn(fn func(...any) (map[K]V, error)) {
 	}
 }
 
-func NewMapCacheByFn[K comparable, V any](cacheType Cache[K, V], fn func(...any) (V, error), expireTime time.Duration) *MapCache[K, V] {
-	return &MapCache[K, V]{
+func NewMapCacheByFn[K comparable, V any](cacheType Cache[K, V], fn MapSingleFn[K, V], expireTime time.Duration) *MapCache[K, V] {
+	r := &MapCache[K, V]{
 		mux:        sync.Mutex{},
 		cacheFunc:  fn,
 		expireTime: expireTime,
-		data:       cacheType,
+		handle:     cacheType,
 	}
+	r.SetDefaultBatchFunc(fn)
+	return r
 }
-func NewMapCacheByBatchFn[K comparable, V any](cacheType Cache[K, V], fn func(...any) (map[K]V, error), expireTime time.Duration) *MapCache[K, V] {
+func NewMapCacheByBatchFn[K comparable, V any](cacheType Cache[K, V], fn MapBatchFn[K, V], expireTime time.Duration) *MapCache[K, V] {
 	r := &MapCache[K, V]{
 		mux:          sync.Mutex{},
 		batchCacheFn: fn,
 		expireTime:   expireTime,
-		data:         cacheType,
+		handle:       cacheType,
 	}
-	r.setCacheFn(fn)
+	r.setDefaultCacheFn(fn)
 	return r
 }
 
 func (m *MapCache[K, V]) Flush(ctx context.Context) {
 	m.mux.Lock()
 	defer m.mux.Unlock()
-	m.data.Flush(ctx)
+	m.handle.Flush(ctx)
 }
 
 func (m *MapCache[K, V]) Get(ctx context.Context, k K) (V, bool) {
-	return m.data.Get(ctx, k)
+	return m.handle.Get(ctx, k)
 }
 
 func (m *MapCache[K, V]) Set(ctx context.Context, k K, v V) {
-	m.data.Set(ctx, k, v, m.expireTime)
+	m.handle.Set(ctx, k, v, m.expireTime)
+}
+
+func (m *MapCache[K, V]) Delete(ctx context.Context, k K) {
+	m.handle.Delete(ctx, k)
+}
+func (m *MapCache[K, V]) Ver(ctx context.Context, k K) int {
+	return m.handle.Ver(ctx, k)
 }
 
 func (m *MapCache[K, V]) GetCache(c context.Context, key K, timeout time.Duration, params ...any) (V, error) {
-	data, ok := m.data.Get(c, key)
+	data, ok := m.handle.Get(c, key)
 	var err error
-	if !ok || m.data.Ttl(c, key, m.expireTime) <= 0 {
-		ver := m.data.Ver(c, key)
+	if !ok || m.handle.Ttl(c, key, m.expireTime) <= 0 {
+		ver := m.handle.Ver(c, key)
 		call := func() {
 			m.mux.Lock()
 			defer m.mux.Unlock()
-			if m.data.Ver(c, key) > ver {
-				data, _ = m.data.Get(c, key)
+			if m.handle.Ver(c, key) > ver {
+				data, _ = m.handle.Get(c, key)
 				return
 			}
-			data, err = m.cacheFunc(params...)
+			data, err = m.cacheFunc(c, key, params...)
 			if err != nil {
 				return
 			}
@@ -137,10 +177,10 @@ func (m *MapCache[K, V]) GetCacheBatch(c context.Context, key []K, timeout time.
 	var res []V
 	ver := 0
 	needFlush := slice.FilterAndMap(key, func(k K) (r K, ok bool) {
-		if _, ok := m.data.Get(c, k); !ok {
+		if _, ok := m.handle.Get(c, k); !ok {
 			return k, true
 		}
-		ver += m.data.Ver(c, k)
+		ver += m.handle.Ver(c, k)
 		return
 	})
 
@@ -151,14 +191,14 @@ func (m *MapCache[K, V]) GetCacheBatch(c context.Context, key []K, timeout time.
 			defer m.mux.Unlock()
 
 			vers := slice.Reduce(needFlush, func(t K, r int) int {
-				return r + m.data.Ver(c, t)
+				return r + m.handle.Ver(c, t)
 			}, 0)
 
 			if vers > ver {
 				return
 			}
 
-			r, er := m.batchCacheFn(params...)
+			r, er := m.batchCacheFn(c, key, params...)
 			if err != nil {
 				err = er
 				return
@@ -185,7 +225,7 @@ func (m *MapCache[K, V]) GetCacheBatch(c context.Context, key []K, timeout time.
 		}
 	}
 	res = slice.FilterAndMap(key, func(k K) (V, bool) {
-		return m.data.Get(c, k)
+		return m.handle.Get(c, k)
 	})
 	return res, err
 }
@@ -193,5 +233,5 @@ func (m *MapCache[K, V]) GetCacheBatch(c context.Context, key []K, timeout time.
 func (m *MapCache[K, V]) ClearExpired(ctx context.Context) {
 	m.mux.Lock()
 	defer m.mux.Unlock()
-	m.data.ClearExpired(ctx, m.expireTime)
+	m.handle.ClearExpired(ctx, m.expireTime)
 }

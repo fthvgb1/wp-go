@@ -9,16 +9,17 @@ import (
 	"github.com/fthvgb1/wp-go/helper/number"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
-	"github.com/gin-gonic/gin"
 	"time"
 )
 
 func GetPostById(ctx context.Context, id uint64) (models.Posts, error) {
-	return postsCache.GetCache(ctx, id, time.Second, ctx, id)
+	//return cachemanager.Get[models.Posts]("postData", ctx, id, time.Second)
+	return postsCache.GetCache(ctx, id, time.Second)
 }
 
 func GetPostsByIds(ctx context.Context, ids []uint64) ([]models.Posts, error) {
-	return postsCache.GetCacheBatch(ctx, ids, time.Second, ctx, ids)
+	//return cachemanager.GetMultiple[models.Posts]("postData", ctx, ids, time.Second)
+	return postsCache.GetCacheBatch(ctx, ids, time.Second)
 }
 
 func SearchPost(ctx context.Context, key string, args ...any) (r []models.Posts, total int, err error) {
@@ -41,7 +42,7 @@ func PostLists(ctx context.Context, key string, args ...any) (r []models.Posts, 
 	return
 }
 
-func GetMaxPostId(ctx *gin.Context) (uint64, error) {
+func GetMaxPostId(ctx context.Context) (uint64, error) {
 	return maxPostIdCache.GetCache(ctx, time.Second, ctx)
 }
 

@@ -28,9 +28,7 @@ func RecentComments(a ...any) (r []models.Comments, err error) {
 // PostComments
 // param1 context.Context
 // param2 postId
-func PostComments(args ...any) ([]uint64, error) {
-	ctx := args[0].(context.Context)
-	postId := args[1].(uint64)
+func PostComments(ctx context.Context, postId uint64, _ ...any) ([]uint64, error) {
 	r, err := model.Finds[models.Comments](ctx, model.Conditions(
 		model.Where(model.SqlBuilder{
 			{"comment_approved", "1"},
@@ -50,9 +48,7 @@ func PostComments(args ...any) ([]uint64, error) {
 	}), err
 }
 
-func GetCommentByIds(args ...any) (map[uint64]models.Comments, error) {
-	ctx := args[0].(context.Context)
-	ids := args[1].([]uint64)
+func GetCommentByIds(ctx context.Context, ids []uint64, _ ...any) (map[uint64]models.Comments, error) {
 	m := make(map[uint64]models.Comments)
 	r, err := model.SimpleFind[models.Comments](ctx, model.SqlBuilder{
 		{"comment_ID", "in", ""}, {"comment_approved", "1"},

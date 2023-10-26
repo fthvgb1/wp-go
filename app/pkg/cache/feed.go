@@ -1,6 +1,7 @@
 package cache
 
 import (
+	"context"
 	"fmt"
 	"github.com/fthvgb1/wp-go/app/pkg/logs"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
@@ -92,9 +93,8 @@ func feed(arg ...any) (xml []string, err error) {
 	return
 }
 
-func postFeed(arg ...any) (x string, err error) {
-	c := arg[0].(*gin.Context)
-	id := arg[1].(string)
+func postFeed(c context.Context, id string, arg ...any) (x string, err error) {
+	id = arg[1].(string)
 	ID := str.ToInteger[uint64](id, 0)
 	maxId, err := GetMaxPostId(c)
 	logs.IfError(err, "get max post id")

@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"github.com/fthvgb1/wp-go/app/cmd/cachemanager"
 	"github.com/fthvgb1/wp-go/app/pkg/logs"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
 	"github.com/fthvgb1/wp-go/cache"
@@ -28,11 +29,11 @@ func PostComments(ctx context.Context, Id uint64) ([]models.Comments, error) {
 }
 
 func GetCommentById(ctx context.Context, id uint64) (models.Comments, error) {
-	return commentsCache.GetCache(ctx, id, time.Second, ctx, id)
+	return cachemanager.Get[models.Comments]("commentData", ctx, id, time.Second)
 }
 
 func GetCommentByIds(ctx context.Context, ids []uint64) ([]models.Comments, error) {
-	return commentsCache.GetCacheBatch(ctx, ids, time.Second, ctx, ids)
+	return cachemanager.GetMultiple[models.Comments]("commentData", ctx, ids, time.Second)
 }
 
 func NewCommentCache() *cache.MapCache[string, string] {

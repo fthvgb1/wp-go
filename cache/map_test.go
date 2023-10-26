@@ -12,19 +12,17 @@ import (
 )
 
 var ca MapCache[string, string]
-var fn func(a ...any) (string, error)
-var batchFn func(a ...any) (map[string]string, error)
+var fn MapSingleFn[string, string]
+var batchFn MapBatchFn[string, string]
 var ct context.Context
 
 func init() {
-	fn = func(a ...any) (string, error) {
-		aa := a[1].(string)
+	fn = func(ctx context.Context, aa string, a ...any) (string, error) {
 		return strings.Repeat(aa, 2), nil
 	}
 	ct = context.Background()
-	batchFn = func(a ...any) (map[string]string, error) {
+	batchFn = func(ctx context.Context, arr []string, a ...any) (map[string]string, error) {
 		fmt.Println(a)
-		arr := a[1].([]string)
 		return slice.FilterAndToMap(arr, func(t string) (string, string, bool) {
 			return t, strings.Repeat(t, 2), true
 		}), nil
@@ -293,7 +291,7 @@ func TestMapCache_Set(t *testing.T) {
 
 func TestMapCache_SetCacheBatchFn(t *testing.T) {
 	type args[K comparable, V any] struct {
-		fn func(...any) (map[K]V, error)
+		fn MapBatchFn[K, V]
 	}
 	type testCase[K comparable, V any] struct {
 		name string
@@ -315,19 +313,19 @@ func TestMapCache_SetCacheBatchFn(t *testing.T) {
 }
 
 func TestMapCache_SetCacheFunc(t *testing.T) {
-	type args[V any] struct {
-		fn func(...any) (V, error)
+	type args[K comparable, V any] struct {
+		fn MapSingleFn[K, V]
 	}
 	type testCase[K comparable, V any] struct {
 		name string
 		m    MapCache[K, V]
-		args args[V]
+		args args[K, V]
 	}
 	tests := []testCase[string, string]{
 		{
 			name: "t1",
 			m:    ca,
-			args: args[string]{fn: fn},
+			args: args[string, string]{fn: fn},
 		},
 	}
 	for _, tt := range tests {
@@ -370,7 +368,7 @@ func TestMapCache_Ttl(t *testing.T) {
 
 func TestMapCache_setCacheFn(t *testing.T) {
 	type args[K comparable, V any] struct {
-		fn func(...any) (map[K]V, error)
+		fn MapBatchFn[K, V]
 	}
 	type testCase[K comparable, V any] struct {
 		name string
@@ -387,7 +385,7 @@ func TestMapCache_setCacheFn(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ca.cacheFunc = nil
-			tt.m.setCacheFn(tt.args.fn)
+			tt.m.setDefaultCacheFn(tt.args.fn)
 			fmt.Println(ca.GetCache(ct, "xx", time.Second, ct, "xx"))
 		})
 	}

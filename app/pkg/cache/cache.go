@@ -27,10 +27,7 @@ var postListIdsCache *cache.MapCache[string, dao.PostIds]
 var searchPostIdsCache *cache.MapCache[string, dao.PostIds]
 var maxPostIdCache *cache.VarCache[uint64]
 
-var usersCache *cache.MapCache[uint64, models.Users]
 var usersNameCache *cache.MapCache[string, models.Users]
-var commentsCache *cache.MapCache[uint64, models.Comments]
-
 var feedCache *cache.VarCache[[]string]
 
 var postFeedCache *cache.MapCache[string, string]
@@ -44,43 +41,43 @@ var allUsernameCache *cache.VarCache[map[string]struct{}]
 func InitActionsCommonCache() {
 	c := config.GetConfig()
 
-	searchPostIdsCache = cachemanager.MapCacheBy[string](dao.SearchPostIds, c.CacheTime.SearchPostCacheTime)
+	searchPostIdsCache = cachemanager.NewMemoryMapCache(nil, dao.SearchPostIds, c.CacheTime.SearchPostCacheTime, "searchPostIds")
 
-	postListIdsCache = cachemanager.MapCacheBy[string](dao.SearchPostIds, c.CacheTime.PostListCacheTime)
+	postListIdsCache = cachemanager.NewMemoryMapCache(nil, dao.SearchPostIds, c.CacheTime.PostListCacheTime, "listPostIds")
 
-	monthPostsCache = cachemanager.MapCacheBy[string](dao.MonthPost, c.CacheTime.MonthPostCacheTime)
+	monthPostsCache = cachemanager.NewMemoryMapCache(nil, dao.MonthPost, c.CacheTime.MonthPostCacheTime, "monthPostIds")
 
-	postContextCache = cachemanager.MapCacheBy[uint64](dao.GetPostContext, c.CacheTime.ContextPostCacheTime)
+	postContextCache = cachemanager.NewMemoryMapCache(nil, dao.GetPostContext, c.CacheTime.ContextPostCacheTime, "postContext")
 
-	postsCache = cachemanager.MapBatchCacheBy(dao.GetPostsByIds, c.CacheTime.PostDataCacheTime)
+	postsCache = cachemanager.NewMemoryMapCache(dao.GetPostsByIds, nil, c.CacheTime.PostDataCacheTime, "postData")
 
-	postMetaCache = cachemanager.MapBatchCacheBy(dao.GetPostMetaByPostIds, c.CacheTime.PostDataCacheTime)
+	postMetaCache = cachemanager.NewMemoryMapCache(dao.GetPostMetaByPostIds, nil, c.CacheTime.PostDataCacheTime, "postMetaData")
 
-	categoryAndTagsCaches = cachemanager.MapCacheBy[string](dao.CategoriesAndTags, c.CacheTime.CategoryCacheTime)
+	categoryAndTagsCaches = cachemanager.NewMemoryMapCache(nil, dao.CategoriesAndTags, c.CacheTime.CategoryCacheTime, "categoryAndTagsData")
 
 	recentPostsCaches = cache.NewVarCache(dao.RecentPosts, c.CacheTime.RecentPostCacheTime)
 
 	recentCommentsCaches = cache.NewVarCache(dao.RecentComments, c.CacheTime.RecentCommentsCacheTime)
 
-	postCommentCaches = cachemanager.MapCacheBy[uint64](dao.PostComments, c.CacheTime.PostCommentsCacheTime)
+	postCommentCaches = cachemanager.NewMemoryMapCache(nil, dao.PostComments, c.CacheTime.PostCommentsCacheTime, "postCommentIds")
 
 	maxPostIdCache = cache.NewVarCache(dao.GetMaxPostId, c.CacheTime.MaxPostIdCacheTime)
 
-	usersCache = cachemanager.MapCacheBy[uint64](dao.GetUserById, c.CacheTime.UserInfoCacheTime)
+	cachemanager.NewMemoryMapCache(nil, dao.GetUserById, c.CacheTime.UserInfoCacheTime, "userData")
 
-	usersNameCache = cachemanager.MapCacheBy[string](dao.GetUserByName, c.CacheTime.UserInfoCacheTime)
+	usersNameCache = cachemanager.NewMemoryMapCache(nil, dao.GetUserByName, c.CacheTime.UserInfoCacheTime, "usernameMapToUserData")
 
-	commentsCache = cachemanager.MapBatchCacheBy(dao.GetCommentByIds, c.CacheTime.CommentsCacheTime)
+	cachemanager.NewMemoryMapCache(dao.GetCommentByIds, nil, c.CacheTime.CommentsCacheTime, "commentData")
 
 	allUsernameCache = cache.NewVarCache(dao.AllUsername, c.CacheTime.UserInfoCacheTime)
 
 	feedCache = cache.NewVarCache(feed, time.Hour)
 
-	postFeedCache = cachemanager.MapCacheBy[string](postFeed, time.Hour)
+	postFeedCache = cachemanager.NewMemoryMapCache(nil, postFeed, time.Hour, "postFeed")
 
 	commentsFeedCache = cache.NewVarCache(commentsFeed, time.Hour)
 
-	newCommentCache = cachemanager.MapCacheBy[string, string](nil, 15*time.Minute)
+	newCommentCache = cachemanager.NewMemoryMapCache[string, string](nil, nil, 15*time.Minute, "feed-NewComment")
 
 	InitFeed()
 }

@@ -7,9 +7,7 @@ import (
 	"github.com/fthvgb1/wp-go/model"
 )
 
-func GetUserById(a ...any) (r models.Users, err error) {
-	ctx := a[0].(context.Context)
-	uid := a[1].(uint64)
+func GetUserById(ctx context.Context, uid uint64, _ ...any) (r models.Users, err error) {
 	r, err = model.FindOneById[models.Users](ctx, uid)
 	return
 }
@@ -27,9 +25,7 @@ func AllUsername(a ...any) (map[string]struct{}, error) {
 	}, true), nil
 }
 
-func GetUserByName(a ...any) (r models.Users, err error) {
-	u := a[1].(string)
-	ctx := a[0].(context.Context)
+func GetUserByName(ctx context.Context, u string, _ ...any) (r models.Users, err error) {
 	r, err = model.FirstOne[models.Users](ctx, model.SqlBuilder{{
 		"user_login", u,
 	}}, "*", nil)

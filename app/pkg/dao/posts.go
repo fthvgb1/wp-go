@@ -3,6 +3,7 @@ package dao
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
 	"github.com/fthvgb1/wp-go/app/pkg/models/relation"
@@ -15,10 +16,8 @@ import (
 	"time"
 )
 
-func GetPostsByIds(a ...any) (m map[uint64]models.Posts, err error) {
-	ctx := a[0].(context.Context)
+func GetPostsByIds(ctx context.Context, ids []uint64, _ ...any) (m map[uint64]models.Posts, err error) {
 	m = make(map[uint64]models.Posts)
-	ids := a[1].([]uint64)
 	q := model.Conditions(
 		model.Where(model.SqlBuilder{{"Id", "in", ""}}),
 		model.Join(model.SqlBuilder{
@@ -99,8 +98,7 @@ func GetPostsByIds(a ...any) (m map[uint64]models.Posts, err error) {
 	return
 }
 
-func SearchPostIds(args ...any) (ids PostIds, err error) {
-	ctx := args[0].(context.Context)
+func SearchPostIds(ctx context.Context, _ string, args ...any) (ids PostIds, err error) {
 	q := args[1].(*model.QueryCondition)
 	page := args[2].(int)
 	pageSize := args[3].(int)
@@ -146,15 +144,14 @@ func RecentPosts(a ...any) (r []models.Posts, err error) {
 	return
 }
 
-func GetPostContext(arg ...any) (r PostContext, err error) {
-	ctx := arg[0].(context.Context)
+func GetPostContext(ctx context.Context, _ uint64, arg ...any) (r PostContext, err error) {
 	t := arg[1].(time.Time)
 	next, err := model.FirstOne[models.Posts](ctx, model.SqlBuilder{
 		{"post_date", ">", t.Format("2006-01-02 15:04:05")},
 		{"post_status", "in", ""},
 		{"post_type", "post"},
 	}, "ID,post_title,post_password", nil, []any{"publish"})
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		err = nil
 	}
 	if err != nil {
@@ -165,7 +162,7 @@ func GetPostContext(arg ...any) (r PostContext, err error) {
 		{"post_status", "in", ""},
 		{"post_type", "post"},
 	}, "ID,post_title", model.SqlBuilder{{"post_date", "desc"}}, []any{"publish"})
-	if err == sql.ErrNoRows {
+	if errors.Is(err, sql.ErrNoRows) {
 		err = nil
 	}
 	if err != nil {
@@ -178,8 +175,7 @@ func GetPostContext(arg ...any) (r PostContext, err error) {
 	return
 }
 
-func MonthPost(args ...any) (r []uint64, err error) {
-	ctx := args[0].(context.Context)
+func MonthPost(ctx context.Context, _ string, args ...any) (r []uint64, err error) {
 	year, month := args[1].(string), args[2].(string)
 	where := model.SqlBuilder{
 		{"post_type", "post"},
