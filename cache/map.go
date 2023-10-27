@@ -132,8 +132,8 @@ func (m *MapCache[K, V]) GetCacheBatch(c context.Context, key []K, timeout time.
 	var res []V
 	ver := 0
 	needFlush := slice.FilterAndMap(key, func(k K) (r K, ok bool) {
-		ver += m.Ver(c, k)
 		if _, ok := m.Get(c, k); !ok {
+			ver += m.Ver(c, k)
 			return k, true
 		}
 		return
