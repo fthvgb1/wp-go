@@ -92,7 +92,7 @@ func (m *MapCache[K, V]) Flush(ctx context.Context) {
 func (m *MapCache[K, V]) GetCache(c context.Context, key K, timeout time.Duration, params ...any) (V, error) {
 	data, ok := m.Get(c, key)
 	var err error
-	if !ok || m.Ttl(c, key) <= 0 {
+	if !ok {
 		ver := m.Ver(c, key)
 		call := func() {
 			m.mux.Lock()
@@ -132,10 +132,10 @@ func (m *MapCache[K, V]) GetCacheBatch(c context.Context, key []K, timeout time.
 	var res []V
 	ver := 0
 	needFlush := slice.FilterAndMap(key, func(k K) (r K, ok bool) {
+		ver += m.Ver(c, k)
 		if _, ok := m.Get(c, k); !ok {
 			return k, true
 		}
-		ver += m.Ver(c, k)
 		return
 	})
 

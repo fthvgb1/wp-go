@@ -2,6 +2,7 @@ package wp
 
 import (
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/pkg/cache"
@@ -127,7 +128,7 @@ func (i *IndexHandle) BuildIndexData(parm *IndexParams) (err error) {
 		return
 	}
 	posts, totalRows, err := i.GetIndexData()
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		i.Stats = constraints.Error404
 		return
 	}
