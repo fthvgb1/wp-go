@@ -7,7 +7,9 @@ import (
 
 func TestFlushMapVal(t *testing.T) {
 	t.Run("t1", func(t *testing.T) {
+		c := 0
 		v := GetAnyValMapBy("key", 2, struct{}{}, func(a struct{}) int {
+			c++
 			return 33
 		})
 		fmt.Println(v)

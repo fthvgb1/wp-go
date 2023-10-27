@@ -353,12 +353,12 @@ func TestMapCache_Ttl(t *testing.T) {
 			name: "t1",
 			m:    ca,
 			args: args[string]{ct, "aa"},
-			want: ca.expireTime - tx.Sub(txx),
+			want: ca.GetExpireTime(ct) - tx.Sub(txx),
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			fmt.Printf("过期时间=%v \nttl=%v \n当前时间   =%v\n最后设置时间=%v\n当时时间-最后设置时间=%v ", ca.expireTime, ca.Ttl(ct, "aa"), tx, txx, tx.Sub(txx))
+			fmt.Printf("过期时间=%v \nttl=%v \n当前时间   =%v\n最后设置时间=%v\n当时时间-最后设置时间=%v ", ca.GetExpireTime(ct), ca.Ttl(ct, "aa"), tx, txx, tx.Sub(txx))
 			if got := tt.m.Ttl(tt.args.ct, tt.args.k); got != tt.want {
 				t.Errorf("Ttl() = %v, want %v", got, tt.want)
 			}

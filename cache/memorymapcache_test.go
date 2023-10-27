@@ -15,7 +15,7 @@ var ttt time.Time
 
 func init() {
 	ctx = context.Background()
-	mm = *NewMemoryMapCache[string, string]()
+	mm = *NewMemoryMapCache[string, string](3 * time.Second)
 	ttt = time.Now()
 	mm.Store("aa", mapVal[string]{
 		setTime: ttt,
@@ -53,7 +53,7 @@ func TestMemoryMapCache_ClearExpired(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			fmt.Println(tt.m)
-			tt.m.ClearExpired(tt.args.in0, tt.args.expire)
+			tt.m.ClearExpired(tt.args.in0)
 			time.Sleep(time.Second)
 			fmt.Println(tt.m)
 		})
@@ -83,7 +83,7 @@ func TestMemoryMapCache_Delete(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			fmt.Println(mm.Get(ctx, "aa"))
-			tt.m.Delete(tt.args.in0, tt.args.key)
+			tt.m.Del(tt.args.in0, tt.args.key)
 			fmt.Println(mm.Get(ctx, "aa"))
 
 		})
@@ -111,7 +111,7 @@ func TestMemoryMapCache_Flush(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			tt.m.Flush(tt.args.in0)
-			mm.Set(ctx, "aa", "xx", time.Second)
+			mm.Set(ctx, "aa", "xx")
 			fmt.Println(mm.Get(ctx, "aa"))
 		})
 	}
@@ -180,7 +180,7 @@ func TestMemoryMapCache_Set(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			tt.m.Set(tt.args.in0, tt.args.key, tt.args.val, tt.args.in3)
+			tt.m.Set(tt.args.in0, tt.args.key, tt.args.val)
 			fmt.Println(tt.m.Get(ctx, tt.args.key))
 		})
 	}
@@ -209,7 +209,7 @@ func TestMemoryMapCache_Ttl(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := tt.m.Ttl(tt.args.in0, tt.args.key, tt.args.expire); got != tt.want {
+			if got := tt.m.Ttl(tt.args.in0, tt.args.key); got != tt.want {
 				t.Errorf("Ttl() = %v, want %v", got, tt.want)
 			}
 		})
@@ -227,7 +227,7 @@ func TestMemoryMapCache_Ver(t *testing.T) {
 		args args[K]
 		want int
 	}
-	mm.Set(ctx, "aa", "ff", time.Second)
+	mm.Set(ctx, "aa", "ff")
 	tests := []testCase[string, string]{
 		{
 			name: "t1",

@@ -34,12 +34,12 @@ func Flush() {
 	}
 }
 
-func FlushMapVal[T any](name string, key T) {
+func FlushMapVal[T any](name string, keys ...T) {
 	v, ok := mapFlush.Load(name)
-	if !ok {
+	if !ok || len(keys) < 1 {
 		return
 	}
-	v(key)
+	v(keys)
 }
 
 func FlushAnyVal(name ...string) {
@@ -58,9 +58,9 @@ func pushFlushMap[K comparable, V any](m *cache.MapCache[K, V], args ...any) {
 			m.Flush(ctx)
 		})
 		mapFlush.Store(name, func(a any) {
-			k, ok := a.(K)
-			if ok {
-				m.Delete(ctx, k)
+			k, ok := a.([]K)
+			if ok && len(k) > 0 {
+				m.Del(ctx, k...)
 			}
 		})
 		getSingleFn.Store(name, func(ct context.Context, k any, t time.Duration, a ...any) (any, error) {
@@ -119,9 +119,8 @@ func parseArgs(args ...any) string {
 	return name
 }
 
-func NewMapCache[K comparable, V any](data cache.Cache[K, V], batchFn cache.MapBatchFn[K, V],
-	fn cache.MapSingleFn[K, V], expireTime time.Duration, args ...any) *cache.MapCache[K, V] {
-	m := cache.NewMapCache[K, V](data, fn, batchFn, expireTime)
+func NewMapCache[K comparable, V any](data cache.Cache[K, V], batchFn cache.MapBatchFn[K, V], fn cache.MapSingleFn[K, V], args ...any) *cache.MapCache[K, V] {
+	m := cache.NewMapCache[K, V](data, fn, batchFn)
 	pushFlushMap(m, args...)
 	FlushPush(m)
 	ClearPush(m)
@@ -129,7 +128,7 @@ func NewMapCache[K comparable, V any](data cache.Cache[K, V], batchFn cache.MapB
 }
 func NewMemoryMapCache[K comparable, V any](batchFn cache.MapBatchFn[K, V],
 	fn cache.MapSingleFn[K, V], expireTime time.Duration, args ...any) *cache.MapCache[K, V] {
-	return NewMapCache[K, V](cache.NewMemoryMapCache[K, V](), batchFn, fn, expireTime, args...)
+	return NewMapCache[K, V](cache.NewMemoryMapCache[K, V](expireTime), batchFn, fn, args...)
 }
 
 func FlushPush(f ...flush) {

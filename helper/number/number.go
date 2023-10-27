@@ -10,21 +10,25 @@ import (
 	"strconv"
 )
 
-func Range[T constraints.Integer](start, end, step T) []T {
-	if step == 0 {
-		panic("step can't be 0")
+func Range[T constraints.Integer](start, end T, steps ...T) []T {
+	step := T(1)
+	if len(steps) > 0 {
+		step = steps[0]
 	}
-	l := int((end-start+1)/step + 1)
+	var l int
+	if step == 0 {
+		l = int(end - start + 1)
+	} else {
+		l = int((end-start+1)/step + 1)
+	}
 	if l < 0 {
-		l = 0 - l
+		l = -l
 	}
 	r := make([]T, 0, l)
-	for i := start; ; {
-		r = append(r, i)
-		i = i + step
-		if (step > 0 && i > end) || (step < 0 && i < end) {
-			break
-		}
+	gap := start
+	for i := 0; i < l; i++ {
+		r = append(r, gap)
+		gap += step
 	}
 	return r
 }
@@ -36,23 +40,23 @@ func Rand[T constraints.Integer](start, end T) T {
 }
 
 func Min[T constraints.Integer | constraints.Float](a ...T) T {
-	min := a[0]
+	mins := a[0]
 	for _, t := range a {
-		if min > t {
-			min = t
+		if mins > t {
+			mins = t
 		}
 	}
-	return min
+	return mins
 }
 
 func Max[T constraints.Integer | constraints.Float](a ...T) T {
-	max := a[0]
+	maxs := a[0]
 	for _, t := range a {
-		if max < t {
-			max = t
+		if maxs < t {
+			maxs = t
 		}
 	}
-	return max
+	return maxs
 }
 
 func Sum[T constraints.Integer | constraints.Float](a ...T) T {

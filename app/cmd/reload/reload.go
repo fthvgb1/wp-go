@@ -37,9 +37,9 @@ var safetyMapLock = sync.Mutex{}
 
 var flushMapFn = safety.NewMap[string, func(any)]()
 
-func FlushMapVal[T any](namespace string, key T) {
+func FlushMapVal[T any](namespace string, key ...T) {
 	fn, ok := flushMapFn.Load(namespace)
-	if !ok {
+	if !ok || len(key) < 1 {
 		return
 	}
 	fn(key)
@@ -89,11 +89,13 @@ func safetyMapFn[K comparable, V, A any](namespace string, args ...any) *safetyM
 			m = &safetyMap[K, V, A]{safety.NewMap[K, V](), sync.Mutex{}}
 			ord, _ := parseArgs(args...)
 			flushMapFn.Store(namespace, func(a any) {
-				k, ok := a.(K)
-				if !ok {
+				k, ok := a.([]K)
+				if !ok && len(k) > 0 {
 					return
 				}
-				m.val.Delete(k)
+				for _, key := range k {
+					m.val.Delete(key)
+				}
 			})
 			Push(func() {
 				m.val.Flush()
