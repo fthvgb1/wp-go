@@ -164,17 +164,15 @@ func (m *MapCache[K, V]) GetCacheBatch(c context.Context, key []K, timeout time.
 			err = er
 			return
 		}
-		for k, v := range r {
-			m.Set(c, k, v)
-			if i, ok := needIndex[k]; ok {
-				res[i] = v
-				delete(needIndex, k)
-			}
-		}
 		for k, i := range needIndex {
-			v, ok := m.Get(c, k)
+			v, ok := r[k]
 			if ok {
 				res[i] = v
+			} else {
+				v, ok = m.Get(c, k)
+				if ok {
+					res[i] = v
+				}
 			}
 		}
 	}
