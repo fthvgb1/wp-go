@@ -129,25 +129,23 @@ func (m *MapCache[K, V]) GetCache(c context.Context, key K, timeout time.Duratio
 }
 
 func (m *MapCache[K, V]) GetCacheBatch(c context.Context, key []K, timeout time.Duration, params ...any) ([]V, error) {
-	var res []V
-	ver := 0
+	var res = make([]V, 0, len(key))
+	var ver = 0
 	var needFlush []K
-	var needIndex = make(map[int]K)
-	slice.ForEach(key, func(i int, k K) {
+	var needIndex = make(map[K]int)
+	for i, k := range key {
 		v, ok := m.Get(c, k)
-		var vv V
-		if ok {
-			vv = v
-		} else {
+		if !ok {
 			needFlush = append(needFlush, k)
 			ver += m.Ver(c, k)
-			needIndex[i] = k
+			needIndex[k] = i
 		}
-		res = append(res, vv)
-	})
+		res = append(res, v)
+	}
 	if len(needFlush) < 1 {
 		return res, nil
 	}
+
 	var err error
 	call := func() {
 		m.mux.Lock()
@@ -168,6 +166,9 @@ func (m *MapCache[K, V]) GetCacheBatch(c context.Context, key []K, timeout time.
 		}
 		for k, v := range r {
 			m.Set(c, k, v)
+			if i, ok := needIndex[k]; ok {
+				res[i] = v
+			}
 		}
 	}
 	if timeout > 0 {
@@ -186,11 +187,6 @@ func (m *MapCache[K, V]) GetCacheBatch(c context.Context, key []K, timeout time.
 	} else {
 		call()
 	}
-	for index, k := range needIndex {
-		v, ok := m.Get(c, k)
-		if ok {
-			res[index] = v
-		}
-	}
+
 	return res, err
 }
