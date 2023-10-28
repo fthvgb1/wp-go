@@ -168,6 +168,7 @@ func (m *MapCache[K, V]) GetCacheBatch(c context.Context, key []K, timeout time.
 			v, ok := r[k]
 			if ok {
 				res[i] = v
+				m.Set(c, k, v)
 			} else {
 				v, ok = m.Get(c, k)
 				if ok {
