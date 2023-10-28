@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/fthvgb1/wp-go/helper/slice"
+	"github.com/fthvgb1/wp-go/helper/maps"
 	"sync"
 	"time"
 )
@@ -130,19 +130,17 @@ func (m *MapCache[K, V]) GetCache(c context.Context, key K, timeout time.Duratio
 
 func (m *MapCache[K, V]) GetCacheBatch(c context.Context, key []K, timeout time.Duration, params ...any) ([]V, error) {
 	var res = make([]V, 0, len(key))
-	var needFlush []K
 	var needIndex = make(map[K]int)
 	var ver = make(map[K]int)
 	for i, k := range key {
 		v, ok := m.Get(c, k)
 		if !ok {
-			needFlush = append(needFlush, k)
 			ver[k] = m.Ver(c, k)
 			needIndex[k] = i
 		}
 		res = append(res, v)
 	}
-	if len(needFlush) < 1 {
+	if len(needIndex) < 1 {
 		return res, nil
 	}
 
@@ -150,9 +148,8 @@ func (m *MapCache[K, V]) GetCacheBatch(c context.Context, key []K, timeout time.
 	call := func() {
 		m.mux.Lock()
 		defer m.mux.Unlock()
-
-		needFlushs := slice.Filter(needFlush, func(k K, i int) bool {
-			return ver[k] >= m.Ver(c, k)
+		needFlushs := maps.FilterToSlice(needIndex, func(k K, v int) (K, bool) {
+			return k, ver[k] >= m.Ver(c, k)
 		})
 
 		if len(needFlushs) < 1 {
@@ -170,6 +167,13 @@ func (m *MapCache[K, V]) GetCacheBatch(c context.Context, key []K, timeout time.
 		for k, v := range r {
 			m.Set(c, k, v)
 			if i, ok := needIndex[k]; ok {
+				res[i] = v
+				delete(needIndex, k)
+			}
+		}
+		for k, i := range needIndex {
+			v, ok := m.Get(c, k)
+			if ok {
 				res[i] = v
 			}
 		}
