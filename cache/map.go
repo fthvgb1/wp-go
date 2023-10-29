@@ -224,7 +224,6 @@ func (m *MapCache[K, V]) getBatches(e Expend[K, V]) func(ctx context.Context, ke
 			if !ok {
 				flushKeys = append(flushKeys, k)
 				needIndex[k] = i
-			} else {
 				var vv V
 				v = vv
 			}
