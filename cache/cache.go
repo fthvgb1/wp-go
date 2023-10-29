@@ -15,3 +15,9 @@ type Cache[K comparable, V any] interface {
 	Del(ctx context.Context, key ...K)
 	ClearExpired(ctx context.Context)
 }
+
+type Expend[K comparable, V any] interface {
+	Gets(ctx context.Context, k []K) (map[K]V, error)
+	Vers(ctx context.Context, k []K) map[K]int
+	Sets(ctx context.Context, m map[K]V)
+}
