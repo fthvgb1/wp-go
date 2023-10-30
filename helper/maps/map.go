@@ -24,6 +24,18 @@ func StructToAnyMap[K comparable, T any](s T) (r map[K]any, err error) {
 	return
 }
 
+func Filter[M ~map[K]V, K comparable, V any](fn func(K, V) bool, m ...M) M {
+	var r = map[K]V{}
+	for _, mm := range m {
+		for k, v := range mm {
+			if ok := fn(k, v); ok {
+				r[k] = v
+			}
+		}
+	}
+	return r
+}
+
 func FilterToSlice[T any, K comparable, V any](m map[K]V, fn func(K, V) (T, bool)) (r []T) {
 	for k, v := range m {
 		vv, ok := fn(k, v)

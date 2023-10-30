@@ -27,10 +27,7 @@ func init() {
 			return t, strings.Repeat(t, 2), true
 		}), nil
 	}
-	ca = *NewMemoryMapCacheByFn[string, string](fn, time.Second*2)
-	ca.SetCacheBatchFn(batchFn)
-	_, _ = ca.GetCache(ct, "aa", time.Second, ct, "aa")
-	_, _ = ca.GetCache(ct, "bb", time.Second, ct, "bb")
+
 }
 func TestMapCache_ClearExpired(t *testing.T) {
 	type args struct {
@@ -70,7 +67,9 @@ func TestMapCache_Flush(t *testing.T) {
 		m    MapCache[K, V]
 		args args
 	}
-	ca := *NewMemoryMapCacheByFn[string, string](fn, time.Second)
+	ca := *NewMapCache[string, string](NewMemoryMapCache[string, string](func() time.Duration {
+		return time.Second
+	}), fn, nil)
 	_, _ = ca.GetCache(ct, "aa", time.Second, ct, "aa")
 	tests := []testCase[string, string]{
 		{

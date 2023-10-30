@@ -107,8 +107,8 @@ func InitHandle(fn func(*Handle), h *Handle) {
 		h.handlers = make(map[string]map[string][]HandleCall)
 		h.handleHook = make(map[string][]func(HandleCall) (HandleCall, bool))
 		h.ginH = gin.H{}
-		fnMap = map[string]map[string]any{}
-		fnHook = map[string]map[string]any{}
+		fnMap.Flush()
+		fnHook.Flush()
 		fn(h)
 		v := apply.UsePlugins()
 		pluginFn, ok := v.(func(*Handle))

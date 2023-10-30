@@ -3,6 +3,7 @@ package cachemanager
 import (
 	"context"
 	"errors"
+	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/cache"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/safety"
@@ -15,6 +16,14 @@ var mapFlush = safety.NewMap[string, func(any)]()
 var getSingleFn = safety.NewMap[string, func(context.Context, any, time.Duration, ...any) (any, error)]()
 var getBatchFn = safety.NewMap[string, func(context.Context, any, time.Duration, ...any) (any, error)]()
 var anyFlush = safety.NewMap[string, func()]()
+
+var expiredTime = safety.NewMap[string, expire]()
+
+type expire struct {
+	fn          func() time.Duration
+	p           *safety.Var[time.Duration]
+	isUseManger *safety.Var[bool]
+}
 
 type flush interface {
 	Flush(ctx context.Context)
@@ -52,7 +61,7 @@ func FlushAnyVal(name ...string) {
 }
 
 func pushFlushMap[K comparable, V any](m *cache.MapCache[K, V], args ...any) {
-	name := parseArgs(args...)
+	name, _ := parseArgs(args...)
 	if name != "" {
 		anyFlush.Store(name, func() {
 			m.Flush(ctx)
@@ -108,15 +117,22 @@ func GetMultiple[T, K any](name string, ct context.Context, key []K, timeout tim
 	return
 }
 
-func parseArgs(args ...any) string {
+func parseArgs(args ...any) (string, func() time.Duration) {
 	var name string
+	var fn func() time.Duration
 	for _, arg := range args {
 		v, ok := arg.(string)
 		if ok {
 			name = v
+			continue
 		}
+		vv, ok := arg.(func() time.Duration)
+		if ok {
+			fn = vv
+		}
+
 	}
-	return name
+	return name, fn
 }
 
 func NewMapCache[K comparable, V any](data cache.Cache[K, V], batchFn cache.MapBatchFn[K, V], fn cache.MapSingleFn[K, V], args ...any) *cache.MapCache[K, V] {
@@ -128,7 +144,48 @@ func NewMapCache[K comparable, V any](data cache.Cache[K, V], batchFn cache.MapB
 }
 func NewMemoryMapCache[K comparable, V any](batchFn cache.MapBatchFn[K, V],
 	fn cache.MapSingleFn[K, V], expireTime time.Duration, args ...any) *cache.MapCache[K, V] {
-	return NewMapCache[K, V](cache.NewMemoryMapCache[K, V](expireTime), batchFn, fn, args...)
+	name, f := parseArgs(args...)
+	var t, tt func() time.Duration
+	t = f
+	if t == nil {
+		t = func() time.Duration {
+			return expireTime
+		}
+	}
+	tt = t
+	if name != "" {
+		expireTime = t()
+		p := safety.NewVar(expireTime)
+		e := expire{
+			fn:          t,
+			p:           p,
+			isUseManger: safety.NewVar(false),
+		}
+		expiredTime.Store(name, e)
+		reload.Push(func() {
+			if !e.isUseManger.Load() {
+				e.p.Store(tt())
+			}
+		}, str.Join("cacheManger-", name, "-expiredTime"))
+		t = func() time.Duration {
+			return e.p.Load()
+		}
+	}
+
+	return NewMapCache[K, V](cache.NewMemoryMapCache[K, V](t), batchFn, fn, args...)
+}
+
+func SetExpireTime(t time.Duration, name ...string) {
+	for _, s := range name {
+		v, ok := expiredTime.Load(s)
+		if !ok {
+			continue
+		}
+		v.p.Store(t)
+		if !v.isUseManger.Load() {
+			v.isUseManger.Store(true)
+		}
+	}
 }
 
 func FlushPush(f ...flush) {

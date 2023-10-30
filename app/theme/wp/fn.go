@@ -2,13 +2,14 @@ package wp
 
 import (
 	"errors"
+	"github.com/fthvgb1/wp-go/safety"
 )
 
-var fnMap map[string]map[string]any
-var fnHook map[string]map[string]any
+var fnMap = safety.NewMap[string, map[string]any]()  //map[string]map[string]any
+var fnHook = safety.NewMap[string, map[string]any]() // map[string]map[string]any
 
 func GetFn[T any](fnType string, name string) []T {
-	v, ok := fnMap[fnType]
+	v, ok := fnMap.Load(fnType)
 	if !ok {
 		return nil
 	}
@@ -19,7 +20,7 @@ func GetFn[T any](fnType string, name string) []T {
 	return vv.([]T)
 }
 func GetFnHook[T any](fnType string, name string) []T {
-	v, ok := fnHook[fnType]
+	v, ok := fnHook.Load(fnType)
 	if !ok {
 		return nil
 	}
@@ -31,10 +32,10 @@ func GetFnHook[T any](fnType string, name string) []T {
 }
 
 func PushFn[T any](fnType string, name string, fns ...T) error {
-	v, ok := fnMap[fnType]
+	v, ok := fnMap.Load(fnType)
 	if !ok {
 		v = make(map[string]any)
-		fnMap[fnType] = v
+		fnMap.Store(fnType, v)
 		v[name] = fns
 		return nil
 	}
@@ -52,10 +53,10 @@ func PushFn[T any](fnType string, name string, fns ...T) error {
 }
 
 func PushFnHook[T any](fnType string, name string, fns ...T) error {
-	v, ok := fnHook[fnType]
+	v, ok := fnHook.Load(fnType)
 	if !ok {
 		v = make(map[string]any)
-		fnHook[fnType] = v
+		fnHook.Store(fnType, v)
 		v[name] = fns
 		return nil
 	}

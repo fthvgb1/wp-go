@@ -13,7 +13,7 @@ type queue struct {
 	name  string
 }
 
-var calls []queue
+var calls = safety.NewSlice(make([]queue, 0))
 var callsM = safety.NewMap[string, func()]()
 
 var anyMap = safety.NewMap[string, any]()
@@ -252,7 +252,8 @@ func SafeMap[K comparable, T any](args ...any) *safety.Map[K, T] {
 
 func Push(fn func(), a ...any) {
 	ord, name := parseArgs(a...)
-	calls = append(calls, queue{fn, ord, name})
+	calls.Append(queue{fn, ord, name})
+	//calls = append(calls, queue{fn, ord, name})
 	if name != "" {
 		callsM.Store(name, fn)
 	}
@@ -263,10 +264,10 @@ func Reload() {
 	safetyMaps.Flush()
 	callsM.Flush()
 	flushMapFn.Flush()
-	slice.Sort(calls, func(i, j queue) bool {
+	slice.Sort(calls.Load(), func(i, j queue) bool {
 		return i.order > j.order
 	})
-	for _, call := range calls {
+	for _, call := range calls.Load() {
 		call.fn()
 	}
 	return

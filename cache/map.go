@@ -98,39 +98,39 @@ func (m *MapCache[K, V]) Flush(ctx context.Context) {
 
 func (m *MapCache[K, V]) GetCache(c context.Context, key K, timeout time.Duration, params ...any) (V, error) {
 	data, ok := m.Get(c, key)
+	if ok {
+		return data, nil
+	}
 	var err error
-	if !ok {
-		ver := m.Ver(c, key)
-		call := func() {
-			m.mux.Lock()
-			defer m.mux.Unlock()
-			if m.Ver(c, key) > ver {
-				data, _ = m.Get(c, key)
-				return
-			}
-			data, err = m.cacheFunc(c, key, params...)
-			if err != nil {
-				return
-			}
-			m.Set(c, key, data)
+	call := func() {
+		m.mux.Lock()
+		defer m.mux.Unlock()
+		if data, ok = m.Get(c, key); ok {
+			return
 		}
-		if timeout > 0 {
-			ctx, cancel := context.WithTimeout(c, timeout)
-			defer cancel()
-			done := make(chan struct{}, 1)
-			go func() {
-				call()
-				done <- struct{}{}
-			}()
-			select {
-			case <-ctx.Done():
-				err = errors.New(fmt.Sprintf("get cache %v %s", key, ctx.Err().Error()))
-			case <-done:
-			}
-		} else {
+		data, err = m.cacheFunc(c, key, params...)
+		if err != nil {
+			return
+		}
+		m.Set(c, key, data)
+	}
+	if timeout > 0 {
+		ctx, cancel := context.WithTimeout(c, timeout)
+		defer cancel()
+		done := make(chan struct{}, 1)
+		go func() {
 			call()
+			done <- struct{}{}
+		}()
+		select {
+		case <-ctx.Done():
+			err = errors.New(fmt.Sprintf("get cache %v %s", key, ctx.Err().Error()))
+			var vv V
+			return vv, err
+		case <-done:
 		}
-
+	} else {
+		call()
 	}
 	return data, err
 }
@@ -142,11 +142,9 @@ func (m *MapCache[K, V]) GetCacheBatch(c context.Context, key []K, timeout time.
 func (m *MapCache[K, V]) getCacheBatchs(c context.Context, key []K, timeout time.Duration, params ...any) ([]V, error) {
 	var res = make([]V, 0, len(key))
 	var needIndex = make(map[K]int)
-	var ver = make(map[K]int)
 	for i, k := range key {
 		v, ok := m.Get(c, k)
 		if !ok {
-			ver[k] = m.Ver(c, k)
 			needIndex[k] = i
 		}
 		res = append(res, v)
@@ -160,13 +158,16 @@ func (m *MapCache[K, V]) getCacheBatchs(c context.Context, key []K, timeout time
 		m.mux.Lock()
 		defer m.mux.Unlock()
 		needFlushs := maps.FilterToSlice(needIndex, func(k K, v int) (K, bool) {
-			return k, ver[k] >= m.Ver(c, k)
+			vv, ok := m.Get(c, k)
+			if ok {
+				res[needIndex[k]] = vv
+				delete(needIndex, k)
+				return k, false
+			}
+			return k, true
 		})
 
 		if len(needFlushs) < 1 {
-			for k, i := range needIndex {
-				res[i], _ = m.Get(c, k)
-			}
 			return
 		}
 
@@ -180,11 +181,6 @@ func (m *MapCache[K, V]) getCacheBatchs(c context.Context, key []K, timeout time
 			if ok {
 				res[i] = v
 				m.Set(c, k, v)
-			} else {
-				v, ok = m.Get(c, k)
-				if ok {
-					res[i] = v
-				}
 			}
 		}
 	}
@@ -199,6 +195,7 @@ func (m *MapCache[K, V]) getCacheBatchs(c context.Context, key []K, timeout time
 		select {
 		case <-ctx.Done():
 			err = errors.New(fmt.Sprintf("get cache %v %s", key, ctx.Err().Error()))
+			return nil, err
 		case <-done:
 		}
 	} else {
@@ -232,37 +229,29 @@ func (m *MapCache[K, V]) getBatches(e Expend[K, V]) func(ctx context.Context, ke
 		if len(needIndex) < 1 {
 			return res, nil
 		}
-		vers := cc.Vers(ctx, flushKeys)
 
 		call := func() {
 			m.mux.Lock()
 			defer m.mux.Unlock()
-			verss := cc.Vers(ctx, flushKeys)
-			needFlushs := maps.FilterToSlice(needIndex, func(k K, v int) (K, bool) {
-				vv, ok := vers[k]
-				vvv, ook := verss[k]
-				if !ok || !ook || vv >= vvv {
-					return k, true
-				}
-				return k, false
-			})
+			mmm, er := cc.Gets(ctx, maps.FilterToSlice(needIndex, func(k K, v int) (K, bool) {
+				return k, true
+			}))
+			if er != nil {
+				err = er
+				return
+			}
+			for k, v := range mmm {
+				res[needIndex[k]] = v
+				delete(needIndex, k)
+			}
 
-			if len(needFlushs) < 1 {
-				vv, er := cc.Gets(ctx, needFlushs)
-				if er != nil {
-					err = er
-					return
-				}
-				for k, i := range needIndex {
-					v, ok := vv[k]
-					if ok {
-						res[i] = v
-					}
-				}
+			if len(needIndex) < 1 {
 				return
 			}
 
-			r, er := m.batchCacheFn(ctx, needFlushs, params...)
+			r, er := m.batchCacheFn(ctx, maps.FilterToSlice(needIndex, func(k K, v int) (K, bool) {
+				return k, true
+			}), params...)
 			if err != nil {
 				err = er
 				return
@@ -287,6 +276,7 @@ func (m *MapCache[K, V]) getBatches(e Expend[K, V]) func(ctx context.Context, ke
 			select {
 			case <-ctx.Done():
 				err = errors.New(fmt.Sprintf("get cache %v %s", key, ctx.Err().Error()))
+				return nil, err
 			case <-done:
 			}
 		} else {

@@ -41,33 +41,55 @@ var allUsernameCache *cache.VarCache[map[string]struct{}]
 func InitActionsCommonCache() {
 	c := config.GetConfig()
 
-	searchPostIdsCache = cachemanager.NewMemoryMapCache(nil, dao.SearchPostIds, c.CacheTime.SearchPostCacheTime, "searchPostIds")
+	searchPostIdsCache = cachemanager.NewMemoryMapCache(nil, dao.SearchPostIds, c.CacheTime.SearchPostCacheTime, "searchPostIds", func() time.Duration {
+		return config.GetConfig().CacheTime.SearchPostCacheTime
+	})
 
-	postListIdsCache = cachemanager.NewMemoryMapCache(nil, dao.SearchPostIds, c.CacheTime.PostListCacheTime, "listPostIds")
+	postListIdsCache = cachemanager.NewMemoryMapCache(nil, dao.SearchPostIds, c.CacheTime.PostListCacheTime, "listPostIds", func() time.Duration {
+		return config.GetConfig().CacheTime.PostListCacheTime
+	})
 
-	monthPostsCache = cachemanager.NewMemoryMapCache(nil, dao.MonthPost, c.CacheTime.MonthPostCacheTime, "monthPostIds")
+	monthPostsCache = cachemanager.NewMemoryMapCache(nil, dao.MonthPost, c.CacheTime.MonthPostCacheTime, "monthPostIds", func() time.Duration {
+		return config.GetConfig().CacheTime.MonthPostCacheTime
+	})
 
-	postContextCache = cachemanager.NewMemoryMapCache(nil, dao.GetPostContext, c.CacheTime.ContextPostCacheTime, "postContext")
+	postContextCache = cachemanager.NewMemoryMapCache(nil, dao.GetPostContext, c.CacheTime.ContextPostCacheTime, "postContext", func() time.Duration {
+		return config.GetConfig().CacheTime.ContextPostCacheTime
+	})
 
-	postsCache = cachemanager.NewMemoryMapCache(dao.GetPostsByIds, nil, c.CacheTime.PostDataCacheTime, "postData")
+	postsCache = cachemanager.NewMemoryMapCache(dao.GetPostsByIds, nil, c.CacheTime.PostDataCacheTime, "postData", func() time.Duration {
+		return config.GetConfig().CacheTime.PostDataCacheTime
+	})
 
-	postMetaCache = cachemanager.NewMemoryMapCache(dao.GetPostMetaByPostIds, nil, c.CacheTime.PostDataCacheTime, "postMetaData")
+	postMetaCache = cachemanager.NewMemoryMapCache(dao.GetPostMetaByPostIds, nil, c.CacheTime.PostDataCacheTime, "postMetaData", func() time.Duration {
+		return config.GetConfig().CacheTime.PostDataCacheTime
+	})
 
-	categoryAndTagsCaches = cachemanager.NewMemoryMapCache(nil, dao.CategoriesAndTags, c.CacheTime.CategoryCacheTime, "categoryAndTagsData")
+	categoryAndTagsCaches = cachemanager.NewMemoryMapCache(nil, dao.CategoriesAndTags, c.CacheTime.CategoryCacheTime, "categoryAndTagsData", func() time.Duration {
+		return config.GetConfig().CacheTime.CategoryCacheTime
+	})
 
 	recentPostsCaches = cache.NewVarCache(dao.RecentPosts, c.CacheTime.RecentPostCacheTime)
 
 	recentCommentsCaches = cache.NewVarCache(dao.RecentComments, c.CacheTime.RecentCommentsCacheTime)
 
-	postCommentCaches = cachemanager.NewMemoryMapCache(nil, dao.PostComments, c.CacheTime.PostCommentsCacheTime, "postCommentIds")
+	postCommentCaches = cachemanager.NewMemoryMapCache(nil, dao.PostComments, c.CacheTime.PostCommentsCacheTime, "postCommentIds", func() time.Duration {
+		return config.GetConfig().CacheTime.PostCommentsCacheTime
+	})
 
 	maxPostIdCache = cache.NewVarCache(dao.GetMaxPostId, c.CacheTime.MaxPostIdCacheTime)
 
-	cachemanager.NewMemoryMapCache(nil, dao.GetUserById, c.CacheTime.UserInfoCacheTime, "userData")
+	cachemanager.NewMemoryMapCache(nil, dao.GetUserById, c.CacheTime.UserInfoCacheTime, "userData", func() time.Duration {
+		return config.GetConfig().CacheTime.UserInfoCacheTime
+	})
 
-	usersNameCache = cachemanager.NewMemoryMapCache(nil, dao.GetUserByName, c.CacheTime.UserInfoCacheTime, "usernameMapToUserData")
+	usersNameCache = cachemanager.NewMemoryMapCache(nil, dao.GetUserByName, c.CacheTime.UserInfoCacheTime, "usernameMapToUserData", func() time.Duration {
+		return config.GetConfig().CacheTime.UserInfoCacheTime
+	})
 
-	cachemanager.NewMemoryMapCache(dao.GetCommentByIds, nil, c.CacheTime.CommentsCacheTime, "commentData")
+	cachemanager.NewMemoryMapCache(dao.GetCommentByIds, nil, c.CacheTime.CommentsCacheTime, "commentData", func() time.Duration {
+		return config.GetConfig().CacheTime.CommentsCacheTime
+	})
 
 	allUsernameCache = cache.NewVarCache(dao.AllUsername, c.CacheTime.UserInfoCacheTime)
 
