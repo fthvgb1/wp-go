@@ -264,10 +264,11 @@ func Reload() {
 	safetyMaps.Flush()
 	callsM.Flush()
 	flushMapFn.Flush()
-	slice.Sort(calls.Load(), func(i, j queue) bool {
+	callll := calls.Load()
+	slice.Sort(callll, func(i, j queue) bool {
 		return i.order > j.order
 	})
-	for _, call := range calls.Load() {
+	for _, call := range callll {
 		call.fn()
 	}
 	return
