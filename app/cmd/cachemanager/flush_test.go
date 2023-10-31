@@ -53,3 +53,19 @@ func TestFlushMapVal(t *testing.T) {
 		fmt.Println(vv.Get(ctx, 6))
 	})
 }
+
+func TestSetExpireTime(t *testing.T) {
+	t.Run("t1", func(t *testing.T) {
+		c := NewMemoryMapCache[string, string](nil, nil, time.Second, "xx")
+		c.Set(ctx, "xx", "yy")
+		fmt.Println(c.Get(ctx, "xx"))
+		time.Sleep(time.Second)
+		fmt.Println(c.Get(ctx, "xx"))
+		SetExpireTime(3*time.Second, "xx")
+		c.Set(ctx, "xx", "yyy")
+		time.Sleep(time.Second)
+		fmt.Println(c.Get(ctx, "xx"))
+		time.Sleep(3 * time.Second)
+		fmt.Println(c.Get(ctx, "xx"))
+	})
+}

@@ -261,7 +261,7 @@ func Push(fn func(), a ...any) {
 
 func Reload() {
 	anyMap.Flush()
-	safetyMaps.Flush()
+	//safetyMaps.Flush()
 	callsM.Flush()
 	flushMapFn.Flush()
 	callll := calls.Load()
