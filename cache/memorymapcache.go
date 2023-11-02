@@ -24,6 +24,10 @@ type mapVal[T any] struct {
 	data    T
 }
 
+func (m *MemoryMapCache[K, V]) SetExpiredTime(f func() time.Duration) {
+	m.expireTime = f
+}
+
 func (m *MemoryMapCache[K, V]) GetExpireTime(_ context.Context) time.Duration {
 	return m.expireTime()
 }

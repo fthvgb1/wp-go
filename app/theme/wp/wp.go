@@ -118,7 +118,7 @@ func InitHandle(fn func(*Handle), h *Handle) {
 		h.C.Set("inited", true)
 		inited = true
 		return *h
-	}, float64(-100))
+	})
 	h.ginH = maps.Copy(hh.ginH)
 	h.ginH["calPostClass"] = postClass(h)
 	h.ginH["calBodyClass"] = bodyClass(h)

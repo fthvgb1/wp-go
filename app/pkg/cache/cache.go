@@ -69,15 +69,21 @@ func InitActionsCommonCache() {
 		return config.GetConfig().CacheTime.CategoryCacheTime
 	})
 
-	recentPostsCaches = cache.NewVarCache(dao.RecentPosts, c.CacheTime.RecentPostCacheTime)
+	recentPostsCaches = cachemanager.NewVarMemoryCache(dao.RecentPosts, c.CacheTime.RecentPostCacheTime, "recentPosts", func() time.Duration {
+		return config.GetConfig().CacheTime.RecentPostCacheTime
+	})
 
-	recentCommentsCaches = cache.NewVarCache(dao.RecentComments, c.CacheTime.RecentCommentsCacheTime)
+	recentCommentsCaches = cachemanager.NewVarMemoryCache(dao.RecentComments, c.CacheTime.RecentCommentsCacheTime, "recentComments", func() time.Duration {
+		return config.GetConfig().CacheTime.RecentCommentsCacheTime
+	})
 
 	postCommentCaches = cachemanager.NewMemoryMapCache(nil, dao.PostComments, c.CacheTime.PostCommentsCacheTime, "postCommentIds", func() time.Duration {
 		return config.GetConfig().CacheTime.PostCommentsCacheTime
 	})
 
-	maxPostIdCache = cache.NewVarCache(dao.GetMaxPostId, c.CacheTime.MaxPostIdCacheTime)
+	maxPostIdCache = cachemanager.NewVarMemoryCache(dao.GetMaxPostId, c.CacheTime.MaxPostIdCacheTime, "maxPostId", func() time.Duration {
+		return config.GetConfig().CacheTime.MaxPostIdCacheTime
+	})
 
 	cachemanager.NewMemoryMapCache(nil, dao.GetUserById, c.CacheTime.UserInfoCacheTime, "userData", func() time.Duration {
 		return config.GetConfig().CacheTime.UserInfoCacheTime
@@ -91,13 +97,15 @@ func InitActionsCommonCache() {
 		return config.GetConfig().CacheTime.CommentsCacheTime
 	})
 
-	allUsernameCache = cache.NewVarCache(dao.AllUsername, c.CacheTime.UserInfoCacheTime)
+	allUsernameCache = cachemanager.NewVarMemoryCache(dao.AllUsername, c.CacheTime.UserInfoCacheTime, "allUsername", func() time.Duration {
+		return config.GetConfig().CacheTime.UserInfoCacheTime
+	})
 
-	feedCache = cache.NewVarCache(feed, time.Hour)
+	feedCache = cachemanager.NewVarMemoryCache(feed, time.Hour, "feed")
 
 	postFeedCache = cachemanager.NewMemoryMapCache(nil, postFeed, time.Hour, "postFeed")
 
-	commentsFeedCache = cache.NewVarCache(commentsFeed, time.Hour)
+	commentsFeedCache = cachemanager.NewVarMemoryCache(commentsFeed, time.Hour, "commentsFeed")
 
 	newCommentCache = cachemanager.NewMemoryMapCache[string, string](nil, nil, 15*time.Minute, "NewComment")
 

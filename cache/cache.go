@@ -19,3 +19,14 @@ type Expend[K comparable, V any] interface {
 	Gets(ctx context.Context, k []K) (map[K]V, error)
 	Sets(ctx context.Context, m map[K]V)
 }
+
+type SetTime interface {
+	SetExpiredTime(func() time.Duration)
+}
+
+type AnyCache[T any] interface {
+	Get(ctx context.Context) (T, bool)
+	Set(ctx context.Context, v T)
+	Flush(ctx context.Context)
+	GetLastSetTime(ctx context.Context) time.Time
+}

@@ -12,8 +12,7 @@ func GetUserById(ctx context.Context, uid uint64, _ ...any) (r models.Users, err
 	return
 }
 
-func AllUsername(a ...any) (map[string]struct{}, error) {
-	ctx := a[0].(context.Context)
+func AllUsername(ctx context.Context, _ ...any) (map[string]struct{}, error) {
 	r, err := model.SimpleFind[models.Users](ctx, model.SqlBuilder{
 		{"user_status", "=", "0", "int"},
 	}, "user_login")

@@ -10,8 +10,7 @@ import (
 
 // RecentComments
 // param context.Context
-func RecentComments(a ...any) (r []models.Comments, err error) {
-	ctx := a[0].(context.Context)
+func RecentComments(ctx context.Context, a ...any) (r []models.Comments, err error) {
 	n := a[1].(int)
 	return model.Finds[models.Comments](ctx, model.Conditions(
 		model.Where(model.SqlBuilder{

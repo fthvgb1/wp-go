@@ -25,19 +25,20 @@ func isCacheExpired(c *gin.Context, lastTime time.Time) bool {
 }
 
 func Feed(c *gin.Context) {
-	if !isCacheExpired(c, cache.FeedCache().GetLastSetTime()) {
+	feed := cache.FeedCache()
+	if !isCacheExpired(c, feed.GetLastSetTime(c)) {
 		c.Status(http.StatusNotModified)
 		return
 	}
 
-	r, err := cache.FeedCache().GetCache(c, time.Second, c)
+	r, err := feed.GetCache(c, time.Second, c)
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
 		c.Abort()
 		c.Error(err)
 		return
 	}
-	setFeed(r[0], c, cache.FeedCache().GetLastSetTime())
+	setFeed(r[0], c, feed.GetLastSetTime(c))
 }
 
 func setFeed(s string, c *gin.Context, t time.Time) {
@@ -51,31 +52,33 @@ func setFeed(s string, c *gin.Context, t time.Time) {
 
 func PostFeed(c *gin.Context) {
 	id := c.Param("id")
-	if !isCacheExpired(c, cache.PostFeedCache().GetLastSetTime(c, id)) {
+	postFeed := cache.PostFeedCache()
+	if !isCacheExpired(c, postFeed.GetLastSetTime(c, id)) {
 		c.Status(http.StatusNotModified)
 		return
 	}
-	s, err := cache.PostFeedCache().GetCache(c, id, time.Second, c, id)
+	s, err := postFeed.GetCache(c, id, time.Second, c, id)
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
 		c.Abort()
 		c.Error(err)
 		return
 	}
-	setFeed(s, c, cache.PostFeedCache().GetLastSetTime(c, id))
+	setFeed(s, c, postFeed.GetLastSetTime(c, id))
 }
 
 func CommentsFeed(c *gin.Context) {
-	if !isCacheExpired(c, cache.CommentsFeedCache().GetLastSetTime()) {
+	feed := cache.CommentsFeedCache()
+	if !isCacheExpired(c, feed.GetLastSetTime(c)) {
 		c.Status(http.StatusNotModified)
 		return
 	}
-	r, err := cache.CommentsFeedCache().GetCache(c, time.Second, c)
+	r, err := feed.GetCache(c, time.Second, c)
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
 		c.Abort()
 		c.Error(err)
 		return
 	}
-	setFeed(r[0], c, cache.CommentsFeedCache().GetLastSetTime())
+	setFeed(r[0], c, feed.GetLastSetTime(c))
 }

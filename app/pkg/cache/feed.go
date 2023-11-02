@@ -13,7 +13,6 @@ import (
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/plugin/digest"
 	"github.com/fthvgb1/wp-go/rss2"
-	"github.com/gin-gonic/gin"
 	"strings"
 	"time"
 )
@@ -46,8 +45,7 @@ func PostFeedCache() *cache.MapCache[string, string] {
 	return postFeedCache
 }
 
-func feed(arg ...any) (xml []string, err error) {
-	c := arg[0].(*gin.Context)
+func feed(c context.Context, _ ...any) (xml []string, err error) {
 	r := RecentPosts(c, 10)
 	ids := slice.Map(r, func(t models.Posts) uint64 {
 		return t.Id
@@ -150,8 +148,7 @@ func postFeed(c context.Context, id string, arg ...any) (x string, err error) {
 	return
 }
 
-func commentsFeed(args ...any) (r []string, err error) {
-	c := args[0].(*gin.Context)
+func commentsFeed(c context.Context, _ ...any) (r []string, err error) {
 	commens := RecentComments(c, 10)
 	rs := templateRss
 	rs.Title = fmt.Sprintf("\"%s\"的评论", wpconfig.GetOption("blogname"))
