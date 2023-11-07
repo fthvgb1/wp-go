@@ -15,6 +15,7 @@ var ctx = context.Background()
 var mapFlush = safety.NewMap[string, func(any)]()
 var getSingleFn = safety.NewMap[string, func(context.Context, any, time.Duration, ...any) (any, error)]()
 var getBatchFn = safety.NewMap[string, func(context.Context, any, time.Duration, ...any) (any, error)]()
+var getBatchToMapFn = safety.NewMap[string, func(context.Context, any, time.Duration, ...any) (any, error)]()
 var anyFlush = safety.NewMap[string, func()]()
 
 var getVar = safety.NewMap[string, func(context.Context, time.Duration, ...any) (any, error)]()
@@ -94,6 +95,13 @@ func pushFlushMap[K comparable, V any](m *cache.MapCache[K, V], args ...any) {
 		}
 		return m.GetCacheBatch(ct, kk, t, a...)
 	})
+	getBatchToMapFn.Store(name, func(ct context.Context, k any, t time.Duration, a ...any) (any, error) {
+		kk, ok := k.([]K)
+		if !ok {
+			return nil, errors.New(str.Join("cache ", name, " key type err"))
+		}
+		return m.GetBatchToMap(ct, kk, t, a...)
+	})
 	FlushPush()
 }
 
@@ -123,6 +131,20 @@ func GetMultiple[T, K any](name string, ct context.Context, key []K, timeout tim
 		return r, err
 	}
 	r = vv.([]T)
+	return
+}
+func GetMultipleToMap[T any, K comparable](name string, ct context.Context, key []K, timeout time.Duration, params ...any) (r map[K]T, err error) {
+	ct = context.WithValue(ct, "getCache", name)
+	v, ok := getBatchToMapFn.Load(name)
+	if !ok {
+		err = errors.New(str.Join("cache ", name, " doesn't exist"))
+		return
+	}
+	vv, err := v(ct, key, timeout, params...)
+	if err != nil {
+		return r, err
+	}
+	r = vv.(map[K]T)
 	return
 }
 
