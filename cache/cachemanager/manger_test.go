@@ -4,7 +4,10 @@ import (
 	"context"
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper/number"
+	"github.com/fthvgb1/wp-go/helper/slice"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/taskPools"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -51,12 +54,17 @@ func TestFlushMapVal(t *testing.T) {
 		FlushAnyVal("test")
 		fmt.Println(vv.Get(ctx, 5))
 		fmt.Println(vv.Get(ctx, 6))
+		//fmt.Println(GetVarCache("test"))
 	})
 }
 
 func TestSetExpireTime(t *testing.T) {
 	t.Run("t1", func(t *testing.T) {
-		c := NewMemoryMapCache[string, string](nil, nil, time.Second, "xx")
+		c := NewMemoryMapCache[string, string](func(ctx2 context.Context, strings []string, a ...any) (map[string]string, error) {
+			return slice.ToMap(strings, func(v string) (string, string) {
+				return v, str.Join(v, "__", v)
+			}, false), nil
+		}, nil, time.Second, "xx")
 		c.Set(ctx, "xx", "yy")
 		fmt.Println(c.Get(ctx, "xx"))
 		time.Sleep(time.Second)
@@ -67,5 +75,18 @@ func TestSetExpireTime(t *testing.T) {
 		fmt.Println(c.Get(ctx, "xx"))
 		time.Sleep(3 * time.Second)
 		fmt.Println(c.Get(ctx, "xx"))
+		cc, _ := GetMapCache[string, string]("xx")
+		fmt.Println(reflect.DeepEqual(c, cc))
+		cc.Set(ctx, "fff", "xxxx")
+		cc.Set(ctx, "ffx", "eex")
+		cc.Set(ctx, "ww", "vv")
+		m, err := cc.GetBatchToMap(ctx, []string{"fff", "ffx", "ww", "kkkk"}, time.Second)
+		fmt.Println(m, err)
+		fmt.Println(GetMultipleToMap[string]("xx", ctx, []string{"fff", "ffx", "ww", "kkkk"}, time.Second))
+		v := NewVarMemoryCache(func(ct context.Context, a ...any) (string, error) {
+			return "ssss", nil
+		}, 3*time.Second, "ff")
+		vv, _ := GetVarCache[string]("ff")
+		fmt.Println(reflect.DeepEqual(v, vv))
 	})
 }

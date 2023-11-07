@@ -2,9 +2,9 @@ package cache
 
 import (
 	"context"
-	"github.com/fthvgb1/wp-go/app/cmd/cachemanager"
 	"github.com/fthvgb1/wp-go/app/pkg/logs"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
+	"github.com/fthvgb1/wp-go/cache/cachemanager"
 	"github.com/fthvgb1/wp-go/model"
 	"time"
 )

@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/fthvgb1/wp-go/app/cmd/cachemanager"
 	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/cmd/route"
 	"github.com/fthvgb1/wp-go/app/mail"
@@ -15,6 +14,7 @@ import (
 	"github.com/fthvgb1/wp-go/app/plugins/wphandle"
 	"github.com/fthvgb1/wp-go/app/theme"
 	"github.com/fthvgb1/wp-go/app/wpconfig"
+	"github.com/fthvgb1/wp-go/cache/cachemanager"
 	"github.com/fthvgb1/wp-go/model"
 	"log"
 	"os"
