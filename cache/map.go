@@ -151,21 +151,17 @@ func (m *MapCache[K, V]) getBatchToMap(e Expend[K, V]) func(c context.Context, k
 		var needIndex = make(map[K]int)
 		var err error
 		mm, err := e.Gets(ctx, key)
-		if err != nil {
-			return nil, err
+		if err != nil || len(key) == len(mm) {
+			return mm, err
 		}
+		res = mm
 		var flushKeys []K
 		for i, k := range key {
-			v, ok := mm[k]
+			_, ok := mm[k]
 			if !ok {
 				flushKeys = append(flushKeys, k)
 				needIndex[k] = i
-			} else {
-				res[k] = v
 			}
-		}
-		if len(needIndex) < 1 {
-			return res, nil
 		}
 
 		call := func() {
