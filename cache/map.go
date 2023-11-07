@@ -147,13 +147,13 @@ func (m *MapCache[K, V]) GetBatchToMap(c context.Context, key []K, timeout time.
 }
 func (m *MapCache[K, V]) getBatchToMap(e Expend[K, V]) func(c context.Context, key []K, timeout time.Duration, params ...any) (map[K]V, error) {
 	return func(ctx context.Context, key []K, timeout time.Duration, params ...any) (map[K]V, error) {
-		var res = make(map[K]V)
-		var needIndex = make(map[K]int)
+		var res map[K]V
 		var err error
 		mm, err := e.Gets(ctx, key)
 		if err != nil || len(key) == len(mm) {
 			return mm, err
 		}
+		var needIndex = make(map[K]int)
 		res = mm
 		var flushKeys []K
 		for i, k := range key {
