@@ -3,11 +3,11 @@ package wp
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/pkg/cache"
 	"github.com/fthvgb1/wp-go/app/pkg/logs"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
 	"github.com/fthvgb1/wp-go/app/wpconfig"
+	"github.com/fthvgb1/wp-go/cache/reload"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/model"
@@ -20,14 +20,14 @@ func (h *Handle) DisplayHeaderText() bool {
 
 func (h *Handle) GetCustomHeaderImg() (r models.PostThumbnail, isRand bool) {
 	var err error
-	img := reload.GetAnyValBys("headerImages", h.theme, func(theme string) []models.PostThumbnail {
+	img := reload.GetAnyValBy("headerImages", h.theme, func(theme string) ([]models.PostThumbnail, bool) {
 		hs, er := h.GetHeaderImages(h.theme)
 		if er != nil {
 			err = er
-			return nil
+			return nil, false
 		}
-		return hs
-	})
+		return hs, true
+	}, 5)
 	if err != nil {
 		logs.Error(err, "获取页眉背景图失败")
 		return

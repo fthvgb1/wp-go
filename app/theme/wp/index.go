@@ -4,11 +4,11 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/pkg/cache"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
 	"github.com/fthvgb1/wp-go/app/plugins"
+	"github.com/fthvgb1/wp-go/cache/reload"
 	"github.com/fthvgb1/wp-go/helper/number"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/model"
@@ -141,8 +141,8 @@ func (i *IndexHandle) BuildIndexData(parm *IndexParams) (err error) {
 func (i *IndexHandle) ExecPostsPlugin() {
 	fn := i.postsPlugin
 	if fn == nil {
-		fn = reload.GetAnyValBys("postPlugins", i, func(a *IndexHandle) PostsPlugin {
-			return UsePostsPlugins()
+		fn = reload.GetAnyValBys("postPlugins", i, func(a *IndexHandle) (PostsPlugin, bool) {
+			return UsePostsPlugins(), true
 		})
 	}
 	for j := range i.Posts {

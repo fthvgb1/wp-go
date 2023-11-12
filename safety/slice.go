@@ -16,7 +16,8 @@ func NewSlice[T any](a []T) *Slice[T] {
 
 func (r *Slice[T]) Append(t ...T) {
 	r.mu.Lock()
+	defer r.mu.Unlock()
 	ts := append(r.Load(), t...)
 	r.Store(ts)
-	r.mu.Unlock()
+
 }

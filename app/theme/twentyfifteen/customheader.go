@@ -1,9 +1,9 @@
 package twentyfifteen
 
 import (
-	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints"
 	"github.com/fthvgb1/wp-go/app/theme/wp"
+	"github.com/fthvgb1/wp-go/cache/reload"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 )
 

@@ -2,10 +2,10 @@ package widget
 
 import (
 	"fmt"
-	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints/widgets"
 	"github.com/fthvgb1/wp-go/app/theme/wp"
 	"github.com/fthvgb1/wp-go/app/wpconfig"
+	"github.com/fthvgb1/wp-go/cache/reload"
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
@@ -29,7 +29,7 @@ func metaArgs() map[string]string {
 }
 
 func Meta(h *wp.Handle, id string) string {
-	args := reload.GetAnyValBys("widget-meta-args", h, func(h *wp.Handle) map[string]string {
+	args := reload.GetAnyValBys("widget-meta-args", h, func(h *wp.Handle) (map[string]string, bool) {
 		commonArgs := wp.GetComponentsArgs(h, widgets.Widget, map[string]string{})
 		metaArgs := metaArgs()
 		args := wp.GetComponentsArgs(h, widgets.Meta, metaArgs)
@@ -46,7 +46,7 @@ func Meta(h *wp.Handle, id string) string {
 			args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, args["{$title}"])
 			args["{$navCloser}"] = "</nav>"
 		}
-		return args
+		return args, true
 	})
 
 	ss := str.NewBuilder()

@@ -2,11 +2,11 @@ package widget
 
 import (
 	"fmt"
-	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints/widgets"
 	"github.com/fthvgb1/wp-go/app/theme/wp"
 	"github.com/fthvgb1/wp-go/app/wpconfig"
+	"github.com/fthvgb1/wp-go/cache/reload"
 	"github.com/fthvgb1/wp-go/helper/html"
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
@@ -48,7 +48,7 @@ func searchArgs() map[string]string {
 var form = html5SearchForm
 
 func Search(h *wp.Handle, id string) string {
-	args := reload.GetAnyValBys("widget-search-args", h, func(h *wp.Handle) map[string]string {
+	args := reload.GetAnyValBys("widget-search-args", h, func(h *wp.Handle) (map[string]string, bool) {
 		search := searchArgs()
 		commonArgs := wp.GetComponentsArgs(h, widgets.Widget, map[string]string{})
 		args := wp.GetComponentsArgs(h, widgets.Search, search)
@@ -69,7 +69,7 @@ func Search(h *wp.Handle, id string) string {
 			form = xmlSearchForm
 		}
 
-		return args
+		return args, true
 	})
 	s := strings.ReplaceAll(searchTemplate, "{$form}", form)
 	val := ""

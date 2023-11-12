@@ -2,12 +2,12 @@ package wp
 
 import (
 	"errors"
-	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/pkg/config"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints"
 	"github.com/fthvgb1/wp-go/app/pkg/logs"
 	"github.com/fthvgb1/wp-go/app/plugins/wphandle/apply"
 	"github.com/fthvgb1/wp-go/app/wpconfig"
+	"github.com/fthvgb1/wp-go/cache/reload"
 	"github.com/fthvgb1/wp-go/helper/maps"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/gin-contrib/sessions"
@@ -100,7 +100,7 @@ type HandleCall struct {
 
 func InitHandle(fn func(*Handle), h *Handle) {
 	var inited = false
-	hh := reload.GetAnyValBys("themeArgAndConfig", h, func(h *Handle) Handle {
+	hh := reload.GetAnyValBys("themeArgAndConfig", h, func(h *Handle) (Handle, bool) {
 		h.components = make(map[string]map[string][]Components[string])
 		h.componentsArgs = make(map[string]any)
 		h.componentFilterFn = make(map[string][]func(*Handle, string, ...any) string)
@@ -117,7 +117,7 @@ func InitHandle(fn func(*Handle), h *Handle) {
 		}
 		h.C.Set("inited", true)
 		inited = true
-		return *h
+		return *h, true
 	})
 	h.ginH = maps.Copy(hh.ginH)
 	h.ginH["calPostClass"] = postClass(h)

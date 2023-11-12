@@ -1,8 +1,8 @@
 package middleware
 
 import (
-	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/pkg/config"
+	"github.com/fthvgb1/wp-go/cache/reload"
 	"github.com/gin-gonic/gin"
 )
 

@@ -2,12 +2,12 @@ package route
 
 import (
 	"github.com/fthvgb1/wp-go/app/actions"
-	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/middleware"
 	"github.com/fthvgb1/wp-go/app/pkg/config"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints"
 	"github.com/fthvgb1/wp-go/app/theme"
 	"github.com/fthvgb1/wp-go/app/wpconfig"
+	"github.com/fthvgb1/wp-go/cache/reload"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-contrib/pprof"

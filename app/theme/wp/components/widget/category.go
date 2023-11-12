@@ -2,12 +2,12 @@ package widget
 
 import (
 	"fmt"
-	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/pkg/cache"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints/widgets"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
 	"github.com/fthvgb1/wp-go/app/theme/wp"
+	"github.com/fthvgb1/wp-go/cache/reload"
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
@@ -48,7 +48,7 @@ func categoryArgs() map[string]string {
 func Category(h *wp.Handle, id string) string {
 	conf := configs(categoryConfig, "widget_categories", int64(2))
 
-	args := reload.GetAnyValBys("widget-category-args", h, func(h *wp.Handle) map[string]string {
+	args := reload.GetAnyValBys("widget-category-args", h, func(h *wp.Handle) (map[string]string, bool) {
 		commonArgs := wp.GetComponentsArgs(h, widgets.Widget, map[string]string{})
 		args := wp.GetComponentsArgs(h, widgets.Categories, categoryArgs())
 		args = maps.FilterZeroMerge(categoryArgs(), CommonArgs(), commonArgs, args)
@@ -58,7 +58,7 @@ func Category(h *wp.Handle, id string) string {
 			args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, args["{title}"])
 			args["{$navCloser}"] = "</nav>"
 		}
-		return args
+		return args, true
 	})
 
 	t := categoryTemplate

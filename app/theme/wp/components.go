@@ -1,8 +1,8 @@
 package wp
 
 import (
-	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints"
+	"github.com/fthvgb1/wp-go/cache/reload"
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
@@ -27,15 +27,15 @@ func (h *Handle) HookComponents(scene string, fn func(Components[string]) (Compo
 }
 
 func CalComponents(h *Handle) {
-	componentss := reload.GetAnyValMapBy("scene-components", str.Join("allScene-", h.scene), h, func(h *Handle) map[string][]Components[string] {
+	componentss := reload.GetAnyValMapBy("scene-components", str.Join("allScene-", h.scene), h, func(h *Handle) (map[string][]Components[string], bool) {
 		return maps.MergeBy(func(k string, v1, v2 []Components[string]) ([]Components[string], bool) {
 			vv := append(v1, v2...)
 			return vv, vv != nil
-		}, nil, h.components[h.scene], h.components[constraints.AllScene])
+		}, nil, h.components[h.scene], h.components[constraints.AllScene]), true
 	})
 	for k, components := range componentss {
 		key := str.Join("calComponents-", h.scene, "-", k)
-		ss := reload.GetAnyValMapBy("calComponents", key, h, func(h *Handle) []Components[string] {
+		ss := reload.GetAnyValMapBy("calComponents", key, h, func(h *Handle) ([]Components[string], bool) {
 			r := slice.FilterAndMap(components, func(t Components[string]) (Components[string], bool) {
 				fns, ok := h.componentHook[k]
 				if !ok {
@@ -53,7 +53,7 @@ func CalComponents(h *Handle) {
 			slice.Sort(r, func(i, j Components[string]) bool {
 				return i.Order > j.Order
 			})
-			return r
+			return r, true
 		})
 		var s = make([]string, 0, len(ss))
 		for _, component := range ss {
@@ -64,7 +64,9 @@ func CalComponents(h *Handle) {
 			if component.Fn != nil {
 				v := ""
 				if component.Cached {
-					v = reload.GetAnyValMapBy("cacheComponents", component.Name, h, component.Fn)
+					v = reload.GetAnyValMapBy("cacheComponents", component.Name, h, func(a *Handle) (string, bool) {
+						return component.Fn(h), true
+					})
 				} else {
 					v = component.Fn(h)
 				}

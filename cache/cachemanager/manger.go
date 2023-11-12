@@ -3,8 +3,8 @@ package cachemanager
 import (
 	"context"
 	"errors"
-	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/cache"
+	"github.com/fthvgb1/wp-go/cache/reload"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/safety"
 	"time"

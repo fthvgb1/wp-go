@@ -2,11 +2,11 @@ package widget
 
 import (
 	"fmt"
-	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/pkg/cache"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints/widgets"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
 	"github.com/fthvgb1/wp-go/app/theme/wp"
+	"github.com/fthvgb1/wp-go/cache/reload"
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
@@ -42,7 +42,7 @@ var recentCommentsTemplate = `{$before_widget}
 func RecentComments(h *wp.Handle, id string) string {
 	conf := configs(recentCommentConf, "widget_recent-comments", int64(2))
 
-	args := reload.GetAnyValBys("widget-recent-comment-args", h, func(h *wp.Handle) map[string]string {
+	args := reload.GetAnyValBys("widget-recent-comment-args", h, func(h *wp.Handle) (map[string]string, bool) {
 		commentsArgs := recentCommentsArgs()
 		commonArgs := wp.GetComponentsArgs(h, widgets.Widget, map[string]string{})
 		args := wp.GetComponentsArgs(h, widgets.RecentComments, commentsArgs)
@@ -53,7 +53,7 @@ func RecentComments(h *wp.Handle, id string) string {
 			args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, conf["title"])
 			args["{$navCloser}"] = "</nav>"
 		}
-		return args
+		return args, true
 	})
 
 	comments := slice.Map(cache.RecentComments(h.C, int(conf["number"].(int64))), func(t models.Comments) string {

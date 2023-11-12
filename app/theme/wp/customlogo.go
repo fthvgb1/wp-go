@@ -2,9 +2,9 @@ package wp
 
 import (
 	"fmt"
-	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/pkg/cache"
 	"github.com/fthvgb1/wp-go/app/wpconfig"
+	"github.com/fthvgb1/wp-go/cache/reload"
 	"github.com/fthvgb1/wp-go/helper/maps"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 )
@@ -44,8 +44,8 @@ func CalCustomLogo(h *Handle) (r string) {
 
 func customLogo(h *Handle) func() string {
 	return func() string {
-		return reload.GetAnyValBys("customLogo", h, func(h *Handle) string {
-			return CalCustomLogo(h)
+		return reload.GetAnyValBys("customLogo", h, func(h *Handle) (string, bool) {
+			return CalCustomLogo(h), true
 		})
 	}
 }

@@ -2,13 +2,13 @@ package widget
 
 import (
 	"fmt"
-	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/pkg/cache"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints/widgets"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
 	"github.com/fthvgb1/wp-go/app/theme/wp"
 	"github.com/fthvgb1/wp-go/app/wpconfig"
+	"github.com/fthvgb1/wp-go/cache/reload"
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
@@ -44,14 +44,14 @@ func recentConf() map[any]any {
 }
 
 func RecentPosts(h *wp.Handle, id string) string {
-	conf := reload.GetAnyValBys("widget-recent-posts-conf", h, func(h *wp.Handle) map[any]any {
+	conf := reload.GetAnyValBys("widget-recent-posts-conf", h, func(h *wp.Handle) (map[any]any, bool) {
 		recent := recentConf()
 		conf := wpconfig.GetPHPArrayVal[map[any]any]("widget_recent-posts", recent, int64(2))
 		conf = maps.FilterZeroMerge(recent, conf)
-		return conf
+		return conf, true
 	})
 
-	args := reload.GetAnyValBys("widget-recent-posts-args", h, func(h *wp.Handle) map[string]string {
+	args := reload.GetAnyValBys("widget-recent-posts-args", h, func(h *wp.Handle) (map[string]string, bool) {
 		recent := recentPostsArgs()
 		commonArgs := wp.GetComponentsArgs(h, widgets.Widget, map[string]string{})
 		args := wp.GetComponentsArgs(h, widgets.RecentPosts, recent)
@@ -62,7 +62,7 @@ func RecentPosts(h *wp.Handle, id string) string {
 			args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, conf["title"])
 			args["{$navCloser}"] = "</nav>"
 		}
-		return args
+		return args, true
 	})
 
 	currentPostId := uint64(0)

@@ -2,7 +2,6 @@ package twentyseventeen
 
 import (
 	"fmt"
-	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints/widgets"
 	"github.com/fthvgb1/wp-go/app/pkg/logs"
@@ -12,6 +11,7 @@ import (
 	"github.com/fthvgb1/wp-go/app/theme/wp/components"
 	"github.com/fthvgb1/wp-go/app/theme/wp/components/widget"
 	"github.com/fthvgb1/wp-go/app/wpconfig"
+	"github.com/fthvgb1/wp-go/cache/reload"
 	"github.com/fthvgb1/wp-go/helper"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/gin-gonic/gin"

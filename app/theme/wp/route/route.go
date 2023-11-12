@@ -1,8 +1,8 @@
 package route
 
 import (
-	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/theme/wp"
+	"github.com/fthvgb1/wp-go/cache/reload"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/safety"
 	"regexp"
@@ -74,7 +74,7 @@ func ResolveRoute(h *wp.Handle) {
 	requestURI := h.C.Request.RequestURI
 	rs, rrs := reload.GetAnyValBys("route",
 		struct{}{},
-		func(_ struct{}) func() (map[string]Route, map[string]*regexp.Regexp) {
+		func(_ struct{}) (func() (map[string]Route, map[string]*regexp.Regexp), bool) {
 			m := map[string]Route{}
 			rrs := map[string]*regexp.Regexp{}
 			routes.Range(func(key string, value Route) bool {
@@ -82,19 +82,21 @@ func ResolveRoute(h *wp.Handle) {
 				if len(routeHook) > 0 {
 					for _, fn := range routeHook {
 						v, ok := fn(value)
-						if ok {
-							m[v.Path] = v
-							if v.Type == "reg" {
-								if v.Path != key {
-									vvv, err := regexp.Compile(v.Path)
-									if err != nil {
-										panic(err)
-									}
-									vv = vvv
-								}
-								rrs[v.Path] = vv
-							}
+						if !ok {
+							continue
 						}
+						m[v.Path] = v
+						if v.Type != "reg" {
+							continue
+						}
+						if v.Path != key {
+							vvv, err := regexp.Compile(v.Path)
+							if err != nil {
+								panic(err)
+							}
+							vv = vvv
+						}
+						rrs[v.Path] = vv
 					}
 				} else {
 					m[key] = value
@@ -105,7 +107,7 @@ func ResolveRoute(h *wp.Handle) {
 			})
 			return func() (map[string]Route, map[string]*regexp.Regexp) {
 				return m, rrs
-			}
+			}, true
 		})()
 	v, ok := rs[requestURI]
 	if ok && slice.IsContained(v.Method, h.C.Request.Method) {

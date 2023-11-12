@@ -2,11 +2,11 @@ package widget
 
 import (
 	"fmt"
-	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/pkg/cache"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints/widgets"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
 	"github.com/fthvgb1/wp-go/app/theme/wp"
+	"github.com/fthvgb1/wp-go/cache/reload"
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
@@ -42,7 +42,7 @@ var archivesConfig = map[any]any{
 
 func Archive(h *wp.Handle, id string) string {
 	conf := configs(archivesConfig, "widget_archives", int64(2))
-	args := reload.GetAnyValBys("widget-archive-args", h, func(h *wp.Handle) map[string]string {
+	args := reload.GetAnyValBys("widget-archive-args", h, func(h *wp.Handle) (map[string]string, bool) {
 		archiveArgs := archiveArgs()
 		commonArgs := wp.GetComponentsArgs(h, widgets.Widget, CommonArgs())
 		args := wp.GetComponentsArgs(h, widgets.Archive, archiveArgs)
@@ -53,7 +53,7 @@ func Archive(h *wp.Handle, id string) string {
 			args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, conf["title"].(string))
 			args["{$navCloser}"] = "</nav>"
 		}
-		return args
+		return args, true
 	})
 
 	s := archiveTemplate

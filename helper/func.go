@@ -134,3 +134,13 @@ func GetAnyVal[T any](v any, defaults T) T {
 	}
 	return vv
 }
+
+func ParseArgs[T any](defaults T, a ...any) T {
+	for _, aa := range a {
+		v, ok := aa.(T)
+		if ok {
+			return v
+		}
+	}
+	return defaults
+}

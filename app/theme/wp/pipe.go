@@ -1,8 +1,8 @@
 package wp
 
 import (
-	"github.com/fthvgb1/wp-go/app/cmd/reload"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints"
+	"github.com/fthvgb1/wp-go/cache/reload"
 	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
@@ -68,7 +68,7 @@ func (h *Handle) PushDataHandler(scene string, fns ...HandleCall) {
 func BuildPipe(pipeScene string, keyFn func(*Handle, string) string, fn func(*Handle, map[string][]HandleCall, string) []HandleCall) func(HandleFn[*Handle], *Handle) {
 	return func(next HandleFn[*Handle], h *Handle) {
 		key := keyFn(h, pipeScene)
-		handlers := reload.GetAnyValMapBy("pipeHandlers", key, h, func(h *Handle) []HandleCall {
+		handlers := reload.GetAnyValMapBy("pipeHandlers", key, h, func(h *Handle) ([]HandleCall, bool) {
 			conf := h.handleHook[pipeScene]
 			calls := fn(h, h.handlers[pipeScene], key)
 			calls = slice.FilterAndMap(calls, func(call HandleCall) (HandleCall, bool) {
@@ -84,7 +84,7 @@ func BuildPipe(pipeScene string, keyFn func(*Handle, string) string, fn func(*Ha
 			slice.Sort(calls, func(i, j HandleCall) bool {
 				return i.Order > j.Order
 			})
-			return calls
+			return calls, true
 		})
 		for _, handler := range handlers {
 			handler.Fn(h)
@@ -107,7 +107,7 @@ func Run(h *Handle, conf func(*Handle)) {
 	if !helper.GetContextVal(h.C, "inited", false) {
 		InitHandle(conf, h)
 	}
-	reload.GetAnyValBys(str.Join("pipeInit-", h.scene), h, func(h *Handle) func(*Handle) {
+	reload.GetAnyValBys(str.Join("pipeInit-", h.scene), h, func(h *Handle) (func(*Handle), bool) {
 		p := GetFn[Pipe]("pipe", constraints.AllScene)
 		p = append(p, GetFn[Pipe]("pipe", h.scene)...)
 		pipes := slice.FilterAndMap(p, func(pipe Pipe) (Pipe, bool) {
@@ -128,7 +128,7 @@ func Run(h *Handle, conf func(*Handle)) {
 		arr := slice.Map(pipes, func(t Pipe) HandlePipeFn[*Handle] {
 			return t.Fn
 		})
-		return HandlePipe(NothingToDo, arr...)
+		return HandlePipe(NothingToDo, arr...), true
 	})(h)
 }
 
