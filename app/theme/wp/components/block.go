@@ -1,6 +1,7 @@
 package components
 
 import (
+	"github.com/fthvgb1/wp-go/app/pkg/logs"
 	"github.com/fthvgb1/wp-go/app/theme/wp"
 	"github.com/fthvgb1/wp-go/app/theme/wp/components/block"
 	"github.com/fthvgb1/wp-go/app/wpconfig"
@@ -29,6 +30,7 @@ func Block(id string) (func(*wp.Handle) string, string) {
 			if ok {
 				s, err := fn(h, id, parserBlock)
 				if err != nil {
+					logs.Error(err, str.Join("parse block", parserBlock.Name, " fail "), parserBlock)
 					continue
 				}
 				out = append(out, s())

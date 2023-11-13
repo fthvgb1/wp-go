@@ -29,13 +29,7 @@ var confPath string
 var address string
 var intReg = regexp.MustCompile(`^\d`)
 
-func init() {
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Println(r)
-			os.Exit(1)
-		}
-	}()
+func inits() {
 	flag.StringVar(&confPath, "c", "config.yaml", "config file support json,yaml or url")
 	flag.StringVar(&address, "p", "", "listen address and port")
 	flag.Parse()
@@ -148,6 +142,7 @@ func main() {
 			os.Exit(1)
 		}
 	}()
+	inits()
 	go signalNotify()
 	Gin := route.SetupRouter()
 	c := config.GetConfig()
