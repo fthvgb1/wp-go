@@ -3,6 +3,7 @@ package dao
 import (
 	"context"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
+	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/helper/number"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/model"
@@ -11,7 +12,7 @@ import (
 // RecentComments
 // param context.Context
 func RecentComments(ctx context.Context, a ...any) (r []models.Comments, err error) {
-	n := a[1].(int)
+	n := helper.ParseArgs(10, a...)
 	return model.Finds[models.Comments](ctx, model.Conditions(
 		model.Where(model.SqlBuilder{
 			{"comment_approved", "1"},
@@ -28,7 +29,7 @@ func RecentComments(ctx context.Context, a ...any) (r []models.Comments, err err
 // param1 context.Context
 // param2 postId
 func PostComments(ctx context.Context, postId uint64, _ ...any) ([]uint64, error) {
-	r, err := model.Finds[models.Comments](ctx, model.Conditions(
+	r, err := model.ChunkFind[models.Comments](ctx, 300, model.Conditions(
 		model.Where(model.SqlBuilder{
 			{"comment_approved", "1"},
 			{"comment_post_ID", "=", number.IntToString(postId), "int"},

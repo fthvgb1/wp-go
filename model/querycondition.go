@@ -54,7 +54,7 @@ func chunkFind[T Model](db dbQuery, ctx context.Context, perLimit int, q *QueryC
 			rr, err = finds[T](db, ctx, q)
 		}
 		offset += perLimit
-		if (err != nil && err != sql.ErrNoRows) || len(rr) < 1 {
+		if (err != nil && !errors.Is(err, sql.ErrNoRows)) || len(rr) < 1 {
 			return
 		}
 		r = append(r, rr...)
