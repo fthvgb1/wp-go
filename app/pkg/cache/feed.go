@@ -9,6 +9,7 @@ import (
 	"github.com/fthvgb1/wp-go/app/plugins/wpposts"
 	"github.com/fthvgb1/wp-go/app/wpconfig"
 	"github.com/fthvgb1/wp-go/cache"
+	"github.com/fthvgb1/wp-go/cache/cachemanager"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/plugin/digest"
@@ -34,15 +35,18 @@ func InitFeed() {
 }
 
 func CommentsFeedCache() *cache.VarCache[[]string] {
-	return commentsFeedCache
+	r, _ := cachemanager.GetVarCache[[]string]("commentsFeed")
+	return r
 }
 
 func FeedCache() *cache.VarCache[[]string] {
-	return feedCache
+	r, _ := cachemanager.GetVarCache[[]string]("feed")
+	return r
 }
 
 func PostFeedCache() *cache.MapCache[string, string] {
-	return postFeedCache
+	r, _ := cachemanager.GetMapCache[string, string]("postFeed")
+	return r
 }
 
 func feed(c context.Context, _ ...any) (xml []string, err error) {
@@ -91,8 +95,7 @@ func feed(c context.Context, _ ...any) (xml []string, err error) {
 	return
 }
 
-func postFeed(c context.Context, id string, arg ...any) (x string, err error) {
-	id = arg[1].(string)
+func postFeed(c context.Context, id string, _ ...any) (x string, err error) {
 	ID := str.ToInteger[uint64](id, 0)
 	maxId, err := GetMaxPostId(c)
 	logs.IfError(err, "get max post id")

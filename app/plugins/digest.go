@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/app/pkg/config"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
-	"github.com/fthvgb1/wp-go/cache"
 	"github.com/fthvgb1/wp-go/cache/cachemanager"
 	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/plugin/digest"
@@ -15,14 +14,12 @@ import (
 	"unicode/utf8"
 )
 
-var digestCache *cache.MapCache[uint64, string]
-
 var more = regexp.MustCompile("<!--more(.*?)?-->")
 
 var removeWpBlock = regexp.MustCompile("<!-- /?wp:.*-->")
 
 func InitDigestCache() {
-	digestCache = cachemanager.NewMemoryMapCache(nil, digestRaw, config.GetConfig().CacheTime.DigestCacheTime, "digestPlugin", func() time.Duration {
+	cachemanager.NewMemoryMapCache(nil, digestRaw, config.GetConfig().CacheTime.DigestCacheTime, "digestPlugin", func() time.Duration {
 		return config.GetConfig().CacheTime.DigestCacheTime
 	})
 }
@@ -74,7 +71,7 @@ func PostsMore(id uint64, content, closeTag string) string {
 }
 
 func Digest(ctx context.Context, post *models.Posts, limit int) {
-	content, _ := digestCache.GetCache(ctx, post.Id, time.Second, ctx, post.PostContent, post.Id, limit)
+	content, _ := cachemanager.Get[string]("digestPlugin", ctx, post.Id, time.Second, ctx, post.PostContent, post.Id, limit)
 	post.PostContent = content
 }
 

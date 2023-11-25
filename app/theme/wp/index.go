@@ -89,14 +89,14 @@ func (i *IndexHandle) GetIndexData() (posts []models.Posts, totalRaw int, err er
 	switch i.scene {
 	case constraints.Home, constraints.Category, constraints.Tag, constraints.Author:
 
-		posts, totalRaw, err = cache.PostLists(i.C, i.Param.CacheKey, i.C, q, i.Param.Page, i.Param.PageSize)
+		posts, totalRaw, err = cache.PostLists(i.C, i.Param.CacheKey, q, i.Param.Page, i.Param.PageSize)
 		if i.scene == constraints.Home && i.Param.Page == 1 {
 			i.MarkSticky(&posts)
 		}
 
 	case constraints.Search:
 
-		posts, totalRaw, err = cache.SearchPost(i.C, i.Param.CacheKey, i.C, q, i.Param.Page, i.Param.PageSize)
+		posts, totalRaw, err = cache.SearchPost(i.C, i.Param.CacheKey, q, i.Param.Page, i.Param.PageSize)
 
 	case constraints.Archive:
 		i.ginH["archiveYear"] = i.Param.Year

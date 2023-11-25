@@ -6,82 +6,56 @@ import (
 	"github.com/fthvgb1/wp-go/app/pkg/dao"
 	"github.com/fthvgb1/wp-go/app/pkg/logs"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
-	"github.com/fthvgb1/wp-go/cache"
 	"github.com/fthvgb1/wp-go/cache/cachemanager"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/safety"
 	"time"
 )
 
-var postContextCache *cache.MapCache[uint64, dao.PostContext]
-var categoryAndTagsCaches *cache.MapCache[string, []models.TermsMy]
-var recentPostsCaches *cache.VarCache[[]models.Posts]
-var recentCommentsCaches *cache.VarCache[[]models.Comments]
-var postCommentCaches *cache.MapCache[uint64, []uint64]
-var postsCache *cache.MapCache[uint64, models.Posts]
-
-var postMetaCache *cache.MapCache[uint64, map[string]any]
-
-var monthPostsCache *cache.MapCache[string, []uint64]
-var postListIdsCache *cache.MapCache[string, dao.PostIds]
-var searchPostIdsCache *cache.MapCache[string, dao.PostIds]
-var maxPostIdCache *cache.VarCache[uint64]
-
-var usersNameCache *cache.MapCache[string, models.Users]
-var feedCache *cache.VarCache[[]string]
-
-var postFeedCache *cache.MapCache[string, string]
-
-var commentsFeedCache *cache.VarCache[[]string]
-
-var newCommentCache *cache.MapCache[string, string]
-
-var allUsernameCache *cache.VarCache[map[string]struct{}]
-
 func InitActionsCommonCache() {
 	c := config.GetConfig()
 
-	searchPostIdsCache = cachemanager.NewMemoryMapCache(nil, dao.SearchPostIds, c.CacheTime.SearchPostCacheTime, "searchPostIds", func() time.Duration {
+	cachemanager.NewMemoryMapCache(nil, dao.SearchPostIds, c.CacheTime.SearchPostCacheTime, "searchPostIds", func() time.Duration {
 		return config.GetConfig().CacheTime.SearchPostCacheTime
 	})
 
-	postListIdsCache = cachemanager.NewMemoryMapCache(nil, dao.SearchPostIds, c.CacheTime.PostListCacheTime, "listPostIds", func() time.Duration {
+	cachemanager.NewMemoryMapCache(nil, dao.SearchPostIds, c.CacheTime.PostListCacheTime, "listPostIds", func() time.Duration {
 		return config.GetConfig().CacheTime.PostListCacheTime
 	})
 
-	monthPostsCache = cachemanager.NewMemoryMapCache(nil, dao.MonthPost, c.CacheTime.MonthPostCacheTime, "monthPostIds", func() time.Duration {
+	cachemanager.NewMemoryMapCache(nil, dao.MonthPost, c.CacheTime.MonthPostCacheTime, "monthPostIds", func() time.Duration {
 		return config.GetConfig().CacheTime.MonthPostCacheTime
 	})
 
-	postContextCache = cachemanager.NewMemoryMapCache(nil, dao.GetPostContext, c.CacheTime.ContextPostCacheTime, "postContext", func() time.Duration {
+	cachemanager.NewMemoryMapCache(nil, dao.GetPostContext, c.CacheTime.ContextPostCacheTime, "postContext", func() time.Duration {
 		return config.GetConfig().CacheTime.ContextPostCacheTime
 	})
 
-	postsCache = cachemanager.NewMemoryMapCache(dao.GetPostsByIds, nil, c.CacheTime.PostDataCacheTime, "postData", func() time.Duration {
+	cachemanager.NewMemoryMapCache(dao.GetPostsByIds, nil, c.CacheTime.PostDataCacheTime, "postData", func() time.Duration {
 		return config.GetConfig().CacheTime.PostDataCacheTime
 	})
 
-	postMetaCache = cachemanager.NewMemoryMapCache(dao.GetPostMetaByPostIds, nil, c.CacheTime.PostDataCacheTime, "postMetaData", func() time.Duration {
+	cachemanager.NewMemoryMapCache(dao.GetPostMetaByPostIds, nil, c.CacheTime.PostDataCacheTime, "postMetaData", func() time.Duration {
 		return config.GetConfig().CacheTime.PostDataCacheTime
 	})
 
-	categoryAndTagsCaches = cachemanager.NewMemoryMapCache(nil, dao.CategoriesAndTags, c.CacheTime.CategoryCacheTime, "categoryAndTagsData", func() time.Duration {
+	cachemanager.NewMemoryMapCache(nil, dao.CategoriesAndTags, c.CacheTime.CategoryCacheTime, "categoryAndTagsData", func() time.Duration {
 		return config.GetConfig().CacheTime.CategoryCacheTime
 	})
 
-	recentPostsCaches = cachemanager.NewVarMemoryCache(dao.RecentPosts, c.CacheTime.RecentPostCacheTime, "recentPosts", func() time.Duration {
+	cachemanager.NewVarMemoryCache(dao.RecentPosts, c.CacheTime.RecentPostCacheTime, "recentPosts", func() time.Duration {
 		return config.GetConfig().CacheTime.RecentPostCacheTime
 	})
 
-	recentCommentsCaches = cachemanager.NewVarMemoryCache(dao.RecentComments, c.CacheTime.RecentCommentsCacheTime, "recentComments", func() time.Duration {
+	cachemanager.NewVarMemoryCache(dao.RecentComments, c.CacheTime.RecentCommentsCacheTime, "recentComments", func() time.Duration {
 		return config.GetConfig().CacheTime.RecentCommentsCacheTime
 	})
 
-	postCommentCaches = cachemanager.NewMemoryMapCache(nil, dao.PostComments, c.CacheTime.PostCommentsCacheTime, "postCommentIds", func() time.Duration {
+	cachemanager.NewMemoryMapCache(nil, dao.PostComments, c.CacheTime.PostCommentsCacheTime, "postCommentIds", func() time.Duration {
 		return config.GetConfig().CacheTime.PostCommentsCacheTime
 	})
 
-	maxPostIdCache = cachemanager.NewVarMemoryCache(dao.GetMaxPostId, c.CacheTime.MaxPostIdCacheTime, "maxPostId", func() time.Duration {
+	cachemanager.NewVarMemoryCache(dao.GetMaxPostId, c.CacheTime.MaxPostIdCacheTime, "maxPostId", func() time.Duration {
 		return config.GetConfig().CacheTime.MaxPostIdCacheTime
 	})
 
@@ -89,7 +63,7 @@ func InitActionsCommonCache() {
 		return config.GetConfig().CacheTime.UserInfoCacheTime
 	})
 
-	usersNameCache = cachemanager.NewMemoryMapCache(nil, dao.GetUserByName, c.CacheTime.UserInfoCacheTime, "usernameMapToUserData", func() time.Duration {
+	cachemanager.NewMemoryMapCache(nil, dao.GetUserByName, c.CacheTime.UserInfoCacheTime, "usernameMapToUserData", func() time.Duration {
 		return config.GetConfig().CacheTime.UserInfoCacheTime
 	})
 
@@ -97,17 +71,17 @@ func InitActionsCommonCache() {
 		return config.GetConfig().CacheTime.CommentsCacheTime
 	})
 
-	allUsernameCache = cachemanager.NewVarMemoryCache(dao.AllUsername, c.CacheTime.UserInfoCacheTime, "allUsername", func() time.Duration {
+	cachemanager.NewVarMemoryCache(dao.AllUsername, c.CacheTime.UserInfoCacheTime, "allUsername", func() time.Duration {
 		return config.GetConfig().CacheTime.UserInfoCacheTime
 	})
 
-	feedCache = cachemanager.NewVarMemoryCache(feed, time.Hour, "feed")
+	cachemanager.NewVarMemoryCache(feed, time.Hour, "feed")
 
-	postFeedCache = cachemanager.NewMemoryMapCache(nil, postFeed, time.Hour, "postFeed")
+	cachemanager.NewMemoryMapCache(nil, postFeed, time.Hour, "postFeed")
 
-	commentsFeedCache = cachemanager.NewVarMemoryCache(commentsFeed, time.Hour, "commentsFeed")
+	cachemanager.NewVarMemoryCache(commentsFeed, time.Hour, "commentsFeed")
 
-	newCommentCache = cachemanager.NewMemoryMapCache[string, string](nil, nil, 15*time.Minute, "NewComment")
+	cachemanager.NewMemoryMapCache[string, string](nil, nil, 15*time.Minute, "NewComment")
 
 	InitFeed()
 }
@@ -149,7 +123,7 @@ func CategoriesTags(ctx context.Context, t ...string) []models.TermsMy {
 	if len(t) > 0 {
 		tt = t[0]
 	}
-	r, err := categoryAndTagsCaches.GetCache(ctx, tt, time.Second, ctx, tt)
+	r, err := cachemanager.Get[[]models.TermsMy]("categoryAndTagsData", ctx, tt, time.Second)
 	logs.IfError(err, "get category fail")
 	return r
 }
@@ -158,7 +132,7 @@ func AllCategoryTagsNames(ctx context.Context, t ...string) map[string]struct{} 
 	if len(t) > 0 {
 		tt = t[0]
 	}
-	r, err := categoryAndTagsCaches.GetCache(ctx, tt, time.Second, ctx, tt)
+	r, err := cachemanager.Get[[]models.TermsMy]("categoryAndTagsData", ctx, tt, time.Second)
 	if err != nil {
 		logs.Error(err, "get category fail")
 		return nil

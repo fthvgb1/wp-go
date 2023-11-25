@@ -2,14 +2,13 @@ package cache
 
 import (
 	"context"
+	"github.com/fthvgb1/wp-go/cache/cachemanager"
 	"time"
 )
 
-func GetPostMetaByPostIds(ctx context.Context, ids []uint64) (r []map[string]any, err error) {
-	r, err = postMetaCache.GetCacheBatch(ctx, ids, time.Second, ctx, ids)
-	return
+func GetPostMetaByPostIds(ctx context.Context, ids []uint64) ([]map[string]any, error) {
+	return cachemanager.GetMultiple[map[string]any]("postMetaData", ctx, ids, time.Second)
 }
-func GetPostMetaByPostId(ctx context.Context, id uint64) (r map[string]any, err error) {
-	r, err = postMetaCache.GetCache(ctx, id, time.Second, ctx, id)
-	return
+func GetPostMetaByPostId(ctx context.Context, id uint64) (map[string]any, error) {
+	return cachemanager.Get[map[string]any]("postMetaData", ctx, id, time.Second)
 }

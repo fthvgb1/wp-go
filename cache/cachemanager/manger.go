@@ -13,17 +13,40 @@ import (
 var ctx = context.Background()
 
 var mapFlush = safety.NewMap[string, func(any)]()
-var getSingleFn = safety.NewMap[string, func(context.Context, any, time.Duration, ...any) (any, error)]()
-var getBatchFn = safety.NewMap[string, func(context.Context, any, time.Duration, ...any) (any, error)]()
-var getBatchToMapFn = safety.NewMap[string, func(context.Context, any, time.Duration, ...any) (any, error)]()
 var anyFlush = safety.NewMap[string, func()]()
-
-var getVar = safety.NewMap[string, func(context.Context, time.Duration, ...any) (any, error)]()
 
 var expiredTime = safety.NewMap[string, expire]()
 
 var varCache = safety.NewMap[string, any]()
 var mapCache = safety.NewMap[string, any]()
+
+func SetVarCache[T any](name string, v *cache.VarCache[T]) error {
+	vv, ok := varCache.Load(name)
+	if !ok {
+		varCache.Store(name, v)
+		return nil
+	}
+	_, ok = vv.(*cache.VarCache[T])
+	if ok {
+		varCache.Store(name, v)
+		return nil
+	}
+	return errors.New(str.Join("cache ", name, " type err"))
+}
+
+func SetMapCache[K comparable, V any](name string, ca *cache.MapCache[K, V]) error {
+	v, ok := mapCache.Load(name)
+	if !ok {
+		mapCache.Store(name, ca)
+		return nil
+	}
+	_, ok = v.(*cache.MapCache[K, V])
+	if !ok {
+		return errors.New(str.Join("cache ", name, " type err"))
+	}
+	mapCache.Store(name, ca)
+	return nil
+}
 
 type expire struct {
 	fn          func() time.Duration
@@ -66,8 +89,7 @@ func FlushAnyVal(name ...string) {
 	}
 }
 
-func pushFlushMap[K comparable, V any](m *cache.MapCache[K, V], args ...any) {
-	name, _ := parseArgs(args...)
+func PushMangerMap[K comparable, V any](name string, m *cache.MapCache[K, V]) {
 	if name == "" {
 		return
 	}
@@ -81,70 +103,57 @@ func pushFlushMap[K comparable, V any](m *cache.MapCache[K, V], args ...any) {
 			m.Del(ctx, k...)
 		}
 	})
-	getSingleFn.Store(name, func(ct context.Context, k any, t time.Duration, a ...any) (any, error) {
-		kk, ok := k.(K)
-		if !ok {
-			return nil, errors.New(str.Join("cache ", name, " key type err"))
-		}
-		return m.GetCache(ct, kk, t, a...)
-	})
-	getBatchFn.Store(name, func(ct context.Context, k any, t time.Duration, a ...any) (any, error) {
-		kk, ok := k.([]K)
-		if !ok {
-			return nil, errors.New(str.Join("cache ", name, " key type err"))
-		}
-		return m.GetCacheBatch(ct, kk, t, a...)
-	})
-	getBatchToMapFn.Store(name, func(ct context.Context, k any, t time.Duration, a ...any) (any, error) {
-		kk, ok := k.([]K)
-		if !ok {
-			return nil, errors.New(str.Join("cache ", name, " key type err"))
-		}
-		return m.GetBatchToMap(ct, kk, t, a...)
-	})
-	FlushPush()
 }
 
-func Get[T, K any](name string, ct context.Context, key K, timeout time.Duration, params ...any) (r T, err error) {
+func Get[T any, K comparable](name string, ct context.Context, key K, timeout time.Duration, params ...any) (r T, err error) {
 	ct = context.WithValue(ct, "getCache", name)
-	v, ok := getSingleFn.Load(name)
-	if !ok {
-		err = errors.New(str.Join("cache ", name, " doesn't exist"))
-		return
-	}
-	vv, err := v(ct, key, timeout, params...)
+	ca, err := getMap[K, T](name)
 	if err != nil {
 		return r, err
 	}
-	r = vv.(T)
+	vv, err := ca.GetCache(ct, key, timeout, params...)
+	if err != nil {
+		return r, err
+	}
+	r = vv
 	return
 }
-func GetMultiple[T, K any](name string, ct context.Context, key []K, timeout time.Duration, params ...any) (r []T, err error) {
-	ct = context.WithValue(ct, "getCache", name)
-	v, ok := getBatchFn.Load(name)
+
+func getMap[K comparable, T any](name string) (*cache.MapCache[K, T], error) {
+	m, ok := mapCache.Load(name)
 	if !ok {
-		err = errors.New(str.Join("cache ", name, " doesn't exist"))
-		return
+		return nil, errors.New(str.Join("cache ", name, " doesn't exist"))
 	}
-	vv, err := v(ct, key, timeout, params...)
+	vk, ok := m.(*cache.MapCache[K, T])
+	if !ok {
+		return nil, errors.New(str.Join("cache ", name, " type error"))
+	}
+	return vk, nil
+}
+func GetMultiple[T any, K comparable](name string, ct context.Context, key []K, timeout time.Duration, params ...any) (r []T, err error) {
+	ct = context.WithValue(ct, "getCache", name)
+	ca, err := getMap[K, T](name)
 	if err != nil {
 		return r, err
 	}
-	r = vv.([]T)
+	vv, err := ca.GetCacheBatch(ct, key, timeout, params...)
+	if err != nil {
+		return r, err
+	}
+	r = vv
 	return
 }
 func GetMultipleToMap[T any, K comparable](name string, ct context.Context, key []K, timeout time.Duration, params ...any) (r map[K]T, err error) {
 	ct = context.WithValue(ct, "getCache", name)
-	v, ok := getBatchToMapFn.Load(name)
-	if !ok {
-		err = errors.New(str.Join("cache ", name, " doesn't exist"))
-		return
-	}
-	vv, err := v(ct, key, timeout, params...)
+	ca, err := getMap[K, T](name)
 	if err != nil {
 		return r, err
 	}
-	r = vv.(map[K]T)
+	vv, err := ca.GetBatchToMap(ct, key, timeout, params...)
+	if err != nil {
+		return r, err
+	}
+	r = vv
 	return
 }
 
@@ -168,10 +177,12 @@ func parseArgs(args ...any) (string, func() time.Duration) {
 
 func NewMapCache[K comparable, V any](data cache.Cache[K, V], batchFn cache.MapBatchFn[K, V], fn cache.MapSingleFn[K, V], args ...any) *cache.MapCache[K, V] {
 	m := cache.NewMapCache[K, V](data, fn, batchFn)
-	pushFlushMap(m, args...)
 	FlushPush(m)
 	ClearPush(m)
 	name, f := parseArgs(args...)
+	if name != "" {
+		PushMangerMap(name, m)
+	}
 	if f != nil && name != "" {
 		SetExpireTime(any(data).(cache.SetTime), name, 0, f)
 	}
@@ -249,9 +260,6 @@ func NewVarCache[T any](c cache.AnyCache[T], fn func(context.Context, ...any) (T
 	name, _ := parseArgs(a...)
 	if name != "" {
 		varCache.Store(name, v)
-		getVar.Store(name, func(c context.Context, duration time.Duration, a ...any) (any, error) {
-			return v.GetCache(c, duration, a...)
-		})
 	}
 	cc, ok := any(c).(clearExpired)
 	if ok {
@@ -262,21 +270,16 @@ func NewVarCache[T any](c cache.AnyCache[T], fn func(context.Context, ...any) (T
 
 func GetVarVal[T any](name string, ctx context.Context, duration time.Duration, a ...any) (r T, err error) {
 	ctx = context.WithValue(ctx, "getCache", name)
-	fn, ok := getVar.Load(name)
+	ca, ok := GetVarCache[T](name)
 	if !ok {
 		err = errors.New(str.Join("cache ", name, " is not exist"))
 		return
 	}
-	v, err := fn(ctx, duration, a...)
+	v, err := ca.GetCache(ctx, duration, a...)
 	if err != nil {
 		return
 	}
-	vv, ok := v.(T)
-	if !ok {
-		err = errors.New(str.Join("cache ", name, " value wanted can't match got"))
-		return
-	}
-	r = vv
+	r = v
 	return
 }
 
@@ -298,10 +301,6 @@ func GetVarCache[T any](name string) (*cache.VarCache[T], bool) {
 }
 
 func GetMapCache[K comparable, V any](name string) (*cache.MapCache[K, V], bool) {
-	v, ok := mapCache.Load(name)
-	if !ok {
-		return nil, false
-	}
-	vv, ok := v.(*cache.MapCache[K, V])
-	return vv, ok
+	vv, err := getMap[K, V](name)
+	return vv, err != nil
 }

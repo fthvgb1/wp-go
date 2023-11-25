@@ -12,7 +12,7 @@ import (
 
 func RecentComments(ctx context.Context, n int) (r []models.Comments) {
 	nn := number.Max(n, 10)
-	r, err := recentCommentsCaches.GetCache(ctx, time.Second, ctx, nn)
+	r, err := cachemanager.GetVarVal[[]models.Comments]("recentComments", ctx, time.Second, ctx, nn)
 	if len(r) > n {
 		r = r[0:n]
 	}
@@ -21,7 +21,7 @@ func RecentComments(ctx context.Context, n int) (r []models.Comments) {
 }
 
 func PostComments(ctx context.Context, Id uint64) ([]models.Comments, error) {
-	ids, err := postCommentCaches.GetCache(ctx, Id, time.Second, ctx, Id)
+	ids, err := cachemanager.Get[[]uint64]("postCommentIds", ctx, Id, time.Second)
 	if err != nil {
 		return nil, err
 	}
@@ -37,5 +37,6 @@ func GetCommentByIds(ctx context.Context, ids []uint64) ([]models.Comments, erro
 }
 
 func NewCommentCache() *cache.MapCache[string, string] {
-	return newCommentCache
+	r, _ := cachemanager.GetMapCache[string, string]("NewComment")
+	return r
 }

@@ -99,9 +99,9 @@ func GetPostsByIds(ctx context.Context, ids []uint64, _ ...any) (m map[uint64]mo
 }
 
 func SearchPostIds(ctx context.Context, _ string, args ...any) (ids PostIds, err error) {
-	q := args[1].(*model.QueryCondition)
-	page := args[2].(int)
-	pageSize := args[3].(int)
+	q := args[0].(*model.QueryCondition)
+	page := args[1].(int)
+	pageSize := args[2].(int)
 	q.Fields = "ID"
 	res, total, err := model.Pagination[models.Posts](ctx, q, page, pageSize)
 	for _, posts := range res {
@@ -116,7 +116,7 @@ func SearchPostIds(ctx context.Context, _ string, args ...any) (ids PostIds, err
 	return
 }
 
-func GetMaxPostId(ctx context.Context, a ...any) (uint64, error) {
+func GetMaxPostId(ctx context.Context, _ ...any) (uint64, error) {
 	r, err := model.SimpleFind[models.Posts](ctx,
 		model.SqlBuilder{{"post_type", "post"}, {"post_status", "publish"}},
 		"max(ID) ID",
@@ -129,7 +129,7 @@ func GetMaxPostId(ctx context.Context, a ...any) (uint64, error) {
 }
 
 func RecentPosts(ctx context.Context, a ...any) (r []models.Posts, err error) {
-	num := a[1].(int)
+	num := helper.ParseArgs(10, a...)
 	r, err = model.Finds[models.Posts](ctx, model.Conditions(
 		model.Where(model.SqlBuilder{
 			{"post_type", "post"},
@@ -143,7 +143,7 @@ func RecentPosts(ctx context.Context, a ...any) (r []models.Posts, err error) {
 }
 
 func GetPostContext(ctx context.Context, _ uint64, arg ...any) (r PostContext, err error) {
-	t := arg[1].(time.Time)
+	t := arg[0].(time.Time)
 	next, err := model.FirstOne[models.Posts](ctx, model.SqlBuilder{
 		{"post_date", ">", t.Format("2006-01-02 15:04:05")},
 		{"post_status", "in", ""},
@@ -174,7 +174,7 @@ func GetPostContext(ctx context.Context, _ uint64, arg ...any) (r PostContext, e
 }
 
 func MonthPost(ctx context.Context, _ string, args ...any) (r []uint64, err error) {
-	year, month := args[1].(string), args[2].(string)
+	year, month := args[0].(string), args[1].(string)
 	where := model.SqlBuilder{
 		{"post_type", "post"},
 		{"post_status", "publish"},

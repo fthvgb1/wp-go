@@ -57,7 +57,7 @@ func PostFeed(c *gin.Context) {
 		c.Status(http.StatusNotModified)
 		return
 	}
-	s, err := postFeed.GetCache(c, id, time.Second, c, id)
+	s, err := postFeed.GetCache(c, id, time.Second)
 	if err != nil {
 		c.Status(http.StatusInternalServerError)
 		c.Abort()
