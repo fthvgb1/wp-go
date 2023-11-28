@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/fthvgb1/wp-go/cache"
 	"github.com/fthvgb1/wp-go/cache/reload"
+	"github.com/fthvgb1/wp-go/helper"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/safety"
 	"time"
@@ -14,8 +15,6 @@ var ctx = context.Background()
 
 var mapFlush = safety.NewMap[string, func(any)]()
 var anyFlush = safety.NewMap[string, func()]()
-
-var expiredTime = safety.NewMap[string, expire]()
 
 var varCache = safety.NewMap[string, any]()
 var mapCache = safety.NewMap[string, any]()
@@ -176,7 +175,8 @@ func parseArgs(args ...any) (string, func() time.Duration) {
 }
 
 func NewMapCache[K comparable, V any](data cache.Cache[K, V], batchFn cache.MapBatchFn[K, V], fn cache.MapSingleFn[K, V], args ...any) *cache.MapCache[K, V] {
-	m := cache.NewMapCache[K, V](data, fn, batchFn)
+	inc := helper.ParseArgs(cache.IncreaseUpdate[K, V]{}, args...)
+	m := cache.NewMapCache[K, V](data, fn, batchFn, inc)
 	FlushPush(m)
 	ClearPush(m)
 	name, f := parseArgs(args...)
@@ -201,43 +201,13 @@ func SetExpireTime(c cache.SetTime, name string, expireTime time.Duration, expir
 	if name == "" {
 		return
 	}
-	var t, tt func() time.Duration
-	t = expireTimeFn
-	if t == nil {
-		t = func() time.Duration {
-			return expireTime
-		}
-	}
-	tt = t
-	expireTime = t()
-	p := safety.NewVar(expireTime)
-	e := expire{
-		fn:          t,
-		p:           p,
-		isUseManger: safety.NewVar(false),
-	}
-	expiredTime.Store(name, e)
-	reload.Push(func() {
-		if !e.isUseManger.Load() {
-			e.p.Store(tt())
-		}
-	}, str.Join("cacheManger-", name, "-expiredTime"))
-	t = func() time.Duration {
-		return e.p.Load()
-	}
-	c.SetExpiredTime(t)
+	fn := reload.FnVal(str.Join("cacheManger-", name, "-expiredTime"), expireTime, expireTimeFn)
+	c.SetExpiredTime(fn)
 }
 
 func ChangeExpireTime(t time.Duration, name ...string) {
 	for _, s := range name {
-		v, ok := expiredTime.Load(s)
-		if !ok {
-			continue
-		}
-		v.p.Store(t)
-		if !v.isUseManger.Load() {
-			v.isUseManger.Store(true)
-		}
+		reload.ChangeFnVal(s, t)
 	}
 }
 

@@ -261,7 +261,6 @@ func Push(fn func(), a ...any) {
 }
 
 func Reload() {
-	anyMap.Flush()
 	callsM.Flush()
 	flushMapFn.Flush()
 	callll := calls.Load()
@@ -272,4 +271,50 @@ func Reload() {
 		call.fn()
 	}
 	return
+}
+
+type Any[T any] struct {
+	fn          func() T
+	v           *safety.Var[T]
+	isUseManger *safety.Var[bool]
+}
+
+func FnVal[T any](name string, t T, fn func() T) func() T {
+	if fn == nil {
+		fn = func() T {
+			return t
+		}
+	} else {
+		t = fn()
+	}
+	p := safety.NewVar(t)
+	e := Any[T]{
+		fn:          fn,
+		v:           p,
+		isUseManger: safety.NewVar(false),
+	}
+	Push(func() {
+		if !e.isUseManger.Load() {
+			e.v.Store(fn())
+		}
+	})
+	anyMap.Store(name, e)
+	return func() T {
+		return e.v.Load()
+	}
+}
+
+func ChangeFnVal[T any](name string, val T) {
+	v, ok := anyMap.Load(name)
+	if !ok {
+		return
+	}
+	vv, ok := v.(Any[T])
+	if !ok {
+		return
+	}
+	if !vv.isUseManger.Load() {
+		vv.isUseManger.Store(true)
+	}
+	vv.v.Store(val)
 }

@@ -6,6 +6,7 @@ import (
 	"github.com/fthvgb1/wp-go/app/pkg/dao"
 	"github.com/fthvgb1/wp-go/app/pkg/logs"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
+	"github.com/fthvgb1/wp-go/cache"
 	"github.com/fthvgb1/wp-go/cache/cachemanager"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/safety"
@@ -51,9 +52,15 @@ func InitActionsCommonCache() {
 		return config.GetConfig().CacheTime.RecentCommentsCacheTime
 	})
 
-	cachemanager.NewMemoryMapCache(nil, dao.PostComments, c.CacheTime.PostCommentsCacheTime, "postCommentIds", func() time.Duration {
-		return config.GetConfig().CacheTime.PostCommentsCacheTime
-	})
+	cachemanager.NewMemoryMapCache(nil, dao.PostComments, c.CacheTime.PostCommentsCacheTime,
+		"postCommentIds",
+		func() time.Duration {
+			return config.GetConfig().CacheTime.PostCommentsCacheTime
+		},
+		cache.NewIncreaseUpdate("comment-increaseUpdate", dao.GetIncreaseComment, 30*time.Second,
+			func() time.Duration {
+				return config.GetConfig().CacheTime.CommentsIncreaseUpdateTime
+			}))
 
 	cachemanager.NewVarMemoryCache(dao.GetMaxPostId, c.CacheTime.MaxPostIdCacheTime, "maxPostId", func() time.Duration {
 		return config.GetConfig().CacheTime.MaxPostIdCacheTime

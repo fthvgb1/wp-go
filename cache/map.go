@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/fthvgb1/wp-go/cache/reload"
+	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"sync"
 	"time"
@@ -16,30 +18,47 @@ type MapCache[K comparable, V any] struct {
 	batchCacheFn       MapBatchFn[K, V]
 	getCacheBatch      func(c context.Context, key []K, timeout time.Duration, params ...any) ([]V, error)
 	getCacheBatchToMap func(c context.Context, key []K, timeout time.Duration, params ...any) (map[K]V, error)
+	increaseUpdate     IncreaseUpdate[K, V]
+	refresh            Refresh[K, V]
+}
+type IncreaseUpdate[K comparable, V any] struct {
+	CycleTime func() time.Duration
+	Fn        IncreaseFn[K, V]
+}
+
+func NewIncreaseUpdate[K comparable, V any](name string, fn IncreaseFn[K, V], cycleTime time.Duration, tFn func() time.Duration) IncreaseUpdate[K, V] {
+	tFn = reload.FnVal(name, cycleTime, tFn)
+	return IncreaseUpdate[K, V]{CycleTime: tFn, Fn: fn}
 }
 
 type MapSingleFn[K, V any] func(context.Context, K, ...any) (V, error)
 type MapBatchFn[K comparable, V any] func(context.Context, []K, ...any) (map[K]V, error)
+type IncreaseFn[K comparable, V any] func(c context.Context, currentData V, k K, t time.Time, a ...any) (data V, save bool, refresh bool, err error)
 
-func NewMapCache[K comparable, V any](data Cache[K, V], cacheFunc MapSingleFn[K, V], batchCacheFn MapBatchFn[K, V]) *MapCache[K, V] {
+func NewMapCache[K comparable, V any](ca Cache[K, V], cacheFunc MapSingleFn[K, V], batchCacheFn MapBatchFn[K, V], inc IncreaseUpdate[K, V]) *MapCache[K, V] {
 	r := &MapCache[K, V]{
-		Cache:        data,
-		mux:          sync.Mutex{},
-		cacheFunc:    cacheFunc,
-		batchCacheFn: batchCacheFn,
+		Cache:          ca,
+		mux:            sync.Mutex{},
+		cacheFunc:      cacheFunc,
+		batchCacheFn:   batchCacheFn,
+		increaseUpdate: inc,
 	}
 	if cacheFunc == nil && batchCacheFn != nil {
 		r.setDefaultCacheFn(batchCacheFn)
 	} else if batchCacheFn == nil && cacheFunc != nil {
 		r.SetDefaultBatchFunc(cacheFunc)
 	}
-	ex, ok := any(data).(Expend[K, V])
+	ex, ok := any(ca).(Expend[K, V])
 	if !ok {
 		r.getCacheBatch = r.getCacheBatchs
 		r.getCacheBatchToMap = r.getBatchToMapes
 	} else {
 		r.getCacheBatch = r.getBatches(ex)
 		r.getCacheBatchToMap = r.getBatchToMap(ex)
+	}
+	re, ok := any(ca).(Refresh[K, V])
+	if ok {
+		r.refresh = re
 	}
 	return r
 }
@@ -101,10 +120,44 @@ func (m *MapCache[K, V]) Flush(ctx context.Context) {
 
 func (m *MapCache[K, V]) GetCache(c context.Context, key K, timeout time.Duration, params ...any) (V, error) {
 	data, ok := m.Get(c, key)
-	if ok {
-		return data, nil
-	}
 	var err error
+	if ok {
+		if m.increaseUpdate.Fn == nil || m.refresh == nil {
+			return data, err
+		}
+		nowTime := time.Now()
+		if nowTime.Sub(m.GetLastSetTime(c, key)) < m.increaseUpdate.CycleTime() {
+			return data, err
+		}
+		fn := func() {
+			m.mux.Lock()
+			defer m.mux.Unlock()
+			if nowTime.Sub(m.GetLastSetTime(c, key)) < m.increaseUpdate.CycleTime() {
+				return
+			}
+			dat, save, refresh, er := m.increaseUpdate.Fn(c, data, key, m.GetLastSetTime(c, key), params...)
+			if er != nil {
+				err = er
+				return
+			}
+			if refresh {
+				m.refresh.Refresh(c, key, params...)
+			}
+			if save {
+				m.Set(c, key, dat)
+				data = dat
+			}
+		}
+		if timeout > 0 {
+			er := helper.RunFnWithTimeout(c, timeout, fn, fmt.Sprintf("increateUpdate cache %v err", key))
+			if err == nil && er != nil {
+				return data, er
+			}
+		} else {
+			fn()
+		}
+		return data, err
+	}
 	call := func() {
 		m.mux.Lock()
 		defer m.mux.Unlock()
@@ -118,19 +171,9 @@ func (m *MapCache[K, V]) GetCache(c context.Context, key K, timeout time.Duratio
 		m.Set(c, key, data)
 	}
 	if timeout > 0 {
-		ctx, cancel := context.WithTimeout(c, timeout)
-		defer cancel()
-		done := make(chan struct{}, 1)
-		go func() {
-			call()
-			done <- struct{}{}
-		}()
-		select {
-		case <-ctx.Done():
-			err = errors.New(fmt.Sprintf("get cache %v %s", key, ctx.Err().Error()))
-			var vv V
-			return vv, err
-		case <-done:
+		er := helper.RunFnWithTimeout(c, timeout, call, fmt.Sprintf("get cache %v ", key))
+		if err == nil && er != nil {
+			err = er
 		}
 	} else {
 		call()

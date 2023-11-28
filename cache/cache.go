@@ -30,3 +30,7 @@ type AnyCache[T any] interface {
 	Flush(ctx context.Context)
 	GetLastSetTime(ctx context.Context) time.Time
 }
+
+type Refresh[K comparable, V any] interface {
+	Refresh(ctx context.Context, k K, a ...any)
+}

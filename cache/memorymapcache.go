@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/safety"
 	"time"
 )
@@ -96,4 +97,14 @@ func (m *MemoryMapCache[K, V]) ClearExpired(_ context.Context) {
 		}
 		return true
 	})
+}
+
+func (m *MemoryMapCache[K, V]) Refresh(_ context.Context, k K, a ...any) {
+	v, ok := m.Load(k)
+	if !ok {
+		return
+	}
+	t := helper.ParseArgs(time.Now(), a...)
+	v.setTime = t
+	m.Store(k, v)
 }

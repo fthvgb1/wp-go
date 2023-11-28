@@ -46,23 +46,24 @@ type Config struct {
 }
 
 type CacheTime struct {
-	CacheControl            time.Duration   `yaml:"cacheControl" json:"cacheControl,omitempty"`
-	RecentPostCacheTime     time.Duration   `yaml:"recentPostCacheTime" json:"recentPostCacheTime,omitempty"`
-	CategoryCacheTime       time.Duration   `yaml:"categoryCacheTime" json:"categoryCacheTime,omitempty"`
-	ArchiveCacheTime        time.Duration   `yaml:"archiveCacheTime" json:"archiveCacheTime,omitempty"`
-	ContextPostCacheTime    time.Duration   `yaml:"contextPostCacheTime" json:"contextPostCacheTime,omitempty"`
-	RecentCommentsCacheTime time.Duration   `yaml:"recentCommentsCacheTime" json:"recentCommentsCacheTime,omitempty"`
-	DigestCacheTime         time.Duration   `yaml:"digestCacheTime" json:"digestCacheTime,omitempty"`
-	PostListCacheTime       time.Duration   `yaml:"postListCacheTime" json:"postListCacheTime,omitempty"`
-	SearchPostCacheTime     time.Duration   `yaml:"searchPostCacheTime" json:"searchPostCacheTime,omitempty"`
-	MonthPostCacheTime      time.Duration   `yaml:"monthPostCacheTime" json:"monthPostCacheTime,omitempty"`
-	PostDataCacheTime       time.Duration   `yaml:"postDataCacheTime" json:"postDataCacheTime,omitempty"`
-	PostCommentsCacheTime   time.Duration   `yaml:"postCommentsCacheTime" json:"postCommentsCacheTime,omitempty"`
-	CrontabClearCacheTime   time.Duration   `yaml:"crontabClearCacheTime" json:"crontabClearCacheTime,omitempty"`
-	MaxPostIdCacheTime      time.Duration   `yaml:"maxPostIdCacheTime" json:"maxPostIdCacheTime,omitempty"`
-	UserInfoCacheTime       time.Duration   `yaml:"userInfoCacheTime" json:"userInfoCacheTime,omitempty"`
-	CommentsCacheTime       time.Duration   `yaml:"commentsCacheTime" json:"commentsCacheTime,omitempty"`
-	SleepTime               []time.Duration `yaml:"sleepTime" json:"sleepTime,omitempty"`
+	CacheControl               time.Duration   `yaml:"cacheControl" json:"cacheControl,omitempty"`
+	RecentPostCacheTime        time.Duration   `yaml:"recentPostCacheTime" json:"recentPostCacheTime,omitempty"`
+	CategoryCacheTime          time.Duration   `yaml:"categoryCacheTime" json:"categoryCacheTime,omitempty"`
+	ArchiveCacheTime           time.Duration   `yaml:"archiveCacheTime" json:"archiveCacheTime,omitempty"`
+	ContextPostCacheTime       time.Duration   `yaml:"contextPostCacheTime" json:"contextPostCacheTime,omitempty"`
+	RecentCommentsCacheTime    time.Duration   `yaml:"recentCommentsCacheTime" json:"recentCommentsCacheTime,omitempty"`
+	DigestCacheTime            time.Duration   `yaml:"digestCacheTime" json:"digestCacheTime,omitempty"`
+	PostListCacheTime          time.Duration   `yaml:"postListCacheTime" json:"postListCacheTime,omitempty"`
+	SearchPostCacheTime        time.Duration   `yaml:"searchPostCacheTime" json:"searchPostCacheTime,omitempty"`
+	MonthPostCacheTime         time.Duration   `yaml:"monthPostCacheTime" json:"monthPostCacheTime,omitempty"`
+	PostDataCacheTime          time.Duration   `yaml:"postDataCacheTime" json:"postDataCacheTime,omitempty"`
+	PostCommentsCacheTime      time.Duration   `yaml:"postCommentsCacheTime" json:"postCommentsCacheTime,omitempty"`
+	CrontabClearCacheTime      time.Duration   `yaml:"crontabClearCacheTime" json:"crontabClearCacheTime,omitempty"`
+	MaxPostIdCacheTime         time.Duration   `yaml:"maxPostIdCacheTime" json:"maxPostIdCacheTime,omitempty"`
+	UserInfoCacheTime          time.Duration   `yaml:"userInfoCacheTime" json:"userInfoCacheTime,omitempty"`
+	CommentsCacheTime          time.Duration   `yaml:"commentsCacheTime" json:"commentsCacheTime,omitempty"`
+	SleepTime                  []time.Duration `yaml:"sleepTime" json:"sleepTime,omitempty"`
+	CommentsIncreaseUpdateTime time.Duration   `yaml:"commentsIncreaseUpdateTime" json:"commentsIncreaseUpdateTime"`
 }
 
 type Ssl struct {

@@ -58,6 +58,15 @@ func Filter[T any](arr []T, fn func(T, int) bool) []T {
 	}
 	return r
 }
+func Filters[T any](arr []T, fn func(T) bool) []T {
+	var r []T
+	for _, t := range arr {
+		if fn(t) {
+			r = append(r, t)
+		}
+	}
+	return r
+}
 
 func Reduce[R, T any](arr []T, fn func(T, R) R, r R) R {
 	for _, t := range arr {

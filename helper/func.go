@@ -2,6 +2,7 @@ package helper
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"net/url"
@@ -9,6 +10,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"time"
 )
 
 func ToAny[T any](v T) any {
@@ -143,4 +145,46 @@ func ParseArgs[T any](defaults T, a ...any) T {
 		}
 	}
 	return defaults
+}
+
+func RunFnWithTimeout(ctx context.Context, t time.Duration, call func(), a ...any) (err error) {
+	ctx, cancel := context.WithTimeout(ctx, t)
+	defer cancel()
+	done := make(chan struct{}, 1)
+	go func() {
+		call()
+		done <- struct{}{}
+	}()
+	select {
+	case <-ctx.Done():
+		msg := ParseArgs("", a...)
+		if msg != "" {
+			return errors.New(str.Join(msg, ":", ctx.Err().Error()))
+		}
+		return ctx.Err()
+	case <-done:
+		close(done)
+	}
+	return nil
+}
+
+func RunFnWithTimeouts[A, V any](ctx context.Context, t time.Duration, ar A, call func(A) (V, error), a ...any) (v V, err error) {
+	ctx, cancel := context.WithTimeout(ctx, t)
+	defer cancel()
+	done := make(chan struct{}, 1)
+	go func() {
+		v, err = call(ar)
+		done <- struct{}{}
+	}()
+	select {
+	case <-ctx.Done():
+		msg := ParseArgs("", a...)
+		if msg != "" {
+			return v, errors.New(str.Join(msg, ":", ctx.Err().Error()))
+		}
+		return v, ctx.Err()
+	case <-done:
+		close(done)
+	}
+	return v, err
 }

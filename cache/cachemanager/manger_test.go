@@ -94,18 +94,18 @@ func TestSetExpireTime(t *testing.T) {
 
 func TestSetMapCache(t *testing.T) {
 	t.Run("t1", func(t *testing.T) {
-		NewMemoryMapCache(nil, func(ctx2 context.Context, k string, a ...any) (string, error) {
+		x := NewMemoryMapCache(nil, func(ctx2 context.Context, k string, a ...any) (string, error) {
 			fmt.Println("memory cache")
 			return strings.Repeat(k, 2), nil
 		}, time.Hour, "test")
 		fmt.Println(Get[string]("test", ctx, "test", time.Second))
 
-		cc := NewMapCache[string, string](xx[string, string]{m: map[string]string{}}, nil, func(ctx2 context.Context, k string, a ...any) (string, error) {
+		NewMapCache[string, string](xx[string, string]{m: map[string]string{}}, nil, func(ctx2 context.Context, k string, a ...any) (string, error) {
 			fmt.Println("other cache drives. eg: redis,file.....")
 			return strings.Repeat(k, 2), nil
-		}, "kkk", time.Hour)
+		}, "test", time.Hour)
 
-		if err := SetMapCache("test", cc); err != nil {
+		if err := SetMapCache("kkk", x); err != nil {
 			t.Errorf("SetMapCache() error = %v, wantErr %v", err, nil)
 		}
 		fmt.Println(Get[string]("test", ctx, "test", time.Second))
@@ -152,16 +152,16 @@ func (x xx[K, V]) ClearExpired(ctx context.Context) {
 
 func TestSetVarCache(t *testing.T) {
 	t.Run("t1", func(t *testing.T) {
-		NewVarMemoryCache(func(ctx2 context.Context, a ...any) (string, error) {
+		bak := NewVarMemoryCache(func(ctx2 context.Context, a ...any) (string, error) {
 			fmt.Println("memory cache")
 			return "xxx", nil
 		}, time.Hour, "test")
 		fmt.Println(GetVarVal[string]("test", ctx, time.Second))
-		o := NewVarCache[string](oo[string]{}, func(ctx2 context.Context, a ...any) (string, error) {
+		NewVarCache[string](oo[string]{}, func(ctx2 context.Context, a ...any) (string, error) {
 			fmt.Println("other cache drives. eg: redis,file.....")
 			return "ooo", nil
-		})
-		if err := SetVarCache("test", o); err != nil {
+		}, "test")
+		if err := SetVarCache("xx", bak); err != nil {
 			t.Errorf("SetVarCache() error = %v, wantErr %v", err, nil)
 		}
 		fmt.Println(GetVarVal[string]("test", ctx, time.Second))
