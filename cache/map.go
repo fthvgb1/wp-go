@@ -229,7 +229,7 @@ func (m *MapCache[K, V]) getBatchToMap(e Expend[K, V]) func(c context.Context, k
 			r, er := m.batchCacheFn(ctx, maps.FilterToSlice(needIndex, func(k K, v int) (K, bool) {
 				return k, true
 			}), params...)
-			if err != nil {
+			if er != nil {
 				err = er
 				return
 			}
@@ -296,7 +296,7 @@ func (m *MapCache[K, V]) getBatchToMapes(c context.Context, key []K, timeout tim
 		}
 
 		rr, er := m.batchCacheFn(c, needFlushs, params...)
-		if err != nil {
+		if er != nil {
 			err = er
 			return
 		}
@@ -361,7 +361,7 @@ func (m *MapCache[K, V]) getCacheBatchs(c context.Context, key []K, timeout time
 		}
 
 		r, er := m.batchCacheFn(c, needFlushs, params...)
-		if err != nil {
+		if er != nil {
 			err = er
 			return
 		}
@@ -441,7 +441,7 @@ func (m *MapCache[K, V]) getBatches(e Expend[K, V]) func(ctx context.Context, ke
 			r, er := m.batchCacheFn(ctx, maps.FilterToSlice(needIndex, func(k K, v int) (K, bool) {
 				return k, true
 			}), params...)
-			if err != nil {
+			if er != nil {
 				err = er
 				return
 			}

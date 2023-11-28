@@ -52,20 +52,33 @@ func PostComments(ctx context.Context, postId uint64, _ ...any) ([]uint64, error
 }
 
 func GetCommentByIds(ctx context.Context, ids []uint64, _ ...any) (map[uint64]models.Comments, error) {
-	m := make(map[uint64]models.Comments)
-	r, err := model.ChunkFind[models.Comments](ctx, 500, model.Conditions(
-		model.Where(model.SqlBuilder{
-			{"comment_ID", "in", ""}, {"comment_approved", "1"},
-		}),
-		model.Fields("*"),
-		model.In(slice.ToAnySlice(ids)),
-	))
-	if err != nil {
-		return m, err
+	if len(ids) < 1 {
+		return nil, nil
 	}
-	return slice.SimpleToMap(r, func(t models.Comments) uint64 {
-		return t.CommentId
-	}), err
+	m := make(map[uint64]models.Comments)
+	off := 0
+	for {
+		id := slice.Slice(ids, off, 500)
+		if len(id) < 1 {
+			break
+		}
+		r, err := model.Finds[models.Comments](ctx, model.Conditions(
+			model.Where(model.SqlBuilder{
+				{"comment_ID", "in", ""}, {"comment_approved", "1"},
+			}),
+			model.Fields("*"),
+			model.In(slice.ToAnySlice(id)),
+		))
+		if err != nil {
+			return m, err
+		}
+		for _, comments := range r {
+			m[comments.CommentId] = comments
+		}
+		off += 500
+	}
+
+	return m, nil
 }
 
 func GetIncreaseComment(ctx context.Context, currentData []uint64, k uint64, t time.Time, _ ...any) (data []uint64, save bool, refresh bool, err error) {

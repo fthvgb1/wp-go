@@ -8,6 +8,10 @@ func Splice[T any](a *[]T, offset, length int, replacement []T) []T {
 	}
 	if offset >= 0 {
 		if offset+length > l {
+			if offset == 0 {
+				*a = []T{}
+				return arr[:l]
+			}
 			return nil
 		} else if l > offset && l < offset+length {
 			v := arr[offset:l]

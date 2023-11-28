@@ -152,13 +152,11 @@ func Slice[T any](arr []T, offset, length int) (r []T) {
 		length = l - offset
 	}
 	if l > offset && l >= offset+length {
-		r = append(make([]T, 0, length), arr[offset:offset+length]...)
-		arr = append(arr[:offset], arr[offset+length:]...)
+		r = arr[offset : offset+length]
 	} else if l <= offset {
 		return
 	} else if l > offset && l < offset+length {
-		r = append(make([]T, 0, length), arr[offset:]...)
-		arr = arr[:offset]
+		r = arr[offset:]
 	}
 	return
 }
