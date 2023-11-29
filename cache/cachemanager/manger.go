@@ -47,12 +47,6 @@ func SetMapCache[K comparable, V any](name string, ca *cache.MapCache[K, V]) err
 	return nil
 }
 
-type expire struct {
-	fn          func() time.Duration
-	p           *safety.Var[time.Duration]
-	isUseManger *safety.Var[bool]
-}
-
 type flush interface {
 	Flush(ctx context.Context)
 }
@@ -225,7 +219,9 @@ func ClearExpired() {
 }
 
 func NewVarCache[T any](c cache.AnyCache[T], fn func(context.Context, ...any) (T, error), a ...any) *cache.VarCache[T] {
-	v := cache.NewVarCache(c, fn)
+	inc := helper.ParseArgs(cache.IncreaseUpdateVar[T]{}, a...)
+	ref := helper.ParseArgs(cache.RefreshVar[T](nil), a...)
+	v := cache.NewVarCache(c, fn, inc, ref)
 	FlushPush(v)
 	name, _ := parseArgs(a...)
 	if name != "" {

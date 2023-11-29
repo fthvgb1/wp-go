@@ -82,7 +82,7 @@ func GetCommentByIds(ctx context.Context, ids []uint64, _ ...any) (map[uint64]mo
 }
 
 func GetIncreaseComment(ctx context.Context, currentData []uint64, k uint64, t time.Time, _ ...any) (data []uint64, save bool, refresh bool, err error) {
-	r, err := model.ChunkFind[models.Comments](ctx, 300, model.Conditions(
+	r, err := model.ChunkFind[models.Comments](ctx, 1000, model.Conditions(
 		model.Where(model.SqlBuilder{
 			{"comment_approved", "1"},
 			{"comment_post_ID", "=", number.IntToString(k), "int"},

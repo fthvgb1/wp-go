@@ -2,8 +2,7 @@ package cache
 
 import (
 	"context"
-	"errors"
-	"fmt"
+	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/safety"
 	"sync"
 	"time"
@@ -11,16 +10,54 @@ import (
 
 type VarCache[T any] struct {
 	AnyCache[T]
-	setCacheFunc func(context.Context, ...any) (T, error)
-	mutex        sync.Mutex
+	setCacheFunc   func(context.Context, ...any) (T, error)
+	mutex          sync.Mutex
+	increaseUpdate IncreaseUpdateVar[T]
+	refresh        RefreshVar[T]
 }
+
+type IncreaseUpdateVar[T any] struct {
+	CycleTime func() time.Duration
+	Fn        IncreaseVarFn[T]
+}
+
+type IncreaseVarFn[T any] func(c context.Context, currentData T, t time.Time, a ...any) (data T, save bool, refresh bool, err error)
 
 func (t *VarCache[T]) GetCache(ctx context.Context, timeout time.Duration, params ...any) (T, error) {
 	data, ok := t.Get(ctx)
+	var err error
 	if ok {
+		if t.increaseUpdate.Fn != nil && t.refresh != nil {
+			nowTime := time.Now()
+			if t.increaseUpdate.CycleTime() > nowTime.Sub(t.GetLastSetTime(ctx)) {
+				return data, nil
+			}
+			fn := func() {
+				t.mutex.Lock()
+				defer t.mutex.Unlock()
+				da, save, refresh, er := t.increaseUpdate.Fn(ctx, data, t.GetLastSetTime(ctx), params...)
+				if er != nil {
+					err = er
+					return
+				}
+				if save {
+					t.Set(ctx, da)
+				}
+				if refresh {
+					t.refresh.Refresh(ctx, params...)
+				}
+			}
+			if timeout > 0 {
+				er := helper.RunFnWithTimeout(ctx, timeout, fn, "increaseUpdate cache fail")
+				if err == nil && er != nil {
+					err = er
+				}
+			} else {
+				fn()
+			}
+		}
 		return data, nil
 	}
-	var err error
 	call := func() {
 		t.mutex.Lock()
 		defer t.mutex.Unlock()
@@ -38,19 +75,9 @@ func (t *VarCache[T]) GetCache(ctx context.Context, timeout time.Duration, param
 		data = r
 	}
 	if timeout > 0 {
-		ctx, cancel := context.WithTimeout(ctx, timeout)
-		defer cancel()
-		done := make(chan struct{}, 1)
-		go func() {
-			call()
-			done <- struct{}{}
-			close(done)
-		}()
-		select {
-		case <-ctx.Done():
-			err = errors.New(fmt.Sprintf("get cache %s", ctx.Err().Error()))
-		case <-done:
-
+		er := helper.RunFnWithTimeout(ctx, timeout, call, "get cache fail")
+		if err == nil && er != nil {
+			err = er
 		}
 	} else {
 		call()
@@ -98,9 +125,11 @@ func (c *VarMemoryCache[T]) GetLastSetTime(_ context.Context) time.Time {
 	return c.v.Load().setTime
 }
 
-func NewVarCache[T any](cache AnyCache[T], fn func(context.Context, ...any) (T, error)) *VarCache[T] {
+func NewVarCache[T any](cache AnyCache[T], fn func(context.Context, ...any) (T, error), inc IncreaseUpdateVar[T], ref RefreshVar[T]) *VarCache[T] {
 	return &VarCache[T]{
 		AnyCache: cache, setCacheFunc: fn, mutex: sync.Mutex{},
+		increaseUpdate: inc,
+		refresh:        ref,
 	}
 }
 

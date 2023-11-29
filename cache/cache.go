@@ -34,3 +34,6 @@ type AnyCache[T any] interface {
 type Refresh[K comparable, V any] interface {
 	Refresh(ctx context.Context, k K, a ...any)
 }
+type RefreshVar[T any] interface {
+	Refresh(ctx context.Context, a ...any)
+}
