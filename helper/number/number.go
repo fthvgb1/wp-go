@@ -97,8 +97,8 @@ func Divide[T constraints.Integer | constraints.Float](i, j T) T {
 	return i / j
 }
 
-func CalTotalPage[T constraints.Integer](totalRows, size T) T {
-	return T(math.Ceil(float64(totalRows) / float64(size)))
+func DivideCeil[T constraints.Integer](num1, num2 T) T {
+	return T(math.Ceil(float64(num1) / float64(num2)))
 }
 
 type Counter[T constraints.Integer] func() T

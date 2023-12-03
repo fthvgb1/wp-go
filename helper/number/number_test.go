@@ -245,8 +245,8 @@ func TestCalTotalPage(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if got := CalTotalPage(tt.args.totalRows, tt.args.size); got != tt.want {
-				t.Errorf("CalTotalPage() = %v, want %v", got, tt.want)
+			if got := DivideCeil(tt.args.totalRows, tt.args.size); got != tt.want {
+				t.Errorf("DivideCeil() = %v, want %v", got, tt.want)
 			}
 		})
 	}

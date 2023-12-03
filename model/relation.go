@@ -3,6 +3,7 @@ package model
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/helper/slice"
@@ -24,7 +25,7 @@ const (
 
 // Relationship join table
 //
-// RelationType HasOne| HasMany
+// # RelationType HasOne| HasMany
 //
 // eg: hasOne, post has a user. ForeignKey is user's id , Local is post's userId field
 //
@@ -119,7 +120,7 @@ func Relation(isPlural bool, db dbQuery, ctx context.Context, r any, q *QueryCon
 
 	for _, f := range q.RelationFn {
 		getVal, isJoin, qq, relationship := f()
-		idFn, assignmentFn, rr, rrs, ship := relationship()
+		idFn, assignmentFn, varFn, ship := relationship()
 		if isJoin {
 			beforeFn = append(beforeFn, func() {
 				parseBeforeJoin(qx, ship)
@@ -167,15 +168,15 @@ func Relation(isPlural bool, db dbQuery, ctx context.Context, r any, q *QueryCon
 				}
 				qq.In = in
 			}
-			err = ParseRelation(isPlural || ship.RelationType == HasMany, db, ctx, helper.Or(isPlural, rrs, rr), qq)
+			err = ParseRelation(isPlural || ship.RelationType == HasMany, db, ctx, varFn(isPlural), qq)
 			if err != nil {
-				if err == sql.ErrNoRows {
+				if errors.Is(err, sql.ErrNoRows) {
 					err = nil
 				} else {
 					return err
 				}
 			}
-			assignmentFn(r, helper.Or(isPlural, rrs, rr))
+			assignmentFn(r, varFn(isPlural))
 			return err
 		})
 	}
@@ -250,10 +251,15 @@ func SetHasMany[T, V any, K comparable](assignmentFn func(*T, *[]V), pIdFn func(
 func RelationHasOne[M, P any, I constraints.Integer | constraints.Unsigned](fId func(*M) I, pId func(*P) I, setVal func(*M, *P), r Relationship) RelationFn {
 	idFn := GetWithID(fId)
 	setFn := SetHasOne(setVal, fId, pId)
-	return func() (func(any) []any, func(any, any), any, any, Relationship) {
-		var s P
-		var ss []P
-		return idFn, setFn, &s, &ss, r
+	return func() (func(any) []any, func(any, any), func(bool) any, Relationship) {
+		return idFn, setFn, func(isPlural bool) any {
+			if isPlural {
+				var ss []P
+				return &ss
+			}
+			var s P
+			return &s
+		}, r
 	}
 }
 
@@ -262,9 +268,11 @@ func RelationHasOne[M, P any, I constraints.Integer | constraints.Unsigned](fId 
 func RelationHasMany[M, P any, I constraints.Integer | constraints.Unsigned](mId func(*M) I, pId func(*P) I, setVal func(*M, *[]P), r Relationship) RelationFn {
 	idFn := GetWithID(mId)
 	setFn := SetHasMany(setVal, mId, pId)
-	return func() (func(any) []any, func(any, any), any, any, Relationship) {
-		var ss []P
-		return idFn, setFn, &ss, &ss, r
+	return func() (func(any) []any, func(any, any), func(bool) any, Relationship) {
+		return idFn, setFn, func(_ bool) any {
+			var ss []P
+			return &ss
+		}, r
 	}
 }
 

@@ -134,7 +134,7 @@ func (i *IndexHandle) BuildIndexData(parm *IndexParams) (err error) {
 	}
 	i.Posts = posts
 	i.TotalRows = totalRows
-	i.ginH["totalPage"] = number.CalTotalPage(totalRows, i.Param.PageSize)
+	i.ginH["totalPage"] = number.DivideCeil(totalRows, i.Param.PageSize)
 	return
 }
 

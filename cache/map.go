@@ -18,7 +18,7 @@ type MapCache[K comparable, V any] struct {
 	batchCacheFn       MapBatchFn[K, V]
 	getCacheBatch      func(c context.Context, key []K, timeout time.Duration, params ...any) ([]V, error)
 	getCacheBatchToMap func(c context.Context, key []K, timeout time.Duration, params ...any) (map[K]V, error)
-	increaseUpdate     IncreaseUpdate[K, V]
+	increaseUpdate     *IncreaseUpdate[K, V]
 	refresh            Refresh[K, V]
 }
 type IncreaseUpdate[K comparable, V any] struct {
@@ -26,16 +26,16 @@ type IncreaseUpdate[K comparable, V any] struct {
 	Fn        IncreaseFn[K, V]
 }
 
-func NewIncreaseUpdate[K comparable, V any](name string, fn IncreaseFn[K, V], cycleTime time.Duration, tFn func() time.Duration) IncreaseUpdate[K, V] {
+func NewIncreaseUpdate[K comparable, V any](name string, fn IncreaseFn[K, V], cycleTime time.Duration, tFn func() time.Duration) *IncreaseUpdate[K, V] {
 	tFn = reload.FnVal(name, cycleTime, tFn)
-	return IncreaseUpdate[K, V]{CycleTime: tFn, Fn: fn}
+	return &IncreaseUpdate[K, V]{CycleTime: tFn, Fn: fn}
 }
 
 type MapSingleFn[K, V any] func(context.Context, K, ...any) (V, error)
 type MapBatchFn[K comparable, V any] func(context.Context, []K, ...any) (map[K]V, error)
 type IncreaseFn[K comparable, V any] func(c context.Context, currentData V, k K, t time.Time, a ...any) (data V, save bool, refresh bool, err error)
 
-func NewMapCache[K comparable, V any](ca Cache[K, V], cacheFunc MapSingleFn[K, V], batchCacheFn MapBatchFn[K, V], inc IncreaseUpdate[K, V]) *MapCache[K, V] {
+func NewMapCache[K comparable, V any](ca Cache[K, V], cacheFunc MapSingleFn[K, V], batchCacheFn MapBatchFn[K, V], inc *IncreaseUpdate[K, V]) *MapCache[K, V] {
 	r := &MapCache[K, V]{
 		Cache:          ca,
 		mux:            sync.Mutex{},
@@ -118,45 +118,50 @@ func (m *MapCache[K, V]) Flush(ctx context.Context) {
 	m.Cache.Flush(ctx)
 }
 
+func (m *MapCache[K, V]) increaseUpdates(c context.Context, timeout time.Duration, data V, key K, params ...any) (V, error) {
+	var err error
+	nowTime := time.Now()
+	if nowTime.Sub(m.GetLastSetTime(c, key)) < m.increaseUpdate.CycleTime() {
+		return data, err
+	}
+	fn := func() {
+		m.mux.Lock()
+		defer m.mux.Unlock()
+		if nowTime.Sub(m.GetLastSetTime(c, key)) < m.increaseUpdate.CycleTime() {
+			return
+		}
+		dat, save, refresh, er := m.increaseUpdate.Fn(c, data, key, m.GetLastSetTime(c, key), params...)
+		if er != nil {
+			err = er
+			return
+		}
+		if refresh {
+			m.refresh.Refresh(c, key, params...)
+		}
+		if save {
+			m.Set(c, key, dat)
+			data = dat
+		}
+	}
+	if timeout > 0 {
+		er := helper.RunFnWithTimeout(c, timeout, fn)
+		if err == nil && er != nil {
+			return data, fmt.Errorf("increateUpdate cache %v err:[%s]", key, er)
+		}
+	} else {
+		fn()
+	}
+	return data, err
+}
+
 func (m *MapCache[K, V]) GetCache(c context.Context, key K, timeout time.Duration, params ...any) (V, error) {
 	data, ok := m.Get(c, key)
 	var err error
 	if ok {
-		if m.increaseUpdate.Fn == nil || m.refresh == nil {
+		if m.increaseUpdate == nil || m.refresh == nil {
 			return data, err
 		}
-		nowTime := time.Now()
-		if nowTime.Sub(m.GetLastSetTime(c, key)) < m.increaseUpdate.CycleTime() {
-			return data, err
-		}
-		fn := func() {
-			m.mux.Lock()
-			defer m.mux.Unlock()
-			if nowTime.Sub(m.GetLastSetTime(c, key)) < m.increaseUpdate.CycleTime() {
-				return
-			}
-			dat, save, refresh, er := m.increaseUpdate.Fn(c, data, key, m.GetLastSetTime(c, key), params...)
-			if er != nil {
-				err = er
-				return
-			}
-			if refresh {
-				m.refresh.Refresh(c, key, params...)
-			}
-			if save {
-				m.Set(c, key, dat)
-				data = dat
-			}
-		}
-		if timeout > 0 {
-			er := helper.RunFnWithTimeout(c, timeout, fn, fmt.Sprintf("increateUpdate cache %v err", key))
-			if err == nil && er != nil {
-				return data, er
-			}
-		} else {
-			fn()
-		}
-		return data, err
+		return m.increaseUpdates(c, timeout, data, key, params...)
 	}
 	call := func() {
 		m.mux.Lock()

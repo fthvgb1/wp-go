@@ -12,11 +12,12 @@ type QueryCondition struct {
 	Having     SqlBuilder
 	Limit      int
 	Offset     int
+	TotalRow   int
 	In         [][]any
 	RelationFn []func() (bool, bool, *QueryCondition, RelationFn)
 }
 
-type RelationFn func() (func(any) []any, func(any, any), any, any, Relationship)
+type RelationFn func() (func(any) []any, func(any, any), func(bool) any, Relationship)
 
 func Conditions(fns ...Condition) *QueryCondition {
 	r := &QueryCondition{}
@@ -78,6 +79,13 @@ func Limit(limit int) Condition {
 	}
 }
 
+// TotalRaw only effect on Pagination,when TotalRaw>0 ,will not query count
+func TotalRaw(total int) Condition {
+	return func(c *QueryCondition) {
+		c.TotalRow = total
+	}
+}
+
 func Offset(offset int) Condition {
 	return func(c *QueryCondition) {
 		c.Offset = offset
@@ -96,7 +104,7 @@ func WithCtx(ctx *context.Context) Condition {
 	}
 }
 
-func WithFn(getVal, isJoin bool, q *QueryCondition, fn func() (func(any) []any, func(any, any), any, any, Relationship)) Condition {
+func WithFn(getVal, isJoin bool, q *QueryCondition, fn func() (func(any) []any, func(any, any), func(bool) any, Relationship)) Condition {
 	return func(c *QueryCondition) {
 		c.RelationFn = append(c.RelationFn, func() (bool, bool, *QueryCondition, RelationFn) {
 			return getVal, isJoin, q, fn

@@ -37,7 +37,7 @@ func pagination[T Model](db dbQuery, ctx context.Context, q *QueryCondition, pag
 		From:   q.From,
 		Fields: "count(*) n",
 	}
-	if q.Group != "" {
+	if q.Group != "" && q.TotalRow <= 0 {
 		qx.Fields = q.Fields
 		if qx.From == "" {
 			qx.From = Table[T]()
@@ -55,11 +55,17 @@ func pagination[T Model](db dbQuery, ctx context.Context, q *QueryCondition, pag
 			Fields: "count(*) n",
 		}
 	}
-	n, err := gets[count[T]](db, ctx, &qx)
-	total = n.N
-	if err != nil || total < 1 {
-		return
+	if q.TotalRow <= 0 {
+		n, er := gets[count[T]](db, ctx, &qx)
+		total = n.N
+		if er != nil || total < 1 {
+			err = er
+			return
+		}
+	} else {
+		total = q.TotalRow
 	}
+
 	offset := 0
 	if page > 1 {
 		offset = (page - 1) * q.Limit

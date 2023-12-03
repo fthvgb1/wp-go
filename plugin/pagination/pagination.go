@@ -26,7 +26,7 @@ type ParsePagination struct {
 }
 
 func NewParsePagination(totalRaw int, pageSize int, currentPage, step int, query string, path string) ParsePagination {
-	return ParsePagination{TotalPage: number.CalTotalPage(totalRaw, pageSize), TotalRaw: totalRaw, PageSize: pageSize, CurrentPage: currentPage, Query: query, Path: path, Step: step}
+	return ParsePagination{TotalPage: number.DivideCeil(totalRaw, pageSize), TotalRaw: totalRaw, PageSize: pageSize, CurrentPage: currentPage, Query: query, Path: path, Step: step}
 }
 
 func Paginate(e Elements, p ParsePagination) string {

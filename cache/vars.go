@@ -12,7 +12,7 @@ type VarCache[T any] struct {
 	AnyCache[T]
 	setCacheFunc   func(context.Context, ...any) (T, error)
 	mutex          sync.Mutex
-	increaseUpdate IncreaseUpdateVar[T]
+	increaseUpdate *IncreaseUpdateVar[T]
 	refresh        RefreshVar[T]
 }
 
@@ -27,7 +27,7 @@ func (t *VarCache[T]) GetCache(ctx context.Context, timeout time.Duration, param
 	data, ok := t.Get(ctx)
 	var err error
 	if ok {
-		if t.increaseUpdate.Fn != nil && t.refresh != nil {
+		if t.increaseUpdate != nil && t.refresh != nil {
 			nowTime := time.Now()
 			if t.increaseUpdate.CycleTime() > nowTime.Sub(t.GetLastSetTime(ctx)) {
 				return data, nil
@@ -125,7 +125,7 @@ func (c *VarMemoryCache[T]) GetLastSetTime(_ context.Context) time.Time {
 	return c.v.Load().setTime
 }
 
-func NewVarCache[T any](cache AnyCache[T], fn func(context.Context, ...any) (T, error), inc IncreaseUpdateVar[T], ref RefreshVar[T]) *VarCache[T] {
+func NewVarCache[T any](cache AnyCache[T], fn func(context.Context, ...any) (T, error), inc *IncreaseUpdateVar[T], ref RefreshVar[T]) *VarCache[T] {
 	return &VarCache[T]{
 		AnyCache: cache, setCacheFunc: fn, mutex: sync.Mutex{},
 		increaseUpdate: inc,
