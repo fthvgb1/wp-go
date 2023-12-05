@@ -264,8 +264,8 @@ func Reload() {
 	callsM.Flush()
 	flushMapFn.Flush()
 	callll := calls.Load()
-	slice.Sort(callll, func(i, j queue) bool {
-		return i.order > j.order
+	slice.SimpleSort(callll, slice.DESC, func(t queue) float64 {
+		return t.order
 	})
 	for _, call := range callll {
 		call.fn()

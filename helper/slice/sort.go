@@ -56,3 +56,16 @@ func Sorts[T constraints.Ordered](a []T, order int) {
 	}
 	sort.Sort(slice)
 }
+
+func SimpleSort[T any, O constraints.Ordered](a []T, order int, fn func(t T) O) {
+	slice := anyArr[T]{
+		data: a,
+		fn: func(i, j T) bool {
+			if order == DESC {
+				return fn(i) > fn(j)
+			}
+			return fn(i) < fn(j)
+		},
+	}
+	sort.Sort(slice)
+}

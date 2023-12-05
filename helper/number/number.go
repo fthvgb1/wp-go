@@ -19,7 +19,10 @@ func Range[T constraints.Integer](start, end T, steps ...T) []T {
 	if step == 0 {
 		l = int(end - start + 1)
 	} else {
-		l = int((end-start+1)/step + 1)
+		l = int((end - start + 1) / step)
+		if step*T(l) <= end && step != 1 {
+			l++
+		}
 	}
 	if l < 0 {
 		l = -l

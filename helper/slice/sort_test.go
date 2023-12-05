@@ -2,6 +2,7 @@ package slice
 
 import (
 	"fmt"
+	"github.com/fthvgb1/wp-go/helper/number"
 	"golang.org/x/exp/constraints"
 	"reflect"
 	"testing"
@@ -160,6 +161,42 @@ func TestStableSort(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			StableSort(tt.args.arr, tt.args.fn)
+		})
+	}
+}
+
+func TestSimpleSort(t *testing.T) {
+
+	type args[T any, O constraints.Ordered] struct {
+		a     []T
+		order int
+		fn    func(t T) O
+	}
+	type testCase[T any, O constraints.Ordered] struct {
+		name string
+		args args[T, O]
+	}
+	tests := []testCase[int, int]{
+		{
+			name: "t1",
+			args: args[int, int]{
+				a: func() []int {
+					f := number.Range(1, 20)
+					Shuffle(&f)
+					fmt.Println(f)
+					return f
+				}(),
+				order: ASC,
+				fn: func(t int) int {
+					return t
+				},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			SimpleSort(tt.args.a, tt.args.order, tt.args.fn)
+			fmt.Println(tt.args.a)
 		})
 	}
 }

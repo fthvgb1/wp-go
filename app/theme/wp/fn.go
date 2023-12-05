@@ -5,8 +5,8 @@ import (
 	"github.com/fthvgb1/wp-go/safety"
 )
 
-var fnMap = safety.NewMap[string, map[string]any]()  //map[string]map[string]any
-var fnHook = safety.NewMap[string, map[string]any]() // map[string]map[string]any
+var fnMap = safety.NewMap[string, map[string]any]()
+var fnHook = safety.NewMap[string, map[string]any]()
 
 func GetFn[T any](fnType string, name string) []T {
 	v, ok := fnMap.Load(fnType)

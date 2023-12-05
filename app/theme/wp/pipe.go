@@ -81,8 +81,8 @@ func BuildPipe(pipeScene string, keyFn func(*Handle, string) string, fn func(*Ha
 				}
 				return call, ok
 			})
-			slice.Sort(calls, func(i, j HandleCall) bool {
-				return i.Order > j.Order
+			slice.SimpleSort(calls, slice.DESC, func(t HandleCall) float64 {
+				return t.Order
 			})
 			return calls, true
 		})
@@ -122,9 +122,10 @@ func Run(h *Handle, conf func(*Handle)) {
 			}
 			return pipe, pipe.Fn != nil
 		})
-		slice.Sort(pipes, func(i, j Pipe) bool {
-			return i.Order > j.Order
+		slice.SimpleSort(pipes, slice.DESC, func(t Pipe) float64 {
+			return t.Order
 		})
+
 		arr := slice.Map(pipes, func(t Pipe) HandlePipeFn[*Handle] {
 			return t.Fn
 		})
@@ -133,7 +134,7 @@ func Run(h *Handle, conf func(*Handle)) {
 }
 
 func MiddlewareKey(h *Handle, pipScene string) string {
-	return h.DoActionFilter("middleware", "middleware", pipScene)
+	return h.DoActionFilter("middleware", str.Join("pipe-middleware-", h.scene), pipScene)
 }
 
 func PipeMiddlewareHandle(h *Handle, middlewares map[string][]HandleCall, key string) (handlers []HandleCall) {
@@ -193,7 +194,7 @@ func (h *Handle) PipeHandleHook(name string, calls []HandleCall, m map[string][]
 }
 
 func InitPipe(h *Handle) {
-	h.PushPipe(constraints.Home, NewPipe(constraints.PipeMiddleware, 300,
+	h.PushPipe(constraints.AllScene, NewPipe(constraints.PipeMiddleware, 300,
 		BuildPipe(constraints.PipeMiddleware, MiddlewareKey, PipeMiddlewareHandle)))
 
 	h.PushPipe(constraints.AllScene, NewPipe(constraints.PipeData, 200,

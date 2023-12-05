@@ -11,6 +11,7 @@ import (
 	"github.com/fthvgb1/wp-go/app/pkg/logs"
 	"github.com/fthvgb1/wp-go/app/wpconfig"
 	"github.com/fthvgb1/wp-go/helper/slice"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
 	"io"
@@ -110,6 +111,9 @@ func PostComment(c *gin.Context) {
 		}
 		cc := c.Copy()
 		go func() {
+			if gin.Mode() != gin.ReleaseMode {
+				return
+			}
 			id := comment.CommentPostId
 			if id <= 0 {
 				logs.Error(errors.New("获取文档id错误"), "", comment.CommentPostId)
@@ -131,7 +135,9 @@ func PostComment(c *gin.Context) {
 			return
 		}
 		cache.NewCommentCache().Set(c, up.RawQuery, string(s))
-		c.Redirect(http.StatusFound, res.Header.Get("Location"))
+		uu, _ := url.Parse(res.Header.Get("Location"))
+		uuu := str.Join(uu.Path, "?", uu.RawQuery)
+		c.Redirect(http.StatusFound, uuu)
 		return
 	}
 	var r io.Reader
