@@ -24,7 +24,7 @@ func (c count[T]) Table() string {
 }
 
 func pagination[T Model](db dbQuery, ctx context.Context, q *QueryCondition, page, pageSize int) (r []T, total int, err error) {
-	if page < 1 || pageSize < 1 {
+	if page < 1 {
 		return
 	}
 	q.Limit = pageSize
@@ -65,7 +65,9 @@ func pagination[T Model](db dbQuery, ctx context.Context, q *QueryCondition, pag
 	} else {
 		total = q.TotalRow
 	}
-
+	if q.Limit <= 0 {
+		return
+	}
 	offset := 0
 	if page > 1 {
 		offset = (page - 1) * q.Limit

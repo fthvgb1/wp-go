@@ -76,6 +76,7 @@ func SetupRouter() *gin.Engine {
 	r.GET("/p/author/:author/page/:page", actions.ThemeHook(constraints.Author))
 	r.POST("/login", actions.Login)
 	r.GET("/p/:id", actions.ThemeHook(constraints.Detail))
+	r.GET("/p/:id/comment-page-:page", actions.ThemeHook(constraints.Detail))
 	r.GET("/p/:id/feed", actions.PostFeed)
 	r.GET("/feed", actions.Feed)
 	r.GET("/comments/feed", actions.CommentsFeed)

@@ -13,6 +13,8 @@ import (
 	"time"
 )
 
+var ctx = context.Background()
+
 func TestFlushMapVal(t *testing.T) {
 	_ = number.Range(1, 5, 0)
 	t.Run("t1", func(t *testing.T) {

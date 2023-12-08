@@ -11,8 +11,6 @@ import (
 	"time"
 )
 
-var ctx = context.Background()
-
 var mapFlush = safety.NewMap[string, func(any)]()
 var anyFlush = safety.NewMap[string, func()]()
 
@@ -60,6 +58,7 @@ var clears []clearExpired
 var flushes []flush
 
 func Flush() {
+	ctx := context.WithValue(context.Background(), "execFlushBy", "mangerFlushFn")
 	for _, f := range flushes {
 		f.Flush(ctx)
 	}
@@ -88,11 +87,13 @@ func PushMangerMap[K comparable, V any](name string, m *cache.MapCache[K, V]) {
 	}
 	mapCache.Store(name, m)
 	anyFlush.Store(name, func() {
+		ctx := context.WithValue(context.Background(), "ctx", "registerFlush")
 		m.Flush(ctx)
 	})
 	mapFlush.Store(name, func(a any) {
 		k, ok := a.([]K)
 		if ok && len(k) > 0 {
+			ctx := context.WithValue(context.Background(), "ctx", "registerFlush")
 			m.Del(ctx, k...)
 		}
 	})
@@ -168,6 +169,25 @@ func parseArgs(args ...any) (string, func() time.Duration) {
 	return name, fn
 }
 
+func NewPaginationCache[K comparable, V any](m *cache.MapCache[string, helper.PaginationData[V]], maxNum int,
+	dbFn cache.DbFn[K, V], localFn cache.LocalFn[K, V], dbKeyFn func(K, ...any) string, fetchNum int, name string, a ...any) *cache.Pagination[K, V] {
+	fn := helper.ParseArgs([]func() int(nil), a...)
+	var ma, fet func() int
+	if len(fn) > 0 {
+		ma = fn[0]
+		if len(fn) > 1 {
+			fet = fn[1]
+		}
+	}
+	if ma == nil {
+		ma = reload.FnVal(str.Join("paginationCache-", name, "-maxNum"), maxNum, nil)
+	}
+	if fet == nil {
+		fet = reload.FnVal(str.Join("paginationCache-", name, "-fetchNum"), fetchNum, nil)
+	}
+	return cache.NewPagination(m, ma, dbFn, localFn, dbKeyFn, fet, name)
+}
+
 func NewMapCache[K comparable, V any](data cache.Cache[K, V], batchFn cache.MapBatchFn[K, V], fn cache.MapSingleFn[K, V], args ...any) *cache.MapCache[K, V] {
 	inc := helper.ParseArgs((*cache.IncreaseUpdate[K, V])(nil), args...)
 	m := cache.NewMapCache[K, V](data, fn, batchFn, inc)
@@ -213,6 +233,7 @@ func ClearPush(c ...clearExpired) {
 }
 
 func ClearExpired() {
+	ctx := context.WithValue(context.Background(), "execClearExpired", "mangerClearExpiredFn")
 	for _, c := range clears {
 		c.ClearExpired(ctx)
 	}
