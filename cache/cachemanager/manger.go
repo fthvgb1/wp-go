@@ -170,7 +170,7 @@ func parseArgs(args ...any) (string, func() time.Duration) {
 }
 
 func NewPaginationCache[K comparable, V any](m *cache.MapCache[string, helper.PaginationData[V]], maxNum int,
-	dbFn cache.DbFn[K, V], localFn cache.LocalFn[K, V], dbKeyFn func(K, ...any) string, fetchNum int, name string, a ...any) *cache.Pagination[K, V] {
+	dbFn cache.DbFn[K, V], localFn cache.LocalFn[K, V], dbKeyFn, localKeyFn func(K, ...any) string, fetchNum int, name string, a ...any) *cache.Pagination[K, V] {
 	fn := helper.ParseArgs([]func() int(nil), a...)
 	var ma, fet func() int
 	if len(fn) > 0 {
@@ -185,7 +185,7 @@ func NewPaginationCache[K comparable, V any](m *cache.MapCache[string, helper.Pa
 	if fet == nil {
 		fet = reload.FnVal(str.Join("paginationCache-", name, "-fetchNum"), fetchNum, nil)
 	}
-	return cache.NewPagination(m, ma, dbFn, localFn, dbKeyFn, fet, name)
+	return cache.NewPagination(m, ma, dbFn, localFn, dbKeyFn, localKeyFn, fet, name)
 }
 
 func NewMapCache[K comparable, V any](data cache.Cache[K, V], batchFn cache.MapBatchFn[K, V], fn cache.MapSingleFn[K, V], args ...any) *cache.MapCache[K, V] {
