@@ -3,8 +3,8 @@ package safety
 import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/helper/number"
+	"github.com/fthvgb1/wp-go/taskPools"
 	"testing"
-	"time"
 )
 
 func TestSlice_Append(t *testing.T) {
@@ -26,13 +26,27 @@ func TestSlice_Append(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			fn := func() {
-				tt.r.Append(tt.args.t...)
+				switch number.Rand(1, 3) {
+				case 1:
+					f := tt.r.Load()
+					fmt.Println(f)
+				case 2:
+					tt.r.Append(tt.args.t...)
+				case 3:
+					/*s := tt.r.Load()
+					if len(s) < 1 {
+						break
+					}
+					ii, v := slice.Rand(number.Range(0, len(s)))
+					s[ii] = v*/
+				}
+
 			}
-			go fn()
-			go fn()
-			go fn()
-			go fn()
-			time.Sleep(time.Second)
+			p := taskPools.NewPools(20)
+			for i := 0; i < 50; i++ {
+				p.Execute(fn)
+			}
+			p.Wait()
 			fmt.Println(tt.r.Load())
 		})
 	}

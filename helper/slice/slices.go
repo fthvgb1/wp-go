@@ -62,10 +62,26 @@ func Delete[T any](a *[]T, index int) {
 	*a = append(arr[:index], arr[index+1:]...)
 }
 
-func Copy[T any](a []T) []T {
-	dst := make([]T, len(a))
+func Copy[T any](a []T, l ...int) []T {
+	length := len(a)
+	if len(l) > 0 {
+		length = l[0]
+	}
+	var dst []T
+	if len(a) < length {
+		dst = make([]T, len(a), length)
+	} else {
+		dst = make([]T, length)
+	}
 	copy(dst, a)
 	return dst
+}
+func Copies[T any](a ...[]T) []T {
+	var r []T
+	for _, ts := range a {
+		r = append(r, ts...)
+	}
+	return r
 }
 
 func Unshift[T any](a *[]T, e ...T) {

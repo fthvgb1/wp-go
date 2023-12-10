@@ -190,7 +190,7 @@ func NewPaginationCache[K comparable, V any](m *cache.MapCache[string, helper.Pa
 
 func NewMapCache[K comparable, V any](data cache.Cache[K, V], batchFn cache.MapBatchFn[K, V], fn cache.MapSingleFn[K, V], args ...any) *cache.MapCache[K, V] {
 	inc := helper.ParseArgs((*cache.IncreaseUpdate[K, V])(nil), args...)
-	m := cache.NewMapCache[K, V](data, fn, batchFn, inc)
+	m := cache.NewMapCache[K, V](data, fn, batchFn, inc, args...)
 	FlushPush(m)
 	ClearPush(m)
 	name, f := parseArgs(args...)
@@ -242,7 +242,7 @@ func ClearExpired() {
 func NewVarCache[T any](c cache.AnyCache[T], fn func(context.Context, ...any) (T, error), a ...any) *cache.VarCache[T] {
 	inc := helper.ParseArgs((*cache.IncreaseUpdateVar[T])(nil), a...)
 	ref := helper.ParseArgs(cache.RefreshVar[T](nil), a...)
-	v := cache.NewVarCache(c, fn, inc, ref)
+	v := cache.NewVarCache(c, fn, inc, ref, a...)
 	FlushPush(v)
 	name, _ := parseArgs(a...)
 	if name != "" {

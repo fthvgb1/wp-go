@@ -14,6 +14,10 @@ type VarCache[T any] struct {
 	mutex          sync.Mutex
 	increaseUpdate *IncreaseUpdateVar[T]
 	refresh        RefreshVar[T]
+	get            func(ctx context.Context) (T, bool)
+	set            func(ctx context.Context, v T)
+	flush          func(ctx context.Context)
+	getLastSetTime func(ctx context.Context) time.Time
 }
 
 type IncreaseUpdateVar[T any] struct {
@@ -22,6 +26,67 @@ type IncreaseUpdateVar[T any] struct {
 }
 
 type IncreaseVarFn[T any] func(c context.Context, currentData T, t time.Time, a ...any) (data T, save bool, refresh bool, err error)
+
+func (t *VarCache[T]) Get(ctx context.Context) (T, bool) {
+	return t.get(ctx)
+}
+func (t *VarCache[T]) Set(ctx context.Context, v T) {
+	t.set(ctx, v)
+}
+func (t *VarCache[T]) Flush(ctx context.Context) {
+	t.flush(ctx)
+}
+func (t *VarCache[T]) GetLastSetTime(ctx context.Context) time.Time {
+	return t.getLastSetTime(ctx)
+}
+
+func initVarCache[T any](t *VarCache[T], a ...any) {
+	gets := helper.ParseArgs[func(AnyCache[T], context.Context) (T, bool)](nil, a...)
+	if gets == nil {
+		t.get = t.AnyCache.Get
+	} else {
+		t.get = func(ctx context.Context) (T, bool) {
+			return gets(t.AnyCache, ctx)
+		}
+	}
+
+	set := helper.ParseArgs[func(AnyCache[T], context.Context, T)](nil, a...)
+	if set == nil {
+		t.set = t.AnyCache.Set
+	} else {
+		t.set = func(ctx context.Context, v T) {
+			set(t.AnyCache, ctx, v)
+		}
+	}
+
+	flush := helper.ParseArgs[func(AnyCache[T], context.Context)](nil, a...)
+	if flush == nil {
+		t.flush = t.AnyCache.Flush
+	} else {
+		t.flush = func(ctx context.Context) {
+			flush(t.AnyCache, ctx)
+		}
+	}
+
+	getLastSetTime := helper.ParseArgs[func(AnyCache[T], context.Context) time.Time](nil, a...)
+	if getLastSetTime == nil {
+		t.getLastSetTime = t.AnyCache.GetLastSetTime
+	} else {
+		t.getLastSetTime = func(ctx context.Context) time.Time {
+			return getLastSetTime(t.AnyCache, ctx)
+		}
+	}
+}
+
+func NewVarCache[T any](cache AnyCache[T], fn func(context.Context, ...any) (T, error), inc *IncreaseUpdateVar[T], ref RefreshVar[T], a ...any) *VarCache[T] {
+	r := &VarCache[T]{
+		AnyCache: cache, setCacheFunc: fn, mutex: sync.Mutex{},
+		increaseUpdate: inc,
+		refresh:        ref,
+	}
+	initVarCache(r, a...)
+	return r
+}
 
 func (t *VarCache[T]) GetCache(ctx context.Context, timeout time.Duration, params ...any) (T, error) {
 	data, ok := t.Get(ctx)
@@ -123,14 +188,6 @@ type vars[T any] struct {
 
 func (c *VarMemoryCache[T]) GetLastSetTime(_ context.Context) time.Time {
 	return c.v.Load().setTime
-}
-
-func NewVarCache[T any](cache AnyCache[T], fn func(context.Context, ...any) (T, error), inc *IncreaseUpdateVar[T], ref RefreshVar[T]) *VarCache[T] {
-	return &VarCache[T]{
-		AnyCache: cache, setCacheFunc: fn, mutex: sync.Mutex{},
-		increaseUpdate: inc,
-		refresh:        ref,
-	}
 }
 
 func (c *VarMemoryCache[T]) Flush(_ context.Context) {

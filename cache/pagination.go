@@ -19,6 +19,7 @@ type Pagination[K comparable, V any] struct {
 	dbFn          func(ctx context.Context, k K, page, limit, totalRaw int, a ...any) ([]V, int, error)
 	localFn       func(ctx context.Context, data []V, k K, page, limit int, a ...any) ([]V, int, error)
 	batchFetchNum func() int
+	localKeyFn    func(K K, a ...any) string
 	dbKeyFn       func(K K, a ...any) string
 	name          string
 }
@@ -29,7 +30,7 @@ type DbFn[K comparable, V any] func(ctx context.Context, k K, page, limit, total
 
 type LocalFn[K comparable, V any] func(ctx context.Context, data []V, k K, page, limit int, a ...any) ([]V, int, error)
 
-func NewPagination[K comparable, V any](m *MapCache[string, helper.PaginationData[V]], maxNum func() int, dbFn DbFn[K, V], localFn LocalFn[K, V], dbKeyFn func(K, ...any) string, batchFetchNum func() int, name string) *Pagination[K, V] {
+func NewPagination[K comparable, V any](m *MapCache[string, helper.PaginationData[V]], maxNum func() int, dbFn DbFn[K, V], localFn LocalFn[K, V], dbKeyFn, localKeyFn func(K, ...any) string, batchFetchNum func() int, name string) *Pagination[K, V] {
 	if dbKeyFn == nil {
 		dbKeyFn = func(k K, a ...any) string {
 			s := str.NewBuilder()
@@ -38,6 +39,11 @@ func NewPagination[K comparable, V any](m *MapCache[string, helper.PaginationDat
 			}
 
 			return strings.TrimRight(s.String(), "|")
+		}
+	}
+	if localKeyFn == nil {
+		localKeyFn = func(k K, a ...any) string {
+			return fmt.Sprintf("%v", k)
 		}
 	}
 	return &Pagination[K, V]{
@@ -49,6 +55,7 @@ func NewPagination[K comparable, V any](m *MapCache[string, helper.PaginationDat
 		batchFetchNum: batchFetchNum,
 		name:          name,
 		dbKeyFn:       dbKeyFn,
+		localKeyFn:    localKeyFn,
 	}
 }
 
@@ -68,7 +75,7 @@ func (p *Pagination[K, V]) Pagination(ctx context.Context, timeout time.Duration
 }
 
 func (p *Pagination[K, V]) paginationByLocal(ctx context.Context, timeout time.Duration, k K, page, limit int, a ...any) ([]V, int, error) {
-	key := fmt.Sprintf("%v", k)
+	key := p.localKeyFn(k)
 	data, ok := p.Get(ctx, key)
 	if ok {
 		if p.increaseUpdate != nil && p.refresh != nil {
@@ -82,6 +89,12 @@ func (p *Pagination[K, V]) paginationByLocal(ctx context.Context, timeout time.D
 			data = dat
 		}
 		return p.localFn(ctx, data.Data, k, page, limit, a...)
+	}
+	p.mux.Lock()
+	defer p.mux.Unlock()
+	data, ok = p.Get(ctx, key)
+	if ok {
+		return data.Data, data.TotalRaw, nil
 	}
 	batchNum := p.batchFetchNum()
 	da, totalRaw, err := p.fetchDb(ctx, timeout, k, 1, 0, 0, a...)
@@ -101,6 +114,9 @@ func (p *Pagination[K, V]) paginationByLocal(ctx context.Context, timeout time.D
 			}
 			da = append(da, daa...)
 		}
+		data.Data = da
+		data.TotalRaw = totalRaw
+		p.Set(ctx, key, data)
 	}
 
 	return p.localFn(ctx, data.Data, k, page, limit, a...)
@@ -109,6 +125,12 @@ func (p *Pagination[K, V]) paginationByLocal(ctx context.Context, timeout time.D
 func (p *Pagination[K, V]) paginationByDB(ctx context.Context, timeout time.Duration, k K, page, limit, totalRaw int, a ...any) ([]V, int, error) {
 	key := p.dbKeyFn(k, append([]any{page, limit}, a...)...)
 	data, ok := p.Get(ctx, key)
+	if ok {
+		return data.Data, data.TotalRaw, nil
+	}
+	p.mux.Lock()
+	defer p.mux.Unlock()
+	data, ok = p.Get(ctx, key)
 	if ok {
 		return data.Data, data.TotalRaw, nil
 	}

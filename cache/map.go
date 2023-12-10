@@ -20,7 +20,35 @@ type MapCache[K comparable, V any] struct {
 	getCacheBatchToMap func(c context.Context, key []K, timeout time.Duration, params ...any) (map[K]V, error)
 	increaseUpdate     *IncreaseUpdate[K, V]
 	refresh            Refresh[K, V]
+	gets               func(ctx context.Context, key K) (V, bool)
+	sets               func(ctx context.Context, key K, val V)
+	getExpireTimes     func(ctx context.Context) time.Duration
+	ttl                func(ctx context.Context, key K) time.Duration
+	flush              func(ctx context.Context)
+	del                func(ctx context.Context, key ...K)
+	clearExpired       func(ctx context.Context)
 }
+
+func (m *MapCache[K, V]) Get(ctx context.Context, key K) (V, bool) {
+	return m.gets(ctx, key)
+}
+
+func (m *MapCache[K, V]) Set(ctx context.Context, key K, val V) {
+	m.sets(ctx, key, val)
+}
+func (m *MapCache[K, V]) Ttl(ctx context.Context, key K) time.Duration {
+	return m.ttl(ctx, key)
+}
+func (m *MapCache[K, V]) GetExpireTime(ctx context.Context) time.Duration {
+	return m.getExpireTimes(ctx)
+}
+func (m *MapCache[K, V]) Del(ctx context.Context, key ...K) {
+	m.del(ctx, key...)
+}
+func (m *MapCache[K, V]) ClearExpired(ctx context.Context) {
+	m.clearExpired(ctx)
+}
+
 type IncreaseUpdate[K comparable, V any] struct {
 	CycleTime func() time.Duration
 	Fn        IncreaseFn[K, V]
@@ -35,7 +63,7 @@ type MapSingleFn[K, V any] func(context.Context, K, ...any) (V, error)
 type MapBatchFn[K comparable, V any] func(context.Context, []K, ...any) (map[K]V, error)
 type IncreaseFn[K comparable, V any] func(c context.Context, currentData V, k K, t time.Time, a ...any) (data V, save bool, refresh bool, err error)
 
-func NewMapCache[K comparable, V any](ca Cache[K, V], cacheFunc MapSingleFn[K, V], batchCacheFn MapBatchFn[K, V], inc *IncreaseUpdate[K, V]) *MapCache[K, V] {
+func NewMapCache[K comparable, V any](ca Cache[K, V], cacheFunc MapSingleFn[K, V], batchCacheFn MapBatchFn[K, V], inc *IncreaseUpdate[K, V], a ...any) *MapCache[K, V] {
 	r := &MapCache[K, V]{
 		Cache:          ca,
 		mux:            sync.Mutex{},
@@ -60,7 +88,72 @@ func NewMapCache[K comparable, V any](ca Cache[K, V], cacheFunc MapSingleFn[K, V
 	if ok {
 		r.refresh = re
 	}
+	initCache(r, a...)
 	return r
+}
+
+func initCache[K comparable, V any](r *MapCache[K, V], a ...any) {
+	gets := helper.ParseArgs[func(Cache[K, V], context.Context, K) (V, bool)](nil, a...)
+	if gets == nil {
+		r.gets = r.Cache.Get
+	} else {
+		r.gets = func(ctx context.Context, key K) (V, bool) {
+			return gets(r.Cache, ctx, key)
+		}
+	}
+
+	sets := helper.ParseArgs[func(Cache[K, V], context.Context, K, V)](nil, a...)
+	if sets == nil {
+		r.sets = r.Cache.Set
+	} else {
+		r.sets = func(ctx context.Context, key K, val V) {
+			sets(r.Cache, ctx, key, val)
+		}
+	}
+
+	getExpireTimes := helper.ParseArgs[func(Cache[K, V], context.Context) time.Duration](nil, a...)
+	if getExpireTimes == nil {
+		r.getExpireTimes = r.Cache.GetExpireTime
+	} else {
+		r.getExpireTimes = func(ctx context.Context) time.Duration {
+			return getExpireTimes(r.Cache, ctx)
+		}
+	}
+
+	ttl := helper.ParseArgs[func(Cache[K, V], context.Context, K) time.Duration](nil, a...)
+	if ttl == nil {
+		r.ttl = r.Cache.Ttl
+	} else {
+		r.ttl = func(ctx context.Context, k K) time.Duration {
+			return ttl(r.Cache, ctx, k)
+		}
+	}
+
+	del := helper.ParseArgs[func(Cache[K, V], context.Context, ...K)](nil, a...)
+	if del == nil {
+		r.del = r.Cache.Del
+	} else {
+		r.del = func(ctx context.Context, key ...K) {
+			del(r.Cache, ctx, key...)
+		}
+	}
+
+	flushAndClearExpired := helper.ParseArgs[[]func(Cache[K, V], context.Context)](nil, a...)
+	if flushAndClearExpired == nil {
+		r.flush = r.Cache.Flush
+		r.clearExpired = r.Cache.ClearExpired
+	} else {
+		r.flush = func(ctx context.Context) {
+			flushAndClearExpired[0](r.Cache, ctx)
+		}
+		if len(flushAndClearExpired) > 1 {
+			r.clearExpired = func(ctx context.Context) {
+				flushAndClearExpired[1](r.Cache, ctx)
+			}
+		} else {
+			r.clearExpired = r.Cache.ClearExpired
+		}
+	}
 }
 
 func (m *MapCache[K, V]) SetDefaultBatchFunc(fn MapSingleFn[K, V]) {
@@ -115,7 +208,7 @@ func (m *MapCache[K, V]) setDefaultCacheFn(fn MapBatchFn[K, V]) {
 func (m *MapCache[K, V]) Flush(ctx context.Context) {
 	m.mux.Lock()
 	defer m.mux.Unlock()
-	m.Cache.Flush(ctx)
+	m.flush(ctx)
 }
 
 func (m *MapCache[K, V]) increaseUpdates(c context.Context, timeout time.Duration, data V, key K, params ...any) (V, error) {
