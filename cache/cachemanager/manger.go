@@ -289,5 +289,5 @@ func GetVarCache[T any](name string) (*cache.VarCache[T], bool) {
 
 func GetMapCache[K comparable, V any](name string) (*cache.MapCache[K, V], bool) {
 	vv, err := getMap[K, V](name)
-	return vv, err != nil
+	return vv, err == nil
 }

@@ -1,0 +1,129 @@
+package main
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"github.com/fthvgb1/wp-go/app/pkg/config"
+	"github.com/fthvgb1/wp-go/app/pkg/dao"
+	"github.com/fthvgb1/wp-go/app/theme/wp"
+	"github.com/fthvgb1/wp-go/cache/cachemanager"
+	"github.com/fthvgb1/wp-go/helper/number"
+	"github.com/fthvgb1/wp-go/helper/slice"
+	"github.com/fthvgb1/wp-go/helper/strings"
+	"github.com/redis/go-redis/v9"
+	"strconv"
+	strings2 "strings"
+	"time"
+)
+
+type RdmCache[K comparable, V any] struct {
+	expired  func() time.Duration
+	rdb      *redis.Client
+	keyFn    func(K) string
+	name     string
+	resFn    func(map[string]string) V
+	saveData func(V) map[string]string
+}
+
+func (r *RdmCache[K, V]) SetExpiredTime(f func() time.Duration) {
+	r.expired = f
+}
+
+func (r *RdmCache[K, V]) Get(ctx context.Context, key K) (V, bool) {
+	var re V
+	result, err := r.rdb.Exists(ctx, r.keyFn(key)).Result()
+	if result <= 0 || err != nil {
+		return re, false
+	}
+
+	rr, err := r.rdb.HGetAll(ctx, r.keyFn(key)).Result()
+
+	if errors.Is(err, redis.Nil) {
+		return re, false
+	}
+	if err != nil {
+		return re, false
+	}
+	return r.resFn(rr), true
+}
+
+func (r *RdmCache[K, V]) Set(ctx context.Context, key K, val V) {
+	k := r.keyFn(key)
+	result, err := r.rdb.HSet(ctx, k, r.saveData(val)).Result()
+	b, err := r.rdb.Expire(ctx, k, r.expired()).Result()
+	if err != nil {
+		fmt.Println(result, b, err)
+		return
+	}
+	fmt.Println(result, err)
+
+}
+
+func (r *RdmCache[K, V]) GetExpireTime(ctx context.Context) time.Duration {
+	return r.expired()
+}
+
+func (r *RdmCache[K, V]) Ttl(ctx context.Context, key K) time.Duration {
+	result, err := r.rdb.TTL(ctx, r.keyFn(key)).Result()
+	if err != nil {
+		return 0
+	}
+	return result
+}
+
+func (r *RdmCache[K, V]) Flush(ctx context.Context) {
+
+}
+
+func (r *RdmCache[K, V]) Del(ctx context.Context, key ...K) {
+	r.rdb.Del(ctx, slice.Map(key, r.keyFn)...)
+}
+
+func (r *RdmCache[K, V]) ClearExpired(ctx context.Context) {
+
+}
+// use step:
+//1 go build -gcflags all="-N -l" --race -buildmode=plugin -o redisCache.so main.go && cp ./redisCache.so wp-go/plugins/
+//2 wp-go config add redisCache plugin
+func Re(h *wp.Handle) {
+	vv, ok := cachemanager.GetMapCache[string, dao.PostIds]("listPostIds")
+	if ok {
+		_, ok := any(vv.Cache).(*RdmCache[string, dao.PostIds])
+		if ok {
+			return
+		}
+	}
+	rdm := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "", // no password set
+		DB:       0,  // use default DB
+	})
+	r := RdmCache[string, dao.PostIds]{
+		expired: func() time.Duration {
+			return time.Minute
+		},
+		keyFn: func(u string) string {
+			return strings.Join("postIds:", u)
+		},
+		rdb:  rdm,
+		name: "",
+		resFn: func(m map[string]string) dao.PostIds {
+			return dao.PostIds{
+				Ids:    slice.Map(strings2.Split(m["ids"], ","), strings.ToInt[uint64]),
+				Length: strings.ToInt[int](m["length"]),
+			}
+		},
+		saveData: func(ids dao.PostIds) map[string]string {
+			t := slice.Map(ids.Ids, number.IntToString[uint64])
+			return map[string]string{
+				"ids":    strings2.Join(t, ","),
+				"length": strconv.Itoa(ids.Length),
+			}
+		},
+	}
+	cachemanager.NewMapCache[string, dao.PostIds](&r, nil, dao.SearchPostIds, config.GetConfig().CacheTime.PostListCacheTime, "listPostIds", func() time.Duration {
+		return config.GetConfig().CacheTime.PostListCacheTime
+	})
+	fmt.Println("redis cache inited ok")
+}
