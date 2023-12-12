@@ -25,7 +25,6 @@ type Comments struct {
 }
 
 type CommentHtml interface {
-	Sort(i, j *Comments) bool
 	FormatLi(c *gin.Context, m models.Comments, depth int, isTls bool, eo, parent string) string
 }
 
@@ -51,10 +50,16 @@ func FormatComments(c *gin.Context, i CommentHtml, comments []models.Comments, m
 
 func (d CommentHandler) formatComment(comments []*Comments, isTop bool) (html string) {
 	s := str.NewBuilder()
-	if d.depth > d.maxDepth {
+	if d.depth >= d.maxDepth {
 		comments = d.findComments(comments)
 	}
-	slice.Sort(comments, d.i.Sort)
+	order := wpconfig.GetOption("comment_order")
+	slice.Sort(comments, func(i, j *Comments) bool {
+		if order == "asc" {
+			return i.CommentDate.Sub(j.CommentDate) < 0
+		}
+		return i.CommentDate.Sub(j.CommentDate) > 0
+	})
 	for i, comment := range comments {
 		eo := "even"
 		if (i+1)%2 == 0 {
@@ -85,7 +90,7 @@ func (d CommentHandler) findComments(comments []*Comments) []*Comments {
 	var r []*Comments
 	for _, comment := range comments {
 		tmp := *comment
-		comment.Children = nil
+		tmp.Children = nil
 		r = append(r, &tmp)
 		if len(comment.Children) > 0 {
 			t := d.findComments(comment.Children)
@@ -133,14 +138,6 @@ func CommentRender() CommonCommentFormat {
 }
 
 type CommonCommentFormat struct {
-}
-
-func (c CommonCommentFormat) Sort(i, j *Comments) bool {
-	order := wpconfig.GetOption("comment_order")
-	if order == "asc" {
-		return i.CommentDate.UnixNano() < j.CommentDate.UnixNano()
-	}
-	return i.CommentDate.UnixNano() > j.CommentDate.UnixNano()
 }
 
 func (c CommonCommentFormat) FormatLi(ctx *gin.Context, m models.Comments, depth int, isTls bool, eo, parent string) string {

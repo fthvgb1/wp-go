@@ -50,8 +50,8 @@ func CalComponents(h *Handle) {
 				}
 				return t, true
 			})
-			slice.Sort(r, func(i, j Components[string]) bool {
-				return i.Order > j.Order
+			slice.SimpleSort(r, slice.DESC, func(t Components[string]) float64 {
+				return t.Order
 			})
 			return r, true
 		})
