@@ -11,6 +11,7 @@ import (
 	"github.com/fthvgb1/wp-go/app/plugins/wpposts"
 	"github.com/fthvgb1/wp-go/app/wpconfig"
 	str "github.com/fthvgb1/wp-go/helper/strings"
+	"net/http"
 )
 
 type DetailHandle struct {
@@ -33,6 +34,16 @@ func (d *DetailHandle) BuildDetailData() (err error) {
 	d.Comment()
 	d.ContextPost()
 	return
+}
+
+func ShowPreComment(h *Handle) {
+	v, ok := cache.NewCommentCache().Get(h.C, h.C.Request.URL.RawQuery)
+	if ok {
+		h.C.Writer.Header().Set("Content-Type", "text/html; charset=utf-8")
+		h.C.Writer.WriteHeader(http.StatusOK)
+		_, _ = h.C.Writer.Write([]byte(v))
+		h.Abort()
+	}
 }
 
 func (d *DetailHandle) CheckAndGetPost() (err error) {

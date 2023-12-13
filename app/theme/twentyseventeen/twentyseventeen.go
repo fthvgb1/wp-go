@@ -38,6 +38,9 @@ func configs(h *wp.Handle) {
 	wp.InitPipe(h)
 	h.PushHandler(constraints.PipeMiddleware, constraints.Home,
 		wp.NewHandleFn(widget.CheckCategory, 100.006, "widget.CheckCategory"))
+	h.PushHandler(constraints.PipeMiddleware, constraints.Detail,
+		wp.NewHandleFn(wp.ShowPreComment, 100, "wp.ShowPreComment"),
+	)
 	h.AddActionFilter("bodyClass", calClass)
 	h.PushCacheGroupHeadScript(constraints.AllScene, "colorScheme-customHeader", 10, colorScheme, customHeader)
 	components.WidgetArea(h)

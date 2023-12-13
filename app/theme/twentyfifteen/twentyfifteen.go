@@ -23,7 +23,11 @@ func configs(h *wp.Handle) {
 	})
 	wp.InitPipe(h)
 	h.PushHandler(constraints.PipeMiddleware, constraints.Home,
-		wp.NewHandleFn(widget.CheckCategory, 100, "widget.CheckCategory"))
+		wp.NewHandleFn(widget.CheckCategory, 100, "widget.CheckCategory"),
+	)
+	h.PushHandler(constraints.PipeMiddleware, constraints.Detail,
+		wp.NewHandleFn(wp.ShowPreComment, 100, "wp.ShowPreComment"),
+	)
 
 	h.Index.SetPageEle(plugins.TwentyFifteenPagination())
 	h.PushCacheGroupHeadScript(constraints.AllScene, "CalCustomBackGround", 10.005, CalCustomBackGround)
