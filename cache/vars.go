@@ -156,7 +156,10 @@ type VarMemoryCache[T any] struct {
 }
 
 func (c *VarMemoryCache[T]) ClearExpired(ctx context.Context) {
-	c.Flush(ctx)
+	_, ok := c.Get(ctx)
+	if !ok {
+		c.Flush(ctx)
+	}
 }
 
 func NewVarMemoryCache[T any](expireTime func() time.Duration) *VarMemoryCache[T] {
