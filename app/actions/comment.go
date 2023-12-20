@@ -134,9 +134,14 @@ func PostComment(c *gin.Context) {
 			err = er
 			return
 		}
-		cache.NewCommentCache().Set(c, up.RawQuery, string(s))
+		uuu := ""
 		uu, _ := url.Parse(res.Header.Get("Location"))
-		uuu := str.Join(uu.Path, "?", uu.RawQuery)
+		if up.RawQuery != "" {
+			cache.NewCommentCache().Set(c, up.RawQuery, string(s))
+			uuu = str.Join(uu.Path, "?", uu.RawQuery)
+		} else {
+			uuu = str.Join(uu.Path)
+		}
 		c.Redirect(http.StatusFound, uuu)
 		return
 	}

@@ -8,22 +8,22 @@ import (
 func TestFlushMapVal(t *testing.T) {
 	t.Run("t1", func(t *testing.T) {
 		c := 0
-		v := GetAnyValMapBy("key", 2, struct{}{}, func(a struct{}) int {
+		v := GetAnyValMapBy("key", 2, struct{}{}, func(a struct{}) (int, bool) {
 			c++
-			return 33
+			return 33, true
 		})
 		fmt.Println(v)
 		FlushMapVal("key", 2)
 
-		v = GetAnyValMapBy("key", 2, struct{}{}, func(a struct{}) int {
+		v = GetAnyValMapBy("key", 2, struct{}{}, func(a struct{}) (int, bool) {
 			fmt.Println("xxxxx")
-			return 33
+			return 33, true
 		})
 		fmt.Println(v)
 		FlushAnyVal("key")
-		v = GetAnyValMapBy("key", 2, struct{}{}, func(a struct{}) int {
+		v = GetAnyValMapBy[int, int, struct{}]("key", 2, struct{}{}, func(a struct{}) (int, bool) {
 			fmt.Println("yyyy")
-			return 33
+			return 33, true
 		})
 		fmt.Println(v)
 	})

@@ -74,7 +74,7 @@ func TestSort(t *testing.T) {
 func TestSorts(t *testing.T) {
 	type args[T constraints.Ordered] struct {
 		a     []T
-		order int
+		order string
 	}
 	type testCase[T constraints.Ordered] struct {
 		name string
@@ -169,7 +169,7 @@ func TestSimpleSort(t *testing.T) {
 
 	type args[T any, O constraints.Ordered] struct {
 		a     []T
-		order int
+		order string
 		fn    func(t T) O
 	}
 	type testCase[T any, O constraints.Ordered] struct {

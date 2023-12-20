@@ -106,7 +106,12 @@ func postFeed(c context.Context, id string, _ ...any) (x string, err error) {
 	if post.Id == 0 || err != nil {
 		return
 	}
-	comments, err := PostComments(c, post.Id)
+	limit := str.ToInteger(wpconfig.GetOption("comments_per_page"), 10)
+	ids, _, err := cachemanager.Pagination[uint64]("PostCommentsIds", c, time.Second, ID, 1, limit, "desc")
+	if err != nil {
+		return
+	}
+	comments, err := cachemanager.GetMultiple[models.PostComments]("postCommentData", c, ids, time.Second)
 	if err != nil {
 		return
 	}
@@ -135,7 +140,7 @@ func postFeed(c context.Context, id string, _ ...any) (x string, err error) {
 			}
 		}
 	} else {
-		rs.Items = slice.Map(comments, func(t models.Comments) rss2.Item {
+		rs.Items = slice.Map(comments, func(t models.PostComments) rss2.Item {
 			return rss2.Item{
 				Title:   fmt.Sprintf("评价者：%s", t.CommentAuthor),
 				Link:    fmt.Sprintf("%s/p/%d#comment-%d", site, post.Id, t.CommentId),
@@ -158,13 +163,13 @@ func commentsFeed(c context.Context, _ ...any) (r []string, err error) {
 	rs.LastBuildDate = time.Now().Format(timeFormat)
 	site := wpconfig.GetOption("siteurl")
 	rs.AtomLink = fmt.Sprintf("%s/comments/feed", site)
-	com, err := GetCommentByIds(c, slice.Map(commens, func(t models.Comments) uint64 {
+	com, err := GetCommentDataByIds(c, slice.Map(commens, func(t models.Comments) uint64 {
 		return t.CommentId
 	}))
 	if nil != err {
 		return []string{}, err
 	}
-	rs.Items = slice.Map(com, func(t models.Comments) rss2.Item {
+	rs.Items = slice.Map(com, func(t models.PostComments) rss2.Item {
 		post, _ := GetPostById(c, t.CommentPostId)
 		desc := "评论受保护：要查看请输入密码。"
 		content := t.CommentContent

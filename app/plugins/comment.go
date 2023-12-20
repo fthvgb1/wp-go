@@ -1,8 +1,10 @@
 package plugins
 
 import (
+	"context"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
 	"github.com/fthvgb1/wp-go/app/wpconfig"
+	"github.com/fthvgb1/wp-go/helper/number"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/gin-gonic/gin"
@@ -12,11 +14,12 @@ import (
 
 type CommentHandler struct {
 	*gin.Context
-	comments []*Comments
-	maxDepth int
-	depth    int
-	isTls    bool
-	i        CommentHtml
+	comments         []*Comments
+	maxDepth         int
+	depth            int
+	isTls            bool
+	i                CommentHtml
+	isThreadComments bool
 }
 
 type Comments struct {
@@ -25,7 +28,8 @@ type Comments struct {
 }
 
 type CommentHtml interface {
-	FormatLi(c *gin.Context, m models.Comments, depth int, isTls bool, eo, parent string) string
+	FormatLi(c context.Context, m models.Comments, depth, maxDepth, page int, isTls, isThreadComments bool, eo, parent string) string
+	FloorOrder(wpOrder string, i, j models.PostComments) bool
 }
 
 func FormatComments(c *gin.Context, i CommentHtml, comments []models.Comments, maxDepth int) string {
@@ -45,10 +49,10 @@ func FormatComments(c *gin.Context, i CommentHtml, comments []models.Comments, m
 		isTls:    isTls,
 		i:        i,
 	}
-	return h.formatComment(h.comments, true)
+	return h.formatComment(h.comments)
 }
 
-func (d CommentHandler) formatComment(comments []*Comments, isTop bool) (html string) {
+func (d CommentHandler) formatComment(comments []*Comments) (html string) {
 	s := str.NewBuilder()
 	if d.depth >= d.maxDepth {
 		comments = d.findComments(comments)
@@ -71,13 +75,11 @@ func (d CommentHandler) formatComment(comments []*Comments, isTop bool) (html st
 			parent = "parent"
 			fl = true
 		}
-		s.WriteString(d.i.FormatLi(d.Context, comment.Comments, d.depth, d.isTls, eo, parent))
+		s.WriteString(d.i.FormatLi(d.Context, comment.Comments, d.depth, d.maxDepth, 1, d.isTls, d.isThreadComments, eo, parent))
 		if fl {
 			d.depth++
-			s.WriteString(`<ol class="children">`, d.formatComment(comment.Children, false), `</ol>`)
-			if isTop {
-				d.depth = 1
-			}
+			s.WriteString(`<ol class="children">`, d.formatComment(comment.Children), `</ol>`)
+			d.depth--
 		}
 		s.WriteString("</li><!-- #comment-## -->")
 	}
@@ -140,8 +142,24 @@ func CommentRender() CommonCommentFormat {
 type CommonCommentFormat struct {
 }
 
-func (c CommonCommentFormat) FormatLi(ctx *gin.Context, m models.Comments, depth int, isTls bool, eo, parent string) string {
-	return FormatLi(CommonLi(), ctx, m, depth, isTls, eo, parent)
+func (c CommonCommentFormat) FormatLi(_ context.Context, m models.Comments, currentDepth, maxDepth, page int, isTls, isThreadComments bool, eo, parent string) string {
+	return FormatLi(CommonLi(), m, currentDepth, maxDepth, page, isTls, isThreadComments, eo, parent)
+}
+
+func (c CommonCommentFormat) FloorOrder(wpOrder string, i, j models.PostComments) bool {
+	return i.CommentId > j.CommentId
+}
+func respond(m models.Comments, isShow bool) string {
+	if !isShow {
+		return ""
+	}
+	pId := number.IntToString(m.CommentPostId)
+	cId := number.IntToString(m.CommentId)
+	return str.Replace(respondTml, map[string]string{
+		"{{PostId}}":        pId,
+		"{{CommentId}}":     cId,
+		"{{CommentAuthor}}": m.CommentAuthor,
+	})
 }
 
 var li = `
@@ -153,14 +171,11 @@ var li = `
                      src="{{Gravatar}}"
                      srcset="{{Gravatar}} 2x"
                      class="avatar avatar-56 photo" height="56" width="56" loading="lazy">
-                <b class="fn">
-                    <a href="{{CommentAuthorUrl}}" rel="external nofollow ugc"
-                       class="url">{{CommentAuthor}}</a>
-                </b>
+                <b class="fn">{{CommentAuthor}}</b>
                 <span class="says">说道：</span></div><!-- .comment-author -->
 
             <div class="comment-metadata">
-                <a href="/p/{{PostId}}#comment-{{CommentId}}">
+                <a href="/p/{{PostId}}/comment-page-{{page}}#comment-{{CommentId}}">
                     <time datetime="{{CommentDateGmt}}">{{CommentDate}}</time>
                 </a></div><!-- .comment-metadata -->
 
@@ -170,30 +185,38 @@ var li = `
             <p>{{CommentContent}}</p>
         </div><!-- .comment-content -->
 
-        <div class="reply">
+        {{respond}}
+    </article><!-- .comment-body -->
+
+`
+
+var respondTml = `<div class="reply">
             <a rel="nofollow" class="comment-reply-link"
                href="/p/{{PostId}}?replytocom={{CommentId}}#respond" data-commentid="{{CommentId}}" data-postid="{{PostId}}"
                data-belowelement="div-comment-{{CommentId}}" data-respondelement="respond"
                data-replyto="回复给{{CommentAuthor}}"
                aria-label="回复给{{CommentAuthor}}">回复</a>
-        </div>
-    </article><!-- .comment-body -->
+        </div>`
 
-`
-
-func FormatLi(li string, c *gin.Context, comments models.Comments, depth int, isTls bool, eo, parent string) string {
+func FormatLi(li string, comments models.Comments, currentDepth, maxDepth, page int, isTls, isThreadComments bool, eo, parent string) string {
+	isShow := false
+	if isThreadComments && currentDepth < maxDepth {
+		isShow = true
+	}
 	for k, v := range map[string]string{
 		"{{CommentId}}":        strconv.FormatUint(comments.CommentId, 10),
-		"{{Depth}}":            strconv.Itoa(depth),
+		"{{Depth}}":            strconv.Itoa(currentDepth),
 		"{{Gravatar}}":         Gravatar(comments.CommentAuthorEmail, isTls),
 		"{{CommentAuthorUrl}}": comments.CommentAuthorUrl,
 		"{{CommentAuthor}}":    comments.CommentAuthor,
 		"{{PostId}}":           strconv.FormatUint(comments.CommentPostId, 10),
+		"{{page}}":             strconv.Itoa(page),
 		"{{CommentDateGmt}}":   comments.CommentDateGmt.String(),
 		"{{CommentDate}}":      comments.CommentDate.Format("2006-01-02 15:04"),
 		"{{CommentContent}}":   comments.CommentContent,
 		"{{eo}}":               eo,
 		"{{parent}}":           parent,
+		"{{respond}}":          respond(comments, isShow),
 	} {
 		li = strings.Replace(li, k, v, -1)
 	}

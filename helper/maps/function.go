@@ -185,7 +185,7 @@ func DescEahByKey[K constraints.Ordered, V any](m map[K]V, fn func(K, V)) {
 	orderedEahByKey(m, slice.ASC, fn)
 }
 
-func orderedEahByKey[K constraints.Ordered, V any](m map[K]V, ordered int, fn func(K, V)) {
+func orderedEahByKey[K constraints.Ordered, V any](m map[K]V, ordered string, fn func(K, V)) {
 	keys := Keys(m)
 	slice.Sorts(keys, ordered)
 	for _, key := range keys {

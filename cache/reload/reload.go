@@ -304,7 +304,7 @@ func FnVal[T any](name string, t T, fn func() T) func() T {
 	}
 }
 
-func ChangeFnVal[T any](name string, val T) {
+func ChangeFnVal[T any](name string, val T, coverConf bool) {
 	v, ok := anyMap.Load(name)
 	if !ok {
 		return
@@ -313,7 +313,7 @@ func ChangeFnVal[T any](name string, val T) {
 	if !ok {
 		return
 	}
-	if !vv.isUseManger.Load() {
+	if coverConf && !vv.isUseManger.Load() {
 		vv.isUseManger.Store(true)
 	}
 	vv.v.Store(val)

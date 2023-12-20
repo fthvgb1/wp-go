@@ -185,7 +185,9 @@ func NewPaginationCache[K comparable, V any](m *cache.MapCache[string, helper.Pa
 	if fet == nil {
 		fet = reload.FnVal(str.Join("paginationCache-", name, "-fetchNum"), fetchNum, nil)
 	}
-	return cache.NewPagination(m, ma, dbFn, localFn, dbKeyFn, localKeyFn, fet, name)
+	p := cache.NewPagination(m, ma, dbFn, localFn, dbKeyFn, localKeyFn, fet, name)
+	mapCache.Store(name, p)
+	return p
 }
 
 func NewMapCache[K comparable, V any](data cache.Cache[K, V], batchFn cache.MapBatchFn[K, V], fn cache.MapSingleFn[K, V], args ...any) *cache.MapCache[K, V] {
@@ -219,9 +221,9 @@ func SetExpireTime(c cache.SetTime, name string, expireTime time.Duration, expir
 	c.SetExpiredTime(fn)
 }
 
-func ChangeExpireTime(t time.Duration, name ...string) {
+func ChangeExpireTime(t time.Duration, coverConf bool, name ...string) {
 	for _, s := range name {
-		reload.ChangeFnVal(s, t)
+		reload.ChangeFnVal(s, t, coverConf)
 	}
 }
 
@@ -290,4 +292,29 @@ func GetVarCache[T any](name string) (*cache.VarCache[T], bool) {
 func GetMapCache[K comparable, V any](name string) (*cache.MapCache[K, V], bool) {
 	vv, err := getMap[K, V](name)
 	return vv, err == nil
+}
+
+func GetPaginationCache[K comparable, V any](name string) (*cache.Pagination[K, V], bool) {
+	v, err := getPagination[K, V](name)
+	return v, err == nil
+}
+
+func Pagination[V any, K comparable](name string, ctx context.Context, timeout time.Duration, k K, page, limit int, a ...any) ([]V, int, error) {
+	v, err := getPagination[K, V](name)
+	if err != nil {
+		return nil, 0, err
+	}
+	return v.Pagination(ctx, timeout, k, page, limit, a...)
+}
+
+func getPagination[K comparable, T any](name string) (*cache.Pagination[K, T], error) {
+	m, ok := mapCache.Load(name)
+	if !ok {
+		return nil, errors.New(str.Join("cache ", name, " doesn't exist"))
+	}
+	vk, ok := m.(*cache.Pagination[K, T])
+	if !ok {
+		return nil, errors.New(str.Join("cache ", name, " type error"))
+	}
+	return vk, nil
 }

@@ -72,7 +72,7 @@ func TestSetExpireTime(t *testing.T) {
 		fmt.Println(c.Get(ctx, "xx"))
 		time.Sleep(time.Second)
 		fmt.Println(c.Get(ctx, "xx"))
-		ChangeExpireTime(3*time.Second, "xx")
+		ChangeExpireTime(3*time.Second, true, "xx")
 		c.Set(ctx, "xx", "yyy")
 		time.Sleep(time.Second)
 		fmt.Println(c.Get(ctx, "xx"))

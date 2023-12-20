@@ -30,7 +30,14 @@ type DbFn[K comparable, V any] func(ctx context.Context, k K, page, limit, total
 
 type LocalFn[K comparable, V any] func(ctx context.Context, data []V, k K, page, limit int, a ...any) ([]V, int, error)
 
-func NewPagination[K comparable, V any](m *MapCache[string, helper.PaginationData[V]], maxNum func() int, dbFn DbFn[K, V], localFn LocalFn[K, V], dbKeyFn, localKeyFn func(K, ...any) string, batchFetchNum func() int, name string) *Pagination[K, V] {
+func (p *Pagination[K, V]) IsSwitchDB(k K) bool {
+	v, _ := p.isSwitch.Load(k)
+	return v == true
+}
+
+func NewPagination[K comparable, V any](m *MapCache[string, helper.PaginationData[V]], maxNum func() int,
+	dbFn DbFn[K, V], localFn LocalFn[K, V], dbKeyFn, localKeyFn func(K, ...any) string,
+	batchFetchNum func() int, name string) *Pagination[K, V] {
 	if dbKeyFn == nil {
 		dbKeyFn = func(k K, a ...any) string {
 			s := str.NewBuilder()
@@ -66,6 +73,7 @@ func (p *Pagination[K, V]) Pagination(ctx context.Context, timeout time.Duration
 	data, total, err := p.paginationByLocal(ctx, timeout, k, page, limit, a...)
 	if err != nil {
 		if errors.Is(err, switchDb) {
+			p.isSwitch.Store(k, true)
 			err = nil
 			return p.paginationByDB(ctx, timeout, k, page, limit, total, a...)
 		}
@@ -101,36 +109,47 @@ func (p *Pagination[K, V]) paginationByLocal(ctx context.Context, timeout time.D
 	if err != nil {
 		return nil, 0, err
 	}
+	if totalRaw < 1 {
+		data.Data = nil
+		data.TotalRaw = 0
+		p.Set(ctx, key, data)
+		return nil, 0, nil
+	}
 	if totalRaw >= p.maxNum() {
-		p.isSwitch.Store(k, true)
 		return nil, totalRaw, switchDb
 	}
-	if len(da) < totalRaw {
-		totalPage := number.DivideCeil(totalRaw, batchNum)
-		for i := 1; i <= totalPage; i++ {
-			daa, _, err := p.fetchDb(ctx, timeout, k, i, batchNum, totalRaw, a...)
-			if err != nil {
-				return nil, 0, err
-			}
-			da = append(da, daa...)
+	totalPage := number.DivideCeil(totalRaw, batchNum)
+	for i := 1; i <= totalPage; i++ {
+		daa, _, err := p.fetchDb(ctx, timeout, k, i, batchNum, totalRaw, a...)
+		if err != nil {
+			return nil, 0, err
 		}
-		data.Data = da
-		data.TotalRaw = totalRaw
-		p.Set(ctx, key, data)
+		da = append(da, daa...)
 	}
+	data.Data = da
+	data.TotalRaw = totalRaw
+	p.Set(ctx, key, data)
 
 	return p.localFn(ctx, data.Data, k, page, limit, a...)
 }
 
+func (p *Pagination[K, V]) dbGet(ctx context.Context, key string) (helper.PaginationData[V], bool) {
+	data, ok := p.Get(ctx, key)
+	if ok && p.increaseUpdate != nil && p.increaseUpdate.CycleTime() > p.GetExpireTime(ctx)-p.Ttl(ctx, key) {
+		return data, true
+	}
+	return data, false
+}
+
 func (p *Pagination[K, V]) paginationByDB(ctx context.Context, timeout time.Duration, k K, page, limit, totalRaw int, a ...any) ([]V, int, error) {
 	key := p.dbKeyFn(k, append([]any{page, limit}, a...)...)
-	data, ok := p.Get(ctx, key)
+	data, ok := p.dbGet(ctx, key)
 	if ok {
 		return data.Data, data.TotalRaw, nil
 	}
 	p.mux.Lock()
 	defer p.mux.Unlock()
-	data, ok = p.Get(ctx, key)
+	data, ok = p.dbGet(ctx, key)
 	if ok {
 		return data.Data, data.TotalRaw, nil
 	}

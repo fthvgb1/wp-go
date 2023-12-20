@@ -1,6 +1,7 @@
 package twentyseventeen
 
 import (
+	"context"
 	"fmt"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints/widgets"
@@ -14,7 +15,6 @@ import (
 	"github.com/fthvgb1/wp-go/cache/reload"
 	"github.com/fthvgb1/wp-go/helper"
 	str "github.com/fthvgb1/wp-go/helper/strings"
-	"github.com/gin-gonic/gin"
 	"strings"
 )
 
@@ -103,7 +103,7 @@ type comment struct {
 	plugins.CommonCommentFormat
 }
 
-func (c comment) FormatLi(ctx *gin.Context, m models.Comments, depth int, isTls bool, eo, parent string) string {
+func (c comment) FormatLi(_ context.Context, m models.Comments, depth, maxDepth, page int, isTls, isThreadComments bool, eo, parent string) string {
 	templ := plugins.CommonLi()
 	templ = strings.ReplaceAll(templ, `<a rel="nofollow" class="comment-reply-link"
                href="/p/{{PostId}}?replytocom={{CommentId}}#respond" data-commentid="{{CommentId}}" data-postid="{{PostId}}"
@@ -114,7 +114,7 @@ func (c comment) FormatLi(ctx *gin.Context, m models.Comments, depth int, isTls 
                data-belowelement="div-comment-{{CommentId}}" data-respondelement="respond"
                data-replyto="回复给{{CommentAuthor}}"
                aria-label="回复给{{CommentAuthor}}"><svg class="icon icon-mail-reply" aria-hidden="true" role="img"> <use href="#icon-mail-reply" xlink:href="#icon-mail-reply"></use> </svg>回复</a>`)
-	return plugins.FormatLi(templ, ctx, m, depth, isTls, eo, parent)
+	return plugins.FormatLi(templ, m, depth, maxDepth, page, isTls, isThreadComments, eo, parent)
 }
 
 func postThumbnail(h *wp.Handle, posts *models.Posts) {

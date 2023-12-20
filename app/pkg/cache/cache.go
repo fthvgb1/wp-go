@@ -8,6 +8,7 @@ import (
 	"github.com/fthvgb1/wp-go/app/pkg/models"
 	"github.com/fthvgb1/wp-go/cache"
 	"github.com/fthvgb1/wp-go/cache/cachemanager"
+	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/safety"
 	"time"
@@ -52,15 +53,30 @@ func InitActionsCommonCache() {
 		return config.GetConfig().CacheTime.RecentCommentsCacheTime
 	})
 
-	cachemanager.NewMemoryMapCache(nil, dao.PostComments, c.CacheTime.PostCommentsCacheTime,
-		"postCommentIds",
-		func() time.Duration {
-			return config.GetConfig().CacheTime.PostCommentsCacheTime
-		},
-		cache.NewIncreaseUpdate("comment-increaseUpdate", dao.GetIncreaseComment, 30*time.Second,
-			func() time.Duration {
-				return config.GetConfig().CacheTime.CommentsIncreaseUpdateTime
-			}))
+	cachemanager.NewMemoryMapCache(nil, dao.CommentNum, 30*time.Second, "commentNumber", func() time.Duration {
+		return config.GetConfig().CacheTime.CommentsIncreaseUpdateTime
+	})
+
+	cachemanager.NewPaginationCache(
+		cachemanager.NewMemoryMapCache[string, helper.PaginationData[uint64]](nil, nil, 30*time.Second,
+			"PostCommentsIds", func() time.Duration {
+				return config.GetConfig().CacheTime.PostCommentsCacheTime
+			},
+			cache.NewIncreaseUpdate("PostCommentsIds-increaseUpdate", CommentDataIncreaseUpdate, 30*time.Second,
+				func() time.Duration {
+					return config.GetConfig().CacheTime.CommentsIncreaseUpdateTime
+				}),
+		),
+
+		1000, dao.PostCommentsIds, dao.PostCommentLocal, nil, nil, 300, "PostCommentsIds")
+
+	cachemanager.NewMemoryMapCache(dao.CommentDates, nil, time.Hour, "postCommentData", func() time.Duration {
+		return config.GetConfig().CacheTime.CommentsCacheTime
+	})
+
+	cachemanager.NewMemoryMapCache[uint64, []models.Comments](nil, CommentDataIncreaseUpdates, time.Hour, func() time.Duration {
+		return config.GetConfig().CacheTime.CommentsCacheTime
+	}, "increaseComment30s", cache.NewIncreaseUpdate("increaseComment30s", IncreaseUpdates, 30*time.Second, nil))
 
 	cachemanager.NewVarMemoryCache(dao.GetMaxPostId, c.CacheTime.MaxPostIdCacheTime, "maxPostId", func() time.Duration {
 		return config.GetConfig().CacheTime.MaxPostIdCacheTime
@@ -72,10 +88,6 @@ func InitActionsCommonCache() {
 
 	cachemanager.NewMemoryMapCache(nil, dao.GetUserByName, c.CacheTime.UserInfoCacheTime, "usernameMapToUserData", func() time.Duration {
 		return config.GetConfig().CacheTime.UserInfoCacheTime
-	})
-
-	cachemanager.NewMemoryMapCache(dao.GetCommentByIds, nil, c.CacheTime.CommentsCacheTime, "commentData", func() time.Duration {
-		return config.GetConfig().CacheTime.CommentsCacheTime
 	})
 
 	cachemanager.NewVarMemoryCache(dao.AllUsername, c.CacheTime.UserInfoCacheTime, "allUsername", func() time.Duration {

@@ -125,9 +125,20 @@ func Pagination[T any](arr []T, page, pageSize int) []T {
 	if start > l {
 		start = l
 	}
-	end := page * pageSize
+	end := start + pageSize
 	if l < end {
 		end = l
+	}
+	return arr[start:end]
+}
+func ReversePagination[T any](arr []T, page, pageSize int) []T {
+	end := len(arr) - (page-1)*pageSize
+	if end <= 0 {
+		return nil
+	}
+	start := end - pageSize
+	if start < 0 {
+		start = 0
 	}
 	return arr[start:end]
 }

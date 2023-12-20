@@ -29,3 +29,8 @@ func (w Comments) PrimaryKey() string {
 func (w Comments) Table() string {
 	return "wp_comments"
 }
+
+type PostComments struct {
+	Comments
+	Children []uint64
+}
