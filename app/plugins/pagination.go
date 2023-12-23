@@ -95,12 +95,13 @@ func (p CommentPageEle) Urls(u url.URL, page int, isTLS bool) string {
 	if !strings.Contains(path, "/comment-page-") {
 		path = fmt.Sprintf("%s%s", path, "/comment-page-1#comments")
 	}
-	path = commentReg.ReplaceAllString(path, fmt.Sprintf("/comment-page-%d#comments", page))
+	path = commentReg.ReplaceAllString(path, fmt.Sprintf("/comment-page-%d", page))
 	path = strings.Replace(path, "//", "/", -1)
-	if path == "" {
-		path = "/"
+	ur := str.Join(path, query)
+	if !strings.Contains(ur, "#comments") {
+		ur = str.Join(ur, "#comments")
 	}
-	return str.Join(path, query)
+	return ur
 }
 
 func (p CommentPageEle) Middle(page int, url string) string {
