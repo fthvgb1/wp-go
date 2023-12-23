@@ -40,8 +40,8 @@ var twentyFifteen = PageEle{
 }
 var twentyFifteenComment = CommentPageEle{
 	PageEle{
-		PrevEle: `<div class="nav-previous"><a href="%s#comments">%s</a></div>`,
-		NextEle: `<div class="nav-next"><a href="%s#comments">%s</a></div>`,
+		PrevEle: `<div class="nav-previous"><a href="%s">%s</a></div>`,
+		NextEle: `<div class="nav-next"><a href="%s">%s</a></div>`,
 	},
 }
 
