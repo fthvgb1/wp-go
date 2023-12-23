@@ -20,7 +20,7 @@ type IndexHandle struct {
 	*Handle
 	Param       *IndexParams
 	Posts       []models.Posts
-	pageEle     pagination.Elements
+	pageEle     pagination.Render
 	TotalRows   int
 	postsPlugin PostsPlugin
 }
@@ -33,11 +33,11 @@ func (i *IndexHandle) SetListPlugin(listPlugin func(*Handle, *models.Posts)) {
 	i.postsPlugin = listPlugin
 }
 
-func (i *IndexHandle) PageEle() pagination.Elements {
+func (i *IndexHandle) PageEle() pagination.Render {
 	return i.pageEle
 }
 
-func (i *IndexHandle) SetPageEle(pageEle pagination.Elements) {
+func (i *IndexHandle) SetPageEle(pageEle pagination.Render) {
 	i.pageEle = pageEle
 }
 
@@ -116,8 +116,7 @@ func (i *IndexHandle) Pagination() {
 	if q != "" {
 		q = fmt.Sprintf("?%s", q)
 	}
-	paginations := pagination.NewParsePagination(i.TotalRows, i.Param.PageSize, i.Param.Page, i.Param.PaginationStep, q, i.C.Request.URL.Path)
-	i.ginH["pagination"] = pagination.Paginate(i.pageEle, paginations)
+	i.ginH["pagination"] = pagination.Paginate(i.pageEle, i.TotalRows, i.Param.PageSize, i.Param.Page, i.Param.PaginationStep, *i.C.Request.URL, i.IsHttps())
 
 }
 

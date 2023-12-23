@@ -130,6 +130,7 @@ func InitHandle(fn func(*Handle), h *Handle) {
 	h.Index.postsPlugin = hh.Index.postsPlugin
 	h.Index.pageEle = hh.Index.pageEle
 	h.Detail.CommentRender = hh.Detail.CommentRender
+	h.Detail.CommentPageEle = hh.Detail.CommentPageEle
 	h.handlers = hh.handlers
 	h.handleHook = hh.handleHook
 	h.componentHook = hh.componentHook

@@ -64,11 +64,20 @@
 
                             {{ if .showComment}}
                                 <div id="comments" class="comments-area">
-                                    {{ if gt .post.CommentCount 0}}
-                                        <h2 class="comments-title">“{{.post.PostTitle}}”的{{.post.CommentCount}}个回复 </h2>
+                                    {{ if ne .comments ""}}
+                                        <h2 class="comments-title">“{{.post.PostTitle}}”的{{.totalCommentNum}}个回复 </h2>
                                         <ol class="comment-list">
                                             {{.comments|unescaped}}
                                         </ol>
+
+                                    {{if gt .totalCommentPage 1}}
+                                        <nav class="navigation comments-pagination" aria-label="评论">
+                                            <h2 class="screen-reader-text">评论导航</h2>
+                                            <div class="nav-links">
+                                                {{ .commentPageNav|unescaped}}
+                                            </div><!-- .nav-links -->
+                                        </nav>
+                                    {{end}}
 
                                     {{end}}
                                     {{if eq .post.CommentStatus "open"}}

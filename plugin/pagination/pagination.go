@@ -2,39 +2,49 @@ package pagination
 
 import (
 	"github.com/fthvgb1/wp-go/helper/number"
+	"net/url"
 	"strings"
 )
 
-type Elements interface {
+type Render interface {
 	Current(page, totalPage, totalRows int) string
 	Prev(url string) string
 	Next(url string) string
 	Dots() string
 	Middle(page int, url string) string
-	Url(path, query string, page int) string
+	Urls(u url.URL, page int, isTLS bool) string
+	Step() int
 }
 
-type ParsePagination struct {
-	Elements
+type parser struct {
+	Render
 	TotalPage   int
 	TotalRaw    int
 	PageSize    int
 	CurrentPage int
-	Query       string
-	Path        string
+	Url         url.URL
 	Step        int
+	IsTLS       bool
 }
 
-func NewParsePagination(totalRaw int, pageSize int, currentPage, step int, query string, path string) ParsePagination {
-	return ParsePagination{TotalPage: number.DivideCeil(totalRaw, pageSize), TotalRaw: totalRaw, PageSize: pageSize, CurrentPage: currentPage, Query: query, Path: path, Step: step}
+func Paginate(e Render, totalRaw int, pageSize int, currentPage, step int, u url.URL, isTLS bool) string {
+	st := e.Step()
+	if st > 0 {
+		step = st
+	}
+	return parser{
+		Render:      e,
+		TotalPage:   number.DivideCeil(totalRaw, pageSize),
+		TotalRaw:    totalRaw,
+		PageSize:    pageSize,
+		CurrentPage: currentPage,
+		Url:         u,
+		Step:        step,
+		IsTLS:       isTLS,
+	}.ToHtml()
 }
 
-func Paginate(e Elements, p ParsePagination) string {
-	p.Elements = e
-	return p.ToHtml()
-}
-
-func (p ParsePagination) ToHtml() (html string) {
+func (p parser) ToHtml() (html string) {
 	if p.TotalPage < 2 {
 		return
 	}
@@ -48,14 +58,14 @@ func (p ParsePagination) ToHtml() (html string) {
 		start = 1
 	}
 	if p.CurrentPage > 1 {
-		s.WriteString(p.Prev(p.Url(p.Path, p.Query, p.CurrentPage-1)))
+		s.WriteString(p.Prev(p.Urls(p.Url, p.CurrentPage-1, p.IsTLS)))
 	}
 	if p.CurrentPage >= p.Step+2 {
 		d := false
 		if p.CurrentPage > p.Step+2 {
 			d = true
 		}
-		s.WriteString(p.Middle(1, p.Url(p.Path, p.Query, 1)))
+		s.WriteString(p.Middle(1, p.Urls(p.Url, 1, p.IsTLS)))
 		if d {
 			s.WriteString(p.Dots())
 		}
@@ -69,7 +79,7 @@ func (p ParsePagination) ToHtml() (html string) {
 		if p.CurrentPage == page {
 			h = p.Current(page, p.TotalPage, p.TotalRaw)
 		} else {
-			h = p.Middle(page, p.Url(p.Path, p.Query, page))
+			h = p.Middle(page, p.Urls(p.Url, page, p.IsTLS))
 		}
 		s.WriteString(h)
 
@@ -82,10 +92,10 @@ func (p ParsePagination) ToHtml() (html string) {
 		if d {
 			s.WriteString(p.Dots())
 		}
-		s.WriteString(p.Middle(p.TotalPage, p.Url(p.Path, p.Query, p.TotalPage)))
+		s.WriteString(p.Middle(p.TotalPage, p.Urls(p.Url, p.TotalPage, p.IsTLS)))
 	}
 	if p.CurrentPage < p.TotalPage {
-		s.WriteString(p.Next(p.Url(p.Path, p.Query, p.CurrentPage+1)))
+		s.WriteString(p.Next(p.Urls(p.Url, p.CurrentPage+1, p.IsTLS)))
 	}
 	html = s.String()
 	return

@@ -5,6 +5,7 @@ import (
 	"github.com/fthvgb1/wp-go/app/wpconfig"
 	"github.com/fthvgb1/wp-go/helper"
 	str "github.com/fthvgb1/wp-go/helper/strings"
+	"net/url"
 	"regexp"
 	"strings"
 )
@@ -60,6 +61,10 @@ func (p PageEle) Dots() string {
 	return p.DotsEle
 }
 
+func (p PageEle) Step() int {
+	return 0
+}
+
 func (p PageEle) Middle(page int, url string) string {
 	return fmt.Sprintf(p.MiddleEle, url, page)
 }
@@ -67,7 +72,8 @@ func (p PageEle) Middle(page int, url string) string {
 var reg = regexp.MustCompile(`(/page)/(\d+)`)
 var commentReg = regexp.MustCompile(`/comment-page-(\d+)`)
 
-func (p PageEle) Url(path, query string, page int) string {
+func (p PageEle) Urls(u url.URL, page int, isTLS bool) string {
+	var path, query = u.Path, u.RawQuery
 	if !strings.Contains(path, "/page/") {
 		path = fmt.Sprintf("%s%s", path, "/page/1")
 	}
@@ -84,11 +90,12 @@ func (p PageEle) Url(path, query string, page int) string {
 	return str.Join(path, query)
 }
 
-func (p CommentPageEle) Url(path, query string, page int) string {
+func (p CommentPageEle) Urls(u url.URL, page int, isTLS bool) string {
+	var path, query = u.Path, u.RawQuery
 	if !strings.Contains(path, "/comment-page-") {
-		path = fmt.Sprintf("%s%s", path, "/comment-page-1")
+		path = fmt.Sprintf("%s%s", path, "/comment-page-1#comments")
 	}
-	path = commentReg.ReplaceAllString(path, fmt.Sprintf("/comment-page-%d", page))
+	path = commentReg.ReplaceAllString(path, fmt.Sprintf("/comment-page-%d#comments", page))
 	path = strings.Replace(path, "//", "/", -1)
 	if path == "" {
 		path = "/"
@@ -109,6 +116,48 @@ func (p CommentPageEle) Prev(url string) string {
 	return fmt.Sprintf(p.PrevEle, url, helper.Or(wpconfig.GetOption("comment_order") == "asc", "较早评论", "较新评论"))
 }
 
+func (p CommentPageEle) Step() int {
+	return 0
+}
+
 func (p CommentPageEle) Next(url string) string {
 	return fmt.Sprintf(p.NextEle, url, helper.Or(wpconfig.GetOption("comment_order") == "asc", "较新评论", "较早评论"))
+}
+
+type PaginationNav struct {
+	Currents func(page, totalPage, totalRows int) string
+	Prevs    func(url string) string
+	Nexts    func(url string) string
+	Dotss    func() string
+	Middles  func(page int, url string) string
+	Urlss    func(u url.URL, page int, isTLS bool) string
+	Steps    func() int
+}
+
+func (p PaginationNav) Current(page, totalPage, totalRows int) string {
+	return p.Currents(page, totalPage, totalRows)
+}
+
+func (p PaginationNav) Prev(url string) string {
+	return p.Prevs(url)
+}
+
+func (p PaginationNav) Next(url string) string {
+	return p.Nexts(url)
+}
+
+func (p PaginationNav) Dots() string {
+	return p.Dotss()
+}
+
+func (p PaginationNav) Middle(page int, url string) string {
+	return p.Middles(page, url)
+}
+
+func (p PaginationNav) Urls(u url.URL, page int, isTLS bool) string {
+	return p.Urlss(u, page, isTLS)
+}
+
+func (p PaginationNav) Step() int {
+	return p.Steps()
 }

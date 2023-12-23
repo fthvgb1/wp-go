@@ -15,6 +15,7 @@ import (
 	"github.com/fthvgb1/wp-go/cache/reload"
 	"github.com/fthvgb1/wp-go/helper"
 	str "github.com/fthvgb1/wp-go/helper/strings"
+	"github.com/fthvgb1/wp-go/plugin/pagination"
 	"strings"
 )
 
@@ -27,8 +28,22 @@ var paginate = func() plugins.PageEle {
 	p.NextEle = strings.Replace(p.NextEle, "下一页", `<span class="screen-reader-text">下一页</span>
 <svg class="icon icon-arrow-right" aria-hidden="true" role="img"> <use href="#icon-arrow-right" xlink:href="#icon-arrow-right"></use> 
 </svg>`, 1)
+	commentPageEle = plugins.PaginationNav{
+		Currents: p.Current,
+		Prevs:    p.Prev,
+		Nexts:    p.Next,
+		Dotss:    p.Dots,
+		Middles:  p.Middle,
+		Steps: func() int {
+			return 2
+		},
+		Urlss: plugins.TwentyFifteenCommentPagination().Urls,
+	}
+
 	return p
 }()
+
+var commentPageEle pagination.Render
 
 func Hook(h *wp.Handle) {
 	wp.Run(h, configs)
@@ -56,6 +71,7 @@ func configs(h *wp.Handle) {
 	)
 	videoHeader(h)
 	h.Detail.CommentRender = commentFormat
+	h.Detail.CommentPageEle = commentPageEle
 	h.CommonComponents()
 	h.Index.SetPageEle(paginate)
 	wp.ReplyCommentJs(h)
@@ -103,19 +119,19 @@ type comment struct {
 	plugins.CommonCommentFormat
 }
 
+var commentLi = plugins.CommonLi()
+
+var respondFn = plugins.Responds(respondStr)
+
 func (c comment) FormatLi(_ context.Context, m models.Comments, depth, maxDepth, page int, isTls, isThreadComments bool, eo, parent string) string {
-	templ := plugins.CommonLi()
-	templ = strings.ReplaceAll(templ, `<a rel="nofollow" class="comment-reply-link"
-               href="/p/{{PostId}}?replytocom={{CommentId}}#respond" data-commentid="{{CommentId}}" data-postid="{{PostId}}"
-               data-belowelement="div-comment-{{CommentId}}" data-respondelement="respond"
-               data-replyto="回复给{{CommentAuthor}}"
-               aria-label="回复给{{CommentAuthor}}">回复</a>`, `<a rel="nofollow" class="comment-reply-link"
-               href="/p/{{PostId}}?replytocom={{CommentId}}#respond" data-commentid="{{CommentId}}" data-postid="{{PostId}}"
-               data-belowelement="div-comment-{{CommentId}}" data-respondelement="respond"
-               data-replyto="回复给{{CommentAuthor}}"
-               aria-label="回复给{{CommentAuthor}}"><svg class="icon icon-mail-reply" aria-hidden="true" role="img"> <use href="#icon-mail-reply" xlink:href="#icon-mail-reply"></use> </svg>回复</a>`)
-	return plugins.FormatLi(templ, m, depth, maxDepth, page, isTls, isThreadComments, eo, parent)
+	return plugins.FormatLi(commentLi, m, respondFn, depth, maxDepth, page, isTls, isThreadComments, eo, parent)
 }
+
+var respondStr = `<a rel="nofollow" class="comment-reply-link"
+               href="/p/{{PostId}}?replytocom={{CommentId}}#respond" data-commentid="{{CommentId}}" data-postid="{{PostId}}"
+               data-belowelement="div-comment-{{CommentId}}" data-respondelement="respond"
+               data-replyto="回复给{{CommentAuthor}}"
+               aria-label="回复给{{CommentAuthor}}"><svg class="icon icon-mail-reply" aria-hidden="true" role="img"> <use href="#icon-mail-reply" xlink:href="#icon-mail-reply"></use> </svg>回复</a>`
 
 func postThumbnail(h *wp.Handle, posts *models.Posts) {
 	if posts.Thumbnail.Path != "" {

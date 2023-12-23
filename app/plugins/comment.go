@@ -143,23 +143,34 @@ type CommonCommentFormat struct {
 }
 
 func (c CommonCommentFormat) FormatLi(_ context.Context, m models.Comments, currentDepth, maxDepth, page int, isTls, isThreadComments bool, eo, parent string) string {
-	return FormatLi(CommonLi(), m, currentDepth, maxDepth, page, isTls, isThreadComments, eo, parent)
+	return FormatLi(li, m, respondsFn, currentDepth, maxDepth, page, isTls, isThreadComments, eo, parent)
 }
 
 func (c CommonCommentFormat) FloorOrder(wpOrder string, i, j models.PostComments) bool {
 	return i.CommentId > j.CommentId
 }
-func respond(m models.Comments, isShow bool) string {
-	if !isShow {
-		return ""
+
+type RespondFn func(m models.Comments, depth, maxDepth int, isThreadComments bool) string
+
+var respondsFn = Responds(respondTml)
+
+func RespondsFn() RespondFn {
+	return respondsFn
+}
+
+func Responds(respondTml string) RespondFn {
+	return func(m models.Comments, depth, maxDepth int, isThreadComments bool) string {
+		if !isThreadComments || depth >= maxDepth {
+			return ""
+		}
+		pId := number.IntToString(m.CommentPostId)
+		cId := number.IntToString(m.CommentId)
+		return str.Replace(respondTml, map[string]string{
+			"{{PostId}}":        pId,
+			"{{CommentId}}":     cId,
+			"{{CommentAuthor}}": m.CommentAuthor,
+		})
 	}
-	pId := number.IntToString(m.CommentPostId)
-	cId := number.IntToString(m.CommentId)
-	return str.Replace(respondTml, map[string]string{
-		"{{PostId}}":        pId,
-		"{{CommentId}}":     cId,
-		"{{CommentAuthor}}": m.CommentAuthor,
-	})
 }
 
 var li = `
@@ -198,11 +209,7 @@ var respondTml = `<div class="reply">
                aria-label="回复给{{CommentAuthor}}">回复</a>
         </div>`
 
-func FormatLi(li string, comments models.Comments, currentDepth, maxDepth, page int, isTls, isThreadComments bool, eo, parent string) string {
-	isShow := false
-	if isThreadComments && currentDepth < maxDepth {
-		isShow = true
-	}
+func FormatLi(li string, comments models.Comments, respond RespondFn, currentDepth, maxDepth, page int, isTls, isThreadComments bool, eo, parent string) string {
 	for k, v := range map[string]string{
 		"{{CommentId}}":        strconv.FormatUint(comments.CommentId, 10),
 		"{{Depth}}":            strconv.Itoa(currentDepth),
@@ -216,7 +223,7 @@ func FormatLi(li string, comments models.Comments, currentDepth, maxDepth, page 
 		"{{CommentContent}}":   comments.CommentContent,
 		"{{eo}}":               eo,
 		"{{parent}}":           parent,
-		"{{respond}}":          respond(comments, isShow),
+		"{{respond}}":          respond(comments, currentDepth, maxDepth, isThreadComments),
 	} {
 		li = strings.Replace(li, k, v, -1)
 	}

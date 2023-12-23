@@ -20,12 +20,13 @@ import (
 
 type DetailHandle struct {
 	*Handle
-	CommentRender plugins.CommentHtml
-	Comments      []uint64
-	Page          int
-	Limit         int
-	Post          models.Posts
-	TotalRaw      int
+	CommentRender  plugins.CommentHtml
+	Comments       []uint64
+	Page           int
+	Limit          int
+	Post           models.Posts
+	CommentPageEle pagination.Render
+	TotalRaw       int
 }
 
 func NewDetailHandle(handle *Handle) *DetailHandle {
@@ -132,8 +133,10 @@ func (d *DetailHandle) RenderComment() {
 		d.SetErr(err)
 		return
 	}
-	paginations := pagination.NewParsePagination(d.TotalRaw, d.Limit, d.Page, 1, d.C.Request.URL.RawQuery, d.C.Request.URL.Path)
-	d.ginH["commentPageNav"] = pagination.Paginate(plugins.TwentyFifteenCommentPagination(), paginations)
+	if d.CommentPageEle == nil {
+		d.CommentPageEle = plugins.TwentyFifteenCommentPagination()
+	}
+	d.ginH["commentPageNav"] = pagination.Paginate(d.CommentPageEle, d.TotalRaw, d.Limit, d.Page, 1, *d.C.Request.URL, d.IsHttps())
 
 }
 
