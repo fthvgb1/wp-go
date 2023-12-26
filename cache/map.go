@@ -13,7 +13,8 @@ import (
 
 type MapCache[K comparable, V any] struct {
 	Cache[K, V]
-	mux                sync.Mutex
+	mux                *sync.Mutex
+	muFn               func(ctx context.Context, gMut *sync.Mutex, k ...K) *sync.Mutex
 	cacheFunc          MapSingleFn[K, V]
 	batchCacheFn       MapBatchFn[K, V]
 	getCacheBatch      func(c context.Context, key []K, timeout time.Duration, params ...any) ([]V, error)
@@ -63,13 +64,14 @@ type MapSingleFn[K, V any] func(context.Context, K, ...any) (V, error)
 type MapBatchFn[K comparable, V any] func(context.Context, []K, ...any) (map[K]V, error)
 type IncreaseFn[K comparable, V any] func(c context.Context, currentData V, k K, t time.Time, a ...any) (data V, save bool, refresh bool, err error)
 
-func NewMapCache[K comparable, V any](ca Cache[K, V], cacheFunc MapSingleFn[K, V], batchCacheFn MapBatchFn[K, V], inc *IncreaseUpdate[K, V], a ...any) *MapCache[K, V] {
+func NewMapCache[K comparable, V any](ca Cache[K, V], cacheFunc MapSingleFn[K, V], batchCacheFn MapBatchFn[K, V], inc *IncreaseUpdate[K, V], lockFn LockFn[K], a ...any) *MapCache[K, V] {
 	r := &MapCache[K, V]{
 		Cache:          ca,
-		mux:            sync.Mutex{},
+		mux:            &sync.Mutex{},
 		cacheFunc:      cacheFunc,
 		batchCacheFn:   batchCacheFn,
 		increaseUpdate: inc,
+		muFn:           lockFn,
 	}
 	if cacheFunc == nil && batchCacheFn != nil {
 		r.setDefaultCacheFn(batchCacheFn)
@@ -218,8 +220,9 @@ func (m *MapCache[K, V]) increaseUpdates(c context.Context, timeout time.Duratio
 		return data, err
 	}
 	fn := func() {
-		m.mux.Lock()
-		defer m.mux.Unlock()
+		l := m.muFn(c, m.mux, key)
+		l.Lock()
+		defer l.Unlock()
 		if nowTime.Sub(m.GetLastSetTime(c, key)) < m.increaseUpdate.CycleTime() {
 			return
 		}
@@ -257,8 +260,9 @@ func (m *MapCache[K, V]) GetCache(c context.Context, key K, timeout time.Duratio
 		return m.increaseUpdates(c, timeout, data, key, params...)
 	}
 	call := func() {
-		m.mux.Lock()
-		defer m.mux.Unlock()
+		l := m.muFn(c, m.mux, key)
+		l.Lock()
+		defer l.Unlock()
 		if data, ok = m.Get(c, key); ok {
 			return
 		}
@@ -377,8 +381,9 @@ func (m *MapCache[K, V]) getBatchToMapes(c context.Context, key []K, timeout tim
 	}
 
 	call := func() {
-		m.mux.Lock()
-		defer m.mux.Unlock()
+		l := m.muFn(c, m.mux, key...)
+		l.Lock()
+		defer l.Unlock()
 		needFlushs := maps.FilterToSlice(needIndex, func(k K, v int) (K, bool) {
 			vv, ok := m.Get(c, k)
 			if ok {
@@ -442,8 +447,9 @@ func (m *MapCache[K, V]) getCacheBatchs(c context.Context, key []K, timeout time
 
 	var err error
 	call := func() {
-		m.mux.Lock()
-		defer m.mux.Unlock()
+		l := m.muFn(c, m.mux, key...)
+		l.Lock()
+		defer l.Unlock()
 		needFlushs := maps.FilterToSlice(needIndex, func(k K, v int) (K, bool) {
 			vv, ok := m.Get(c, k)
 			if ok {

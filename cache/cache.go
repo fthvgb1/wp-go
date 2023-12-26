@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"sync"
 	"time"
 )
 
@@ -36,4 +37,14 @@ type Refresh[K comparable, V any] interface {
 }
 type RefreshVar[T any] interface {
 	Refresh(ctx context.Context, a ...any)
+}
+
+type Lockss[K comparable] interface {
+	GetLock(ctx context.Context, gMut *sync.Mutex, k ...K) *sync.Mutex
+}
+
+type LockFn[K comparable] func(ctx context.Context, gMut *sync.Mutex, k ...K) *sync.Mutex
+
+type LocksNum interface {
+	SetLockNum(num int)
 }

@@ -8,6 +8,7 @@ import (
 	"github.com/fthvgb1/wp-go/helper"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/safety"
+	"runtime"
 	"time"
 )
 
@@ -192,7 +193,7 @@ func NewPaginationCache[K comparable, V any](m *cache.MapCache[string, helper.Pa
 
 func NewMapCache[K comparable, V any](data cache.Cache[K, V], batchFn cache.MapBatchFn[K, V], fn cache.MapSingleFn[K, V], args ...any) *cache.MapCache[K, V] {
 	inc := helper.ParseArgs((*cache.IncreaseUpdate[K, V])(nil), args...)
-	m := cache.NewMapCache[K, V](data, fn, batchFn, inc, args...)
+	m := cache.NewMapCache[K, V](data, fn, batchFn, inc, buildLockFn[K](args...), args...)
 	FlushPush(m)
 	ClearPush(m)
 	name, f := parseArgs(args...)
@@ -203,6 +204,35 @@ func NewMapCache[K comparable, V any](data cache.Cache[K, V], batchFn cache.MapB
 		SetExpireTime(any(data).(cache.SetTime), name, 0, f)
 	}
 	return m
+}
+
+func buildLockFn[K comparable](args ...any) cache.LockFn[K] {
+	lockFn := helper.ParseArgs(cache.LockFn[K](nil), args...)
+	name := helper.ParseArgs("", args...)
+	num := helper.ParseArgs(runtime.NumCPU(), args...)
+	loFn := func() int {
+		return num
+	}
+	loFn = helper.ParseArgs(loFn, args...)
+	if name != "" {
+		loFn = reload.FnVal(str.Join("cachesLocksNum-", name), num, loFn)
+	}
+	if lockFn == nil {
+		looo := helper.ParseArgs(cache.Lockss[K](nil), args...)
+		if looo != nil {
+			lockFn = looo.GetLock
+			loo, ok := any(looo).(cache.LocksNum)
+			if ok && loo != nil {
+				loo.SetLockNum(num)
+			}
+		} else {
+			lo := cache.NewLocks[K](loFn)
+			lockFn = lo.GetLock
+			FlushPush(lo)
+		}
+
+	}
+	return lockFn
 }
 func NewMemoryMapCache[K comparable, V any](batchFn cache.MapBatchFn[K, V],
 	fn cache.MapSingleFn[K, V], expireTime time.Duration, args ...any) *cache.MapCache[K, V] {
