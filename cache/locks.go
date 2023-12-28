@@ -43,13 +43,16 @@ func (l *Locks[K]) GetLock(ctx context.Context, gMut *sync.Mutex, keys ...K) *sy
 	if ok {
 		return lo
 	}
+	num := l.numFn()
+	if num == 1 {
+		return gMut
+	}
 	gMut.Lock()
 	defer gMut.Unlock()
 	lo, ok = l.m.Load(k)
 	if ok {
 		return lo
 	}
-	num := l.numFn()
 	if num <= 0 {
 		lo = &sync.Mutex{}
 		l.m.Store(k, lo)
