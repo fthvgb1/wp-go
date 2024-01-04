@@ -87,9 +87,7 @@ func Push[T any](a *[]T, e ...T) {
 
 func Decompress[T any](a [][]T) (r []T) {
 	for _, ts := range a {
-		for _, t := range ts {
-			r = append(r, t)
-		}
+		r = append(r, ts...)
 	}
 	return
 }

@@ -45,7 +45,7 @@ func (c CommentHandle) findComments(ctx context.Context, timeout time.Duration, 
 	parentIds := slice.Map(comments, func(t models.Comments) uint64 {
 		return t.CommentId
 	})
-	children, err := c.childrenComment(ctx, parentIds, timeout)
+	children, err := c.children.GetCacheBatch(ctx, parentIds, timeout)
 	rr := slice.FilterAndMap(children, func(t []uint64) ([]uint64, bool) {
 		return t, len(t) > 0
 	})
@@ -68,22 +68,12 @@ func (c CommentHandle) findComments(ctx context.Context, timeout time.Duration, 
 	return comments, nil
 }
 
-func (c CommentHandle) childrenComment(ctx context.Context, ids []uint64, timeout time.Duration) ([][]uint64, error) {
-	v, err := c.children.GetCacheBatch(ctx, ids, timeout)
-	if err != nil {
-		return nil, err
-	}
-
-	return slice.Copy(v), nil
-}
-
 func (c CommentHandle) formatComments(ctx context.Context, ids []uint64, timeout time.Duration) (html string, err error) {
 	comments, err := c.ca.GetCacheBatch(ctx, ids, timeout)
 	if err != nil {
 		return "", err
 	}
 	if c.depth > 1 && c.depth < c.maxDepth {
-		comments = slice.Copy(comments)
 		slice.Sort(comments, func(i, j models.Comments) bool {
 			return c.html.FloorOrder(c.order, i, j)
 		})
