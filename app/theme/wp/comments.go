@@ -50,9 +50,6 @@ func (c CommentHandle) findComments(ctx context.Context, timeout time.Duration, 
 		return t, len(t) > 0
 	})
 	if len(rr) < 1 {
-		slice.Sort(comments, func(i, j models.Comments) bool {
-			return c.html.FloorOrder(c.order, i, j)
-		})
 		return comments, nil
 	}
 	ids := slice.Decompress(rr)
@@ -65,6 +62,9 @@ func (c CommentHandle) findComments(ctx context.Context, timeout time.Duration, 
 		return nil, err
 	}
 	comments = append(comments, rrr...)
+	slice.Sort(comments, func(i, j models.Comments) bool {
+		return c.html.FloorOrder(c.order, i, j)
+	})
 	return comments, nil
 }
 
