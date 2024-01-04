@@ -6,9 +6,7 @@ import (
 	"github.com/fthvgb1/wp-go/app/pkg/dao"
 	"github.com/fthvgb1/wp-go/app/pkg/logs"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
-	"github.com/fthvgb1/wp-go/cache"
 	"github.com/fthvgb1/wp-go/cache/cachemanager"
-	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/safety"
 	"time"
@@ -57,26 +55,17 @@ func InitActionsCommonCache() {
 		return config.GetConfig().CacheTime.CommentsIncreaseUpdateTime
 	})
 
-	cachemanager.NewPaginationCache(
-		cachemanager.NewMemoryMapCache[string, helper.PaginationData[uint64]](nil, nil, 30*time.Second,
-			"PostCommentsIds", func() time.Duration {
-				return config.GetConfig().CacheTime.PostCommentsCacheTime
-			},
-			cache.NewIncreaseUpdate("PostCommentsIds-increaseUpdate", CommentDataIncreaseUpdate, 30*time.Second,
-				func() time.Duration {
-					return config.GetConfig().CacheTime.CommentsIncreaseUpdateTime
-				}),
-		),
+	cachemanager.NewMemoryMapCache(nil, PostTopComments, 30*time.Second, "PostCommentsIds", func() time.Duration {
+		return config.GetConfig().CacheTime.CommentsIncreaseUpdateTime
+	})
 
-		1000, dao.PostCommentsIds, dao.PostCommentLocal, nil, nil, 300, "PostCommentsIds")
-
-	cachemanager.NewMemoryMapCache(dao.CommentDates, nil, time.Hour, "postCommentData", func() time.Duration {
+	cachemanager.NewMemoryMapCache(dao.GetCommentByIds, nil, time.Hour, "postCommentData", func() time.Duration {
 		return config.GetConfig().CacheTime.CommentsCacheTime
 	})
 
-	cachemanager.NewMemoryMapCache[uint64, []models.Comments](nil, CommentDataIncreaseUpdates, time.Hour, func() time.Duration {
-		return config.GetConfig().CacheTime.CommentsCacheTime
-	}, "increaseComment30s", cache.NewIncreaseUpdate("increaseComment30s", IncreaseUpdates, 30*time.Second, nil))
+	cachemanager.NewMemoryMapCache(dao.CommentChildren, nil, time.Minute, "commentChildren", func() time.Duration {
+		return config.GetConfig().CacheTime.CommentsIncreaseUpdateTime
+	})
 
 	cachemanager.NewVarMemoryCache(dao.GetMaxPostId, c.CacheTime.MaxPostIdCacheTime, "maxPostId", func() time.Duration {
 		return config.GetConfig().CacheTime.MaxPostIdCacheTime
@@ -120,10 +109,10 @@ func Archives(ctx context.Context) []models.PostArchive {
 	data := a.data
 	l := len(data)
 	m := time.Now().Month()
-	if l > 0 && a.month != m || l < 1 {
+	if l < 1 || a.month != m {
 		r, err := a.fn(ctx)
 		if err != nil {
-			logs.Error(err, "set cache fail")
+			logs.Error(err, "set cache Archives fail")
 			return nil
 		}
 		a.month = m

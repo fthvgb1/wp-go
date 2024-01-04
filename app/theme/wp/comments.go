@@ -13,7 +13,8 @@ import (
 )
 
 func RenderComment(ctx context.Context, page int, render plugins.CommentHtml, ids []uint64, timeout time.Duration, isTLS bool) (string, error) {
-	ca, _ := cachemanager.GetMapCache[uint64, models.PostComments]("postCommentData")
+	ca, _ := cachemanager.GetMapCache[uint64, models.Comments]("postCommentData")
+	children, _ := cachemanager.GetMapCache[uint64, []uint64]("commentChildren")
 	h := CommentHandle{
 		maxDepth:       str.ToInteger(wpconfig.GetOption("thread_comments_depth"), 5),
 		depth:          1,
@@ -21,6 +22,7 @@ func RenderComment(ctx context.Context, page int, render plugins.CommentHtml, id
 		html:           render,
 		order:          wpconfig.GetOption("comment_order"),
 		ca:             ca,
+		children:       children,
 		threadComments: wpconfig.GetOption("thread_comments") == "1",
 		page:           page,
 	}
@@ -34,16 +36,21 @@ type CommentHandle struct {
 	html           plugins.CommentHtml
 	order          string
 	page           int
-	ca             *cache.MapCache[uint64, models.PostComments]
+	ca             *cache.MapCache[uint64, models.Comments]
+	children       *cache.MapCache[uint64, []uint64]
 	threadComments bool
 }
 
-func (c CommentHandle) findComments(ctx context.Context, timeout time.Duration, comments []models.PostComments) ([]models.PostComments, error) {
-	rr := slice.FilterAndMap(comments, func(t models.PostComments) ([]uint64, bool) {
-		return t.Children, len(t.Children) > 0
+func (c CommentHandle) findComments(ctx context.Context, timeout time.Duration, comments []models.Comments) ([]models.Comments, error) {
+	parentIds := slice.Map(comments, func(t models.Comments) uint64 {
+		return t.CommentId
+	})
+	children, err := c.childrenComment(ctx, parentIds, timeout)
+	rr := slice.FilterAndMap(children, func(t []uint64) ([]uint64, bool) {
+		return t, len(t) > 0
 	})
 	if len(rr) < 1 {
-		slice.Sort(comments, func(i, j models.PostComments) bool {
+		slice.Sort(comments, func(i, j models.Comments) bool {
 			return c.html.FloorOrder(c.order, i, j)
 		})
 		return comments, nil
@@ -57,12 +64,17 @@ func (c CommentHandle) findComments(ctx context.Context, timeout time.Duration, 
 	if err != nil {
 		return nil, err
 	}
-	comments = slice.Map(comments, func(t models.PostComments) models.PostComments {
-		t.Children = nil
-		return t
-	})
 	comments = append(comments, rrr...)
 	return comments, nil
+}
+
+func (c CommentHandle) childrenComment(ctx context.Context, ids []uint64, timeout time.Duration) ([][]uint64, error) {
+	v, err := c.children.GetCacheBatch(ctx, ids, timeout)
+	if err != nil {
+		return nil, err
+	}
+
+	return slice.Copy(v), nil
 }
 
 func (c CommentHandle) formatComments(ctx context.Context, ids []uint64, timeout time.Duration) (html string, err error) {
@@ -70,8 +82,19 @@ func (c CommentHandle) formatComments(ctx context.Context, ids []uint64, timeout
 	if err != nil {
 		return "", err
 	}
+	if c.depth > 1 && c.depth < c.maxDepth {
+		comments = slice.Copy(comments)
+		slice.Sort(comments, func(i, j models.Comments) bool {
+			return c.html.FloorOrder(c.order, i, j)
+		})
+	}
+	fixChildren := false
 	if c.depth >= c.maxDepth {
 		comments, err = c.findComments(ctx, timeout, comments)
+		if err != nil {
+			return "", err
+		}
+		fixChildren = true
 	}
 	s := str.NewBuilder()
 	for i, comment := range comments {
@@ -81,14 +104,22 @@ func (c CommentHandle) formatComments(ctx context.Context, ids []uint64, timeout
 		}
 		parent := ""
 		fl := false
-		if c.threadComments && len(comment.Children) > 0 && c.depth < c.maxDepth+1 {
+		var children []uint64
+		if !fixChildren {
+			children, err = c.children.GetCache(ctx, comment.CommentId, timeout)
+		}
+
+		if err != nil {
+			return "", err
+		}
+		if c.threadComments && len(children) > 0 && c.depth < c.maxDepth+1 {
 			parent = "parent"
 			fl = true
 		}
-		s.WriteString(c.html.FormatLi(ctx, comment.Comments, c.depth, c.maxDepth, c.page, c.isTls, c.threadComments, eo, parent))
+		s.WriteString(c.html.FormatLi(ctx, comment, c.depth, c.maxDepth, c.page, c.isTls, c.threadComments, eo, parent))
 		if fl {
 			c.depth++
-			ss, err := c.formatComments(ctx, comment.Children, timeout)
+			ss, err := c.formatComments(ctx, children, timeout)
 			if err != nil {
 				return "", err
 			}

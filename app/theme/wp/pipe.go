@@ -22,7 +22,7 @@ func NewPipe(name string, order float64, fn HandlePipeFn[*Handle]) Pipe {
 
 // HandlePipe  方便把功能写在其它包里
 func HandlePipe[T any](initial func(T), fns ...HandlePipeFn[T]) HandleFn[T] {
-	return slice.ReverseReduce(fns, func(next HandlePipeFn[T], f func(t T)) func(t T) {
+	return slice.ReverseReduce(fns, func(next HandlePipeFn[T], f HandleFn[T]) HandleFn[T] {
 		return func(t T) {
 			next(f, t)
 		}

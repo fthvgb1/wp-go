@@ -76,13 +76,6 @@ func Copy[T any](a []T, l ...int) []T {
 	copy(dst, a)
 	return dst
 }
-func Copies[T any](a ...[]T) []T {
-	var r []T
-	for _, ts := range a {
-		r = append(r, ts...)
-	}
-	return r
-}
 
 func Unshift[T any](a *[]T, e ...T) {
 	*a = append(e, *a...)

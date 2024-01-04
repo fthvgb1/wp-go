@@ -111,7 +111,7 @@ func postFeed(c context.Context, id string, _ ...any) (x string, err error) {
 	if err != nil {
 		return
 	}
-	comments, err := cachemanager.GetMultiple[models.PostComments]("postCommentData", c, ids, time.Second)
+	comments, err := cachemanager.GetMultiple[models.Comments]("postCommentData", c, ids, time.Second)
 	if err != nil {
 		return
 	}
@@ -140,7 +140,7 @@ func postFeed(c context.Context, id string, _ ...any) (x string, err error) {
 			}
 		}
 	} else {
-		rs.Items = slice.Map(comments, func(t models.PostComments) rss2.Item {
+		rs.Items = slice.Map(comments, func(t models.Comments) rss2.Item {
 			return rss2.Item{
 				Title:   fmt.Sprintf("评价者：%s", t.CommentAuthor),
 				Link:    fmt.Sprintf("%s/p/%d#comment-%d", site, post.Id, t.CommentId),
@@ -169,7 +169,7 @@ func commentsFeed(c context.Context, _ ...any) (r []string, err error) {
 	if nil != err {
 		return []string{}, err
 	}
-	rs.Items = slice.Map(com, func(t models.PostComments) rss2.Item {
+	rs.Items = slice.Map(com, func(t models.Comments) rss2.Item {
 		post, _ := GetPostById(c, t.CommentPostId)
 		desc := "评论受保护：要查看请输入密码。"
 		content := t.CommentContent

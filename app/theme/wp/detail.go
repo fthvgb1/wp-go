@@ -11,6 +11,7 @@ import (
 	"github.com/fthvgb1/wp-go/app/plugins/wpposts"
 	"github.com/fthvgb1/wp-go/app/wpconfig"
 	"github.com/fthvgb1/wp-go/cache/cachemanager"
+	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/helper/number"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/plugin/pagination"
@@ -88,20 +89,21 @@ func (d *DetailHandle) PasswordProject() {
 	}
 }
 func (d *DetailHandle) Comment() {
-	err := cache.UpdateCommentCache(d.C, time.Second, d.Post.Id)
 	d.ginH["totalCommentNum"] = 0
 	d.ginH["totalCommentPage"] = 1
 	d.ginH["commentPageNav"] = ""
 	d.ginH["commentOrder"] = wpconfig.GetOption("comment_order")
-	logs.IfError(err, "increase update comments err")
 	d.Page = str.ToInteger(d.C.Param("page"), 1)
 	d.ginH["currentPage"] = d.Page
 	d.Limit = str.ToInteger(wpconfig.GetOption("comments_per_page"), 5)
-	ids, totalCommentNum, err := cachemanager.Pagination[uint64]("PostCommentsIds", d.C, time.Second, d.Post.Id, d.Page, d.Limit, "desc")
+	key := fmt.Sprintf("%d-%d-%d", d.Post.Id, d.Page, d.Limit)
+	data, err := cachemanager.Get[helper.PaginationData[uint64]]("PostCommentsIds", d.C, key, time.Second, d.Post.Id, d.Page, d.Limit, 0)
 	if err != nil {
 		d.SetErr(err)
 		return
 	}
+	ids := data.Data
+	totalCommentNum := data.TotalRaw
 	d.TotalRaw = totalCommentNum
 	num, err := cachemanager.Get[int]("commentNumber", d.C, d.Post.Id, time.Second)
 	if err != nil {
