@@ -100,7 +100,7 @@ func PushMangerMap[K comparable, V any](name string, m *cache.MapCache[K, V]) {
 	})
 }
 
-func Get[T any, K comparable](name string, ct context.Context, key K, timeout time.Duration, params ...any) (r T, err error) {
+func GetBy[T any, K comparable](name string, ct context.Context, key K, timeout time.Duration, params ...any) (r T, err error) {
 	ct = context.WithValue(ct, "getCache", name)
 	ca, err := getMap[K, T](name)
 	if err != nil {
@@ -125,7 +125,7 @@ func getMap[K comparable, T any](name string) (*cache.MapCache[K, T], error) {
 	}
 	return vk, nil
 }
-func GetMultiple[T any, K comparable](name string, ct context.Context, key []K, timeout time.Duration, params ...any) (r []T, err error) {
+func GetBatchBy[T any, K comparable](name string, ct context.Context, key []K, timeout time.Duration, params ...any) (r []T, err error) {
 	ct = context.WithValue(ct, "getCache", name)
 	ca, err := getMap[K, T](name)
 	if err != nil {
@@ -138,7 +138,7 @@ func GetMultiple[T any, K comparable](name string, ct context.Context, key []K, 
 	r = vv
 	return
 }
-func GetMultipleToMap[T any, K comparable](name string, ct context.Context, key []K, timeout time.Duration, params ...any) (r map[K]T, err error) {
+func GetBatchByToMap[T any, K comparable](name string, ct context.Context, key []K, timeout time.Duration, params ...any) (r map[K]T, err error) {
 	ct = context.WithValue(ct, "getCache", name)
 	ca, err := getMap[K, T](name)
 	if err != nil {

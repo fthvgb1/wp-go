@@ -28,7 +28,7 @@ func TestFlushMapVal(t *testing.T) {
 			return r, nil
 		}, nil, time.Second, "test")
 
-		gets, err := GetMultiple[int]("test", ctx, number.Range(1, 10), time.Second)
+		gets, err := GetBatchBy[int]("test", ctx, number.Range(1, 10), time.Second)
 		if err != nil {
 			t.Fatal(t, "err:", err)
 		}
@@ -48,7 +48,7 @@ func TestFlushMapVal(t *testing.T) {
 		FlushMapVal("test", 3, 4)
 		fmt.Println(vv.Get(ctx, 3))
 		fmt.Println(vv.Get(ctx, 4))
-		get, err := Get[int]("test", ctx, 3, time.Second)
+		get, err := GetBy[int]("test", ctx, 3, time.Second)
 		if err != nil {
 			t.Fatal(t, "err", err)
 		}
@@ -85,7 +85,7 @@ func TestSetExpireTime(t *testing.T) {
 		cc.Set(ctx, "ww", "vv")
 		m, err := cc.GetBatchToMap(ctx, []string{"fff", "ffx", "ww", "kkkk"}, time.Second)
 		fmt.Println(m, err)
-		fmt.Println(GetMultipleToMap[string]("xx", ctx, []string{"fff", "ffx", "ww", "kkkk"}, time.Second))
+		fmt.Println(GetBatchByToMap[string]("xx", ctx, []string{"fff", "ffx", "ww", "kkkk"}, time.Second))
 		v := NewVarMemoryCache(func(ct context.Context, a ...any) (string, error) {
 			return "ssss", nil
 		}, 3*time.Second, "ff")
@@ -100,7 +100,7 @@ func TestSetMapCache(t *testing.T) {
 			fmt.Println("memory cache")
 			return strings.Repeat(k, 2), nil
 		}, time.Hour, "test")
-		fmt.Println(Get[string]("test", ctx, "test", time.Second))
+		fmt.Println(GetBy[string]("test", ctx, "test", time.Second))
 
 		NewMapCache[string, string](xx[string, string]{m: map[string]string{}}, nil, func(ctx2 context.Context, k string, a ...any) (string, error) {
 			fmt.Println("other cache drives. eg: redis,file.....")
@@ -110,7 +110,7 @@ func TestSetMapCache(t *testing.T) {
 		if err := SetMapCache("kkk", x); err != nil {
 			t.Errorf("SetMapCache() error = %v, wantErr %v", err, nil)
 		}
-		fmt.Println(Get[string]("test", ctx, "test", time.Second))
+		fmt.Println(GetBy[string]("test", ctx, "test", time.Second))
 	})
 }
 

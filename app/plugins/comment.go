@@ -29,7 +29,7 @@ type Comments struct {
 
 type CommentHtml interface {
 	FormatLi(c context.Context, m models.Comments, depth, maxDepth, page int, isTls, isThreadComments bool, eo, parent string) string
-	FloorOrder(wpOrder string, i, j models.Comments) bool
+	FloorOrder(i, j models.Comments) bool
 }
 
 func FormatComments(c *gin.Context, i CommentHtml, comments []models.Comments, maxDepth int) string {
@@ -146,7 +146,7 @@ func (c CommonCommentFormat) FormatLi(_ context.Context, m models.Comments, curr
 	return FormatLi(li, m, respondsFn, currentDepth, maxDepth, page, isTls, isThreadComments, eo, parent)
 }
 
-func (c CommonCommentFormat) FloorOrder(wpOrder string, i, j models.Comments) bool {
+func (c CommonCommentFormat) FloorOrder(i, j models.Comments) bool {
 	return i.CommentId > j.CommentId
 }
 

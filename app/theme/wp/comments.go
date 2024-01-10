@@ -41,11 +41,14 @@ type CommentHandle struct {
 	threadComments bool
 }
 
-func (c CommentHandle) findComments(ctx context.Context, timeout time.Duration, comments []models.Comments) ([]models.Comments, error) {
+func (c CommentHandle) findGrandchildComments(ctx context.Context, timeout time.Duration, comments []models.Comments) ([]models.Comments, error) {
 	parentIds := slice.Map(comments, func(t models.Comments) uint64 {
 		return t.CommentId
 	})
 	children, err := c.children.GetCacheBatch(ctx, parentIds, timeout)
+	if err != nil {
+		return nil, err
+	}
 	rr := slice.FilterAndMap(children, func(t []uint64) ([]uint64, bool) {
 		return t, len(t) > 0
 	})
@@ -57,13 +60,13 @@ func (c CommentHandle) findComments(ctx context.Context, timeout time.Duration, 
 	if err != nil {
 		return nil, err
 	}
-	rrr, err := c.findComments(ctx, timeout, r)
+	rrr, err := c.findGrandchildComments(ctx, timeout, r)
 	if err != nil {
 		return nil, err
 	}
 	comments = append(comments, rrr...)
 	slice.Sort(comments, func(i, j models.Comments) bool {
-		return c.html.FloorOrder(c.order, i, j)
+		return c.html.FloorOrder(i, j)
 	})
 	return comments, nil
 }
@@ -75,12 +78,12 @@ func (c CommentHandle) formatComments(ctx context.Context, ids []uint64, timeout
 	}
 	if c.depth > 1 && c.depth < c.maxDepth {
 		slice.Sort(comments, func(i, j models.Comments) bool {
-			return c.html.FloorOrder(c.order, i, j)
+			return c.html.FloorOrder(i, j)
 		})
 	}
 	fixChildren := false
 	if c.depth >= c.maxDepth {
-		comments, err = c.findComments(ctx, timeout, comments)
+		comments, err = c.findGrandchildComments(ctx, timeout, comments)
 		if err != nil {
 			return "", err
 		}
@@ -97,10 +100,9 @@ func (c CommentHandle) formatComments(ctx context.Context, ids []uint64, timeout
 		var children []uint64
 		if !fixChildren {
 			children, err = c.children.GetCache(ctx, comment.CommentId, timeout)
-		}
-
-		if err != nil {
-			return "", err
+			if err != nil {
+				return "", err
+			}
 		}
 		if c.threadComments && len(children) > 0 && c.depth < c.maxDepth+1 {
 			parent = "parent"

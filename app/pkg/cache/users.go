@@ -9,7 +9,7 @@ import (
 )
 
 func GetUserByName(ctx context.Context, username string) (models.Users, error) {
-	return cachemanager.Get[models.Users]("usernameMapToUserData", ctx, username, time.Second)
+	return cachemanager.GetBy[models.Users]("usernameMapToUserData", ctx, username, time.Second)
 }
 
 func GetAllUsername(ctx context.Context) (map[string]struct{}, error) {
@@ -17,7 +17,7 @@ func GetAllUsername(ctx context.Context) (map[string]struct{}, error) {
 }
 
 func GetUserById(ctx context.Context, uid uint64) models.Users {
-	r, err := cachemanager.Get[models.Users]("userData", ctx, uid, time.Second)
+	r, err := cachemanager.GetBy[models.Users]("userData", ctx, uid, time.Second)
 	logs.IfError(err, "get user", uid)
 	return r
 }

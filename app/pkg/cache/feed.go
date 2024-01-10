@@ -111,7 +111,7 @@ func postFeed(c context.Context, id string, _ ...any) (x string, err error) {
 	if err != nil {
 		return
 	}
-	comments, err := cachemanager.GetMultiple[models.Comments]("postCommentData", c, ids, time.Second)
+	comments, err := cachemanager.GetBatchBy[models.Comments]("postCommentData", c, ids, time.Second)
 	if err != nil {
 		return
 	}
@@ -182,7 +182,7 @@ func commentsFeed(c context.Context, _ ...any) (r []string, err error) {
 		}
 		return rss2.Item{
 			Title:       fmt.Sprintf("%s对《%s》的评论", t.CommentAuthor, post.PostTitle),
-			Link:        fmt.Sprintf("%s/p/%d#comment-%d", site, post.Id, t.CommentId),
+			Link:        t.CommentAuthorUrl,
 			Creator:     t.CommentAuthor,
 			Description: desc,
 			PubDate:     t.CommentDateGmt.Format(timeFormat),

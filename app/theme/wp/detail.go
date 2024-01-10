@@ -11,11 +11,11 @@ import (
 	"github.com/fthvgb1/wp-go/app/plugins/wpposts"
 	"github.com/fthvgb1/wp-go/app/wpconfig"
 	"github.com/fthvgb1/wp-go/cache/cachemanager"
-	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/helper/number"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/plugin/pagination"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -92,27 +92,52 @@ func (d *DetailHandle) Comment() {
 	d.ginH["totalCommentNum"] = 0
 	d.ginH["totalCommentPage"] = 1
 	d.ginH["commentPageNav"] = ""
-	d.ginH["commentOrder"] = wpconfig.GetOption("comment_order")
+	order := wpconfig.GetOption("comment_order")
+	d.ginH["commentOrder"] = order
+	d.Limit = str.ToInteger(wpconfig.GetOption("comments_per_page"), 5)
+	pageComments := wpconfig.GetOption("page_comments")
+	num, err := cachemanager.GetBy[int]("commentNumber", d.C, d.Post.Id, time.Second)
+	if err != nil {
+		d.SetErr(err)
+		return
+	}
+	if num < 1 {
+		return
+	}
+	topNum, err := cachemanager.GetBy[int]("postTopCommentsNum", d.C, d.Post.Id, time.Second)
+	if err != nil {
+		d.SetErr(err)
+		return
+	}
+	totalPage := number.DivideCeil(topNum, d.Limit)
+	if !strings.Contains(d.C.Request.URL.Path, "comment-page") {
+		defaultCommentsPage := wpconfig.GetOption("default_comments_page")
+		if order == "desc" && defaultCommentsPage == "oldest" || order == "asc" && defaultCommentsPage == "newest" {
+			d.C.AddParam("page", number.IntToString(totalPage))
+		}
+	}
 	d.Page = str.ToInteger(d.C.Param("page"), 1)
 	d.ginH["currentPage"] = d.Page
-	d.Limit = str.ToInteger(wpconfig.GetOption("comments_per_page"), 5)
-	key := fmt.Sprintf("%d-%d-%d", d.Post.Id, d.Page, d.Limit)
-	data, err := cachemanager.Get[helper.PaginationData[uint64]]("PostCommentsIds", d.C, key, time.Second, d.Post.Id, d.Page, d.Limit, 0)
+	var key string
+	if pageComments != "1" {
+		key = number.IntToString(d.Post.Id)
+	} else {
+		key = fmt.Sprintf("%d-%d-%d", d.Post.Id, d.Page, d.Limit)
+	}
+	d.ginH["page_comments"] = pageComments
+	d.ginH["totalCommentPage"] = totalPage
+	if totalPage < d.Page {
+		d.SetErr(errors.New("curren page above total page"))
+		return
+	}
+	data, err := cachemanager.GetBy[[]uint64]("PostCommentsIds", d.C, key, time.Second, d.Post.Id, d.Page, d.Limit, topNum)
 	if err != nil {
 		d.SetErr(err)
 		return
 	}
-	ids := data.Data
-	totalCommentNum := data.TotalRaw
-	d.TotalRaw = totalCommentNum
-	num, err := cachemanager.Get[int]("commentNumber", d.C, d.Post.Id, time.Second)
-	if err != nil {
-		d.SetErr(err)
-		return
-	}
+	d.TotalRaw = topNum
 	d.ginH["totalCommentNum"] = num
-	d.ginH["totalCommentPage"] = number.DivideCeil(totalCommentNum, d.Limit)
-	d.Comments = ids
+	d.Comments = data
 }
 
 func (d *DetailHandle) RenderComment() {
@@ -138,8 +163,9 @@ func (d *DetailHandle) RenderComment() {
 	if d.CommentPageEle == nil {
 		d.CommentPageEle = plugins.TwentyFifteenCommentPagination()
 	}
-	d.ginH["commentPageNav"] = pagination.Paginate(d.CommentPageEle, d.TotalRaw, d.Limit, d.Page, 1, *d.C.Request.URL, d.IsHttps())
-
+	if wpconfig.GetOption("page_comments") == "1" {
+		d.ginH["commentPageNav"] = pagination.Paginate(d.CommentPageEle, d.TotalRaw, d.Limit, d.Page, 1, *d.C.Request.URL, d.IsHttps())
+	}
 }
 
 func (d *DetailHandle) ContextPost() {

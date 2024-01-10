@@ -48,7 +48,8 @@ A WordPress front-end written in Go, with relatively simple functions,  only the
         - Syndication feeds show the most recent
     - discussion
         - Other comment settings 
-          - Enable threaded (nested) comments levels deep
+          - `enable|disable` threaded (nested) comments levels deep
+          - Break comments into pages with top level comments per page number and the `last|first` page displayed by default
           - Comments should be displayed with the `newer|older`comments
 
 #### Theme support

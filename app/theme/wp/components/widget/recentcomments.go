@@ -59,9 +59,9 @@ func RecentComments(h *wp.Handle, id string) string {
 	comments := slice.Map(cache.RecentComments(h.C, int(conf["number"].(int64))), func(t models.Comments) string {
 		return fmt.Sprintf(`	<li>
 <span class="comment-author-link">%s</span>发表在《
-		<a href="/p/%v#comment-%v">%s</a>
+		<a href="%s">%s</a>
 		》
-	</li>`, t.CommentAuthor, t.CommentPostId, t.CommentId, t.PostTitle)
+	</li>`, t.CommentAuthor, t.CommentAuthorUrl, t.PostTitle)
 	})
 	s := strings.ReplaceAll(recentCommentsTemplate, "{$li}", strings.Join(comments, "\n"))
 	return h.DoActionFilter(widgets.RecentComments, str.Replace(s, args))

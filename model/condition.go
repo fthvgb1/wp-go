@@ -79,7 +79,7 @@ func Limit(limit int) Condition {
 	}
 }
 
-// TotalRaw only effect on Pagination,when TotalRaw>0 ,will not query count
+// TotalRaw only effect on Pagination, ChunkFind,when TotalRaw>0 ,will not query count
 func TotalRaw(total int) Condition {
 	return func(c *QueryCondition) {
 		c.TotalRow = total

@@ -47,7 +47,7 @@ func InitActionsCommonCache() {
 		return config.GetConfig().CacheTime.RecentPostCacheTime
 	})
 
-	cachemanager.NewVarMemoryCache(dao.RecentComments, c.CacheTime.RecentCommentsCacheTime, "recentComments", func() time.Duration {
+	cachemanager.NewVarMemoryCache(RecentComment, c.CacheTime.RecentCommentsCacheTime, "recentComments", func() time.Duration {
 		return config.GetConfig().CacheTime.RecentCommentsCacheTime
 	})
 
@@ -56,6 +56,9 @@ func InitActionsCommonCache() {
 	})
 
 	cachemanager.NewMemoryMapCache(nil, PostTopComments, 30*time.Second, "PostCommentsIds", func() time.Duration {
+		return config.GetConfig().CacheTime.CommentsIncreaseUpdateTime
+	})
+	cachemanager.NewMemoryMapCache(nil, dao.PostTopCommentNum, 30*time.Second, "postTopCommentsNum", func() time.Duration {
 		return config.GetConfig().CacheTime.CommentsIncreaseUpdateTime
 	})
 
@@ -131,7 +134,7 @@ func CategoriesTags(ctx context.Context, t ...string) []models.TermsMy {
 	if len(t) > 0 {
 		tt = t[0]
 	}
-	r, err := cachemanager.Get[[]models.TermsMy]("categoryAndTagsData", ctx, tt, time.Second)
+	r, err := cachemanager.GetBy[[]models.TermsMy]("categoryAndTagsData", ctx, tt, time.Second)
 	logs.IfError(err, "get category fail")
 	return r
 }
@@ -140,7 +143,7 @@ func AllCategoryTagsNames(ctx context.Context, t ...string) map[string]struct{} 
 	if len(t) > 0 {
 		tt = t[0]
 	}
-	r, err := cachemanager.Get[[]models.TermsMy]("categoryAndTagsData", ctx, tt, time.Second)
+	r, err := cachemanager.GetBy[[]models.TermsMy]("categoryAndTagsData", ctx, tt, time.Second)
 	if err != nil {
 		logs.Error(err, "get category fail")
 		return nil

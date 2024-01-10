@@ -91,25 +91,51 @@ func CommentNum(ctx context.Context, postId uint64, _ ...any) (int, error) {
 	return str.ToInteger(n, 0), err
 }
 
-func PostCommentsIds(ctx context.Context, postId uint64, page, limit, totalRaw int, _ ...any) ([]uint64, int, error) {
-	order := wpconfig.GetOption("comment_order")
+func PostTopCommentNum(ctx context.Context, postId uint64, _ ...any) (int, error) {
+	v, err := model.GetField[models.Comments](ctx, "count(*) num", model.Conditions(
+		model.Where(postTopCommentNumWhere(postId)),
+	))
+	if err != nil {
+		return 0, err
+	}
+	return str.ToInteger(v, 0), nil
+}
+
+func postTopCommentNumWhere(postId uint64) model.SqlBuilder {
 	threadComments := wpconfig.GetOption("thread_comments")
+	pageComments := wpconfig.GetOption("page_comments")
 	where := model.SqlBuilder{
 		{"comment_approved", "1"},
 		{"comment_post_ID", "=", number.IntToString(postId), "int"},
 	}
-	if threadComments == "1" || "1" == wpconfig.GetOption("thread_comments_depth") {
+	if pageComments != "1" || threadComments == "1" || "1" == wpconfig.GetOption("thread_comments_depth") {
 		where = append(where, []string{"comment_parent", "0"})
 	}
-	r, total, err := model.Pagination[models.Comments](ctx, model.Conditions(
-		model.Where(where),
+	return where
+}
+
+func PostCommentsIds(ctx context.Context, postId uint64, page, limit, totalRaw int, _ ...any) ([]uint64, int, error) {
+	order := wpconfig.GetOption("comment_order")
+	pageComments := wpconfig.GetOption("page_comments")
+	condition := model.Conditions(
+		model.Where(postTopCommentNumWhere(postId)),
 		model.TotalRaw(totalRaw),
 		model.Fields("comment_ID"),
 		model.Order(model.SqlBuilder{
 			{"comment_date_gmt", order},
 			{"comment_ID", "asc"},
 		}),
-	), page, limit)
+	)
+	var r []models.Comments
+	var total int
+	var err error
+	if pageComments != "1" {
+		r, err = model.ChunkFind[models.Comments](ctx, 300, condition)
+		total = len(r)
+	} else {
+		r, total, err = model.Pagination[models.Comments](ctx, condition, page, limit)
+	}
+
 	if err != nil && errors.Is(err, sql.ErrNoRows) {
 		err = nil
 	}
@@ -133,8 +159,27 @@ func CommentChildren(ctx context.Context, commentIds []uint64, _ ...any) (r map[
 		}
 		return
 	}
-	r = slice.GroupBy(rr, func(v models.Comments) (uint64, uint64) {
+	rrr := slice.GroupBy(rr, func(v models.Comments) (uint64, uint64) {
 		return v.CommentParent, v.CommentId
 	})
+	r = make(map[uint64][]uint64)
+	for _, id := range commentIds {
+		r[id] = rrr[id]
+	}
 	return
+}
+
+func PreviousCommentNum(ctx context.Context, commentId, postId uint64) (int, error) {
+	v, err := model.GetField[models.Comments](ctx, "count(*)", model.Conditions(
+		model.Where(model.SqlBuilder{
+			{"comment_approved", "1"},
+			{"comment_post_ID", "=", number.IntToString(postId), "int"},
+			{"comment_ID", "<", number.IntToString(commentId), "int"},
+			{"comment_parent", "=", "0", "int"},
+		}),
+	))
+	if err != nil {
+		return 0, err
+	}
+	return str.ToInteger(v, 0), nil
 }

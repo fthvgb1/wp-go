@@ -71,7 +71,7 @@ func PostsMore(id uint64, content, closeTag string) string {
 }
 
 func Digest(ctx context.Context, post *models.Posts, limit int) {
-	content, _ := cachemanager.Get[string]("digestPlugin", ctx, post.Id, time.Second, ctx, post.PostContent, post.Id, limit)
+	content, _ := cachemanager.GetBy[string]("digestPlugin", ctx, post.Id, time.Second, ctx, post.PostContent, post.Id, limit)
 	post.PostContent = content
 }
 

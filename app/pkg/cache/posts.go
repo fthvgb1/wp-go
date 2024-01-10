@@ -15,15 +15,15 @@ import (
 )
 
 func GetPostById(ctx context.Context, id uint64) (models.Posts, error) {
-	return cachemanager.Get[models.Posts]("postData", ctx, id, time.Second)
+	return cachemanager.GetBy[models.Posts]("postData", ctx, id, time.Second)
 }
 
 func GetPostsByIds(ctx context.Context, ids []uint64) ([]models.Posts, error) {
-	return cachemanager.GetMultiple[models.Posts]("postData", ctx, ids, time.Second)
+	return cachemanager.GetBatchBy[models.Posts]("postData", ctx, ids, time.Second)
 }
 
 func SearchPost(ctx context.Context, key string, args ...any) (r []models.Posts, total int, err error) {
-	ids, err := cachemanager.Get[dao.PostIds]("searchPostIds", ctx, key, time.Second, args...)
+	ids, err := cachemanager.GetBy[dao.PostIds]("searchPostIds", ctx, key, time.Second, args...)
 	if err != nil {
 		return
 	}
@@ -33,7 +33,7 @@ func SearchPost(ctx context.Context, key string, args ...any) (r []models.Posts,
 }
 
 func PostLists(ctx context.Context, key string, args ...any) (r []models.Posts, total int, err error) {
-	ids, err := cachemanager.Get[dao.PostIds]("listPostIds", ctx, key, time.Second, args...)
+	ids, err := cachemanager.GetBy[dao.PostIds]("listPostIds", ctx, key, time.Second, args...)
 	if err != nil {
 		return
 	}
@@ -59,7 +59,7 @@ func RecentPosts(ctx context.Context, n int) (r []models.Posts) {
 }
 
 func GetContextPost(ctx context.Context, id uint64, date time.Time) (prev, next models.Posts, err error) {
-	postCtx, err := cachemanager.Get[dao.PostContext]("postContext", ctx, id, time.Second, date)
+	postCtx, err := cachemanager.GetBy[dao.PostContext]("postContext", ctx, id, time.Second, date)
 	if err != nil {
 		return models.Posts{}, models.Posts{}, err
 	}
@@ -69,7 +69,7 @@ func GetContextPost(ctx context.Context, id uint64, date time.Time) (prev, next 
 }
 
 func GetMonthPostIds(ctx context.Context, year, month string, page, limit int, order string) (r []models.Posts, total int, err error) {
-	res, err := cachemanager.Get[[]uint64]("monthPostIds", ctx, fmt.Sprintf("%s%s", year, month), time.Second, year, month)
+	res, err := cachemanager.GetBy[[]uint64]("monthPostIds", ctx, fmt.Sprintf("%s%s", year, month), time.Second, year, month)
 	if err != nil {
 		return
 	}
