@@ -2,6 +2,7 @@ package cache
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/fthvgb1/wp-go/app/pkg/logs"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
@@ -44,6 +45,7 @@ func FeedCache() *cache.VarCache[[]string] {
 	return r
 }
 
+// PostFeedCache query func see PostFeed
 func PostFeedCache() *cache.MapCache[string, string] {
 	r, _ := cachemanager.GetMapCache[string, string]("postFeed")
 	return r
@@ -95,7 +97,7 @@ func feed(c context.Context, _ ...any) (xml []string, err error) {
 	return
 }
 
-func postFeed(c context.Context, id string, _ ...any) (x string, err error) {
+func PostFeed(c context.Context, id string, _ ...any) (x string, err error) {
 	ID := str.ToInteger[uint64](id, 0)
 	maxId, err := GetMaxPostId(c)
 	logs.IfError(err, "get max post id")
@@ -107,11 +109,11 @@ func postFeed(c context.Context, id string, _ ...any) (x string, err error) {
 		return
 	}
 	limit := str.ToInteger(wpconfig.GetOption("comments_per_page"), 10)
-	ids, _, err := cachemanager.Pagination[uint64]("PostCommentsIds", c, time.Second, ID, 1, limit, "desc")
+	ids, err := PostTopLevelCommentIds(c, ID, 1, limit, 0, "desc", "latest-comment")
 	if err != nil {
 		return
 	}
-	comments, err := cachemanager.GetBatchBy[models.Comments]("postCommentData", c, ids, time.Second)
+	comments, err := GetCommentDataByIds(c, ids)
 	if err != nil {
 		return
 	}
@@ -127,10 +129,14 @@ func postFeed(c context.Context, id string, _ ...any) (x string, err error) {
 		wpposts.PasswdProjectContent(&post)
 		if len(comments) > 0 {
 			t := comments[len(comments)-1]
+			u, err := GetCommentUrl(c, t.CommentId, t.CommentPostId)
+			if err != nil {
+				return "", err
+			}
 			rs.Items = []rss2.Item{
 				{
 					Title:       fmt.Sprintf("评价者：%s", t.CommentAuthor),
-					Link:        fmt.Sprintf("%s/p/%d#comment-%d", site, post.Id, t.CommentId),
+					Link:        fmt.Sprintf("%s%s", site, u),
 					Creator:     t.CommentAuthor,
 					PubDate:     t.CommentDateGmt.Format(timeFormat),
 					Guid:        fmt.Sprintf("%s#comment-%d", post.Guid, t.CommentId),
@@ -141,9 +147,14 @@ func postFeed(c context.Context, id string, _ ...any) (x string, err error) {
 		}
 	} else {
 		rs.Items = slice.Map(comments, func(t models.Comments) rss2.Item {
+			u, er := GetCommentUrl(c, t.CommentId, t.CommentPostId)
+			if er != nil {
+				err = errors.Join(err, er)
+				return rss2.Item{}
+			}
 			return rss2.Item{
 				Title:   fmt.Sprintf("评价者：%s", t.CommentAuthor),
-				Link:    fmt.Sprintf("%s/p/%d#comment-%d", site, post.Id, t.CommentId),
+				Link:    fmt.Sprintf("%s%s", site, u),
 				Creator: t.CommentAuthor,
 				PubDate: t.CommentDateGmt.Format(timeFormat),
 				Guid:    fmt.Sprintf("%s#comment-%d", post.Guid, t.CommentId),
@@ -180,9 +191,14 @@ func commentsFeed(c context.Context, _ ...any) (r []string, err error) {
 		} else {
 			content = digest.StripTags(t.CommentContent, "")
 		}
+		u, er := GetCommentUrl(c, t.CommentId, t.CommentPostId)
+		if er != nil {
+			errors.Join(err, er)
+		}
+		u = str.Join(site, u)
 		return rss2.Item{
 			Title:       fmt.Sprintf("%s对《%s》的评论", t.CommentAuthor, post.PostTitle),
-			Link:        t.CommentAuthorUrl,
+			Link:        u,
 			Creator:     t.CommentAuthor,
 			Description: desc,
 			PubDate:     t.CommentDateGmt.Format(timeFormat),

@@ -10,7 +10,7 @@ import (
 	"github.com/fthvgb1/wp-go/app/plugins"
 	"github.com/fthvgb1/wp-go/app/theme/wp"
 	"github.com/fthvgb1/wp-go/app/theme/wp/components"
-	"github.com/fthvgb1/wp-go/app/theme/wp/components/widget"
+	"github.com/fthvgb1/wp-go/app/theme/wp/middleware"
 	"github.com/fthvgb1/wp-go/app/wpconfig"
 	"github.com/fthvgb1/wp-go/cache/reload"
 	"github.com/fthvgb1/wp-go/helper"
@@ -51,11 +51,7 @@ func Hook(h *wp.Handle) {
 
 func configs(h *wp.Handle) {
 	wp.InitPipe(h)
-	h.PushHandler(constraints.PipeMiddleware, constraints.Home,
-		wp.NewHandleFn(widget.CheckCategory, 100.006, "widget.CheckCategory"))
-	h.PushHandler(constraints.PipeMiddleware, constraints.Detail,
-		wp.NewHandleFn(wp.ShowPreComment, 100, "wp.ShowPreComment"),
-	)
+	middleware.CommonMiddleware(h)
 	h.AddActionFilter("bodyClass", calClass)
 	h.PushCacheGroupHeadScript(constraints.AllScene, "colorScheme-customHeader", 10, colorScheme, customHeader)
 	components.WidgetArea(h)

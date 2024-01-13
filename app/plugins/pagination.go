@@ -7,6 +7,7 @@ import (
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"net/url"
 	"regexp"
+	"strconv"
 	"strings"
 )
 
@@ -72,8 +73,20 @@ func (p PageEle) Middle(page int, url string) string {
 var reg = regexp.MustCompile(`(/page)/(\d+)`)
 var commentReg = regexp.MustCompile(`/comment-page-(\d+)`)
 
+var queryParam = []string{"paged", "cat", "m", "author", "tag"}
+
 func (p PageEle) Urls(u url.URL, page int, isTLS bool) string {
 	var path, query = u.Path, u.RawQuery
+	if path == "/" {
+		v := u.Query()
+		for _, q := range queryParam {
+			if v.Get(q) != "" {
+				v.Set("paged", strconv.Itoa(page))
+				return str.Join(path, "?", v.Encode())
+			}
+		}
+	}
+
 	if !strings.Contains(path, "/page/") {
 		path = fmt.Sprintf("%s%s", path, "/page/1")
 	}
@@ -87,20 +100,32 @@ func (p PageEle) Urls(u url.URL, page int, isTLS bool) string {
 	if path == "" {
 		path = "/"
 	}
-	return str.Join(path, query)
+	if query != "" {
+		return str.Join(path, "?", query)
+	}
+	return path
 }
 
 func (p CommentPageEle) Urls(u url.URL, page int, isTLS bool) string {
 	var path, query = u.Path, u.RawQuery
+	if path == "/" {
+		v := u.Query()
+		if v.Get("p") != "" {
+			v.Set("cpage", strconv.Itoa(page))
+			return str.Join(path, "?", v.Encode(), "#comments")
+		}
+	}
+
 	if !strings.Contains(path, "/comment-page-") {
-		path = fmt.Sprintf("%s%s", path, "/comment-page-1#comments")
+		path = fmt.Sprintf("%s%s", path, "/comment-page-1")
 	}
 	path = commentReg.ReplaceAllString(path, fmt.Sprintf("/comment-page-%d", page))
 	path = strings.Replace(path, "//", "/", -1)
-	ur := str.Join(path, query)
-	if !strings.Contains(ur, "#comments") {
-		ur = str.Join(ur, "#comments")
+	ur := path
+	if query != "" {
+		ur = str.Join(path, "?", query)
 	}
+	ur = str.Join(ur, "#comments")
 	return ur
 }
 

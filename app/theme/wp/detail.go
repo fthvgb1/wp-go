@@ -14,7 +14,6 @@ import (
 	"github.com/fthvgb1/wp-go/helper/number"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/plugin/pagination"
-	"net/http"
 	"strings"
 	"time"
 )
@@ -28,6 +27,7 @@ type DetailHandle struct {
 	Post           models.Posts
 	CommentPageEle pagination.Render
 	TotalRaw       int
+	TotalPage      int
 }
 
 func NewDetailHandle(handle *Handle) *DetailHandle {
@@ -40,19 +40,9 @@ func (d *DetailHandle) BuildDetailData() (err error) {
 	if err != nil {
 		return
 	}
-	d.Comment()
+	d.CommentData()
 	d.ContextPost()
 	return
-}
-
-func ShowPreComment(h *Handle) {
-	v, ok := cache.NewCommentCache().Get(h.C, h.C.Request.URL.RawQuery)
-	if ok {
-		h.C.Writer.Header().Set("Content-Type", "text/html; charset=utf-8")
-		h.C.Writer.WriteHeader(http.StatusOK)
-		_, _ = h.C.Writer.Write([]byte(v))
-		h.Abort()
-	}
 }
 
 func (d *DetailHandle) CheckAndGetPost() (err error) {
@@ -88,7 +78,7 @@ func (d *DetailHandle) PasswordProject() {
 		}
 	}
 }
-func (d *DetailHandle) Comment() {
+func (d *DetailHandle) CommentData() {
 	d.ginH["totalCommentNum"] = 0
 	d.ginH["totalCommentPage"] = 1
 	d.ginH["commentPageNav"] = ""
@@ -109,11 +99,11 @@ func (d *DetailHandle) Comment() {
 		d.SetErr(err)
 		return
 	}
-	totalPage := number.DivideCeil(topNum, d.Limit)
+	d.TotalPage = number.DivideCeil(topNum, d.Limit)
 	if !strings.Contains(d.C.Request.URL.Path, "comment-page") {
 		defaultCommentsPage := wpconfig.GetOption("default_comments_page")
 		if order == "desc" && defaultCommentsPage == "oldest" || order == "asc" && defaultCommentsPage == "newest" {
-			d.C.AddParam("page", number.IntToString(totalPage))
+			d.C.AddParam("page", number.IntToString(d.TotalPage))
 		}
 	}
 	d.Page = str.ToInteger(d.C.Param("page"), 1)
@@ -121,16 +111,17 @@ func (d *DetailHandle) Comment() {
 	var key string
 	if pageComments != "1" {
 		key = number.IntToString(d.Post.Id)
+		d.Limit = 0
 	} else {
 		key = fmt.Sprintf("%d-%d-%d", d.Post.Id, d.Page, d.Limit)
 	}
 	d.ginH["page_comments"] = pageComments
-	d.ginH["totalCommentPage"] = totalPage
-	if totalPage < d.Page {
+	d.ginH["totalCommentPage"] = d.TotalPage
+	if d.TotalPage < d.Page {
 		d.SetErr(errors.New("curren page above total page"))
 		return
 	}
-	data, err := cachemanager.GetBy[[]uint64]("PostCommentsIds", d.C, key, time.Second, d.Post.Id, d.Page, d.Limit, topNum)
+	data, err := cache.PostTopLevelCommentIds(d.C, d.Post.Id, d.Page, d.Limit, topNum, order, key)
 	if err != nil {
 		d.SetErr(err)
 		return
@@ -163,7 +154,7 @@ func (d *DetailHandle) RenderComment() {
 	if d.CommentPageEle == nil {
 		d.CommentPageEle = plugins.TwentyFifteenCommentPagination()
 	}
-	if wpconfig.GetOption("page_comments") == "1" {
+	if wpconfig.GetOption("page_comments") == "1" && d.TotalPage > 1 {
 		d.ginH["commentPageNav"] = pagination.Paginate(d.CommentPageEle, d.TotalRaw, d.Limit, d.Page, 1, *d.C.Request.URL, d.IsHttps())
 	}
 }

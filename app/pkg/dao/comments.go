@@ -114,9 +114,7 @@ func postTopCommentNumWhere(postId uint64) model.SqlBuilder {
 	return where
 }
 
-func PostCommentsIds(ctx context.Context, postId uint64, page, limit, totalRaw int, _ ...any) ([]uint64, int, error) {
-	order := wpconfig.GetOption("comment_order")
-	pageComments := wpconfig.GetOption("page_comments")
+func PostCommentsIds(ctx context.Context, postId uint64, page, limit, totalRaw int, order string) ([]uint64, int, error) {
 	condition := model.Conditions(
 		model.Where(postTopCommentNumWhere(postId)),
 		model.TotalRaw(totalRaw),
@@ -129,7 +127,7 @@ func PostCommentsIds(ctx context.Context, postId uint64, page, limit, totalRaw i
 	var r []models.Comments
 	var total int
 	var err error
-	if pageComments != "1" {
+	if limit < 1 {
 		r, err = model.ChunkFind[models.Comments](ctx, 300, condition)
 		total = len(r)
 	} else {

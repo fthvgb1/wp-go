@@ -12,7 +12,6 @@ import (
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/helper/tree"
-	"net/http"
 	"strings"
 )
 
@@ -235,39 +234,6 @@ func DropdownCategories(h *wp.Handle, args map[string]string, conf map[any]any, 
 	return h.DoActionFilter("wp_dropdown_cats", s.String())
 }
 
-func CheckCategory(h *wp.Handle) {
-	name, ok := parseDropdownCate(h)
-	if ok {
-		h.C.Redirect(http.StatusMovedPermanently, fmt.Sprintf("/p/category/%s", name))
-		h.Abort()
-	}
-}
-
-func parseDropdownCate(h *wp.Handle) (cateName string, r bool) {
-	cate := wp.GetComponentsArgs[map[string]string](h, widgets.Categories, categoryArgs())
-	name, ok := cate["{$name}"]
-	if !ok || name == "" {
-		return
-	}
-	cat := h.C.Query(name)
-	if cat == "" {
-		return
-	}
-	id := str.ToInteger[uint64](cat, 0)
-	if id < 1 {
-		return
-	}
-	i, cc := slice.SearchFirst(cache.CategoriesTags(h.C, constraints.Category), func(my models.TermsMy) bool {
-		return id == my.Terms.TermId
-	})
-	if i < 0 {
-		return
-	}
-	r = true
-	cateName = cc.Name
-	return
-}
-
 func IsCategory(h *wp.Handle) (category models.TermsMy, r bool) {
 	cate := wp.GetComponentsArgs[map[string]string](h, widgets.Categories, categoryArgs())
 	name, ok := cate["{$name}"]
@@ -291,4 +257,13 @@ func IsCategory(h *wp.Handle) (category models.TermsMy, r bool) {
 	r = true
 	category = cc
 	return
+}
+
+func CategoryQueryName(h *wp.Handle) string {
+	cate := wp.GetComponentsArgs[map[string]string](h, widgets.Categories, categoryArgs())
+	name, ok := cate["{$name}"]
+	if ok {
+		return name
+	}
+	return ""
 }

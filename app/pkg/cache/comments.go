@@ -9,11 +9,13 @@ import (
 	"github.com/fthvgb1/wp-go/app/wpconfig"
 	"github.com/fthvgb1/wp-go/cache"
 	"github.com/fthvgb1/wp-go/cache/cachemanager"
+	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/helper/number"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"time"
 )
 
+// RecentComments query func see RecentComment
 func RecentComments(ctx context.Context, n int) (r []models.Comments) {
 	nn := number.Max(n, 10)
 	r, err := cachemanager.GetVarVal[[]models.Comments]("recentComments", ctx, time.Second, ctx, nn)
@@ -24,18 +26,25 @@ func RecentComments(ctx context.Context, n int) (r []models.Comments) {
 	return
 }
 
-func PostComments(ctx context.Context, Id uint64) ([]models.Comments, error) {
-	ids, err := cachemanager.GetBy[[]uint64]("PostCommentsIds", ctx, Id, time.Second)
-	if err != nil {
-		return nil, err
+// PostTopLevelCommentIds query func see PostTopComments
+func PostTopLevelCommentIds(ctx context.Context, postId uint64, page, limit, total int, order string, a ...any) ([]uint64, error) {
+	var key string
+	if len(a) > 0 {
+		key = helper.ParseArgs("", a...)
 	}
-	return GetCommentDataByIds(ctx, ids)
+	if key == "" {
+		key = fmt.Sprintf("%d-%d-%d-%d-%s", postId, page, limit, total, order)
+	}
+	return cachemanager.GetBy[[]uint64]("PostCommentsIds", ctx,
+		key, time.Second, postId, page, limit, 0, order)
 }
 
+// GetCommentById query func see dao.GetCommentByIds
 func GetCommentById(ctx context.Context, id uint64) (models.Comments, error) {
 	return cachemanager.GetBy[models.Comments]("postCommentData", ctx, id, time.Second)
 }
 
+// GetCommentDataByIds query func see dao.GetCommentByIds
 func GetCommentDataByIds(ctx context.Context, ids []uint64) ([]models.Comments, error) {
 	return cachemanager.GetBatchBy[models.Comments]("postCommentData", ctx, ids, time.Second)
 }
@@ -50,7 +59,11 @@ func PostTopComments(ctx context.Context, _ string, a ...any) ([]uint64, error) 
 	page := a[1].(int)
 	limit := a[2].(int)
 	total := a[3].(int)
-	v, _, err := dao.PostCommentsIds(ctx, postId, page, limit, total)
+	order := helper.ParseArgs("", a...)
+	if order == "" {
+		order = wpconfig.GetOption("comment_order")
+	}
+	v, _, err := dao.PostCommentsIds(ctx, postId, page, limit, total, order)
 	if err != nil {
 		return nil, err
 	}
@@ -100,7 +113,7 @@ func GetCommentUrl(ctx context.Context, commentId, postId uint64) (string, error
 }
 
 func AncestorCommentId(ctx context.Context, commentId uint64) (uint64, error) {
-	comment, err := cachemanager.GetBy[models.Comments]("postCommentData", ctx, commentId, time.Second)
+	comment, err := GetCommentById(ctx, commentId)
 	if err != nil {
 		return 0, err
 	}

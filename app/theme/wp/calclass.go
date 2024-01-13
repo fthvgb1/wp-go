@@ -57,8 +57,8 @@ func (h *Handle) BodyClass() string {
 		author := h.Index.Param.Author
 		user, _ := cache.GetUserByName(h.C, author)
 		class = append(class, str.Join("author-", number.IntToString(user.Id)))
-		if user.UserLogin[0] != '%' {
-			class = append(class, str.Join("author-", user.UserLogin))
+		if user.DisplayName[0] != '%' {
+			class = append(class, str.Join("author-", user.DisplayName))
 		}
 
 	case constraints.Detail:

@@ -107,30 +107,32 @@ func Run(h *Handle, conf func(*Handle)) {
 	if !helper.GetContextVal(h.C, "inited", false) {
 		InitHandle(conf, h)
 	}
-	reload.GetAnyValBys(str.Join("pipeInit-", h.scene), h, func(h *Handle) (func(*Handle), bool) {
-		p := GetFn[Pipe]("pipe", constraints.AllScene)
-		p = append(p, GetFn[Pipe]("pipe", h.scene)...)
-		pipes := slice.FilterAndMap(p, func(pipe Pipe) (Pipe, bool) {
-			var ok bool
-			hooks := GetFnHook[func(Pipe) (Pipe, bool)]("pipeHook", constraints.AllScene)
-			hooks = append(hooks, GetFnHook[func(Pipe) (Pipe, bool)]("pipeHook", h.scene)...)
-			for _, fn := range hooks {
-				pipe, ok = fn(pipe)
-				if !ok {
-					return pipe, false
-				}
-			}
-			return pipe, pipe.Fn != nil
-		})
-		slice.SimpleSort(pipes, slice.DESC, func(t Pipe) float64 {
-			return t.Order
-		})
+	reload.GetAnyValBys(str.Join("pipeInit-", h.scene), h, BuildPipeAndHandler)(h)
+}
 
-		arr := slice.Map(pipes, func(t Pipe) HandlePipeFn[*Handle] {
-			return t.Fn
-		})
-		return HandlePipe(NothingToDo, arr...), true
-	})(h)
+func BuildPipeAndHandler(h *Handle) (func(*Handle), bool) {
+	p := GetFn[Pipe]("pipe", constraints.AllScene)
+	p = append(p, GetFn[Pipe]("pipe", h.scene)...)
+	pipes := slice.FilterAndMap(p, func(pipe Pipe) (Pipe, bool) {
+		var ok bool
+		hooks := GetFnHook[func(Pipe) (Pipe, bool)]("pipeHook", constraints.AllScene)
+		hooks = append(hooks, GetFnHook[func(Pipe) (Pipe, bool)]("pipeHook", h.scene)...)
+		for _, fn := range hooks {
+			pipe, ok = fn(pipe)
+			if !ok {
+				return pipe, false
+			}
+		}
+		return pipe, pipe.Fn != nil
+	})
+	slice.SimpleSort(pipes, slice.DESC, func(t Pipe) float64 {
+		return t.Order
+	})
+
+	arr := slice.Map(pipes, func(t Pipe) HandlePipeFn[*Handle] {
+		return t.Fn
+	})
+	return HandlePipe(NothingToDo, arr...), true
 }
 
 func MiddlewareKey(h *Handle, pipScene string) string {

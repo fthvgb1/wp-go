@@ -7,7 +7,6 @@ import (
 	"github.com/fthvgb1/wp-go/app/pkg/logs"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
 	"github.com/fthvgb1/wp-go/cache/cachemanager"
-	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/safety"
 	"time"
 )
@@ -78,7 +77,7 @@ func InitActionsCommonCache() {
 		return config.GetConfig().CacheTime.UserInfoCacheTime
 	})
 
-	cachemanager.NewMemoryMapCache(nil, dao.GetUserByName, c.CacheTime.UserInfoCacheTime, "usernameMapToUserData", func() time.Duration {
+	cachemanager.NewMemoryMapCache(nil, dao.GetUserByName, c.CacheTime.UserInfoCacheTime, "usernameToUserData", func() time.Duration {
 		return config.GetConfig().CacheTime.UserInfoCacheTime
 	})
 
@@ -88,7 +87,7 @@ func InitActionsCommonCache() {
 
 	cachemanager.NewVarMemoryCache(feed, time.Hour, "feed")
 
-	cachemanager.NewMemoryMapCache(nil, postFeed, time.Hour, "postFeed")
+	cachemanager.NewMemoryMapCache(nil, PostFeed, time.Hour, "postFeed")
 
 	cachemanager.NewVarMemoryCache(commentsFeed, time.Hour, "commentsFeed")
 
@@ -124,31 +123,4 @@ func Archives(ctx context.Context) []models.PostArchive {
 		data = r
 	}
 	return data
-}
-
-// CategoriesTags categories or tags
-//
-// t is constraints.Tag or constraints.Category
-func CategoriesTags(ctx context.Context, t ...string) []models.TermsMy {
-	tt := ""
-	if len(t) > 0 {
-		tt = t[0]
-	}
-	r, err := cachemanager.GetBy[[]models.TermsMy]("categoryAndTagsData", ctx, tt, time.Second)
-	logs.IfError(err, "get category fail")
-	return r
-}
-func AllCategoryTagsNames(ctx context.Context, t ...string) map[string]struct{} {
-	tt := ""
-	if len(t) > 0 {
-		tt = t[0]
-	}
-	r, err := cachemanager.GetBy[[]models.TermsMy]("categoryAndTagsData", ctx, tt, time.Second)
-	if err != nil {
-		logs.Error(err, "get category fail")
-		return nil
-	}
-	return slice.ToMap(r, func(t models.TermsMy) (string, struct{}) {
-		return t.Name, struct{}{}
-	}, true)
 }

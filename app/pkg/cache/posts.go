@@ -14,14 +14,17 @@ import (
 	"time"
 )
 
+// GetPostById query func see dao.GetPostsByIds
 func GetPostById(ctx context.Context, id uint64) (models.Posts, error) {
 	return cachemanager.GetBy[models.Posts]("postData", ctx, id, time.Second)
 }
 
+// GetPostsByIds query func see dao.GetPostsByIds
 func GetPostsByIds(ctx context.Context, ids []uint64) ([]models.Posts, error) {
 	return cachemanager.GetBatchBy[models.Posts]("postData", ctx, ids, time.Second)
 }
 
+// SearchPost query func see dao.SearchPostIds
 func SearchPost(ctx context.Context, key string, args ...any) (r []models.Posts, total int, err error) {
 	ids, err := cachemanager.GetBy[dao.PostIds]("searchPostIds", ctx, key, time.Second, args...)
 	if err != nil {
@@ -32,6 +35,7 @@ func SearchPost(ctx context.Context, key string, args ...any) (r []models.Posts,
 	return
 }
 
+// PostLists query func see dao.SearchPostIds
 func PostLists(ctx context.Context, key string, args ...any) (r []models.Posts, total int, err error) {
 	ids, err := cachemanager.GetBy[dao.PostIds]("listPostIds", ctx, key, time.Second, args...)
 	if err != nil {
@@ -42,10 +46,12 @@ func PostLists(ctx context.Context, key string, args ...any) (r []models.Posts, 
 	return
 }
 
+// GetMaxPostId query func see dao.GetMaxPostId
 func GetMaxPostId(ctx context.Context) (uint64, error) {
 	return cachemanager.GetVarVal[uint64]("maxPostId", ctx, time.Second)
 }
 
+// RecentPosts query func see dao.RecentPosts
 func RecentPosts(ctx context.Context, n int) (r []models.Posts) {
 	nn := n
 	feedNum := str.ToInteger(wpconfig.GetOption("posts_per_rss"), 10)
@@ -58,6 +64,7 @@ func RecentPosts(ctx context.Context, n int) (r []models.Posts) {
 	return
 }
 
+// GetContextPost query func see dao.GetPostContext
 func GetContextPost(ctx context.Context, id uint64, date time.Time) (prev, next models.Posts, err error) {
 	postCtx, err := cachemanager.GetBy[dao.PostContext]("postContext", ctx, id, time.Second, date)
 	if err != nil {
@@ -68,6 +75,7 @@ func GetContextPost(ctx context.Context, id uint64, date time.Time) (prev, next 
 	return
 }
 
+// GetMonthPostIds query func see dao.MonthPost
 func GetMonthPostIds(ctx context.Context, year, month string, page, limit int, order string) (r []models.Posts, total int, err error) {
 	res, err := cachemanager.GetBy[[]uint64]("monthPostIds", ctx, fmt.Sprintf("%s%s", year, month), time.Second, year, month)
 	if err != nil {

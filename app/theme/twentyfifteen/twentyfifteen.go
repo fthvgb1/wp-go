@@ -6,7 +6,7 @@ import (
 	"github.com/fthvgb1/wp-go/app/plugins"
 	"github.com/fthvgb1/wp-go/app/theme/wp"
 	"github.com/fthvgb1/wp-go/app/theme/wp/components"
-	"github.com/fthvgb1/wp-go/app/theme/wp/components/widget"
+	"github.com/fthvgb1/wp-go/app/theme/wp/middleware"
 	"github.com/fthvgb1/wp-go/app/wpconfig"
 	"strings"
 )
@@ -22,13 +22,7 @@ func configs(h *wp.Handle) {
 		return strings.ReplaceAll(s, `class="search-submit"`, `class="search-submit screen-reader-text"`)
 	})
 	wp.InitPipe(h)
-	h.PushHandler(constraints.PipeMiddleware, constraints.Home,
-		wp.NewHandleFn(widget.CheckCategory, 100, "widget.CheckCategory"),
-	)
-	h.PushHandler(constraints.PipeMiddleware, constraints.Detail,
-		wp.NewHandleFn(wp.ShowPreComment, 100, "wp.ShowPreComment"),
-	)
-
+	middleware.CommonMiddleware(h)
 	h.Index.SetPageEle(plugins.TwentyFifteenPagination())
 	h.PushCacheGroupHeadScript(constraints.AllScene, "CalCustomBackGround", 10.005, CalCustomBackGround)
 	h.PushCacheGroupHeadScript(constraints.AllScene, "colorSchemeCss", 10.0056, colorSchemeCss)

@@ -196,6 +196,10 @@ func GetAnyValBys[T, A any](namespace string, a A, fn func(A) (T, bool), args ..
 	return v.v
 }
 
+// Vars get default value and whenever reloaded assign default value
+//
+// args same as Push
+// if give a name, then can be flushed by calls FlushAnyVal
 func Vars[T any](defaults T, args ...any) *safety.Var[T] {
 	ss := safety.NewVar(defaults)
 	ord, name := parseArgs(args...)
@@ -220,6 +224,11 @@ func parseArgs(a ...any) (ord float64, name string) {
 	}
 	return ord, name
 }
+
+// VarsBy
+//
+// args same as Push
+// if give a name, then can be flushed by calls FlushAnyVal
 func VarsBy[T any](fn func() T, args ...any) *safety.Var[T] {
 	ss := safety.NewVar(fn())
 	ord, name := parseArgs(args...)
@@ -252,6 +261,9 @@ func SafeMap[K comparable, T any](args ...any) *safety.Map[K, T] {
 	return m
 }
 
+// Push the func that will be call whenever Reload called
+//
+// if give a name, then can be flushed by calls FlushAnyVal
 func Push(fn func(), a ...any) {
 	ord, name := parseArgs(a...)
 	calls.Append(queue{fn, ord, name})
