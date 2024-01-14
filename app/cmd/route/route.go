@@ -64,7 +64,8 @@ func SetupRouter() *gin.Engine {
 
 	store := cookie.NewStore([]byte("secret"))
 	r.Use(sessions.Sessions("go-wp", store))
-	r.GET("/", middleware.SearchLimit(c.SingleIpSearchNum), actions.ThemeHook(constraints.Home))
+	r.GET("/", actions.Feed, middleware.SearchLimit(c.SingleIpSearchNum),
+		actions.ThemeHook(constraints.Home))
 	r.GET("/page/:page", actions.ThemeHook(constraints.Home))
 	r.GET("/p/category/:category", actions.ThemeHook(constraints.Category))
 	r.GET("/p/category/:category/page/:page", actions.ThemeHook(constraints.Category))
@@ -78,7 +79,7 @@ func SetupRouter() *gin.Engine {
 	r.GET("/p/:id", actions.ThemeHook(constraints.Detail))
 	r.GET("/p/:id/comment-page-:page", actions.ThemeHook(constraints.Detail))
 	r.GET("/p/:id/feed", actions.PostFeed)
-	r.GET("/feed", actions.Feed)
+	r.GET("/feed", actions.SiteFeed)
 	r.GET("/comments/feed", actions.CommentsFeed)
 	//r.NoRoute(actions.ThemeHook(constraints.NoRoute))
 	commentMiddleWare, _ := middleware.FlowLimit(c.MaxRequestSleepNum, 5, c.CacheTime.SleepTime)

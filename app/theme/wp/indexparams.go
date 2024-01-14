@@ -105,18 +105,16 @@ func NewIndexParams(ctx *gin.Context) *IndexParams {
 
 func (i *IndexParams) ParseSearchs() {
 	s := i.Ctx.Query("s")
-	if s != "" {
-		q := str.Join("%", s, "%")
-		i.Where = append(i.Where, []string{
-			"and", "post_title", "like", q, "",
-			"or", "post_content", "like", q, "",
-			"or", "post_excerpt", "like", q, "",
-		}, []string{"post_password", ""})
-		i.PostType = append(i.PostType, "Page", "attachment")
-		i.Header = fmt.Sprintf("<span>%s</span>的搜索结果", s)
-		i.setTitleLR(str.Join(`"`, s, `"`, "的搜索结果"), i.BlogName)
-		i.Search = s
-	}
+	q := str.Join("%", s, "%")
+	i.Where = append(i.Where, []string{
+		"and", "post_title", "like", q, "",
+		"or", "post_content", "like", q, "",
+		"or", "post_excerpt", "like", q, "",
+	}, []string{"post_password", ""})
+	i.PostType = append(i.PostType, "Page", "attachment")
+	i.Header = fmt.Sprintf("<span>%s</span>的搜索结果", s)
+	i.setTitleLR(str.Join(`"`, s, `"`, "的搜索结果"), i.BlogName)
+	i.Search = s
 }
 func (i *IndexParams) ParseArchives() error {
 	year := i.Ctx.Param("year")

@@ -24,3 +24,15 @@
         {{.sidebarsWidgets|unescaped}}
     {{end}}
 {{end}}
+
+{{define "common/colophon"}}
+    {{if .colophon}}
+        {{.colophon|unescaped}}
+    {{else}}
+        <footer id="colophon" class="site-footer">
+            <div class="site-info">
+                <a href="https://github.com/fthvgb1/wp-go" class="imprint">自豪地采用 wp-go</a>
+            </div>
+        </footer>
+    {{end}}
+{{end}}

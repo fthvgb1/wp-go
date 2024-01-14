@@ -24,6 +24,10 @@ var plainRouteParam = reload.Vars([]Plain{
 		Scene: constraints.Detail,
 	},
 	{
+		Action: "s",
+		Scene:  constraints.Search,
+	},
+	{
 		Scene: constraints.Category,
 		Fn: func(h *wp.Handle) bool {
 			c, ok := widget.IsCategory(h)
@@ -86,6 +90,12 @@ var plainRouteParam = reload.Vars([]Plain{
 	},
 })
 
+func SetExplainRouteParam(p []Plain) {
+	plainRouteParam.Store(p)
+}
+func GetExplainRouteParam() []Plain {
+	return plainRouteParam.Load()
+}
 func PushExplainRouteParam(explain ...Plain) {
 	v := plainRouteParam.Load()
 	v = append(v, explain...)
@@ -108,7 +118,6 @@ func MixWithPlain(h *wp.Handle) {
 			if !explain.Fn(h) {
 				continue
 			}
-			h.C.Set("inited", false)
 			if explain.Scene != "" {
 				h.SetScene(explain.Scene)
 			}
@@ -119,15 +128,14 @@ func MixWithPlain(h *wp.Handle) {
 		if explain.Scene == "" {
 			continue
 		}
-		action := h.C.Query(explain.Action)
-		if action == "" {
+		q := h.C.Query(explain.Action)
+		if q == "" {
 			continue
 		}
 		h.SetScene(explain.Scene)
 		for query, param := range explain.Param {
 			h.C.AddParam(param, h.C.Query(query))
 		}
-		h.C.Set("inited", false)
 		wp.Run(h, nil)
 		h.Abort()
 		return

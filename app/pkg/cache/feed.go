@@ -35,13 +35,15 @@ func InitFeed() {
 	}
 }
 
+// CommentsFeedCache query func see CommentsFeed
 func CommentsFeedCache() *cache.VarCache[[]string] {
 	r, _ := cachemanager.GetVarCache[[]string]("commentsFeed")
 	return r
 }
 
+// FeedCache query func see SiteFeed
 func FeedCache() *cache.VarCache[[]string] {
-	r, _ := cachemanager.GetVarCache[[]string]("feed")
+	r, _ := cachemanager.GetVarCache[[]string]("siteFeed")
 	return r
 }
 
@@ -51,7 +53,7 @@ func PostFeedCache() *cache.MapCache[string, string] {
 	return r
 }
 
-func feed(c context.Context, _ ...any) (xml []string, err error) {
+func SiteFeed(c context.Context, _ ...any) (xml []string, err error) {
 	r := RecentPosts(c, 10)
 	ids := slice.Map(r, func(t models.Posts) uint64 {
 		return t.Id
@@ -167,7 +169,7 @@ func PostFeed(c context.Context, id string, _ ...any) (x string, err error) {
 	return
 }
 
-func commentsFeed(c context.Context, _ ...any) (r []string, err error) {
+func CommentsFeed(c context.Context, _ ...any) (r []string, err error) {
 	commens := RecentComments(c, 10)
 	rs := templateRss
 	rs.Title = fmt.Sprintf("\"%s\"的评论", wpconfig.GetOption("blogname"))

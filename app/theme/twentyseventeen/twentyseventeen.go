@@ -66,6 +66,7 @@ func configs(h *wp.Handle) {
 		wp.NewHandleFn(errorsHandle, 80.005, "errorsHandle"),
 	)
 	videoHeader(h)
+	h.SetData("colophon", colophon)
 	h.Detail.CommentRender = commentFormat
 	h.Detail.CommentPageEle = commentPageEle
 	h.CommonComponents()
@@ -122,6 +123,14 @@ var respondFn = plugins.Responds(respondStr)
 func (c comment) FormatLi(_ context.Context, m models.Comments, depth, maxDepth, page int, isTls, isThreadComments bool, eo, parent string) string {
 	return plugins.FormatLi(commentLi, m, respondFn, depth, maxDepth, page, isTls, isThreadComments, eo, parent)
 }
+
+var colophon = `<footer id="colophon" class="site-footer">
+            <div class="wrap">
+                <div class="site-info">
+                    <a href="https://github.com/fthvgb1/wp-go" class="imprint">自豪地采用 wp-go</a>
+                </div>
+            </div>
+        </footer>`
 
 var respondStr = `<a rel="nofollow" class="comment-reply-link"
                href="/p/{{PostId}}?replytocom={{CommentId}}#respond" data-commentid="{{CommentId}}" data-postid="{{PostId}}"

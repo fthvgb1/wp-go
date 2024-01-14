@@ -10,6 +10,28 @@ import (
 
 var tmp = "Mon, 02 Jan 2006 15:04:05 GMT"
 
+func Feed(c *gin.Context) {
+	v, ok := c.GetQuery("feed")
+	if !ok || v == "" {
+		c.Next()
+		return
+	}
+	switch v {
+	case "rss2":
+		p, ok := c.GetQuery("p")
+		if ok && p != "" {
+			c.AddParam("id", p)
+			PostFeed(c)
+		} else {
+			SiteFeed(c)
+		}
+		return
+	case "comments-rss2":
+		CommentsFeed(c)
+		return
+	}
+}
+
 func isCacheExpired(c *gin.Context, lastTime time.Time) bool {
 	eTag := str.Md5(lastTime.Format(tmp))
 	since := c.Request.Header.Get("If-Modified-Since")
@@ -24,7 +46,7 @@ func isCacheExpired(c *gin.Context, lastTime time.Time) bool {
 	return true
 }
 
-func Feed(c *gin.Context) {
+func SiteFeed(c *gin.Context) {
 	feed := cache.FeedCache()
 	if !isCacheExpired(c, feed.GetLastSetTime(c)) {
 		c.Status(http.StatusNotModified)

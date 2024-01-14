@@ -85,11 +85,11 @@ func InitActionsCommonCache() {
 		return config.GetConfig().CacheTime.UserInfoCacheTime
 	})
 
-	cachemanager.NewVarMemoryCache(feed, time.Hour, "feed")
+	cachemanager.NewVarMemoryCache(SiteFeed, time.Hour, "siteFeed")
 
 	cachemanager.NewMemoryMapCache(nil, PostFeed, time.Hour, "postFeed")
 
-	cachemanager.NewVarMemoryCache(commentsFeed, time.Hour, "commentsFeed")
+	cachemanager.NewVarMemoryCache(CommentsFeed, time.Hour, "commentsFeed")
 
 	cachemanager.NewMemoryMapCache[string, string](nil, nil, 15*time.Minute, "NewComment")
 
