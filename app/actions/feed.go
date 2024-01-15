@@ -25,9 +25,11 @@ func Feed(c *gin.Context) {
 		} else {
 			SiteFeed(c)
 		}
+		c.Abort()
 		return
 	case "comments-rss2":
 		CommentsFeed(c)
+		c.Abort()
 		return
 	}
 }
