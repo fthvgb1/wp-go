@@ -23,7 +23,7 @@ func init() {
 	ct = context.Background()
 	batchFn = func(ctx context.Context, arr []string, a ...any) (map[string]string, error) {
 		fmt.Println(a)
-		return slice.FilterAndToMap(arr, func(t string) (string, string, bool) {
+		return slice.FilterAndToMap(arr, func(t string, _ int) (string, string, bool) {
 			return t, strings.Repeat(t, 2), true
 		}), nil
 	}
@@ -69,7 +69,7 @@ func TestMapCache_Flush(t *testing.T) {
 	}
 	ca := *NewMapCache[string, string](NewMemoryMapCache[string, string](func() time.Duration {
 		return time.Second
-	}), fn, nil)
+	}), fn, nil, nil, nil)
 	_, _ = ca.GetCache(ct, "aa", time.Second, ct, "aa")
 	tests := []testCase[string, string]{
 		{

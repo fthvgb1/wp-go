@@ -21,34 +21,39 @@ var metaTemplate = `{$before_widget}
 {$navCloser}
 {$after_widget}`
 
-func metaArgs() map[string]string {
+func defaultMetaArgs() map[string]string {
 	return map[string]string{
 		"{$aria_label}": "",
 		"{$title}":      "",
 	}
 }
 
-func Meta(h *wp.Handle, id string) string {
-	args := reload.GetAnyValBys("widget-meta-args", h, func(h *wp.Handle) (map[string]string, bool) {
-		commonArgs := wp.GetComponentsArgs(h, widgets.Widget, map[string]string{})
-		metaArgs := metaArgs()
-		args := wp.GetComponentsArgs(h, widgets.Meta, metaArgs)
-		args = maps.FilterZeroMerge(metaArgs, CommonArgs(), commonArgs, args)
-		args["{$before_widget}"] = fmt.Sprintf(args["{$before_widget}"], str.Join("meta-", id), str.Join("widget widget_", "meta"))
-		args["{$title}"] = wpconfig.GetPHPArrayVal("widget_meta", "其它操作", int64(2), "title")
-		if args["{$title}"] == "" {
-			args["{$title}"] = "其他操作"
-		}
-		if args["{$title}"] != "" {
-			args["{$h2title}"] = str.Join(args["{$before_title}"], args["{$title}"], args["{$after_title}"])
-		}
-		if slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
-			args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, args["{$title}"])
-			args["{$navCloser}"] = "</nav>"
-		}
-		return args, true
-	})
+var GetMetaArgs = reload.BuildValFnWithAnyParams("widget-meta-args", ParseMetaArgs)
 
+func ParseMetaArgs(a ...any) map[string]string {
+	h := a[0].(*wp.Handle)
+	id := a[1].(string)
+	commonArgs := wp.GetComponentsArgs(widgets.Widget, map[string]string{})
+	metaArgs := defaultMetaArgs()
+	args := wp.GetComponentsArgs(widgets.Meta, metaArgs)
+	args = maps.FilterZeroMerge(metaArgs, CommonArgs(), commonArgs, args)
+	args["{$before_widget}"] = fmt.Sprintf(args["{$before_widget}"], str.Join("meta-", id), str.Join("widget widget_", "meta"))
+	args["{$title}"] = wpconfig.GetPHPArrayVal("widget_meta", "其它操作", int64(2), "title")
+	if args["{$title}"] == "" {
+		args["{$title}"] = "其他操作"
+	}
+	if args["{$title}"] != "" {
+		args["{$h2title}"] = str.Join(args["{$before_title}"], args["{$title}"], args["{$after_title}"])
+	}
+	if slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
+		args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, args["{$title}"])
+		args["{$navCloser}"] = "</nav>"
+	}
+	return args
+}
+
+func Meta(h *wp.Handle, id string) string {
+	args := GetMetaArgs(h, id)
 	ss := str.NewBuilder()
 	if str.ToInteger(wpconfig.GetOption("users_can_register"), 0) > 0 {
 		ss.Sprintf(`<li><a href="/wp-login.php?action=register">注册</li>`)

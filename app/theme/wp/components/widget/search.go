@@ -47,34 +47,40 @@ func searchArgs() map[string]string {
 
 var form = html5SearchForm
 
+var GetSearchArgs = reload.BuildValFnWithAnyParams("widget-search-args", ParseSearchArgs)
+
+func ParseSearchArgs(a ...any) map[string]string {
+	h := a[0].(*wp.Handle)
+	id := a[1].(string)
+	search := searchArgs()
+	commonArgs := wp.GetComponentsArgs(widgets.Widget, map[string]string{})
+	args := wp.GetComponentsArgs(widgets.Search, search)
+	args = maps.FilterZeroMerge(search, CommonArgs(), commonArgs, args)
+	args["{$before_widget}"] = fmt.Sprintf(args["{$before_widget}"], str.Join("search-", id), str.Join("widget widget_", "search"))
+	if args["{$title}"] == "" {
+		args["{$title}"] = wpconfig.GetPHPArrayVal("widget_search", "", int64(2), "title")
+	}
+
+	if args["{$title}"] != "" {
+		args["{$title}"] = str.Join(args["{$before_title}"], args["{$title}"], args["{$after_title}"])
+	}
+	if args["{$form}"] != "" {
+		form = args["{$form}"]
+		delete(args, "{$form}")
+	}
+	if !slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
+		form = xmlSearchForm
+	}
+
+	return args
+}
+
 func Search(h *wp.Handle, id string) string {
-	args := reload.GetAnyValBys("widget-search-args", h, func(h *wp.Handle) (map[string]string, bool) {
-		search := searchArgs()
-		commonArgs := wp.GetComponentsArgs(h, widgets.Widget, map[string]string{})
-		args := wp.GetComponentsArgs(h, widgets.Search, search)
-		args = maps.FilterZeroMerge(search, CommonArgs(), commonArgs, args)
-		args["{$before_widget}"] = fmt.Sprintf(args["{$before_widget}"], str.Join("search-", id), str.Join("widget widget_", "search"))
-		if args["{$title}"] == "" {
-			args["{$title}"] = wpconfig.GetPHPArrayVal("widget_search", "", int64(2), "title")
-		}
-
-		if args["{$title}"] != "" {
-			args["{$title}"] = str.Join(args["{$before_title}"], args["{$title}"], args["{$after_title}"])
-		}
-		if args["{$form}"] != "" {
-			form = args["{$form}"]
-			delete(args, "{$form}")
-		}
-		if !slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
-			form = xmlSearchForm
-		}
-
-		return args, true
-	})
+	args := GetSearchArgs(h, id)
 	s := strings.ReplaceAll(searchTemplate, "{$form}", form)
 	val := ""
 	if h.Scene() == constraints.Search {
-		val = html.SpecialChars(h.Index.Param.Search)
+		val = html.SpecialChars(h.GetIndexHandle().Param.Search)
 	}
 	s = strings.ReplaceAll(s, "{$value}", val)
 	return h.DoActionFilter(widgets.Search, str.Replace(s, args))

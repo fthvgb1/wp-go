@@ -78,6 +78,15 @@ func (d *DetailHandle) PasswordProject() {
 		}
 	}
 }
+func (h *Handle) GetDetailHandle() *DetailHandle {
+	v, ok := h.C.Get("detailHandle")
+	if !ok {
+		vv := NewDetailHandle(h)
+		h.C.Set("detailHandle", vv)
+		return vv
+	}
+	return v.(*DetailHandle)
+}
 func (d *DetailHandle) CommentData() {
 	d.ginH["totalCommentNum"] = 0
 	d.ginH["totalCommentPage"] = 1
@@ -170,16 +179,17 @@ func DetailRender(h *Handle) {
 	if h.Stats != constraints.Ok {
 		return
 	}
-	d := h.Detail
+	d := h.GetDetailHandle()
 	d.PasswordProject()
 	d.RenderComment()
 	d.ginH["post"] = d.Post
 }
 
 func Detail(h *Handle) {
-	err := h.Detail.BuildDetailData()
+	d := h.GetDetailHandle()
+	err := d.BuildDetailData()
 	if err != nil {
-		h.Detail.SetErr(err)
+		d.SetErr(err)
 	}
 	h.SetData("scene", h.Scene())
 }
@@ -187,7 +197,7 @@ func Detail(h *Handle) {
 func ReplyCommentJs(h *Handle) {
 	h.PushFooterScript(constraints.Detail, NewComponent("comment-reply.js", "", false, 10, func(h *Handle) string {
 		reply := ""
-		if h.Detail.Post.CommentStatus == "open" && wpconfig.GetOption("thread_comments") == "1" {
+		if h.GetDetailHandle().Post.CommentStatus == "open" && wpconfig.GetOption("thread_comments") == "1" {
 			reply = `<script src='/wp-includes/js/comment-reply.min.js' id='comment-reply-js'></script>`
 		}
 		return reply

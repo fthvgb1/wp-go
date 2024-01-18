@@ -10,6 +10,7 @@ import (
 	"github.com/fthvgb1/wp-go/cache/reload"
 	"github.com/fthvgb1/wp-go/helper/maps"
 	str "github.com/fthvgb1/wp-go/helper/strings"
+	"github.com/fthvgb1/wp-go/safety"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 	"html/template"
@@ -19,29 +20,25 @@ import (
 )
 
 type Handle struct {
-	Index             *IndexHandle
-	Detail            *DetailHandle
-	C                 *gin.Context
-	theme             string
-	Session           sessions.Session
-	ginH              gin.H
-	password          string
-	scene             string
-	Code              int
-	Stats             string
-	templ             string
-	components        map[string]map[string][]Components[string]
-	componentHook     map[string][]func(Components[string]) (Components[string], bool)
-	themeMods         wpconfig.ThemeMods
-	handlers          map[string]map[string][]HandleCall
-	handleHook        map[string][]func(HandleCall) (HandleCall, bool)
-	err               error
-	abort             bool
-	stopPipe          bool
-	componentsArgs    map[string]any
-	componentFilterFn map[string][]func(*Handle, string, ...any) string
-	template          *template.Template
+	C         *gin.Context
+	theme     string
+	isInited  bool
+	Session   sessions.Session
+	ginH      gin.H
+	password  string
+	scene     string
+	Code      int
+	Stats     string
+	templ     string
+	themeMods wpconfig.ThemeMods
+	err       error
+	abort     bool
+	stopPipe  bool
+	template  *template.Template
 }
+
+var handlerss = safety.NewMap[string, map[string][]HandleCall]()
+var handleHooks = safety.NewMap[string, []func(HandleCall) (HandleCall, bool)]()
 
 func (h *Handle) Theme() string {
 	return h.theme
@@ -55,20 +52,20 @@ func (h *Handle) SetScene(scene string) {
 	h.scene = scene
 }
 
-func (h *Handle) Components() map[string]map[string][]Components[string] {
-	return h.components
+func (h *Handle) Components() *safety.Map[string, map[string][]Components[string]] {
+	return handleComponents
 }
 
-func (h *Handle) ComponentHook() map[string][]func(Components[string]) (Components[string], bool) {
-	return h.componentHook
+func (h *Handle) ComponentHook() *safety.Map[string, []func(Components[string]) (Components[string], bool)] {
+	return handleComponentHook
 }
 
-func (h *Handle) Handlers() map[string]map[string][]HandleCall {
-	return h.handlers
+func (h *Handle) Handlers() *safety.Map[string, map[string][]HandleCall] {
+	return handlerss
 }
 
-func (h *Handle) HandleHook() map[string][]func(HandleCall) (HandleCall, bool) {
-	return h.handleHook
+func (h *Handle) HandleHook() *safety.Map[string, []func(HandleCall) (HandleCall, bool)] {
+	return handleHooks
 }
 
 func (h *Handle) SetTemplate(template *template.Template) {
@@ -98,45 +95,48 @@ type HandleCall struct {
 	Name  string
 }
 
-func InitHandle(fn func(*Handle), h *Handle) {
-	var inited = false
-	hh := reload.GetAnyValBys("themeArgAndConfig", h, func(h *Handle) (Handle, bool) {
-		h.components = make(map[string]map[string][]Components[string])
-		h.componentsArgs = make(map[string]any)
-		h.componentFilterFn = make(map[string][]func(*Handle, string, ...any) string)
-		h.handlers = make(map[string]map[string][]HandleCall)
-		h.handleHook = make(map[string][]func(HandleCall) (HandleCall, bool))
-		h.ginH = gin.H{}
-		fnMap.Flush()
-		fnHook.Flush()
-		fn(h)
-		v := apply.UsePlugins()
-		pluginFn, ok := v.(func(*Handle))
-		if ok {
-			pluginFn(h)
-		}
-		h.C.Set("inited", true)
-		inited = true
-		return *h, true
-	})
+func SetConfigHandle(a ...any) Handle {
+	configFn := a[0].(func(*Handle))
+	hh := a[1].(*Handle)
+	h := &Handle{}
+	mut := reload.GetGlobeMutex()
+	mut.Lock()
+	defer mut.Unlock()
+	handleComponents.Flush()
+	componentsArgs.Flush()
+	handleComponentHook.Flush()
+	componentFilterFns.Flush()
+	handlerss.Flush()
+	handleHooks.Flush()
+	h.ginH = gin.H{}
+	fnMap.Flush()
+	fnHook.Flush()
+	h.C = hh.C
+	h.theme = hh.theme
+	h.template = hh.template
+	configFn(h)
+	v := apply.UsePlugins()
+	pluginFn, ok := v.(func(*Handle))
+	if ok {
+		pluginFn(h)
+	}
+	return *h
+}
+
+var GetInitHandleFn = reload.BuildValFnWithAnyParams("themeArgAndConfig", SetConfigHandle, 100.01)
+
+type ConfigParm struct {
+	ConfigFn func(*Handle)
+	H        *Handle
+}
+
+func InitHandle(configFn func(*Handle), h *Handle) {
+	hh := GetInitHandleFn(configFn, h)
 	h.ginH = maps.Copy(hh.ginH)
 	h.ginH["calPostClass"] = postClass(h)
 	h.ginH["calBodyClass"] = bodyClass(h)
 	h.ginH["customLogo"] = customLogo(h)
-	if inited {
-		return
-	}
-	h.components = hh.components
-	h.Index.postsPlugin = hh.Index.postsPlugin
-	h.Index.pageEle = hh.Index.pageEle
-	h.Detail.CommentRender = hh.Detail.CommentRender
-	h.Detail.CommentPageEle = hh.Detail.CommentPageEle
-	h.handlers = hh.handlers
-	h.handleHook = hh.handleHook
-	h.componentHook = hh.componentHook
-	h.componentsArgs = hh.componentsArgs
-	h.componentFilterFn = hh.componentFilterFn
-	h.C.Set("inited", true)
+	h.isInited = true
 }
 
 func (h *Handle) Abort() {

@@ -39,22 +39,29 @@ var recentCommentsTemplate = `{$before_widget}
 {$after_widget}
 `
 
-func RecentComments(h *wp.Handle, id string) string {
-	conf := configs(recentCommentConf, "widget_recent-comments", int64(2))
+var GetRecentCommentConf = BuildconfigFn(recentCommentConf, "widget_recent-comments", int64(2))
 
-	args := reload.GetAnyValBys("widget-recent-comment-args", h, func(h *wp.Handle) (map[string]string, bool) {
-		commentsArgs := recentCommentsArgs()
-		commonArgs := wp.GetComponentsArgs(h, widgets.Widget, map[string]string{})
-		args := wp.GetComponentsArgs(h, widgets.RecentComments, commentsArgs)
-		args = maps.FilterZeroMerge(commentsArgs, CommonArgs(), commonArgs, args)
-		args["{$before_widget}"] = fmt.Sprintf(args["{$before_widget}"], str.Join("recent-comments-", id), str.Join("widget widget_", "recent_comments"))
-		args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
-		if slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
-			args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, conf["title"])
-			args["{$navCloser}"] = "</nav>"
-		}
-		return args, true
-	})
+var GetRecentCommentArgs = reload.BuildValFnWithAnyParams("widget-recent-comment-args", RecentCommentArgs)
+
+func RecentCommentArgs(a ...any) map[string]string {
+	h := a[0].(*wp.Handle)
+	conf := a[1].(map[any]any)
+	id := a[2].(string)
+	commentsArgs := recentCommentsArgs()
+	commonArgs := wp.GetComponentsArgs(widgets.Widget, map[string]string{})
+	args := wp.GetComponentsArgs(widgets.RecentComments, commentsArgs)
+	args = maps.FilterZeroMerge(commentsArgs, CommonArgs(), commonArgs, args)
+	args["{$before_widget}"] = fmt.Sprintf(args["{$before_widget}"], str.Join("recent-comments-", id), str.Join("widget widget_", "recent_comments"))
+	args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
+	if slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
+		args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, conf["title"])
+		args["{$navCloser}"] = "</nav>"
+	}
+	return args
+}
+func RecentComments(h *wp.Handle, id string) string {
+	conf := GetRecentCommentConf()
+	args := GetRecentCommentArgs(h, conf, id)
 
 	comments := slice.Map(cache.RecentComments(h.C, int(conf["number"].(int64))), func(t models.Comments) string {
 		return fmt.Sprintf(`	<li>

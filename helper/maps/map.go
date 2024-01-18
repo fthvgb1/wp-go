@@ -192,8 +192,8 @@ func WithDefaultVal[K comparable, V any](m map[K]V, k K, defaults V) V {
 	return defaults
 }
 
-func AnyAnyMap[K comparable, V any](m map[any]any, fn func(k, v any) (K, V, bool)) map[K]V {
-	mm := make(map[K]V, 0)
+func AnyAnyMapTo[K comparable, V any](m map[any]any, fn func(k, v any) (K, V, bool)) map[K]V {
+	mm := make(map[K]V)
 	for k, v := range m {
 		key, val, ok := fn(k, v)
 		if ok {

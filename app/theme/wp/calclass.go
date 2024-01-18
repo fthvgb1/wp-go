@@ -33,14 +33,14 @@ func (h *Handle) BodyClass() string {
 
 	case constraints.Search:
 		s := "search-no-results"
-		if len(h.Index.Posts) > 0 {
+		if len(h.GetIndexHandle().Posts) > 0 {
 			s = "search-results"
 		}
 		class = append(class, "search", s)
 
 	case constraints.Category, constraints.Tag:
 		class = append(class, "archive", "category")
-		cat := h.Index.Param.Category
+		cat := h.GetIndexHandle().Param.Category
 		if cat == "" {
 			break
 		}
@@ -54,7 +54,7 @@ func (h *Handle) BodyClass() string {
 
 	case constraints.Author:
 		class = append(class, "archive", "author")
-		author := h.Index.Param.Author
+		author := h.GetIndexHandle().Param.Author
 		user, _ := cache.GetUserByName(h.C, author)
 		class = append(class, str.Join("author-", number.IntToString(user.Id)))
 		if user.DisplayName[0] != '%' {
@@ -63,7 +63,7 @@ func (h *Handle) BodyClass() string {
 
 	case constraints.Detail:
 		class = append(class, "post-template-default", "single", "single-post")
-		class = append(class, str.Join("postid-", number.IntToString(h.Detail.Post.Id)))
+		class = append(class, str.Join("postid-", number.IntToString(h.GetDetailHandle().Post.Id)))
 		if len(h.themeMods.ThemeSupport.PostFormats) > 0 {
 			class = append(class, "single-format-standard")
 		}

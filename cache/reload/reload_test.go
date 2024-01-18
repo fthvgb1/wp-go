@@ -13,7 +13,7 @@ func TestFlushMapVal(t *testing.T) {
 			return 33, true
 		})
 		fmt.Println(v)
-		FlushMapVal("key", 2)
+		DeleteMapVal("key", 2)
 
 		v = GetAnyValMapBy("key", 2, struct{}{}, func(a struct{}) (int, bool) {
 			fmt.Println("xxxxx")
@@ -32,15 +32,15 @@ func TestFlushMapVal(t *testing.T) {
 func TestGetAnyMapFnBys(t *testing.T) {
 	var i int
 	t.Run("t1", func(t *testing.T) {
-		v := GetAnyMapFnBys[int]("name", func(a int) int {
+		v := BuildMapFnWithConfirm[int]("name", func(a int) (int, bool) {
 			i++
-			return a + 1
+			return a + 1, true
 		})
 		vv := v(1, 2)
 		vvv := v(2, 3)
 		fmt.Println(vv, vvv)
 		v(1, 2)
-		FlushMapVal("name", 2)
+		DeleteMapVal("name", 2)
 		v(2, 3)
 		fmt.Println(i)
 	})

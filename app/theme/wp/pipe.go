@@ -3,7 +3,6 @@ package wp
 import (
 	"github.com/fthvgb1/wp-go/app/pkg/constraints"
 	"github.com/fthvgb1/wp-go/cache/reload"
-	"github.com/fthvgb1/wp-go/helper"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 )
@@ -52,10 +51,12 @@ func (h *Handle) ReplacePipe(scene, pipeName string, pipe Pipe) error {
 }
 
 func (h *Handle) PushHandler(pipScene string, scene string, fns ...HandleCall) {
-	if _, ok := h.handlers[pipScene]; !ok {
-		h.handlers[pipScene] = make(map[string][]HandleCall)
+	v, ok := handlerss.Load(pipScene)
+	if !ok {
+		v = make(map[string][]HandleCall)
 	}
-	h.handlers[pipScene][scene] = append(h.handlers[pipScene][scene], fns...)
+	v[scene] = append(v[scene], fns...)
+	handlerss.Store(pipScene, v)
 }
 
 func (h *Handle) PushRender(statsOrScene string, fns ...HandleCall) {
@@ -65,27 +66,14 @@ func (h *Handle) PushDataHandler(scene string, fns ...HandleCall) {
 	h.PushHandler(constraints.PipeData, scene, fns...)
 }
 
-func BuildPipe(pipeScene string, keyFn func(*Handle, string) string, fn func(*Handle, map[string][]HandleCall, string) []HandleCall) func(HandleFn[*Handle], *Handle) {
+func BuildHandlers(pipeScene string, keyFn func(*Handle, string) string,
+	fn func(*Handle, map[string][]HandleCall, string) []HandleCall) func(HandleFn[*Handle], *Handle) {
+
+	pipeHandlerFn := reload.BuildMapFn[string]("pipeHandlers", BuildHandler(pipeScene, keyFn, fn))
+
 	return func(next HandleFn[*Handle], h *Handle) {
 		key := keyFn(h, pipeScene)
-		handlers := reload.GetAnyValMapBy("pipeHandlers", key, h, func(h *Handle) ([]HandleCall, bool) {
-			conf := h.handleHook[pipeScene]
-			calls := fn(h, h.handlers[pipeScene], key)
-			calls = slice.FilterAndMap(calls, func(call HandleCall) (HandleCall, bool) {
-				ok := true
-				for _, hook := range conf {
-					call, ok = hook(call)
-					if !ok {
-						break
-					}
-				}
-				return call, ok
-			})
-			slice.SimpleSort(calls, slice.DESC, func(t HandleCall) float64 {
-				return t.Order
-			})
-			return calls, true
-		})
+		handlers := pipeHandlerFn(key, h)
 		for _, handler := range handlers {
 			handler.Fn(h)
 			if h.abort {
@@ -98,25 +86,58 @@ func BuildPipe(pipeScene string, keyFn func(*Handle, string) string, fn func(*Ha
 	}
 }
 
+func BuildHandler(pipeScene string, keyFn func(*Handle, string) string,
+	fn func(*Handle, map[string][]HandleCall, string) []HandleCall) func(*Handle) []HandleCall {
+
+	return func(h *Handle) []HandleCall {
+		key := keyFn(h, pipeScene)
+		mut := reload.GetGlobeMutex()
+		mut.Lock()
+		hookers, _ := handleHooks.Load(pipeScene)
+		hh, _ := handlerss.Load(pipeScene)
+		mut.Unlock()
+		calls := fn(h, hh, key)
+		calls = slice.FilterAndMap(calls, func(call HandleCall) (HandleCall, bool) {
+			ok := true
+			for _, hook := range hookers {
+				call, ok = hook(call)
+				if !ok {
+					break
+				}
+			}
+			return call, ok
+		})
+		slice.SimpleSort(calls, slice.DESC, func(t HandleCall) float64 {
+			return t.Order
+		})
+		return calls
+	}
+}
+
 func PipeKey(h *Handle, pipScene string) string {
 	key := str.Join("pipekey", "-", pipScene, "-", h.scene, "-", h.Stats)
 	return h.DoActionFilter("pipeKey", key, pipScene)
 }
 
+var pipeInitFn = reload.BuildMapFn[string]("pipeInit", BuildPipe)
+
 func Run(h *Handle, conf func(*Handle)) {
-	if !helper.GetContextVal(h.C, "inited", false) {
+	if !h.isInited {
 		InitHandle(conf, h)
 	}
-	reload.GetAnyValBys(str.Join("pipeInit-", h.scene), h, BuildPipeAndHandler)(h)
+	pipeInitFn(h.scene, h.scene)(h)
 }
 
-func BuildPipeAndHandler(h *Handle) (func(*Handle), bool) {
-	p := GetFn[Pipe]("pipe", constraints.AllScene)
-	p = append(p, GetFn[Pipe]("pipe", h.scene)...)
-	pipes := slice.FilterAndMap(p, func(pipe Pipe) (Pipe, bool) {
+func BuildPipe(scene string) func(*Handle) {
+	pipees := GetFn[Pipe]("pipe", constraints.AllScene)
+	pipees = append(pipees, GetFn[Pipe]("pipe", scene)...)
+	pipes := slice.FilterAndMap(pipees, func(pipe Pipe) (Pipe, bool) {
 		var ok bool
+		mut := reload.GetGlobeMutex()
+		mut.Lock()
 		hooks := GetFnHook[func(Pipe) (Pipe, bool)]("pipeHook", constraints.AllScene)
-		hooks = append(hooks, GetFnHook[func(Pipe) (Pipe, bool)]("pipeHook", h.scene)...)
+		hooks = append(hooks, GetFnHook[func(Pipe) (Pipe, bool)]("pipeHook", scene)...)
+		mut.Unlock()
 		for _, fn := range hooks {
 			pipe, ok = fn(pipe)
 			if !ok {
@@ -132,7 +153,7 @@ func BuildPipeAndHandler(h *Handle) (func(*Handle), bool) {
 	arr := slice.Map(pipes, func(t Pipe) HandlePipeFn[*Handle] {
 		return t.Fn
 	})
-	return HandlePipe(NothingToDo, arr...), true
+	return HandlePipe(NothingToDo, arr...)
 }
 
 func MiddlewareKey(h *Handle, pipScene string) string {
@@ -164,24 +185,30 @@ func PipeRender(h *Handle, renders map[string][]HandleCall, key string) (handler
 
 // DeleteHandle 写插件的时候用
 func (h *Handle) DeleteHandle(pipeScene string, name string) {
-	h.handleHook[pipeScene] = append(h.handleHook[pipeScene], func(call HandleCall) (HandleCall, bool) {
+	v, _ := handleHooks.Load(pipeScene)
+	v = append(v, func(call HandleCall) (HandleCall, bool) {
 		return call, name != call.Name
 	})
+	handleHooks.Store(pipeScene, v)
 }
 
 // ReplaceHandle 写插件的时候用
 func (h *Handle) ReplaceHandle(pipeScene, name string, fn HandleFn[*Handle]) {
-	h.handleHook[pipeScene] = append(h.handleHook[pipeScene], func(call HandleCall) (HandleCall, bool) {
+	v, _ := handleHooks.Load(pipeScene)
+	v = append(v, func(call HandleCall) (HandleCall, bool) {
 		if name == call.Name {
 			call.Fn = fn
 		}
 		return call, true
 	})
+	handleHooks.Store(pipeScene, v)
 }
 
 // HookHandle 写插件的时候用
 func (h *Handle) HookHandle(pipeScene string, hook func(HandleCall) (HandleCall, bool)) {
-	h.handleHook[pipeScene] = append(h.handleHook[pipeScene], hook)
+	v, _ := handleHooks.Load(pipeScene)
+	v = append(v, hook)
+	handleHooks.Store(pipeScene, v)
 }
 
 func (h *Handle) PushPipeHandleHook(name string, fn ...func([]HandleCall) []HandleCall) error {
@@ -197,10 +224,10 @@ func (h *Handle) PipeHandleHook(name string, calls []HandleCall, m map[string][]
 
 func InitPipe(h *Handle) {
 	h.PushPipe(constraints.AllScene, NewPipe(constraints.PipeMiddleware, 300,
-		BuildPipe(constraints.PipeMiddleware, MiddlewareKey, PipeMiddlewareHandle)))
+		BuildHandlers(constraints.PipeMiddleware, MiddlewareKey, PipeMiddlewareHandle)))
 
 	h.PushPipe(constraints.AllScene, NewPipe(constraints.PipeData, 200,
-		BuildPipe(constraints.PipeData, PipeKey, PipeDataHandle)))
+		BuildHandlers(constraints.PipeData, PipeKey, PipeDataHandle)))
 	h.PushPipe(constraints.AllScene, NewPipe(constraints.PipeRender, 100,
-		BuildPipe(constraints.PipeRender, PipeKey, PipeRender)))
+		BuildHandlers(constraints.PipeRender, PipeKey, PipeRender)))
 }

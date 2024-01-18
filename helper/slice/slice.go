@@ -172,10 +172,10 @@ func Slice[T any](arr []T, offset, length int) (r []T) {
 	return
 }
 
-func FilterAndToMap[K comparable, V, T any](arr []T, fn func(T) (K, V, bool)) map[K]V {
+func FilterAndToMap[K comparable, V, T any](arr []T, fn func(T, int) (K, V, bool)) map[K]V {
 	r := make(map[K]V)
-	for _, t := range arr {
-		k, v, ok := fn(t)
+	for i, t := range arr {
+		k, v, ok := fn(t, i)
 		if ok {
 			r[k] = v
 		}

@@ -40,21 +40,29 @@ var archivesConfig = map[any]any{
 	"title":    "归档",
 }
 
+var GetArchiveConf = BuildconfigFn(archivesConfig, "widget_archives", int64(2))
+var GetArchiveArgs = reload.BuildValFnWithAnyParams("", archiveArgsFn)
+
+func archiveArgsFn(a ...any) map[string]string {
+	h := a[0].(*wp.Handle)
+	conf := a[1].(map[any]any)
+	id := a[2].(string)
+	archiveArgs := archiveArgs()
+	commonArgs := wp.GetComponentsArgs(widgets.Widget, CommonArgs())
+	args := wp.GetComponentsArgs(widgets.Archive, archiveArgs)
+	args = maps.FilterZeroMerge(archiveArgs, CommonArgs(), commonArgs, args)
+	args["{$before_widget}"] = fmt.Sprintf(args["{$before_widget}"], str.Join("archives-", id), str.Join("widget widget_", "archive"))
+	args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
+	if conf["dropdown"].(int64) == 0 && slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
+		args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, conf["title"].(string))
+		args["{$navCloser}"] = "</nav>"
+	}
+	return args
+}
+
 func Archive(h *wp.Handle, id string) string {
-	conf := configs(archivesConfig, "widget_archives", int64(2))
-	args := reload.GetAnyValBys("widget-archive-args", h, func(h *wp.Handle) (map[string]string, bool) {
-		archiveArgs := archiveArgs()
-		commonArgs := wp.GetComponentsArgs(h, widgets.Widget, CommonArgs())
-		args := wp.GetComponentsArgs(h, widgets.Archive, archiveArgs)
-		args = maps.FilterZeroMerge(archiveArgs, CommonArgs(), commonArgs, args)
-		args["{$before_widget}"] = fmt.Sprintf(args["{$before_widget}"], str.Join("archives-", id), str.Join("widget widget_", "archive"))
-		args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
-		if conf["dropdown"].(int64) == 0 && slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
-			args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, conf["title"].(string))
-			args["{$navCloser}"] = "</nav>"
-		}
-		return args, true
-	})
+	conf := GetArchiveConf()
+	args := GetArchiveArgs(h, conf, id)
 
 	s := archiveTemplate
 	if int64(1) == conf["dropdown"].(int64) {
@@ -83,11 +91,12 @@ var dropdownScript = `
 func archiveDropDown(h *wp.Handle, conf map[any]any, args map[string]string, archives []models.PostArchive) string {
 	option := str.NewBuilder()
 	option.Sprintf(`<option value="">%s</option>`, args["{$dropdown_label}"])
-	month := strings.TrimLeft(h.Index.Param.Month, "0")
+	i := h.GetIndexHandle()
+	month := strings.TrimLeft(i.Param.Month, "0")
 	showCount := conf["count"].(int64)
 	for _, archive := range archives {
 		sel := ""
-		if h.Index.Param.Year == archive.Year && month == archive.Month {
+		if i.Param.Year == archive.Year && month == archive.Month {
 			sel = "selected"
 		}
 		count := ""

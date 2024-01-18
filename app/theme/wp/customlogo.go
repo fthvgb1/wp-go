@@ -42,10 +42,10 @@ func CalCustomLogo(h *Handle) (r string) {
 	return
 }
 
+var GetCustomLog = reload.BuildValFn("customLogo", CalCustomLogo)
+
 func customLogo(h *Handle) func() string {
 	return func() string {
-		return reload.GetAnyValBys("customLogo", h, func(h *Handle) (string, bool) {
-			return CalCustomLogo(h), true
-		})
+		return GetCustomLog(h)
 	}
 }

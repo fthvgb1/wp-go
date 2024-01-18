@@ -71,14 +71,7 @@ var plainRouteParam = reload.Vars([]Plain{
 			if u == "" {
 				return false
 			}
-			users := reload.GetAnyValBys("usersIds", struct{}{},
-				func(_ struct{}) (map[uint64]string, bool) {
-					users, err := cache.GetAllUsername(h.C)
-					if err != nil {
-						return nil, true
-					}
-					return maps.Flip(users), true
-				})
+			users := GetUsersIds(h)
 			name, ok := users[str.ToInteger[uint64](u, 0)]
 			if !ok {
 				return false
@@ -89,6 +82,14 @@ var plainRouteParam = reload.Vars([]Plain{
 		},
 	},
 })
+
+var GetUsersIds = reload.BuildValFnWithConfirm("usersIds", func(h *wp.Handle) (map[uint64]string, bool) {
+	users, err := cache.GetAllUsername(h.C)
+	if err != nil {
+		return nil, false
+	}
+	return maps.Flip(users), true
+}, 10)
 
 func SetExplainRouteParam(p []Plain) {
 	plainRouteParam.Store(p)

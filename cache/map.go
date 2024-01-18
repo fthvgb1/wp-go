@@ -56,7 +56,7 @@ type IncreaseUpdate[K comparable, V any] struct {
 }
 
 func NewIncreaseUpdate[K comparable, V any](name string, fn IncreaseFn[K, V], cycleTime time.Duration, tFn func() time.Duration) *IncreaseUpdate[K, V] {
-	tFn = reload.FnVal(name, cycleTime, tFn)
+	tFn = reload.BuildFnVal(name, cycleTime, tFn)
 	return &IncreaseUpdate[K, V]{CycleTime: tFn, Fn: fn}
 }
 

@@ -181,10 +181,10 @@ func NewPaginationCache[K comparable, V any](m *cache.MapCache[string, helper.Pa
 		}
 	}
 	if ma == nil {
-		ma = reload.FnVal(str.Join("paginationCache-", name, "-maxNum"), maxNum, nil)
+		ma = reload.BuildFnVal(str.Join("paginationCache-", name, "-maxNum"), maxNum, nil)
 	}
 	if fet == nil {
-		fet = reload.FnVal(str.Join("paginationCache-", name, "-fetchNum"), fetchNum, nil)
+		fet = reload.BuildFnVal(str.Join("paginationCache-", name, "-fetchNum"), fetchNum, nil)
 	}
 	p := cache.NewPagination(m, ma, dbFn, localFn, dbKeyFn, localKeyFn, fet, name)
 	mapCache.Store(name, p)
@@ -215,7 +215,7 @@ func buildLockFn[K comparable](args ...any) cache.LockFn[K] {
 	}
 	loFn = helper.ParseArgs(loFn, args...)
 	if name != "" {
-		loFn = reload.FnVal(str.Join("cachesLocksNum-", name), num, loFn)
+		loFn = reload.BuildFnVal(str.Join("cachesLocksNum-", name), num, loFn)
 	}
 	if lockFn == nil {
 		looo := helper.ParseArgs(cache.Lockss[K](nil), args...)
@@ -247,13 +247,13 @@ func SetExpireTime(c cache.SetTime, name string, expireTime time.Duration, expir
 	if name == "" {
 		return
 	}
-	fn := reload.FnVal(str.Join("cacheManger-", name, "-expiredTime"), expireTime, expireTimeFn)
+	fn := reload.BuildFnVal(str.Join("cacheManger-", name, "-expiredTime"), expireTime, expireTimeFn)
 	c.SetExpiredTime(fn)
 }
 
 func ChangeExpireTime(t time.Duration, coverConf bool, name ...string) {
 	for _, s := range name {
-		reload.ChangeFnVal(s, t, coverConf)
+		reload.SetFnVal(s, t, coverConf)
 	}
 }
 

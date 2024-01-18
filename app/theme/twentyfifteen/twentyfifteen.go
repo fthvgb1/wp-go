@@ -23,7 +23,7 @@ func configs(h *wp.Handle) {
 	})
 	wp.InitPipe(h)
 	middleware.CommonMiddleware(h)
-	h.Index.SetPageEle(plugins.TwentyFifteenPagination())
+	setPaginationAndRender(h)
 	h.PushCacheGroupHeadScript(constraints.AllScene, "CalCustomBackGround", 10.005, CalCustomBackGround)
 	h.PushCacheGroupHeadScript(constraints.AllScene, "colorSchemeCss", 10.0056, colorSchemeCss)
 	h.CommonComponents()
@@ -39,8 +39,22 @@ func configs(h *wp.Handle) {
 	h.PushRender(constraints.AllScene, wp.NewHandleFn(wp.PreTemplate, 70.005, "wp.PreTemplate"))
 }
 
+func setPaginationAndRender(h *wp.Handle) {
+	h.PushHandler(constraints.PipeRender, constraints.Detail, wp.NewHandleFn(func(hh *wp.Handle) {
+		d := hh.GetDetailHandle()
+		d.CommentRender = plugins.CommentRender()
+		d.CommentPageEle = plugins.TwentyFifteenCommentPagination()
+	}, 150, "setPaginationAndRender"))
+
+	wp.PushIndexHandler(constraints.PipeRender, h, wp.NewHandleFn(func(hh *wp.Handle) {
+		i := hh.GetIndexHandle()
+		i.SetPageEle(plugins.TwentyFifteenPagination())
+	}, 150, "setPaginationAndRender"))
+}
+
 func postThumb(h *wp.Handle) {
-	if h.Detail.Post.Thumbnail.Path != "" {
-		h.Detail.Post.Thumbnail = wpconfig.Thumbnail(h.Detail.Post.Thumbnail.OriginAttachmentData, "post-thumbnail", "")
+	d := h.GetDetailHandle()
+	if d.Post.Thumbnail.Path != "" {
+		d.Post.Thumbnail = wpconfig.Thumbnail(d.Post.Thumbnail.OriginAttachmentData, "post-thumbnail", "")
 	}
 }

@@ -18,16 +18,21 @@ func (h *Handle) DisplayHeaderText() bool {
 	return h.themeMods.ThemeSupport.CustomHeader.HeaderText && "blank" != h.themeMods.HeaderTextcolor
 }
 
+var GetCustomHeaderImgFn = reload.BuildValFnWithConfirm("headerImages", customHeadImag, 5)
+
+func customHeadImag(h *Handle) ([]models.PostThumbnail, bool) {
+	hs, err := h.GetHeaderImages(h.theme)
+	if err != nil {
+		h.SetErr(err)
+		return nil, false
+	}
+	return hs, true
+}
+
 func (h *Handle) GetCustomHeaderImg() (r models.PostThumbnail, isRand bool) {
 	var err error
-	img := reload.GetAnyValBy("headerImages", h.theme, func(theme string) ([]models.PostThumbnail, bool) {
-		hs, er := h.GetHeaderImages(h.theme)
-		if er != nil {
-			err = er
-			return nil, false
-		}
-		return hs, true
-	}, 5)
+	img := GetCustomHeaderImgFn(h)
+	err = h.Err()
 	if err != nil {
 		logs.Error(err, "获取页眉背景图失败")
 		return

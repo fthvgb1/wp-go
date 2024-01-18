@@ -69,7 +69,7 @@ func PostPlugin(calls ...PostsPlugin) PostsPlugin {
 	}
 }
 
-func UsePostsPlugins() PostsPlugin {
+func UsePostsPlugins(_ ...any) PostsPlugin {
 	m := pluginFns.Load()
 	pluginss := slice.FilterAndMap(config.GetConfig().ListPagePlugins, func(t string) (func(PostsPlugin, *Handle, *models.Posts), bool) {
 		f, ok := m[t]

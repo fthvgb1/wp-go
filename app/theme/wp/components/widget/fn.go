@@ -14,9 +14,13 @@ func Fn(id string, fn func(*wp.Handle, string) string) func(h *wp.Handle) string
 	}
 }
 
-func configs[M ~map[K]V, K comparable, V any](m M, key string, a ...any) M {
-	return reload.GetAnyValBys(str.Join("widget-config-", key), key, func(_ string) (M, bool) {
-		c := wpconfig.GetPHPArrayVal[M](key, nil, a...)
-		return maps.FilterZeroMerge(maps.Copy(m), c), true
-	})
+func configFns[K comparable, V any](m map[K]V, key string, a ...any) func(_ ...any) map[K]V {
+	return func(_ ...any) map[K]V {
+		c := wpconfig.GetPHPArrayVal[map[K]V](key, nil, a...)
+		return maps.FilterZeroMerge(maps.Copy(m), c)
+	}
+}
+
+func BuildconfigFn[K comparable, V any](m map[K]V, key string, a ...any) func(_ ...any) map[K]V {
+	return reload.BuildValFnWithAnyParams(str.Join("widget-config-", key), configFns(m, key, a...))
 }

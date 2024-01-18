@@ -25,7 +25,7 @@ var recentPostsTemplate = `{$before_widget}
 {$after_widget}
 `
 
-func recentPostsArgs() map[string]string {
+func DefaultRecentPostsArgs() map[string]string {
 	return map[string]string{
 		"{$before_sidebar}": "",
 		"{$after_sidebar}":  "",
@@ -35,7 +35,7 @@ func recentPostsArgs() map[string]string {
 	}
 }
 
-func recentConf() map[any]any {
+func DefaultRecentConf() map[any]any {
 	return map[any]any{
 		"number":    int64(5),
 		"show_date": false,
@@ -43,28 +43,37 @@ func recentConf() map[any]any {
 	}
 }
 
+var GetRecentPostConf = reload.BuildValFnWithAnyParams("widget-recent-posts-conf", RecentPostConf)
+
+func RecentPostConf(_ ...any) map[any]any {
+	recent := DefaultRecentConf()
+	conf := wpconfig.GetPHPArrayVal[map[any]any]("widget_recent-posts", recent, int64(2))
+	conf = maps.FilterZeroMerge(recent, conf)
+	return conf
+}
+
+var GetRecentPostArgs = reload.BuildValFnWithAnyParams("widget-recent-posts-args", ParseRecentPostArgs)
+
+func ParseRecentPostArgs(a ...any) map[string]string {
+	h := a[0].(*wp.Handle)
+	conf := a[1].(map[any]any)
+	id := a[2].(string)
+	recent := DefaultRecentPostsArgs()
+	commonArgs := wp.GetComponentsArgs(widgets.Widget, map[string]string{})
+	args := wp.GetComponentsArgs(widgets.RecentPosts, recent)
+	args = maps.FilterZeroMerge(recent, CommonArgs(), commonArgs, args)
+	args["{$before_widget}"] = fmt.Sprintf(args["{$before_widget}"], str.Join("recent-posts-", id), str.Join("widget widget_", "recent_entries"))
+	args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
+	if slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
+		args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, conf["title"])
+		args["{$navCloser}"] = "</nav>"
+	}
+	return args
+}
+
 func RecentPosts(h *wp.Handle, id string) string {
-	conf := reload.GetAnyValBys("widget-recent-posts-conf", h, func(h *wp.Handle) (map[any]any, bool) {
-		recent := recentConf()
-		conf := wpconfig.GetPHPArrayVal[map[any]any]("widget_recent-posts", recent, int64(2))
-		conf = maps.FilterZeroMerge(recent, conf)
-		return conf, true
-	})
-
-	args := reload.GetAnyValBys("widget-recent-posts-args", h, func(h *wp.Handle) (map[string]string, bool) {
-		recent := recentPostsArgs()
-		commonArgs := wp.GetComponentsArgs(h, widgets.Widget, map[string]string{})
-		args := wp.GetComponentsArgs(h, widgets.RecentPosts, recent)
-		args = maps.FilterZeroMerge(recent, CommonArgs(), commonArgs, args)
-		args["{$before_widget}"] = fmt.Sprintf(args["{$before_widget}"], str.Join("recent-posts-", id), str.Join("widget widget_", "recent_entries"))
-		args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
-		if slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
-			args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, conf["title"])
-			args["{$navCloser}"] = "</nav>"
-		}
-		return args, true
-	})
-
+	conf := GetRecentPostConf()
+	args := GetRecentPostArgs(h, conf, id)
 	currentPostId := uint64(0)
 	if h.Scene() == constraints.Detail {
 		currentPostId = str.ToInteger(h.C.Param("id"), uint64(0))

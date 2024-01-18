@@ -39,9 +39,11 @@ func InitDb() (*safety.Var[*sqlx.DB], error) {
 	if preDb != nil {
 		_ = preDb.Close()
 	}
-	showQuerySql = reload.FnVal("showQuerySql", false, func() bool {
-		return config.GetConfig().ShowQuerySql
-	})
+	if showQuerySql == nil {
+		showQuerySql = reload.BuildFnVal("showQuerySql", false, func() bool {
+			return config.GetConfig().ShowQuerySql
+		})
+	}
 	return safeDb, err
 }
 

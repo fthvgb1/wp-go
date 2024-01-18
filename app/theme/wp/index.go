@@ -25,6 +25,16 @@ type IndexHandle struct {
 	postsPlugin PostsPlugin
 }
 
+func (h *Handle) GetIndexHandle() *IndexHandle {
+	v, ok := h.C.Get("indexHandle")
+	if !ok {
+		vv := NewIndexHandle(h)
+		h.C.Set("indexHandle", vv)
+		return vv
+	}
+	return v.(*IndexHandle)
+}
+
 func (i *IndexHandle) ListPlugin() func(*Handle, *models.Posts) {
 	return i.postsPlugin
 }
@@ -120,8 +130,11 @@ func (i *IndexHandle) Pagination() {
 
 }
 
-func (i *IndexHandle) BuildIndexData(parm *IndexParams) (err error) {
-	err = i.ParseIndex(parm)
+func (i *IndexHandle) BuildIndexData() (err error) {
+	if i.Param == nil {
+		i.Param = NewIndexParams(i.C)
+	}
+	err = i.ParseIndex(i.Param)
 	if err != nil {
 		i.Stats = constraints.ParamError
 		return
@@ -137,12 +150,12 @@ func (i *IndexHandle) BuildIndexData(parm *IndexParams) (err error) {
 	return
 }
 
+var GetPostsPlugin = reload.BuildValFnWithAnyParams("postPlugins", UsePostsPlugins)
+
 func (i *IndexHandle) ExecPostsPlugin() {
 	fn := i.postsPlugin
 	if fn == nil {
-		fn = reload.GetAnyValBys("postPlugins", i, func(a *IndexHandle) (PostsPlugin, bool) {
-			return UsePostsPlugins(), true
-		})
+		fn = GetPostsPlugin()
 	}
 	for j := range i.Posts {
 		fn(i.Handle, &i.Posts[j])
@@ -150,15 +163,15 @@ func (i *IndexHandle) ExecPostsPlugin() {
 }
 
 func IndexRender(h *Handle) {
-	i := h.Index
+	i := h.GetIndexHandle()
 	i.ExecPostsPlugin()
 	i.Pagination()
 	i.ginH["posts"] = i.Posts
 }
 
 func Index(h *Handle) {
-	i := h.Index
-	err := i.BuildIndexData(NewIndexParams(i.C))
+	i := h.GetIndexHandle()
+	err := i.BuildIndexData()
 	if err != nil {
 		i.SetErr(err)
 	}
@@ -166,11 +179,11 @@ func Index(h *Handle) {
 }
 
 func (i *IndexHandle) MarkSticky(posts *[]models.Posts) {
-	a := i.StickPosts()
+	a := GetStickPosts(i.Handle)
 	if len(a) < 1 {
 		return
 	}
-	m := i.StickMapPosts()
+	m := GetStickMapPosts(i.Handle)
 	*posts = append(a, slice.Filter(*posts, func(post models.Posts, _ int) bool {
 		_, ok := m[post.Id]
 		return !ok

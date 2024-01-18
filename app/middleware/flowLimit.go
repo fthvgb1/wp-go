@@ -19,9 +19,9 @@ func FlowLimit(maxRequestSleepNum, maxRequestNum int64, sleepTime []time.Duratio
 	}
 	s := safety.Var[[]time.Duration]{}
 	s.Store(sleepTime)
-	fn := func(msn, mn int64, st []time.Duration) {
-		atomic.StoreInt64(&maxRequestSleepNum, msn)
-		atomic.StoreInt64(&maxRequestNum, mn)
+	fn := func(sleepNum, maxNum int64, st []time.Duration) {
+		atomic.StoreInt64(&maxRequestSleepNum, sleepNum)
+		atomic.StoreInt64(&maxRequestNum, maxNum)
 		s.Store(st)
 	}
 	return func(c *gin.Context) {

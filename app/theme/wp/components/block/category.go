@@ -40,7 +40,7 @@ func categoryDefaultArgs() map[string]string {
 	}
 }
 
-func parseAttr(attr map[any]any) (string, bool) {
+func parseAttr(attr map[any]any) string {
 	var attrs []string
 	class := maps.GetAnyAnyValWithDefaults(attr, "", "className")
 	classes := strings.Split(class, " ")
@@ -50,7 +50,7 @@ func parseAttr(attr map[any]any) (string, bool) {
 	}
 	style := maps.GetAnyAnyValWithDefaults[map[any]any](attr, nil, "style", "typography")
 	if len(style) > 0 {
-		styless := maps.AnyAnyMap(style, func(k, v any) (string, string, bool) {
+		styless := maps.AnyAnyMapTo(style, func(k, v any) (string, string, bool) {
 			kk, ok := k.(string)
 			if !ok {
 				return "", "", false
@@ -68,51 +68,64 @@ func parseAttr(attr map[any]any) (string, bool) {
 		attrs = append(attrs, fmt.Sprintf(`style="%s;"`, strings.Join(styles, ";")))
 	}
 	attrs = append(attrs, fmt.Sprintf(`class="%s"`, strings.Join(classes, " ")))
-	return strings.Join(attrs, " "), true
+	return strings.Join(attrs, " ")
+}
+
+var GetCategoryAttr = reload.BuildValFn("block-category-attr", parseAttr)
+
+var GetCategoryConf = reload.BuildValFnWithConfirm("block-category-conf", categoryConfFn, 5)
+
+func categoryConfFn(blockParser ParserBlock) (map[any]any, bool) {
+	var con any
+	err := json.Unmarshal([]byte(blockParser.Attrs), &con)
+	if err != nil {
+		logs.Error(err, "解析category attr错误", blockParser.Attrs)
+		return nil, false
+	}
+	var conf map[any]any
+	switch con.(type) {
+	case map[any]any:
+		conf = con.(map[any]any)
+	case map[string]any:
+		conf = maps.StrAnyToAnyAny(con.(map[string]any))
+	}
+	conf = maps.FilterZeroMerge(categoryConf(), conf)
+
+	if maps.GetAnyAnyValWithDefaults(conf, false, "showPostCounts") {
+		conf["count"] = int64(1)
+	}
+
+	if maps.GetAnyAnyValWithDefaults(conf, false, "displayAsDropdown") {
+		conf["dropdown"] = int64(1)
+	}
+	if maps.GetAnyAnyValWithDefaults(conf, false, "showHierarchy") {
+		conf["hierarchical"] = int64(1)
+	}
+
+	class := maps.GetAnyAnyValWithDefaults(conf, "", "className")
+	classes := strings.Split(class, " ")
+	classes = append(classes, "wp-block-categories")
+	if conf["dropdown"].(int64) == 1 {
+		classes = append(classes, "wp-block-categories-dropdown")
+		conf["className"] = strings.Join(classes, " ")
+	} else {
+		classes = append(classes, "wp-block-categories-list")
+		conf["className"] = strings.Join(classes, " ")
+	}
+	return conf, true
+}
+
+var GetCategoryArgs = reload.BuildValFnWithAnyParams("block-category-args", categoryArgs)
+
+func categoryArgs(_ ...any) map[string]string {
+	args := wp.GetComponentsArgs(widgets.Widget, map[string]string{})
+	return maps.FilterZeroMerge(categoryDefaultArgs(), args)
 }
 
 func Category(h *wp.Handle, id string, blockParser ParserBlock) (func() string, error) {
 	counter := number.Counters[int]()
 	var err error
-	conf := reload.GetAnyValBy("block-category-conf", h, func(h *wp.Handle) (map[any]any, bool) {
-		var con any
-		err = json.Unmarshal([]byte(blockParser.Attrs), &con)
-		if err != nil {
-			logs.Error(err, "解析category attr错误", blockParser.Attrs)
-			return nil, false
-		}
-		var conf map[any]any
-		switch con.(type) {
-		case map[any]any:
-			conf = con.(map[any]any)
-		case map[string]any:
-			conf = maps.StrAnyToAnyAny(con.(map[string]any))
-		}
-		conf = maps.FilterZeroMerge(categoryConf(), conf)
-
-		if maps.GetAnyAnyValWithDefaults(conf, false, "showPostCounts") {
-			conf["count"] = int64(1)
-		}
-
-		if maps.GetAnyAnyValWithDefaults(conf, false, "displayAsDropdown") {
-			conf["dropdown"] = int64(1)
-		}
-		if maps.GetAnyAnyValWithDefaults(conf, false, "showHierarchy") {
-			conf["hierarchical"] = int64(1)
-		}
-
-		class := maps.GetAnyAnyValWithDefaults(conf, "", "className")
-		classes := strings.Split(class, " ")
-		classes = append(classes, "wp-block-categories")
-		if conf["dropdown"].(int64) == 1 {
-			classes = append(classes, "wp-block-categories-dropdown")
-			conf["className"] = strings.Join(classes, " ")
-		} else {
-			classes = append(classes, "wp-block-categories-list")
-			conf["className"] = strings.Join(classes, " ")
-		}
-		return conf, true
-	}, 5)
+	conf := GetCategoryConf(blockParser)
 
 	if err != nil {
 		return nil, err
@@ -127,10 +140,7 @@ func Category(h *wp.Handle, id string, blockParser ParserBlock) (func() string, 
 	if maps.GetAnyAnyValWithDefaults(conf, false, "showOnlyTopLevel") {
 		h.C.Set("showOnlyTopLevel", true)
 	}
-	args := reload.GetAnyValBys("block-category-args", h, func(h *wp.Handle) (map[string]string, bool) {
-		args := wp.GetComponentsArgs(h, widgets.Widget, map[string]string{})
-		return maps.FilterZeroMerge(categoryDefaultArgs(), args), true
-	})
+	args := GetCategoryArgs()
 
 	return func() string {
 		return category(h, id, counter, args, conf)
@@ -150,21 +160,21 @@ func category(h *wp.Handle, id string, counter number.Counter[int], args map[str
 	return str.Join(before, out, args["{$after_widget}"])
 }
 
-func categoryUl(h *wp.Handle, categories []models.TermsMy, conf map[any]any) string {
+func categoryUl(h *wp.Handle, categories []models.TermsMy, confAttr map[any]any) string {
 	s := str.NewBuilder()
-	li := widget.CategoryLi(h, conf, categories)
-	attrs := reload.GetAnyValBys("block-category-attr", conf, parseAttr)
+	li := widget.CategoryLi(h, confAttr, categories)
+	attrs := GetCategoryAttr(confAttr)
 	s.Sprintf(`<ul %s>%s</ul>`, attrs, li)
 	return s.String()
 }
 
-func dropdown(h *wp.Handle, categories []models.TermsMy, id int, args map[string]string, conf map[any]any) string {
+func dropdown(h *wp.Handle, categories []models.TermsMy, id int, args map[string]string, confAttr map[any]any) string {
 	s := str.NewBuilder()
 	ids := fmt.Sprintf(`wp-block-categories-%v`, id)
 	args = maps.Copy(args)
 	args["{$selectId}"] = ids
-	attrs := reload.GetAnyValBys("block-category-attr", conf, parseAttr)
-	selects := widget.DropdownCategories(h, args, conf, categories)
+	attrs := GetCategoryAttr(confAttr)
+	selects := widget.DropdownCategories(h, args, confAttr, categories)
 	s.Sprintf(`<div %s><label class="screen-reader-text" for="%s">%s</label>%s%s</div>`, attrs, ids, args["{$title}"], selects, strings.ReplaceAll(categoryDropdownScript, "{$id}", ids))
 	return s.String()
 }

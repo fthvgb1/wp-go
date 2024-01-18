@@ -25,14 +25,25 @@ func IpLimit(num int64) (func(ctx *gin.Context), func(int64)) {
 	fn(num)
 
 	return func(c *gin.Context) {
+		if atomic.LoadInt64(m.limitNum) <= 0 {
+			c.Next()
+			return
+		}
 		ip := c.ClientIP()
-		s := false
 		m.mux.RLock()
 		i, ok := m.m[ip]
 		m.mux.RUnlock()
+
+		if !ok {
+			m.mux.Lock()
+			i = new(int64)
+			m.m[ip] = i
+			m.mux.Unlock()
+		}
+
 		defer func() {
 			ii := atomic.LoadInt64(i)
-			if s && ii > 0 {
+			if ii > 0 {
 				atomic.AddInt64(i, -1)
 				if atomic.LoadInt64(i) == 0 {
 					m.mux.Lock()
@@ -42,20 +53,12 @@ func IpLimit(num int64) (func(ctx *gin.Context), func(int64)) {
 			}
 		}()
 
-		if !ok {
-			m.mux.Lock()
-			i = new(int64)
-			m.m[ip] = i
-			m.mux.Unlock()
-		}
-
-		if atomic.LoadInt64(m.limitNum) > 0 && atomic.LoadInt64(i) >= atomic.LoadInt64(m.limitNum) {
+		if atomic.LoadInt64(i) >= atomic.LoadInt64(m.limitNum) {
 			c.Status(http.StatusForbidden)
 			c.Abort()
 			return
 		}
 		atomic.AddInt64(i, 1)
-		s = true
 		c.Next()
 	}, fn
 }

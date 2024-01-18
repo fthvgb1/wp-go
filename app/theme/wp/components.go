@@ -6,57 +6,106 @@ import (
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	str "github.com/fthvgb1/wp-go/helper/strings"
+	"github.com/fthvgb1/wp-go/safety"
 	"strings"
 )
 
+var handleComponents = safety.NewMap[string, map[string][]Components[string]]()
+var handleComponentHook = safety.NewMap[string, []func(Components[string]) (Components[string], bool)]()
+
+var componentsArgs = safety.NewMap[string, any]()
+var componentFilterFns = safety.NewMap[string, []func(*Handle, string, ...any) string]()
+
 func (h *Handle) DeleteComponents(scene, name string) {
-	h.componentHook[scene] = append(h.componentHook[scene], func(c Components[string]) (Components[string], bool) {
+	v, _ := handleComponentHook.Load(scene)
+	v = append(v, func(c Components[string]) (Components[string], bool) {
 		return c, c.Name != name
 	})
+	handleComponentHook.Store(scene, v)
 }
 func (h *Handle) ReplaceComponents(scene, name string, components Components[string]) {
-	h.componentHook[scene] = append(h.componentHook[scene], func(c Components[string]) (Components[string], bool) {
+	v, _ := handleComponentHook.Load(scene)
+	v = append(v, func(c Components[string]) (Components[string], bool) {
 		if c.Name == name {
 			c = components
 		}
 		return c, true
 	})
+	handleComponentHook.Store(scene, v)
 }
 func (h *Handle) HookComponents(scene string, fn func(Components[string]) (Components[string], bool)) {
-	h.componentHook[scene] = append(h.componentHook[scene], fn)
+	v, _ := handleComponentHook.Load(scene)
+	v = append(v, fn)
+	handleComponentHook.Store(scene, v)
+}
+
+var getComponentFn = reload.BuildMapFn[string]("scene-components", getComponent)
+var hookComponentFn = reload.BuildMapFn[string]("calComponents", hookComponent)
+
+type componentParam struct {
+	components []Components[string]
+	k          string
+}
+
+func hookComponent(p componentParam) []Components[string] {
+	mut := reload.GetGlobeMutex()
+	mut.Lock()
+	allHooks := slice.FilterAndToMap(p.components, func(t Components[string], _ int) (string, []func(Components[string]) (Components[string], bool), bool) {
+		fn, ok := handleComponentHook.Load(p.k)
+		return p.k, fn, ok
+	})
+	mut.Unlock()
+	r := slice.FilterAndMap(p.components, func(component Components[string]) (Components[string], bool) {
+		hooks, ok := allHooks[p.k]
+		if !ok {
+			return component, true
+		}
+		for _, fn := range hooks {
+			hookedComponent, ok := fn(component)
+			if !ok { // DeleteComponents fn
+				return hookedComponent, false
+			}
+			component = hookedComponent // ReplaceComponents fn
+		}
+		return component, true
+	})
+	slice.SimpleSort(r, slice.DESC, func(t Components[string]) float64 {
+		return t.Order
+	})
+	return r
+}
+
+func getComponent(h *Handle) map[string][]Components[string] {
+	mut := reload.GetGlobeMutex()
+	mut.Lock()
+	sceneComponents, _ := handleComponents.Load(h.scene)
+	allSceneComponents, _ := handleComponents.Load(constraints.AllScene)
+
+	mut.Unlock()
+	return maps.MergeBy(func(k string, c1, c2 []Components[string]) ([]Components[string], bool) {
+		vv := append(c1, c2...)
+		return vv, vv != nil
+	}, nil, sceneComponents, allSceneComponents)
+}
+
+type cacheComponentParm[T any] struct {
+	Components[T]
+	h *Handle
+}
+
+var cacheComponentsFn = reload.BuildMapFn[string]("cacheComponents", cacheComponentFn)
+
+func cacheComponentFn(a cacheComponentParm[string]) string {
+	return a.Fn(a.h)
 }
 
 func CalComponents(h *Handle) {
-	componentss := reload.GetAnyValMapBy("scene-components", str.Join("allScene-", h.scene), h, func(h *Handle) (map[string][]Components[string], bool) {
-		return maps.MergeBy(func(k string, v1, v2 []Components[string]) ([]Components[string], bool) {
-			vv := append(v1, v2...)
-			return vv, vv != nil
-		}, nil, h.components[h.scene], h.components[constraints.AllScene]), true
-	})
-	for k, components := range componentss {
+	allComponents := getComponentFn(str.Join("allScene-", h.scene), h)
+	for k, components := range allComponents {
 		key := str.Join("calComponents-", h.scene, "-", k)
-		ss := reload.GetAnyValMapBy("calComponents", key, h, func(h *Handle) ([]Components[string], bool) {
-			r := slice.FilterAndMap(components, func(t Components[string]) (Components[string], bool) {
-				fns, ok := h.componentHook[k]
-				if !ok {
-					return t, true
-				}
-				for _, fn := range fns {
-					c, ok := fn(t)
-					if !ok {
-						return c, false
-					}
-					t = c
-				}
-				return t, true
-			})
-			slice.SimpleSort(r, slice.DESC, func(t Components[string]) float64 {
-				return t.Order
-			})
-			return r, true
-		})
-		var s = make([]string, 0, len(ss))
-		for _, component := range ss {
+		hookedComponents := hookComponentFn(key, componentParam{components, k})
+		var s = make([]string, 0, len(hookedComponents))
+		for _, component := range hookedComponents {
 			if component.Val != "" {
 				s = append(s, component.Val)
 				continue
@@ -64,9 +113,7 @@ func CalComponents(h *Handle) {
 			if component.Fn != nil {
 				v := ""
 				if component.Cached {
-					v = reload.GetAnyValMapBy("cacheComponents", component.Name, h, func(a *Handle) (string, bool) {
-						return component.Fn(h), true
-					})
+					v = cacheComponentsFn(component.Name, cacheComponentParm[string]{component, h})
 				} else {
 					v = component.Fn(h)
 				}
@@ -80,12 +127,12 @@ func CalComponents(h *Handle) {
 }
 
 func (h *Handle) PushComponents(scene, componentType string, components ...Components[string]) {
-	c, ok := h.components[scene]
+	c, ok := handleComponents.Load(scene)
 	if !ok {
 		c = make(map[string][]Components[string])
-		h.components[scene] = c
 	}
 	c[componentType] = append(c[componentType], components...)
+	handleComponents.Store(scene, c)
 }
 
 func (h *Handle) PushGroupComponentStr(scene, componentType, name string, order float64, strs ...string) {
@@ -141,8 +188,8 @@ func (h *Handle) PushGroupHeadScript(scene, name string, order float64, str ...s
 	h.PushGroupComponentStr(scene, constraints.HeadScript, name, order, str...)
 }
 
-func GetComponentsArgs[T any](h *Handle, k string, defaults T) T {
-	v, ok := h.componentsArgs[k]
+func GetComponentsArgs[T any](k string, defaults T) T {
+	v, ok := componentsArgs.Load(k)
 	if ok {
 		vv, ok := v.(T)
 		if ok {
@@ -152,60 +199,61 @@ func GetComponentsArgs[T any](h *Handle, k string, defaults T) T {
 	return defaults
 }
 
-func PushComponentsArgsForSlice[T any](h *Handle, name string, v ...T) {
-	val, ok := h.componentsArgs[name]
+func PushComponentsArgsForSlice[T any](name string, v ...T) {
+	val, ok := componentsArgs.Load(name)
 	if !ok {
 		var vv []T
 		vv = append(vv, v...)
-		h.componentsArgs[name] = vv
+		componentsArgs.Store(name, vv)
 		return
 	}
 	vv, ok := val.([]T)
 	if ok {
 		vv = append(vv, v...)
-		h.componentsArgs[name] = vv
+		componentsArgs.Store(name, vv)
 	}
 }
-func SetComponentsArgsForMap[K comparable, V any](h *Handle, name string, key K, v V) {
-	val, ok := h.componentsArgs[name]
+func SetComponentsArgsForMap[K comparable, V any](name string, key K, v V) {
+	val, ok := componentsArgs.Load(name)
 	if !ok {
 		vv := make(map[K]V)
 		vv[key] = v
-		h.componentsArgs[name] = vv
+		componentsArgs.Store(name, vv)
 		return
 	}
 	vv, ok := val.(map[K]V)
 	if ok {
 		vv[key] = v
-		h.componentsArgs[name] = vv
+		componentsArgs.Store(name, vv)
 	}
 }
-func MergeComponentsArgsForMap[K comparable, V any](h *Handle, name string, m map[K]V) {
-	val, ok := h.componentsArgs[name]
+func MergeComponentsArgsForMap[K comparable, V any](name string, m map[K]V) {
+	val, ok := componentsArgs.Load(name)
 	if !ok {
-		h.componentsArgs[name] = m
+		componentsArgs.Store(name, m)
 		return
 	}
 	vv, ok := val.(map[K]V)
 	if ok {
-		h.componentsArgs[name] = maps.Merge(vv, m)
+		componentsArgs.Store(name, maps.Merge(vv, m))
 	}
 }
 
-func SetComponentsArgs(h *Handle, key string, value any) {
-	h.componentsArgs[key] = value
+func SetComponentsArgs(key string, value any) {
+	componentsArgs.Store(key, value)
 }
 
-func (h *Handle) ComponentFilterFn(name string) ([]func(*Handle, string, ...any) string, bool) {
-	fn, ok := h.componentFilterFn[name]
-	return fn, ok
+func (h *Handle) GetComponentFilterFn(name string) ([]func(*Handle, string, ...any) string, bool) {
+	return componentFilterFns.Load(name)
 }
 
 func (h *Handle) AddActionFilter(name string, fns ...func(*Handle, string, ...any) string) {
-	h.componentFilterFn[name] = append(h.componentFilterFn[name], fns...)
+	v, _ := componentFilterFns.Load(name)
+	v = append(v, fns...)
+	componentFilterFns.Store(name, v)
 }
 func (h *Handle) DoActionFilter(name, s string, args ...any) string {
-	calls, ok := h.componentFilterFn[name]
+	calls, ok := componentFilterFns.Load(name)
 	if ok {
 		return slice.Reduce(calls, func(fn func(*Handle, string, ...any) string, r string) string {
 			return fn(h, r, args...)

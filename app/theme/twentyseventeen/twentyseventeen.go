@@ -57,7 +57,7 @@ func configs(h *wp.Handle) {
 	components.WidgetArea(h)
 	pushScripts(h)
 	h.PushRender(constraints.AllStats, wp.NewHandleFn(calCustomHeader, 10.005, "calCustomHeader"))
-	wp.SetComponentsArgs(h, widgets.Widget, map[string]string{
+	wp.SetComponentsArgs(widgets.Widget, map[string]string{
 		"{$before_widget}": `<section id="%s" class="%s">`,
 		"{$after_widget}":  `</section>`,
 	})
@@ -67,18 +67,28 @@ func configs(h *wp.Handle) {
 	)
 	videoHeader(h)
 	h.SetData("colophon", colophon)
-	h.Detail.CommentRender = commentFormat
-	h.Detail.CommentPageEle = commentPageEle
+	setPaginationAndRender(h)
 	h.CommonComponents()
-	h.Index.SetPageEle(paginate)
 	wp.ReplyCommentJs(h)
 	h.PushPostPlugin(postThumbnail)
-	wp.SetComponentsArgsForMap(h, widgets.Search, "{$form}", searchForm)
+	wp.SetComponentsArgsForMap(widgets.Search, "{$form}", searchForm)
 	wp.PushIndexHandler(constraints.PipeRender, h, wp.NewHandleFn(wp.IndexRender, 10.005, "wp.IndexRender"))
 	h.PushRender(constraints.Detail, wp.NewHandleFn(wp.DetailRender, 10.005, "wp.DetailRender"))
 	h.PushDataHandler(constraints.Detail, wp.NewHandleFn(wp.Detail, 100.005, "wp.Detail"), wp.NewHandleFn(postThumb, 90.005, "{theme}.postThumb"))
 	wp.PushIndexHandler(constraints.PipeData, h, wp.NewHandleFn(wp.Index, 100.005, "wp.Index"))
 	h.PushDataHandler(constraints.AllScene, wp.NewHandleFn(wp.PreCodeAndStats, 90.005, "wp.PreCodeAndStats"))
+}
+
+func setPaginationAndRender(h *wp.Handle) {
+	h.PushHandler(constraints.PipeRender, constraints.Detail, wp.NewHandleFn(func(hh *wp.Handle) {
+		d := hh.GetDetailHandle()
+		d.CommentRender = commentFormat
+		d.CommentPageEle = commentPageEle
+	}, 150, "setPaginationAndRender"))
+	wp.PushIndexHandler(constraints.PipeRender, h, wp.NewHandleFn(func(hh *wp.Handle) {
+		i := hh.GetIndexHandle()
+		i.SetPageEle(paginate)
+	}, 150, "setPaginationAndRender"))
 }
 
 var searchForm = `<form role="search" method="get" class="search-form" action="/">
@@ -101,7 +111,7 @@ func errorsHandle(h *wp.Handle) {
 }
 
 func postThumb(h *wp.Handle) {
-	d := h.Detail
+	d := h.GetDetailHandle()
 	if d.Post.Thumbnail.Path != "" {
 		img := wpconfig.Thumbnail(d.Post.Thumbnail.OriginAttachmentData, "full", "", "thumbnail", "post-thumbnail")
 		img.Sizes = "100vw"

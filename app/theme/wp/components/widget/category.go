@@ -44,22 +44,29 @@ func categoryArgs() map[string]string {
 	}
 }
 
+var GetCategoryConf = BuildconfigFn(categoryConfig, "widget_categories", int64(2))
+
+var GetCategoryArgs = reload.BuildValFnWithAnyParams("widget-category-args", categoryArgsFn)
+
+func categoryArgsFn(a ...any) map[string]string {
+	h := a[0].(*wp.Handle)
+	conf := a[1].(map[any]any)
+	id := a[2].(string)
+	commonArgs := wp.GetComponentsArgs(widgets.Widget, map[string]string{})
+	args := wp.GetComponentsArgs(widgets.Categories, categoryArgs())
+	args = maps.FilterZeroMerge(categoryArgs(), CommonArgs(), commonArgs, args)
+	args["{$before_widget}"] = fmt.Sprintf(args["{$before_widget}"], str.Join("categories-", id), str.Join("widget widget_", "categories"))
+	args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
+	if conf["dropdown"].(int64) == 0 && slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
+		args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, args["{title}"])
+		args["{$navCloser}"] = "</nav>"
+	}
+	return args
+}
+
 func Category(h *wp.Handle, id string) string {
-	conf := configs(categoryConfig, "widget_categories", int64(2))
-
-	args := reload.GetAnyValBys("widget-category-args", h, func(h *wp.Handle) (map[string]string, bool) {
-		commonArgs := wp.GetComponentsArgs(h, widgets.Widget, map[string]string{})
-		args := wp.GetComponentsArgs(h, widgets.Categories, categoryArgs())
-		args = maps.FilterZeroMerge(categoryArgs(), CommonArgs(), commonArgs, args)
-		args["{$before_widget}"] = fmt.Sprintf(args["{$before_widget}"], str.Join("categories-", id), str.Join("widget widget_", "categories"))
-		args["{$title}"] = str.Join(args["{$before_title}"], conf["title"].(string), args["{$after_title}"])
-		if conf["dropdown"].(int64) == 0 && slice.IsContained(h.CommonThemeMods().ThemeSupport.HTML5, "navigation-widgets") {
-			args["{$nav}"] = fmt.Sprintf(`<nav aria-label="%s">`, args["{title}"])
-			args["{$navCloser}"] = "</nav>"
-		}
-		return args, true
-	})
-
+	conf := GetCategoryConf()
+	args := GetCategoryArgs(h, conf, id)
 	t := categoryTemplate
 	dropdown := conf["dropdown"].(int64)
 	categories := cache.CategoriesTags(h.C, constraints.Category)
@@ -201,8 +208,9 @@ func DropdownCategories(h *wp.Handle, args map[string]string, conf map[any]any, 
 	s.Sprintf(`		<option value="-1">%s</option>
 `, args["{$show_option_none}"])
 	currentCategory := ""
+	i := h.GetIndexHandle()
 	if h.Scene() == constraints.Category {
-		currentCategory = h.Index.Param.Category
+		currentCategory = i.Param.Category
 	}
 	showCount := conf["count"].(int64)
 	fn := func(category models.TermsMy, deep int) {
@@ -235,7 +243,7 @@ func DropdownCategories(h *wp.Handle, args map[string]string, conf map[any]any, 
 }
 
 func IsCategory(h *wp.Handle) (category models.TermsMy, r bool) {
-	cate := wp.GetComponentsArgs[map[string]string](h, widgets.Categories, categoryArgs())
+	cate := wp.GetComponentsArgs[map[string]string](widgets.Categories, categoryArgs())
 	name, ok := cate["{$name}"]
 	if !ok || name == "" {
 		return
@@ -260,7 +268,7 @@ func IsCategory(h *wp.Handle) (category models.TermsMy, r bool) {
 }
 
 func CategoryQueryName(h *wp.Handle) string {
-	cate := wp.GetComponentsArgs[map[string]string](h, widgets.Categories, categoryArgs())
+	cate := wp.GetComponentsArgs[map[string]string](widgets.Categories, categoryArgs())
 	name, ok := cate["{$name}"]
 	if ok {
 		return name

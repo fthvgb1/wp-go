@@ -70,49 +70,51 @@ func Hook(path string, fn func(Route) Route) {
 		return r, path == r.Path
 	})
 }
+
+var RegRouteFn = reload.BuildValFnWithAnyParams("regexRoute", RegRouteHook)
+
+func RegRouteHook(_ ...any) func() (map[string]Route, map[string]*regexp.Regexp) {
+	m := map[string]Route{}
+	rrs := map[string]*regexp.Regexp{}
+	routes.Range(func(key string, value Route) bool {
+		vv, _ := regRoutes.Load(key)
+		if len(routeHook) > 0 {
+			for _, fn := range routeHook {
+				v, ok := fn(value)
+				if !ok {
+					continue
+				}
+				m[v.Path] = v
+				if v.Type != "reg" {
+					continue
+				}
+				if v.Path != key {
+					vvv, err := regexp.Compile(v.Path)
+					if err != nil {
+						panic(err)
+					}
+					vv = vvv
+				}
+				rrs[v.Path] = vv
+			}
+		} else {
+			m[key] = value
+			rrs[key] = vv
+		}
+		return true
+	})
+	return func() (map[string]Route, map[string]*regexp.Regexp) {
+		return m, rrs
+	}
+}
 func ResolveRoute(h *wp.Handle) {
 	requestURI := h.C.Request.RequestURI
-	rs, rrs := reload.GetAnyValBys("route",
-		struct{}{},
-		func(_ struct{}) (func() (map[string]Route, map[string]*regexp.Regexp), bool) {
-			m := map[string]Route{}
-			rrs := map[string]*regexp.Regexp{}
-			routes.Range(func(key string, value Route) bool {
-				vv, _ := regRoutes.Load(key)
-				if len(routeHook) > 0 {
-					for _, fn := range routeHook {
-						v, ok := fn(value)
-						if !ok {
-							continue
-						}
-						m[v.Path] = v
-						if v.Type != "reg" {
-							continue
-						}
-						if v.Path != key {
-							vvv, err := regexp.Compile(v.Path)
-							if err != nil {
-								panic(err)
-							}
-							vv = vvv
-						}
-						rrs[v.Path] = vv
-					}
-				} else {
-					m[key] = value
-					rrs[key] = vv
-				}
-
-				return true
-			})
-			return func() (map[string]Route, map[string]*regexp.Regexp) {
-				return m, rrs
-			}, true
-		})()
+	rs, rrs := RegRouteFn()()
 	v, ok := rs[requestURI]
 	if ok && slice.IsContained(v.Method, h.C.Request.Method) {
 		h.SetScene(v.Scene)
 		wp.Run(h, nil)
+		h.Abort()
 		return
 	}
 	for path, reg := range rrs {
@@ -125,6 +127,7 @@ func ResolveRoute(h *wp.Handle) {
 			h.SetScene(rr.Scene)
 			h.C.Set("route", r)
 			wp.Run(h, nil)
+			h.Abort()
 			return
 		}
 	}
