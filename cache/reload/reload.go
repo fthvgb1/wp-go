@@ -61,7 +61,7 @@ func DeleteMapVal[T any](namespace string, key ...T) {
 	fn(key)
 }
 
-func FlushAnyVal(namespaces ...string) {
+func Specifies(namespaces ...string) {
 	for _, namespace := range namespaces {
 		fn, ok := callMap.Load(namespace)
 		if !ok {
@@ -93,7 +93,7 @@ func BuildMapFnWithConfirm[K comparable, V, A any](namespace string, fn func(A) 
 	}
 }
 
-// BuildMapFn build given fn with a new fn which returned value can be saved and flushed when called Reload or FlushAnyVal
+// BuildMapFn build given fn with a new fn which returned value can be saved and flushed when called Reload or Specifies
 // with namespace
 //
 // if give a float then can be reloaded early or lately, more bigger more earlier
@@ -272,7 +272,7 @@ func BuildValFnWithConfirm[T, A any](namespace string, fn func(A) (T, bool), arg
 	}
 }
 
-// BuildValFn build given fn a new fn which return value can be saved and flushed when called Reload or FlushAnyVal
+// BuildValFn build given fn a new fn which return value can be saved and flushed when called Reload or Specifies
 // with namespace.
 //
 // note:  namespace should be not same as BuildMapFn and related fn, they stored same safety.Map[string,any].
@@ -325,7 +325,7 @@ func BuildValFnWithAnyParams[T any](namespace string, fn func(...any) T, args ..
 //
 // args same as Push
 //
-// if give a name, then can be flushed by calls FlushAnyVal
+// if give a name, then can be flushed by calls Specifies
 //
 // if give a float then can be reloaded early or lately, more bigger more earlier
 func Vars[T any](defaults T, args ...any) *safety.Var[T] {
@@ -356,7 +356,7 @@ func parseArgs(a ...any) (ord float64, name string) {
 // VarsBy
 //
 // args same as Push
-// if give a name, then can be flushed by calls FlushAnyVal
+// if give a name, then can be flushed by calls Specifies
 func VarsBy[T any](fn func() T, args ...any) *safety.Var[T] {
 	ss := safety.NewVar(fn())
 	ord, name := parseArgs(args...)
@@ -391,7 +391,7 @@ func SafeMap[K comparable, T any](args ...any) *safety.Map[K, T] {
 
 // Push the func that will be called whenever Reload called
 //
-// if give a name, then can be called by called FlushAnyVal
+// if give a name, then can be called by called Specifies
 //
 // if give a float then can be called early or lately when called Reload, more bigger more earlier
 func Push(fn func(), a ...any) {
