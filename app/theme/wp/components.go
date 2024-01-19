@@ -99,7 +99,7 @@ func cacheComponentFn(a cacheComponentParm[string]) string {
 func CalComponents(h *Handle) {
 	allComponents := GetComponents(str.Join("allScene-", h.scene), h)
 	for k, components := range allComponents {
-		key := str.Join("calComponents-", h.scene, "-", k)
+		key := str.Join("calComponents-", h.theme, "-", h.scene, "-", k)
 		hookedComponents := HookComponents(key, k, components)
 		var s = make([]string, 0, len(hookedComponents))
 		for _, component := range hookedComponents {
