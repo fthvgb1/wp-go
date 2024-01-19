@@ -28,7 +28,6 @@ func configs(h *wp.Handle) {
 	h.PushCacheGroupHeadScript(constraints.AllScene, "colorSchemeCss", 10.0056, colorSchemeCss)
 	h.CommonComponents()
 	components.WidgetArea(h)
-	wp.ReplyCommentJs(h)
 	h.SetData("customHeader", customHeader(h))
 	wp.PushIndexHandler(constraints.PipeRender, h, wp.NewHandleFn(wp.IndexRender, 50.005, "wp.IndexRender"))
 	h.PushRender(constraints.Detail, wp.NewHandleFn(wp.DetailRender, 50.005, "wp.DetailRender"))

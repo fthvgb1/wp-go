@@ -69,7 +69,6 @@ func configs(h *wp.Handle) {
 	h.SetData("colophon", colophon)
 	setPaginationAndRender(h)
 	h.CommonComponents()
-	wp.ReplyCommentJs(h)
 	h.PushPostPlugin(postThumbnail)
 	wp.SetComponentsArgsForMap(widgets.Search, "{$form}", searchForm)
 	wp.PushIndexHandler(constraints.PipeRender, h, wp.NewHandleFn(wp.IndexRender, 10.005, "wp.IndexRender"))

@@ -39,24 +39,21 @@ func (h *Handle) HookComponents(scene string, fn func(Components[string]) (Compo
 	handleComponentHook.Store(scene, v)
 }
 
-var getComponentFn = reload.BuildMapFn[string]("scene-components", getComponent)
-var hookComponentFn = reload.BuildMapFn[string]("calComponents", hookComponent)
+var GetComponents = reload.BuildMapFn[string]("scene-components", getComponent)
+var HookComponents = reload.BuildMapFnWithAnyParams[string]("calComponents", hookComponent)
 
-type componentParam struct {
-	components []Components[string]
-	k          string
-}
-
-func hookComponent(p componentParam) []Components[string] {
+func hookComponent(a ...any) []Components[string] {
+	k := a[0].(string)
+	components := a[1].([]Components[string])
 	mut := reload.GetGlobeMutex()
 	mut.Lock()
-	allHooks := slice.FilterAndToMap(p.components, func(t Components[string], _ int) (string, []func(Components[string]) (Components[string], bool), bool) {
-		fn, ok := handleComponentHook.Load(p.k)
-		return p.k, fn, ok
+	allHooks := slice.FilterAndToMap(components, func(t Components[string], _ int) (string, []func(Components[string]) (Components[string], bool), bool) {
+		fn, ok := handleComponentHook.Load(k)
+		return k, fn, ok
 	})
 	mut.Unlock()
-	r := slice.FilterAndMap(p.components, func(component Components[string]) (Components[string], bool) {
-		hooks, ok := allHooks[p.k]
+	r := slice.FilterAndMap(components, func(component Components[string]) (Components[string], bool) {
+		hooks, ok := allHooks[k]
 		if !ok {
 			return component, true
 		}
@@ -100,10 +97,10 @@ func cacheComponentFn(a cacheComponentParm[string]) string {
 }
 
 func CalComponents(h *Handle) {
-	allComponents := getComponentFn(str.Join("allScene-", h.scene), h)
+	allComponents := GetComponents(str.Join("allScene-", h.scene), h)
 	for k, components := range allComponents {
 		key := str.Join("calComponents-", h.scene, "-", k)
-		hookedComponents := hookComponentFn(key, componentParam{components, k})
+		hookedComponents := HookComponents(key, k, components)
 		var s = make([]string, 0, len(hookedComponents))
 		for _, component := range hookedComponents {
 			if component.Val != "" {

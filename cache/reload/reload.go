@@ -132,7 +132,7 @@ func BuildMapFnWithAnyParams[K comparable, V any](namespace string, fn func(...a
 		if ok {
 			return v
 		}
-		v = fn(a)
+		v = fn(a...)
 		m.Val.Store(key, v)
 		return v
 	}

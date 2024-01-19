@@ -248,6 +248,7 @@ func (h *Handle) CommonComponents() {
 	h.PushCacheGroupHeadScript(constraints.AllScene, "siteIconAndCustomCss", 0, CalSiteIcon, CalCustomCss)
 	h.PushRender(constraints.AllStats, NewHandleFn(CalComponents, 10.001, "wp.CalComponents"))
 	h.PushRender(constraints.AllStats, NewHandleFn(PreRenderTemplate, 0, "wp.PreRenderTemplate"))
+	ReplyCommentJs(h)
 	AdditionScript(h)
 }
 
