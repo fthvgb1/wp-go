@@ -3,11 +3,13 @@ package twentyfifteen
 import (
 	"github.com/fthvgb1/wp-go/app/pkg/constraints"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints/widgets"
+	"github.com/fthvgb1/wp-go/app/pkg/models"
 	"github.com/fthvgb1/wp-go/app/plugins"
 	"github.com/fthvgb1/wp-go/app/theme/wp"
 	"github.com/fthvgb1/wp-go/app/theme/wp/components"
 	"github.com/fthvgb1/wp-go/app/theme/wp/middleware"
 	"github.com/fthvgb1/wp-go/app/wpconfig"
+	"github.com/fthvgb1/wp-go/cache/reload"
 	"strings"
 )
 
@@ -28,7 +30,7 @@ func configs(h *wp.Handle) {
 	h.PushCacheGroupHeadScript(constraints.AllScene, "colorSchemeCss", 10.0056, colorSchemeCss)
 	h.CommonComponents()
 	components.WidgetArea(h)
-	h.SetData("customHeader", customHeader(h))
+	h.PushRender(constraints.AllScene, wp.NewHandleFn(renderCustomHeader, 20.5, "renderCustomHeader"))
 	wp.PushIndexHandler(constraints.PipeRender, h, wp.NewHandleFn(wp.IndexRender, 50.005, "wp.IndexRender"))
 	h.PushRender(constraints.Detail, wp.NewHandleFn(wp.DetailRender, 50.005, "wp.DetailRender"))
 	h.PushRender(constraints.Detail, wp.NewHandleFn(postThumb, 60.005, "postThumb"))
@@ -54,6 +56,16 @@ func setPaginationAndRender(h *wp.Handle) {
 func postThumb(h *wp.Handle) {
 	d := h.GetDetailHandle()
 	if d.Post.Thumbnail.Path != "" {
-		d.Post.Thumbnail = wpconfig.Thumbnail(d.Post.Thumbnail.OriginAttachmentData, "post-thumbnail", "")
+		d.Post.Thumbnail = getPostThumbs(d.Post.Id, d.Post)
 	}
+}
+
+var getPostThumbs = reload.BuildMapFn[uint64]("twentyFifteen-post-thumbnail", postThumbs)
+
+func postThumbs(post models.Posts) models.PostThumbnail {
+	return wpconfig.Thumbnail(post.Thumbnail.OriginAttachmentData, "post-thumbnail", "")
+}
+
+func renderCustomHeader(h *wp.Handle) {
+	h.SetData("customHeader", customHeader(h))
 }

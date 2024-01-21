@@ -1,8 +1,6 @@
 {{define "common/head"}}
 
-    {{if .headScript}}
-        {{.headScript|unescaped}}
-    {{end}}
+    {{ callFuncString .calComponent "headScript"}}
 
     {{if .externHead}}
         {{.externHead|unescaped}}
@@ -10,9 +8,7 @@
 {{end}}
 
 {{define "common/footer"}}
-    {{if .footerScript}}
-        {{.footerScript|unescaped}}
-    {{end}}
+    {{ callFuncString .calComponent "footerScript"}}
     {{if .externFooter}}
         {{.externFooter|unescaped}}
     {{end}}
@@ -20,9 +16,7 @@
 
 
 {{define "common/sidebarWidget"}}
-    {{if .sidebarsWidgets}}
-        {{.sidebarsWidgets|unescaped}}
-    {{end}}
+    {{ callFuncString .calComponent "sidebarsWidgets"}}
 {{end}}
 
 {{define "common/colophon"}}

@@ -3,7 +3,6 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/fthvgb1/wp-go/app/cmd/route"
 	"github.com/fthvgb1/wp-go/app/mail"
 	"github.com/fthvgb1/wp-go/app/pkg/cache"
 	"github.com/fthvgb1/wp-go/app/pkg/config"
@@ -11,6 +10,7 @@ import (
 	"github.com/fthvgb1/wp-go/app/pkg/logs"
 	"github.com/fthvgb1/wp-go/app/plugins"
 	"github.com/fthvgb1/wp-go/app/plugins/wphandle"
+	"github.com/fthvgb1/wp-go/app/route"
 	"github.com/fthvgb1/wp-go/app/theme"
 	"github.com/fthvgb1/wp-go/app/wpconfig"
 	"github.com/fthvgb1/wp-go/cache/cachemanager"
@@ -117,7 +117,7 @@ func reloads() {
 	err = wpconfig.InitTerms()
 	logs.IfError(err, "获取WpTerms表失败")
 	wphandle.LoadPlugins()
-	reload.Reload()
+	reload.Reloads("themeArgAndConfig")
 	flushCache()
 	log.Println("reload complete")
 }

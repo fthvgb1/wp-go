@@ -20,7 +20,7 @@ func TestFlushMapVal(t *testing.T) {
 			return 33, true
 		})
 		fmt.Println(v)
-		Specifies("key")
+		Reloads("key")
 		v = GetAnyValMapBy[int, int, struct{}]("key", 2, struct{}{}, func(a struct{}) (int, bool) {
 			fmt.Println("yyyy")
 			return 33, true

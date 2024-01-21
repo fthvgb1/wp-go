@@ -11,52 +11,59 @@ import (
 )
 
 var handleComponents = safety.NewMap[string, map[string][]Components[string]]()
-var handleComponentHook = safety.NewMap[string, []func(Components[string]) (Components[string], bool)]()
+var handleComponentHook = safety.NewMap[string, map[string][]func(Components[string]) (Components[string], bool)]()
 
 var componentsArgs = safety.NewMap[string, any]()
 var componentFilterFns = safety.NewMap[string, []func(*Handle, string, ...any) string]()
 
-func (h *Handle) DeleteComponents(scene, name string) {
-	v, _ := handleComponentHook.Load(scene)
-	v = append(v, func(c Components[string]) (Components[string], bool) {
-		return c, c.Name != name
+func (h *Handle) DeleteComponents(scene, componentKey, componentName string) {
+	v, ok := handleComponentHook.Load(scene)
+	if !ok {
+		v = make(map[string][]func(Components[string]) (Components[string], bool))
+	}
+
+	v[componentKey] = append(v[componentKey], func(c Components[string]) (Components[string], bool) {
+		return c, c.Name != componentName
 	})
 	handleComponentHook.Store(scene, v)
 }
-func (h *Handle) ReplaceComponents(scene, name string, components Components[string]) {
-	v, _ := handleComponentHook.Load(scene)
-	v = append(v, func(c Components[string]) (Components[string], bool) {
-		if c.Name == name {
+func (h *Handle) ReplaceComponents(scene, componentKey, componentName string, components Components[string]) {
+	v, ok := handleComponentHook.Load(scene)
+	if !ok {
+		v = make(map[string][]func(Components[string]) (Components[string], bool))
+	}
+	v[componentKey] = append(v[componentKey], func(c Components[string]) (Components[string], bool) {
+		if c.Name == componentName {
 			c = components
 		}
 		return c, true
 	})
 	handleComponentHook.Store(scene, v)
 }
-func (h *Handle) HookComponents(scene string, fn func(Components[string]) (Components[string], bool)) {
-	v, _ := handleComponentHook.Load(scene)
-	v = append(v, fn)
+func (h *Handle) PushComponentHooks(scene, componentKey string, fn func(Components[string]) (Components[string], bool)) {
+	v, ok := handleComponentHook.Load(scene)
+	if !ok {
+		v = make(map[string][]func(Components[string]) (Components[string], bool))
+	}
+	v[componentKey] = append(v[componentKey], fn)
 	handleComponentHook.Store(scene, v)
 }
 
-var GetComponents = reload.BuildMapFn[string]("scene-components", getComponent)
-var HookComponents = reload.BuildMapFnWithAnyParams[string]("calComponents", hookComponent)
+var GetAndHookComponents = reload.BuildMapFnWithAnyParams[string]("calComponents", HookComponent)
 
-func hookComponent(a ...any) []Components[string] {
-	k := a[0].(string)
-	components := a[1].([]Components[string])
+func HookComponent(a ...any) []Components[string] {
+	componentKey := a[0].(string)
+	scene := a[1].(string)
 	mut := reload.GetGlobeMutex()
 	mut.Lock()
-	allHooks := slice.FilterAndToMap(components, func(t Components[string], _ int) (string, []func(Components[string]) (Components[string], bool), bool) {
-		fn, ok := handleComponentHook.Load(k)
-		return k, fn, ok
-	})
-	mut.Unlock()
+	defer mut.Unlock()
+	components := GetComponents(scene, componentKey)
 	r := slice.FilterAndMap(components, func(component Components[string]) (Components[string], bool) {
-		hooks, ok := allHooks[k]
+		keyHooks, ok := handleComponentHook.Load(scene)
 		if !ok {
 			return component, true
 		}
+		hooks := keyHooks[componentKey]
 		for _, fn := range hooks {
 			hookedComponent, ok := fn(component)
 			if !ok { // DeleteComponents fn
@@ -72,35 +79,23 @@ func hookComponent(a ...any) []Components[string] {
 	return r
 }
 
-func getComponent(h *Handle) map[string][]Components[string] {
-	mut := reload.GetGlobeMutex()
-	mut.Lock()
-	sceneComponents, _ := handleComponents.Load(h.scene)
+func GetComponents(scene, key string) (r []Components[string]) {
+	sceneComponents, _ := handleComponents.Load(scene)
 	allSceneComponents, _ := handleComponents.Load(constraints.AllScene)
-
-	mut.Unlock()
-	return maps.MergeBy(func(k string, c1, c2 []Components[string]) ([]Components[string], bool) {
-		vv := append(c1, c2...)
-		return vv, vv != nil
-	}, nil, sceneComponents, allSceneComponents)
+	r = append(sceneComponents[key], allSceneComponents[key]...)
+	return
 }
 
-type cacheComponentParm[T any] struct {
-	Components[T]
-	h *Handle
+var CacheComponent = reload.BuildMapFnWithAnyParams[string]("cacheComponents", cacheComponentFn)
+
+func cacheComponentFn(a ...any) string {
+	return a[0].(Components[string]).Fn(a[1].(*Handle))
 }
 
-var cacheComponentsFn = reload.BuildMapFn[string]("cacheComponents", cacheComponentFn)
-
-func cacheComponentFn(a cacheComponentParm[string]) string {
-	return a.Fn(a.h)
-}
-
-func CalComponents(h *Handle) {
-	allComponents := GetComponents(str.Join("allScene-", h.scene), h)
-	for k, components := range allComponents {
-		key := str.Join("calComponents-", h.theme, "-", h.scene, "-", k)
-		hookedComponents := HookComponents(key, k, components)
+func CalComponent(h *Handle) func(string) string {
+	return func(componentKey string) string {
+		cacheKey := str.Join("get-hook-Components-", h.scene, "-", componentKey)
+		hookedComponents := GetAndHookComponents(cacheKey, componentKey, h.scene)
 		var s = make([]string, 0, len(hookedComponents))
 		for _, component := range hookedComponents {
 			if component.Val != "" {
@@ -110,7 +105,8 @@ func CalComponents(h *Handle) {
 			if component.Fn != nil {
 				v := ""
 				if component.Cached {
-					v = cacheComponentsFn(component.Name, cacheComponentParm[string]{component, h})
+					key := str.Join(h.scene, "-", componentKey, "-", component.Name)
+					v = CacheComponent(key, component, h)
 				} else {
 					v = component.Fn(h)
 				}
@@ -119,7 +115,7 @@ func CalComponents(h *Handle) {
 				}
 			}
 		}
-		h.ginH[k] = strings.Join(s, "\n")
+		return strings.Join(s, "\n")
 	}
 }
 

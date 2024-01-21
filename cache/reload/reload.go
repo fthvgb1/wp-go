@@ -61,7 +61,9 @@ func DeleteMapVal[T any](namespace string, key ...T) {
 	fn(key)
 }
 
-func Specifies(namespaces ...string) {
+func Reloads(namespaces ...string) {
+	mut.Lock()
+	defer mut.Unlock()
 	for _, namespace := range namespaces {
 		fn, ok := callMap.Load(namespace)
 		if !ok {
@@ -93,7 +95,7 @@ func BuildMapFnWithConfirm[K comparable, V, A any](namespace string, fn func(A) 
 	}
 }
 
-// BuildMapFn build given fn with a new fn which returned value can be saved and flushed when called Reload or Specifies
+// BuildMapFn build given fn with a new fn which returned value can be saved and flushed when called Reload or Reloads
 // with namespace
 //
 // if give a float then can be reloaded early or lately, more bigger more earlier
@@ -153,8 +155,7 @@ func BuildSafetyMap[K comparable, V, A any](namespace string, args ...any) *Safe
 		return m
 	}
 	m = &SafetyMap[K, V, A]{safety.NewMap[K, V](), sync.Mutex{}}
-	ord, _ := parseArgs(args...)
-	autoFlush := helper.ParseArgs(true, args...)
+	args = append(args, namespace)
 	deleteMapFn.Store(namespace, func(a any) {
 		k, ok := a.([]K)
 		if !ok && len(k) > 0 {
@@ -164,13 +165,8 @@ func BuildSafetyMap[K comparable, V, A any](namespace string, args ...any) *Safe
 			m.Val.Delete(key)
 		}
 	})
-	if autoFlush {
-		Push(func() {
-			m.Val.Flush()
-		}, ord, namespace)
-	}
+	Push(m.Val.Flush, args...)
 	safetyMaps.Store(namespace, m)
-
 	return m
 }
 
@@ -198,22 +194,19 @@ func BuildAnyVal[T, A any](namespace string, counter bool, args ...any) *SafetyV
 	vvv, ok := safetyMaps.Load(namespace)
 	if ok {
 		vv = vvv.(*SafetyVar[T, A])
-	} else {
-		safetyMapLock.Lock()
-		defer safetyMapLock.Unlock()
-		vvv, ok = safetyMaps.Load(namespace)
-		if ok {
-			vv = vvv.(*SafetyVar[T, A])
-		} else {
-			v := Val[T]{}
-			vv = &SafetyVar[T, A]{safety.NewVar(v), sync.Mutex{}}
-			ord, _ := parseArgs(args...)
-			Push(func() {
-				vv.Val.Flush()
-			}, ord, namespace)
-			safetyMaps.Store(namespace, vv)
-		}
 	}
+	safetyMapLock.Lock()
+	defer safetyMapLock.Unlock()
+	vvv, ok = safetyMaps.Load(namespace)
+	if ok {
+		vv = vvv.(*SafetyVar[T, A])
+		return vv
+	}
+	v := Val[T]{}
+	vv = &SafetyVar[T, A]{safety.NewVar(v), sync.Mutex{}}
+	args = append(args, namespace)
+	Push(vv.Val.Flush, args...)
+	safetyMaps.Store(namespace, vv)
 	return vv
 }
 
@@ -272,14 +265,14 @@ func BuildValFnWithConfirm[T, A any](namespace string, fn func(A) (T, bool), arg
 	}
 }
 
-// BuildValFn build given fn a new fn which return value can be saved and flushed when called Reload or Specifies
+// BuildValFn build given fn a new fn which return value can be saved and flushed when called Reload or Reloads
 // with namespace.
 //
 // note:  namespace should be not same as BuildMapFn and related fn, they stored same safety.Map[string,any].
 //
 // if give a float then can be reloaded early or lately, more bigger more earlier
 //
-// if give a bool false will not flushed when called Reload, then can called GetValMap to flush manually
+// if give a bool false will not flushed when called Reload, but can call GetValMap or Reloads to flush manually
 func BuildValFn[T, A any](namespace string, fn func(A) T, args ...any) func(A) T {
 	var vv = BuildAnyVal[T, A](namespace, false, args...)
 	return func(a A) T {
@@ -325,15 +318,17 @@ func BuildValFnWithAnyParams[T any](namespace string, fn func(...any) T, args ..
 //
 // args same as Push
 //
-// if give a name, then can be flushed by calls Specifies
+// if give a name, then can be flushed by calls Reloads
 //
 // if give a float then can be reloaded early or lately, more bigger more earlier
+//
+// if give a bool false will not flushed when called Reload, but can call GetValMap or Reloads to flush manually
 func Vars[T any](defaults T, args ...any) *safety.Var[T] {
 	ss := safety.NewVar(defaults)
-	ord, name := parseArgs(args...)
+
 	Push(func() {
 		ss.Store(defaults)
-	}, ord, name)
+	}, args...)
 	return ss
 }
 
@@ -356,13 +351,12 @@ func parseArgs(a ...any) (ord float64, name string) {
 // VarsBy
 //
 // args same as Push
-// if give a name, then can be flushed by calls Specifies
+// if give a name, then can be flushed by calls Reloads
 func VarsBy[T any](fn func() T, args ...any) *safety.Var[T] {
 	ss := safety.NewVar(fn())
-	ord, name := parseArgs(args...)
 	Push(func() {
 		ss.Store(fn())
-	}, ord, name)
+	}, args...)
 	return ss
 }
 func MapBy[K comparable, T any](fn func(*safety.Map[K, T]), args ...any) *safety.Map[K, T] {
@@ -370,32 +364,35 @@ func MapBy[K comparable, T any](fn func(*safety.Map[K, T]), args ...any) *safety
 	if fn != nil {
 		fn(m)
 	}
-	ord, name := parseArgs(args...)
 	Push(func() {
 		m.Flush()
 		if fn != nil {
 			fn(m)
 		}
-	}, ord, name)
+	}, args...)
 	return m
 }
 
 func SafeMap[K comparable, T any](args ...any) *safety.Map[K, T] {
 	m := safety.NewMap[K, T]()
-	ord, name := parseArgs(args...)
-	Push(func() {
-		m.Flush()
-	}, ord, name)
+	Push(m.Flush, args...)
 	return m
 }
 
 // Push the func that will be called whenever Reload called
 //
-// if give a name, then can be called by called Specifies
+// if give a name, then can be called by called Reloads
 //
 // if give a float then can be called early or lately when called Reload, more bigger more earlier
+//
+// if give a bool false will not flushed when called Reload, then can called GetValMap to flush manually
 func Push(fn func(), a ...any) {
 	ord, name := parseArgs(a...)
+	auto := helper.ParseArgs(true, a...)
+	if name != "" && !auto {
+		callMap.Store(name, fn)
+		return
+	}
 	waitReloadCalls.Append(queue{fn, ord, name})
 	if name != "" {
 		callMap.Store(name, fn)
@@ -405,7 +402,6 @@ func Push(fn func(), a ...any) {
 func Reload() {
 	mut.Lock()
 	defer mut.Unlock()
-	callMap.Flush()
 	deleteMapFn.Flush()
 	reloadCalls := waitReloadCalls.Load()
 	slice.SimpleSort(reloadCalls, slice.DESC, func(t queue) float64 {

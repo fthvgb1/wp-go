@@ -25,6 +25,9 @@ var comFn = template.FuncMap{
 	"exec": func(fn func() string) template.HTML {
 		return template.HTML(fn())
 	},
+	"callFuncString": func(fn func(string) string, s string) template.HTML {
+		return template.HTML(fn(s))
+	},
 }
 
 func postsFn(fn func(models.Posts) string, a models.Posts) string {

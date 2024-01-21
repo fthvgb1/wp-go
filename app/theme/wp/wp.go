@@ -56,7 +56,7 @@ func (h *Handle) Components() *safety.Map[string, map[string][]Components[string
 	return handleComponents
 }
 
-func (h *Handle) ComponentHook() *safety.Map[string, []func(Components[string]) (Components[string], bool)] {
+func (h *Handle) ComponentHook() *safety.Map[string, map[string][]func(Components[string]) (Components[string], bool)] {
 	return handleComponentHook
 }
 
@@ -99,9 +99,6 @@ func SetConfigHandle(a ...any) Handle {
 	configFn := a[0].(func(*Handle))
 	hh := a[1].(*Handle)
 	h := &Handle{}
-	mut := reload.GetGlobeMutex()
-	mut.Lock()
-	defer mut.Unlock()
 	handleComponents.Flush()
 	componentsArgs.Flush()
 	handleComponentHook.Flush()
@@ -120,10 +117,11 @@ func SetConfigHandle(a ...any) Handle {
 	if ok {
 		pluginFn(h)
 	}
+	reload.Reload()
 	return *h
 }
 
-var GetInitHandleFn = reload.BuildValFnWithAnyParams("themeArgAndConfig", SetConfigHandle, 100.01)
+var GetInitHandleFn = reload.BuildValFnWithAnyParams("themeArgAndConfig", SetConfigHandle, false)
 
 type ConfigParm struct {
 	ConfigFn func(*Handle)
@@ -136,6 +134,7 @@ func InitHandle(configFn func(*Handle), h *Handle) {
 	h.ginH["calPostClass"] = postClass(h)
 	h.ginH["calBodyClass"] = bodyClass(h)
 	h.ginH["customLogo"] = customLogo(h)
+	h.ginH["calComponent"] = CalComponent(h)
 	h.isInited = true
 }
 
@@ -246,7 +245,6 @@ func (h *Handle) PushHandlers(pipeScene string, call HandleCall, statsOrScene ..
 
 func (h *Handle) CommonComponents() {
 	h.PushCacheGroupHeadScript(constraints.AllScene, "siteIconAndCustomCss", 0, CalSiteIcon, CalCustomCss)
-	h.PushRender(constraints.AllStats, NewHandleFn(CalComponents, 10.001, "wp.CalComponents"))
 	h.PushRender(constraints.AllStats, NewHandleFn(PreRenderTemplate, 0, "wp.PreRenderTemplate"))
 	ReplyCommentJs(h)
 	AdditionScript(h)

@@ -41,7 +41,7 @@ var archivesConfig = map[any]any{
 }
 
 var GetArchiveConf = BuildconfigFn(archivesConfig, "widget_archives", int64(2))
-var GetArchiveArgs = reload.BuildValFnWithAnyParams("", archiveArgsFn)
+var GetArchiveArgs = reload.BuildValFnWithAnyParams("widget_archive-args", archiveArgsFn)
 
 func archiveArgsFn(a ...any) map[string]string {
 	h := a[0].(*wp.Handle)
