@@ -34,11 +34,10 @@ type Handle struct {
 	err       error
 	abort     bool
 	stopPipe  bool
-	template  *template.Template
 }
 
 var handlerss = safety.NewMap[string, map[string][]HandleCall]()
-var handleHooks = safety.NewMap[string, []func(HandleCall) (HandleCall, bool)]()
+var handleHooks = safety.NewMap[string, map[string][]func(HandleCall) (HandleCall, bool)]()
 
 func (h *Handle) Theme() string {
 	return h.theme
@@ -64,16 +63,8 @@ func (h *Handle) Handlers() *safety.Map[string, map[string][]HandleCall] {
 	return handlerss
 }
 
-func (h *Handle) HandleHook() *safety.Map[string, []func(HandleCall) (HandleCall, bool)] {
+func (h *Handle) HandleHook() *safety.Map[string, map[string][]func(HandleCall) (HandleCall, bool)] {
 	return handleHooks
-}
-
-func (h *Handle) SetTemplate(template *template.Template) {
-	h.template = template
-}
-
-func (h *Handle) Template() *template.Template {
-	return h.template
 }
 
 type HandlePlugins map[string]HandleFn[*Handle]
@@ -110,7 +101,6 @@ func SetConfigHandle(a ...any) Handle {
 	fnHook.Flush()
 	h.C = hh.C
 	h.theme = hh.theme
-	h.template = hh.template
 	configFn(h)
 	v := apply.UsePlugins()
 	pluginFn, ok := v.(func(*Handle))
@@ -163,6 +153,9 @@ func (h *Handle) SetErr(err error) {
 
 func (h *Handle) SetTempl(templ string) {
 	h.templ = templ
+}
+func (h *Handle) GetTempl() string {
+	return h.templ
 }
 
 func (h *Handle) Scene() string {

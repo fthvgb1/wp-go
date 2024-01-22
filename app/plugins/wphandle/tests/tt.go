@@ -7,7 +7,7 @@ import (
 )
 
 func Tt(h *wp.Handle) {
-	h.HookHandle(constraints.PipeMiddleware, func(call wp.HandleCall) (wp.HandleCall, bool) {
+	h.HookHandle(constraints.PipeMiddleware, constraints.AllScene, func(call wp.HandleCall) (wp.HandleCall, bool) {
 		return call, false
 	})
 	/*h.PushPipeHook(constraints.Home, func(pipe wp.Pipe) (wp.Pipe, bool) {
