@@ -120,6 +120,9 @@ type ConfigParm struct {
 
 func InitHandle(configFn func(*Handle), h *Handle) {
 	hh := GetInitHandleFn(configFn, h)
+	mods, err := wpconfig.GetThemeMods(h.theme)
+	logs.IfError(err, "获取mods失败")
+	h.themeMods = mods
 	h.ginH = maps.Copy(hh.ginH)
 	h.ginH["calPostClass"] = postClass(h)
 	h.ginH["calBodyClass"] = bodyClass(h)
@@ -170,15 +173,12 @@ func (h *Handle) SetData(k string, v any) {
 }
 
 func NewHandle(c *gin.Context, scene string, theme string) *Handle {
-	mods, err := wpconfig.GetThemeMods(theme)
-	logs.IfError(err, "获取mods失败")
 	return &Handle{
-		C:         c,
-		theme:     theme,
-		Session:   sessions.Default(c),
-		scene:     scene,
-		Stats:     constraints.Ok,
-		themeMods: mods,
+		C:       c,
+		theme:   theme,
+		Session: sessions.Default(c),
+		scene:   scene,
+		Stats:   constraints.Ok,
 	}
 }
 
@@ -223,7 +223,12 @@ func (h *Handle) RenderHtml(t *template.Template, statsCode int, name string) {
 		header["Content-Type"] = htmlContentType
 	}
 	h.C.Status(statsCode)
-	err := t.ExecuteTemplate(h.C.Writer, name, h.ginH)
+	var err error
+	if name == "" {
+		err = t.Execute(h.C.Writer, h.ginH)
+	} else {
+		err = t.ExecuteTemplate(h.C.Writer, name, h.ginH)
+	}
 	h.Abort()
 	if err != nil {
 		panic(err)

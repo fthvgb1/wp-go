@@ -9,7 +9,7 @@ import (
 )
 
 type MultipleFileTemplate struct {
-	Template map[string]*template.Template
+	Template maps
 	FuncMap  template.FuncMap
 }
 type MultipleFsTemplate struct {
@@ -17,32 +17,57 @@ type MultipleFsTemplate struct {
 	Fs embed.FS
 }
 
+type TemplateMaps map[string]*template.Template
+
+func (m TemplateMaps) Load(name string) (*template.Template, bool) {
+	v, ok := m[name]
+	return v, ok
+}
+
+func (m TemplateMaps) Store(name string, v *template.Template) {
+	m[name] = v
+}
+
+type maps interface {
+	Load(name string) (*template.Template, bool)
+	Store(name string, v *template.Template)
+}
+
 func (t *MultipleFileTemplate) AppendTemplate(name string, templates ...string) *MultipleFileTemplate {
-	tmpl, ok := t.Template[name]
+	tmpl, ok := t.Template.Load(name)
 	if ok {
-		t.Template[name] = template.Must(tmpl.ParseFiles(templates...))
+		t.Template.Store(name, template.Must(tmpl.ParseFiles(templates...)))
 	}
 	return t
 }
 
 func (t *MultipleFsTemplate) AppendTemplate(name string, templates ...string) *MultipleFsTemplate {
-	tmpl, ok := t.Template[name]
+	tmpl, ok := t.Template.Load(name)
 	if ok {
-		t.Template[name] = template.Must(tmpl.ParseFS(t.Fs, templates...))
+		t.Template.Store(name, template.Must(tmpl.ParseFS(t.Fs, templates...)))
 	}
 	return t
 }
 
-func NewFileTemplate() *MultipleFileTemplate {
+func NewFileTemplates(m maps) *MultipleFileTemplate {
 	return &MultipleFileTemplate{
-		Template: make(map[string]*template.Template),
+		Template: m,
 		FuncMap:  make(template.FuncMap),
 	}
 }
 func NewFsTemplate(f embed.FS) *MultipleFsTemplate {
 	return &MultipleFsTemplate{
 		MultipleFileTemplate: MultipleFileTemplate{
-			Template: make(map[string]*template.Template),
+			Template: TemplateMaps(make(map[string]*template.Template)),
+			FuncMap:  make(template.FuncMap),
+		},
+		Fs: f,
+	}
+}
+func NewFsTemplates(f embed.FS, m maps) *MultipleFsTemplate {
+	return &MultipleFsTemplate{
+		MultipleFileTemplate: MultipleFileTemplate{
+			Template: m,
 			FuncMap:  make(template.FuncMap),
 		},
 		Fs: f,
@@ -50,10 +75,10 @@ func NewFsTemplate(f embed.FS) *MultipleFsTemplate {
 }
 
 func (t *MultipleFileTemplate) SetTemplate(name string, templ *template.Template) *MultipleFileTemplate {
-	if _, ok := t.Template[name]; ok {
+	if _, ok := t.Template.Load(name); ok {
 		panic("exists same template " + name)
 	}
-	t.Template[name] = templ
+	t.Template.Store(name, templ)
 	return t
 }
 
@@ -65,14 +90,15 @@ func (t *MultipleFileTemplate) AddTemplate(mainTemplatePattern string, fnMap tem
 	for _, mainTemplate := range mainTemplates {
 		file := filepath.Base(mainTemplate)
 		pattern := append([]string{mainTemplate}, layoutTemplatePattern...)
-		t.Template[mainTemplate] = template.Must(template.New(file).Funcs(fnMap).ParseFiles(pattern...))
+		t.Template.Store(mainTemplate, template.Must(template.New(file).Funcs(fnMap).ParseFiles(pattern...)))
 	}
 	return t
 }
 
 func (t *MultipleFileTemplate) Instance(name string, data any) render.Render {
+	v, _ := t.Template.Load(name)
 	return render.HTML{
-		Template: t.Template[name],
+		Template: v,
 		Data:     data,
 	}
 }
@@ -83,12 +109,12 @@ func (t *MultipleFsTemplate) AddTemplate(mainTemplatePattern string, fnMap templ
 		panic(err)
 	}
 	for _, mainTemplate := range mainTemplates {
-		if _, ok := t.Template[mainTemplate]; ok {
+		if _, ok := t.Template.Load(mainTemplate); ok {
 			panic("exists same Template " + mainTemplate)
 		}
 		file := filepath.Base(mainTemplate)
 		pattern := append([]string{mainTemplate}, layoutTemplatePattern...)
-		t.Template[mainTemplate] = template.Must(template.New(file).Funcs(fnMap).ParseFS(t.Fs, pattern...))
+		t.Template.Store(mainTemplate, template.Must(template.New(file).Funcs(fnMap).ParseFS(t.Fs, pattern...)))
 	}
 	return t
 }

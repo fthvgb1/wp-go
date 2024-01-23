@@ -13,12 +13,12 @@ func InitTheme() {
 }
 
 func GetCurrentTemplateName() string {
-	tmlp := config.GetConfig().Theme
-	if tmlp == "" {
-		tmlp = wpconfig.GetOption("template")
+	templateName := config.GetConfig().Theme
+	if templateName == "" {
+		templateName = wpconfig.GetOption("template")
 	}
-	if !IsTemplateDirExists(tmlp) {
-		tmlp = "twentyfifteen"
+	if !IsTemplateDirExists(templateName) {
+		templateName = "twentyfifteen"
 	}
-	return tmlp
+	return templateName
 }

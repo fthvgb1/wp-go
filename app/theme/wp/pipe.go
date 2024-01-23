@@ -67,10 +67,11 @@ func (h *Handle) PushDataHandler(scene string, fns ...HandleCall) {
 }
 
 func BuildHandlers(pipeScene string, keyFn func(*Handle, string) string,
-	handleHook func(*Handle, map[string][]func(HandleCall) (HandleCall, bool)) []func(HandleCall) (HandleCall, bool),
-	handlesFn func(*Handle, map[string][]HandleCall, string) []HandleCall) func(HandleFn[*Handle], *Handle) {
+	handleHookFn func(*Handle, string,
+		map[string][]func(HandleCall) (HandleCall, bool),
+		map[string][]HandleCall) []HandleCall) func(HandleFn[*Handle], *Handle) {
 
-	pipeHandlerFn := reload.BuildMapFn[string]("pipeHandlers", BuildHandler(pipeScene, keyFn, handleHook, handlesFn))
+	pipeHandlerFn := reload.BuildMapFn[string]("pipeHandlers", BuildHandler(pipeScene, keyFn, handleHookFn))
 
 	return func(next HandleFn[*Handle], h *Handle) {
 		key := keyFn(h, pipeScene)
@@ -88,8 +89,9 @@ func BuildHandlers(pipeScene string, keyFn func(*Handle, string) string,
 }
 
 func BuildHandler(pipeScene string, keyFn func(*Handle, string) string,
-	handleHook func(*Handle, map[string][]func(HandleCall) (HandleCall, bool)) []func(HandleCall) (HandleCall, bool),
-	handlesFn func(*Handle, map[string][]HandleCall, string) []HandleCall) func(*Handle) []HandleCall {
+	handleHook func(*Handle, string,
+		map[string][]func(HandleCall) (HandleCall, bool),
+		map[string][]HandleCall) []HandleCall) func(*Handle) []HandleCall {
 
 	return func(h *Handle) []HandleCall {
 		key := keyFn(h, pipeScene)
@@ -98,23 +100,28 @@ func BuildHandler(pipeScene string, keyFn func(*Handle, string) string,
 		pipeHookers, _ := handleHooks.Load(pipeScene)
 		pipeHandlers, _ := handlerss.Load(pipeScene)
 		mut.Unlock()
-		hookers := handleHook(h, pipeHookers)
-		calls := handlesFn(h, pipeHandlers, key)
-		calls = slice.FilterAndMap(calls, func(call HandleCall) (HandleCall, bool) {
-			ok := true
-			for _, hook := range hookers {
-				call, ok = hook(call)
-				if !ok {
-					break
-				}
-			}
-			return call, ok
-		})
+		calls := handleHook(h, key, pipeHookers, pipeHandlers)
 		slice.SimpleSort(calls, slice.DESC, func(t HandleCall) float64 {
 			return t.Order
 		})
 		return calls
 	}
+}
+
+func HookHandles(hooks map[string][]func(HandleCall) (HandleCall, bool),
+	handlers map[string][]HandleCall, sceneOrStats ...string) []HandleCall {
+	hookedHandlers := slice.FilterAndMap(sceneOrStats, func(k string) ([]HandleCall, bool) {
+		r := handlers[k]
+		for _, hook := range hooks[k] {
+			r = HookHandler(hook, r)
+		}
+		return r, true
+	})
+	return slice.Decompress(hookedHandlers)
+}
+
+func HookHandler(hookFn func(HandleCall) (HandleCall, bool), handlers []HandleCall) []HandleCall {
+	return slice.FilterAndMap(handlers, hookFn)
 }
 
 func PipeKey(h *Handle, pipScene string) string {
@@ -163,36 +170,25 @@ func MiddlewareKey(h *Handle, pipScene string) string {
 	return h.DoActionFilter("middleware", str.Join("pipe-middleware-", h.scene), pipScene)
 }
 
-func PipeMiddlewareHandle(h *Handle, middlewares map[string][]HandleCall, key string) (handlers []HandleCall) {
-	handlers = append(handlers, middlewares[h.scene]...)
-	handlers = append(handlers, middlewares[constraints.AllScene]...)
-	handlers = h.PipeHandleHook("PipeMiddlewareHandle", handlers, middlewares, key)
-	return
+func PipeMiddlewareHandle(h *Handle, key string,
+	hooks map[string][]func(HandleCall) (HandleCall, bool),
+	handlers map[string][]HandleCall) []HandleCall {
+	hookedHandles := HookHandles(hooks, handlers, h.scene, constraints.AllScene)
+	return h.PipeHandleHook("PipeMiddlewareHandle", hookedHandles, handlers, key)
 }
 
-func PipeDataHandle(h *Handle, dataHandlers map[string][]HandleCall, key string) (handlers []HandleCall) {
-	handlers = append(handlers, dataHandlers[h.scene]...)
-	handlers = append(handlers, dataHandlers[constraints.AllScene]...)
-	handlers = h.PipeHandleHook("PipeDataHandle", handlers, dataHandlers, key)
-	return
+func PipeDataHandle(h *Handle, key string,
+	hooks map[string][]func(HandleCall) (HandleCall, bool),
+	handlers map[string][]HandleCall) []HandleCall {
+	hookedHandles := HookHandles(hooks, handlers, h.scene, constraints.AllScene)
+	return h.PipeHandleHook("PipeDataHandle", hookedHandles, handlers, key)
 }
 
-func PipeRender(h *Handle, renders map[string][]HandleCall, key string) (handlers []HandleCall) {
-	handlers = append(handlers, renders[h.Stats]...)
-	handlers = append(handlers, renders[h.scene]...)
-	handlers = append(handlers, renders[constraints.AllStats]...)
-	handlers = append(handlers, renders[constraints.AllScene]...)
-	handlers = h.PipeHandleHook("PipeRender", handlers, renders, key)
-	return
-}
-
-func HandleHook(h *Handle, hooks map[string][]func(HandleCall) (HandleCall, bool)) []func(HandleCall) (HandleCall, bool) {
-	var r []func(HandleCall) (HandleCall, bool)
-	r = append(r, hooks[h.scene]...)
-	r = append(r, hooks[h.Stats]...)
-	r = append(r, hooks[constraints.AllScene]...)
-	r = append(r, hooks[constraints.AllStats]...)
-	return r
+func PipeRender(h *Handle, key string,
+	hooks map[string][]func(HandleCall) (HandleCall, bool),
+	handlers map[string][]HandleCall) []HandleCall {
+	hookedHandles := HookHandles(hooks, handlers, h.scene, h.Stats, constraints.AllScene, constraints.AllStats)
+	return h.PipeHandleHook("PipeRender", hookedHandles, handlers, key)
 }
 
 // DeleteHandle 写插件的时候用
@@ -245,10 +241,10 @@ func (h *Handle) PipeHandleHook(name string, calls []HandleCall, m map[string][]
 
 func InitPipe(h *Handle) {
 	h.PushPipe(constraints.AllScene, NewPipe(constraints.PipeMiddleware, 300,
-		BuildHandlers(constraints.PipeMiddleware, MiddlewareKey, HandleHook, PipeMiddlewareHandle)))
+		BuildHandlers(constraints.PipeMiddleware, MiddlewareKey, PipeMiddlewareHandle)))
 
 	h.PushPipe(constraints.AllScene, NewPipe(constraints.PipeData, 200,
-		BuildHandlers(constraints.PipeData, PipeKey, HandleHook, PipeDataHandle)))
+		BuildHandlers(constraints.PipeData, PipeKey, PipeDataHandle)))
 	h.PushPipe(constraints.AllScene, NewPipe(constraints.PipeRender, 100,
-		BuildHandlers(constraints.PipeRender, PipeKey, HandleHook, PipeRender)))
+		BuildHandlers(constraints.PipeRender, PipeKey, PipeRender)))
 }
