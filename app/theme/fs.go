@@ -26,7 +26,6 @@ func BuildTemplate() *multipTemplate.MultipleFsTemplate {
 		}
 	} else {
 		multiple = multipTemplate.NewFsTemplates(TemplateFs, templates)
-		multiple.FuncMap = FuncMap()
 		commonTemplate(multiple)
 	}
 
@@ -53,10 +52,11 @@ func commonTemplate(t *multipTemplate.MultipleFsTemplate) {
 	if err != nil {
 		panic(err)
 	}
+	funMap := FuncMap()
 	for _, main := range m {
 		file := filepath.Base(main)
 		dir := strings.Split(main, "/")[0]
-		templ := template.Must(template.New(file).Funcs(t.FuncMap).ParseFS(t.Fs, main, filepath.Join(dir, "layout/*.gohtml"), "wp/template.gohtml"))
+		templ := template.Must(template.New(file).Funcs(funMap).ParseFS(t.Fs, main, filepath.Join(dir, "layout/*.gohtml"), "wp/template.gohtml"))
 		t.SetTemplate(main, templ)
 	}
 }

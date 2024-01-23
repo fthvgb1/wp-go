@@ -10,7 +10,6 @@ import (
 
 type MultipleFileTemplate struct {
 	Template maps
-	FuncMap  template.FuncMap
 }
 type MultipleFsTemplate struct {
 	MultipleFileTemplate
@@ -52,14 +51,12 @@ func (t *MultipleFsTemplate) AppendTemplate(name string, templates ...string) *M
 func NewFileTemplates(m maps) *MultipleFileTemplate {
 	return &MultipleFileTemplate{
 		Template: m,
-		FuncMap:  make(template.FuncMap),
 	}
 }
 func NewFsTemplate(f embed.FS) *MultipleFsTemplate {
 	return &MultipleFsTemplate{
 		MultipleFileTemplate: MultipleFileTemplate{
 			Template: TemplateMaps(make(map[string]*template.Template)),
-			FuncMap:  make(template.FuncMap),
 		},
 		Fs: f,
 	}
@@ -68,7 +65,6 @@ func NewFsTemplates(f embed.FS, m maps) *MultipleFsTemplate {
 	return &MultipleFsTemplate{
 		MultipleFileTemplate: MultipleFileTemplate{
 			Template: m,
-			FuncMap:  make(template.FuncMap),
 		},
 		Fs: f,
 	}
