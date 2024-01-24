@@ -1,4 +1,4 @@
-FROM golang:1.21.4-alpine as gobulidIso
+FROM golang:1.21.6-alpine as gobulidIso
 COPY ./ /go/src/wp-go
 WORKDIR /go/src/wp-go
 #ENV GOPROXY="https://goproxy.cn"
