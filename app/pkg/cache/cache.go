@@ -7,7 +7,7 @@ import (
 	"github.com/fthvgb1/wp-go/app/pkg/logs"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
 	"github.com/fthvgb1/wp-go/cache/cachemanager"
-	"github.com/fthvgb1/wp-go/safety"
+	"github.com/fthvgb1/wp-go/cache/reload"
 	"time"
 )
 
@@ -102,9 +102,9 @@ type Arch struct {
 	month time.Month
 }
 
-var arch = safety.NewVar(Arch{
+var arch = reload.Vars(Arch{
 	fn: dao.Archives,
-})
+}, "archives-year-month-data")
 
 func Archives(ctx context.Context) []models.PostArchive {
 	a := arch.Load()

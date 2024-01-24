@@ -19,7 +19,7 @@ func ValidateServerNames() func(ctx *gin.Context) {
 			}
 		}
 		return m
-	})
+	}, "site-names")
 
 	return func(c *gin.Context) {
 		m := sites.Load()

@@ -8,9 +8,9 @@ import (
 
 func SearchLimit(num int64) func(ctx *gin.Context) {
 	fn, reFn := IpLimit(num)
-	reload.Push(func() {
+	reload.Append(func() {
 		reFn(config.GetConfig().SingleIpSearchNum)
-	})
+	}, "search-ip-limit-number")
 	return func(c *gin.Context) {
 		if c.Query("s") != "" {
 			fn(c)

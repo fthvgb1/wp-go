@@ -110,18 +110,15 @@ func BuildHandler(pipeScene string, keyFn func(*Handle, string) string,
 
 func HookHandles(hooks map[string][]func(HandleCall) (HandleCall, bool),
 	handlers map[string][]HandleCall, sceneOrStats ...string) []HandleCall {
+
 	hookedHandlers := slice.FilterAndMap(sceneOrStats, func(k string) ([]HandleCall, bool) {
 		r := handlers[k]
 		for _, hook := range hooks[k] {
-			r = HookHandler(hook, r)
+			r = slice.FilterAndMap(r, hook)
 		}
 		return r, true
 	})
 	return slice.Decompress(hookedHandlers)
-}
-
-func HookHandler(hookFn func(HandleCall) (HandleCall, bool), handlers []HandleCall) []HandleCall {
-	return slice.FilterAndMap(handlers, hookFn)
 }
 
 func PipeKey(h *Handle, pipScene string) string {

@@ -111,10 +111,10 @@ func Thumbnail(metadata models.WpAttachmentMetadata, Type, host string, except .
 var themeModes = func() *safety.Map[string, ThemeMods] {
 	m := safety.NewMap[string, ThemeMods]()
 	themeModsRaw = safety.NewMap[string, map[string]any]()
-	reload.Push(func() {
+	reload.Append(func() {
 		m.Flush()
 		themeModsRaw.Flush()
-	})
+	}, "theme-modes")
 
 	return m
 }()

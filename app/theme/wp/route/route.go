@@ -20,10 +20,10 @@ var routeHook []func(Route) (Route, bool)
 var regRoutes *safety.Map[string, *regexp.Regexp]
 var routes = func() *safety.Map[string, Route] {
 	r := safety.NewMap[string, Route]()
-	reload.Push(func() {
+	reload.Append(func() {
 		r.Flush()
 		regRoutes.Flush()
-	})
+	}, "wp-routers")
 	regRoutes = safety.NewMap[string, *regexp.Regexp]()
 	return r
 }()

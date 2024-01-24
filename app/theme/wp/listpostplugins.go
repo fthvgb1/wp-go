@@ -23,7 +23,7 @@ func PostsPlugins(initial PostsPlugin, calls ...func(PostsPlugin, *Handle, *mode
 var pluginFns = reload.Vars(map[string]func(PostsPlugin, *Handle, *models.Posts){
 	"passwordProject": PasswordProject,
 	"digest":          Digest,
-})
+}, "list-post-plugins-fns")
 
 func (h *Handle) PushPostsPlugin(name string, fn func(PostsPlugin, *Handle, *models.Posts)) {
 	m := pluginFns.Load()
@@ -53,7 +53,7 @@ func Digest(next PostsPlugin, h *Handle, post *models.Posts) {
 	next(h, post)
 }
 
-var ordinaryPlugin = reload.Vars([]PostsPlugin{})
+var ordinaryPlugin = reload.Vars([]PostsPlugin{}, "ordinaryPlugin")
 
 func (h *Handle) PushPostPlugin(plugin ...PostsPlugin) {
 	p := ordinaryPlugin.Load()

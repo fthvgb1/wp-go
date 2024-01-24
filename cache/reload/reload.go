@@ -2,10 +2,11 @@ package reload
 
 import (
 	"github.com/fthvgb1/wp-go/helper"
-	"github.com/fthvgb1/wp-go/helper/number"
 	"github.com/fthvgb1/wp-go/helper/slice"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/safety"
 	"sync"
+	"sync/atomic"
 )
 
 type queue struct {
@@ -165,7 +166,7 @@ func BuildSafetyMap[K comparable, V, A any](namespace string, args ...any) *Safe
 			m.Val.Delete(key)
 		}
 	})
-	Push(m.Val.Flush, args...)
+	Append(m.Val.Flush, args...)
 	safetyMaps.Store(namespace, m)
 	return m
 }
@@ -205,7 +206,7 @@ func BuildAnyVal[T, A any](namespace string, counter bool, args ...any) *SafetyV
 	v := Val[T]{}
 	vv = &SafetyVar[T, A]{safety.NewVar(v), sync.Mutex{}}
 	args = append(args, namespace)
-	Push(vv.Val.Flush, args...)
+	Append(vv.Val.Flush, args...)
 	safetyMaps.Store(namespace, vv)
 	return vv
 }
@@ -233,9 +234,11 @@ func GetAnyValBys[T, A any](namespace string, a A, fn func(A) (T, bool), args ..
 func BuildValFnWithConfirm[T, A any](namespace string, fn func(A) (T, bool), args ...any) func(A) T {
 	var vv = BuildAnyVal[T, A](namespace, false, args...)
 	tryTimes := helper.ParseArgs(1, args...)
-	var counter func() int
+	var counter int64
 	if tryTimes > 1 {
-		counter = number.Counters[int]()
+		Append(func() {
+			atomic.StoreInt64(&counter, 0)
+		}, str.Join("reload-valFn-counter-", namespace))
 	}
 	return func(a A) T {
 		v := vv.Val.Load()
@@ -253,11 +256,11 @@ func BuildValFnWithConfirm[T, A any](namespace string, fn func(A) (T, bool), arg
 			vv.Val.Store(v)
 			return v.V
 		}
-		if counter == nil {
+		if atomic.LoadInt64(&counter) <= 1 {
 			return v.V
 		}
-		times := counter()
-		if times >= tryTimes {
+		atomic.AddInt64(&counter, 1)
+		if atomic.LoadInt64(&counter) >= int64(tryTimes) {
 			v.Ok = true
 			vv.Val.Store(v)
 		}
@@ -316,7 +319,7 @@ func BuildValFnWithAnyParams[T any](namespace string, fn func(...any) T, args ..
 
 // Vars get default value and whenever reloaded assign default value
 //
-// args same as Push
+// args same as Append
 //
 // if give a name, then can be flushed by calls Reloads
 //
@@ -326,7 +329,7 @@ func BuildValFnWithAnyParams[T any](namespace string, fn func(...any) T, args ..
 func Vars[T any](defaults T, args ...any) *safety.Var[T] {
 	ss := safety.NewVar(defaults)
 
-	Push(func() {
+	Append(func() {
 		ss.Store(defaults)
 	}, args...)
 	return ss
@@ -350,11 +353,11 @@ func parseArgs(a ...any) (ord float64, name string) {
 
 // VarsBy
 //
-// args same as Push
+// args same as Append
 // if give a name, then can be flushed by calls Reloads
 func VarsBy[T any](fn func() T, args ...any) *safety.Var[T] {
 	ss := safety.NewVar(fn())
-	Push(func() {
+	Append(func() {
 		ss.Store(fn())
 	}, args...)
 	return ss
@@ -364,7 +367,7 @@ func MapBy[K comparable, T any](fn func(*safety.Map[K, T]), args ...any) *safety
 	if fn != nil {
 		fn(m)
 	}
-	Push(func() {
+	Append(func() {
 		m.Flush()
 		if fn != nil {
 			fn(m)
@@ -375,18 +378,18 @@ func MapBy[K comparable, T any](fn func(*safety.Map[K, T]), args ...any) *safety
 
 func SafeMap[K comparable, T any](args ...any) *safety.Map[K, T] {
 	m := safety.NewMap[K, T]()
-	Push(m.Flush, args...)
+	Append(m.Flush, args...)
 	return m
 }
 
-// Push the func that will be called whenever Reload called
+// Append the func that will be called whenever Reload called
 //
 // if give a name, then can be called by called Reloads
 //
 // if give a float then can be called early or lately when called Reload, more bigger more earlier
 //
 // if give a bool false will not flushed when called Reload, then can called GetValMap to flush manually
-func Push(fn func(), a ...any) {
+func Append(fn func(), a ...any) {
 	ord, name := parseArgs(a...)
 	auto := helper.ParseArgs(true, a...)
 	if name != "" && !auto {
@@ -434,11 +437,11 @@ func BuildFnVal[T any](name string, t T, fn func() T) func() T {
 		v:        p,
 		isManual: safety.NewVar(false),
 	}
-	Push(func() {
+	Append(func() {
 		if !e.isManual.Load() {
 			e.v.Store(fn())
 		}
-	})
+	}, str.Join("fnval-", name))
 	setFnVal.Store(name, e)
 	return func() T {
 		return e.v.Load()

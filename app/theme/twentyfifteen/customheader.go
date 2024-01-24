@@ -81,7 +81,7 @@ var imgStyle = `.site-header {
 			}
 		}`
 
-var header = reload.Vars(constraints.Defaults)
+var header = reload.Vars(constraints.Defaults, "twentyfifteen-customheader")
 
 func calCustomHeaderImg(h *wp.Handle) (r string, rand bool) {
 	img, rand := h.GetCustomHeaderImg()

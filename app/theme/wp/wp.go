@@ -113,11 +113,6 @@ func SetConfigHandle(a ...any) Handle {
 
 var GetInitHandleFn = reload.BuildValFnWithAnyParams("themeArgAndConfig", SetConfigHandle, false)
 
-type ConfigParm struct {
-	ConfigFn func(*Handle)
-	H        *Handle
-}
-
 func InitHandle(configFn func(*Handle), h *Handle) {
 	hh := GetInitHandleFn(configFn, h)
 	mods, err := wpconfig.GetThemeMods(h.theme)

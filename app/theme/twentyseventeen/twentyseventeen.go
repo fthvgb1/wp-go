@@ -162,7 +162,7 @@ func postThumbnail(h *wp.Handle, posts *models.Posts) {
 	}
 }
 
-var header = reload.Vars(models.PostThumbnail{})
+var header = reload.Vars(models.PostThumbnail{}, "twentyseventeen-headerImage")
 
 func calCustomHeader(h *wp.Handle) {
 	h.SetData("HeaderImage", getHeaderImage(h))

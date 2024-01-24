@@ -81,7 +81,7 @@ var plainRouteParam = reload.Vars([]Plain{
 			return true
 		},
 	},
-})
+}, "plainRouteParam")
 
 var GetUsersIds = reload.BuildValFnWithConfirm("usersIds", func(h *wp.Handle) (map[uint64]string, bool) {
 	users, err := cache.GetAllUsername(h.C)

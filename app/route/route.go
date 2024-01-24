@@ -91,9 +91,9 @@ func SetupRouter() *gin.Engine {
 		fn(r)
 	}
 
-	reload.Push(func() {
+	reload.Append(func() {
 		c := config.GetConfig()
 		siteFlow(c.MaxRequestSleepNum, c.MaxRequestNum, c.CacheTime.SleepTime)
-	})
+	}, "site-flowLimit-config")
 	return r
 }
