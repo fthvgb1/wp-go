@@ -112,17 +112,11 @@ func errorsHandle(h *wp.Handle) {
 func postThumb(h *wp.Handle) {
 	d := h.GetDetailHandle()
 	if d.Post.Thumbnail.Path != "" {
-		d.Post.Thumbnail = getPostThumbs(d.Post.Id, d.Post)
+		img := wpconfig.Thumbnail(d.Post.Thumbnail.OriginAttachmentData, "full", "", "thumbnail", "post-thumbnail")
+		img.Sizes = "100vw"
+		img.Srcset = fmt.Sprintf("%s %dw, %s", img.Path, img.Width, img.Srcset)
+		d.Post.Thumbnail = img
 	}
-}
-
-var getPostThumbs = reload.BuildMapFn[uint64]("post-thumbnail", postThumbs)
-
-func postThumbs(post models.Posts) models.PostThumbnail {
-	img := wpconfig.Thumbnail(post.Thumbnail.OriginAttachmentData, "full", "", "thumbnail", "post-thumbnail")
-	img.Sizes = "100vw"
-	img.Srcset = fmt.Sprintf("%s %dw, %s", img.Path, img.Width, img.Srcset)
-	return img
 }
 
 var commentFormat = comment{}

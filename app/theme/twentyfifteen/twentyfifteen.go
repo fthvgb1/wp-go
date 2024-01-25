@@ -3,13 +3,11 @@ package twentyfifteen
 import (
 	"github.com/fthvgb1/wp-go/app/pkg/constraints"
 	"github.com/fthvgb1/wp-go/app/pkg/constraints/widgets"
-	"github.com/fthvgb1/wp-go/app/pkg/models"
 	"github.com/fthvgb1/wp-go/app/plugins"
 	"github.com/fthvgb1/wp-go/app/theme/wp"
 	"github.com/fthvgb1/wp-go/app/theme/wp/components"
 	"github.com/fthvgb1/wp-go/app/theme/wp/middleware"
 	"github.com/fthvgb1/wp-go/app/wpconfig"
-	"github.com/fthvgb1/wp-go/cache/reload"
 	"strings"
 )
 
@@ -56,14 +54,8 @@ func setPaginationAndRender(h *wp.Handle) {
 func postThumb(h *wp.Handle) {
 	d := h.GetDetailHandle()
 	if d.Post.Thumbnail.Path != "" {
-		d.Post.Thumbnail = getPostThumbs(d.Post.Id, d.Post)
+		d.Post.Thumbnail = wpconfig.Thumbnail(d.Post.Thumbnail.OriginAttachmentData, "post-thumbnail", "")
 	}
-}
-
-var getPostThumbs = reload.BuildMapFn[uint64]("twentyFifteen-post-thumbnail", postThumbs)
-
-func postThumbs(post models.Posts) models.PostThumbnail {
-	return wpconfig.Thumbnail(post.Thumbnail.OriginAttachmentData, "post-thumbnail", "")
 }
 
 func renderCustomHeader(h *wp.Handle) {

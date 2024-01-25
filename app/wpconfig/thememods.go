@@ -73,6 +73,7 @@ func Thumbnail(metadata models.WpAttachmentMetadata, Type, host string, except .
 	up := strings.Split(metadata.File, "/")
 	if metadata.File != "" && Type == "full" {
 		mimeType := metadata.Sizes["thumbnail"].MimeType
+		metadata.Sizes = maps.Copy(metadata.Sizes)
 		metadata.Sizes["full"] = models.MetaDataFileSize{
 			File:     filepath.Base(metadata.File),
 			Width:    metadata.Width,
