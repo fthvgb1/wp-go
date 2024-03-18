@@ -28,10 +28,16 @@ type DetailHandle struct {
 	CommentPageEle pagination.Render
 	TotalRaw       int
 	TotalPage      int
+	CommentStep    int
 }
 
 func NewDetailHandle(handle *Handle) *DetailHandle {
-	return &DetailHandle{Handle: handle}
+	return &DetailHandle{
+		Handle:      handle,
+		Page:        1,
+		Limit:       5,
+		CommentStep: 1,
+	}
 }
 
 func (d *DetailHandle) BuildDetailData() (err error) {
@@ -164,7 +170,7 @@ func (d *DetailHandle) RenderComment() {
 		d.CommentPageEle = plugins.TwentyFifteenCommentPagination()
 	}
 	if wpconfig.GetOption("page_comments") == "1" && d.TotalPage > 1 {
-		d.ginH["commentPageNav"] = pagination.Paginate(d.CommentPageEle, d.TotalRaw, d.Limit, d.Page, 1, *d.C.Request.URL, d.IsHttps())
+		d.ginH["commentPageNav"] = pagination.Paginate(d.CommentPageEle, d.TotalRaw, d.Limit, d.Page, d.CommentStep, *d.C.Request.URL, d.IsHttps())
 	}
 }
 

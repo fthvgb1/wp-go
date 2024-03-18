@@ -13,7 +13,6 @@ type Render interface {
 	Dots() string
 	Middle(page int, url string) string
 	Urls(u url.URL, page int, isTLS bool) string
-	Step() int
 }
 
 type parser struct {
@@ -28,10 +27,6 @@ type parser struct {
 }
 
 func Paginate(e Render, totalRaw int, pageSize int, currentPage, step int, u url.URL, isTLS bool) string {
-	st := e.Step()
-	if st > 0 {
-		step = st
-	}
 	return parser{
 		Render:      e,
 		TotalPage:   number.DivideCeil(totalRaw, pageSize),

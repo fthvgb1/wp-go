@@ -19,7 +19,8 @@ type Comments struct {
 	CommentParent      uint64    `gorm:"column:comment_parent" db:"comment_parent" json:"comment_parent" form:"comment_parent"`
 	UserId             uint64    `gorm:"column:user_id" db:"user_id" json:"user_id" form:"user_id"`
 	//扩展字段
-	PostTitle string `db:"post_title"`
+	PostTitle  string    `db:"post_title"`
+	UpdateTime time.Time `gorm:"update_time" form:"update_time" json:"update_time" db:"update_time"`
 }
 
 func (w Comments) PrimaryKey() string {

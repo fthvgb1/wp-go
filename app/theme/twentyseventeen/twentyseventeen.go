@@ -34,10 +34,7 @@ var paginate = func() plugins.PageEle {
 		Nexts:    p.Next,
 		Dotss:    p.Dots,
 		Middles:  p.Middle,
-		Steps: func() int {
-			return 2
-		},
-		Urlss: plugins.TwentyFifteenCommentPagination().Urls,
+		Urlss:    plugins.TwentyFifteenCommentPagination().Urls,
 	}
 
 	return p
@@ -83,6 +80,7 @@ func setPaginationAndRender(h *wp.Handle) {
 		d := hh.GetDetailHandle()
 		d.CommentRender = commentFormat
 		d.CommentPageEle = commentPageEle
+		d.CommentStep = 2
 	}, 150, "setPaginationAndRender"))
 	wp.PushIndexHandler(constraints.PipeRender, h, wp.NewHandleFn(func(hh *wp.Handle) {
 		i := hh.GetIndexHandle()

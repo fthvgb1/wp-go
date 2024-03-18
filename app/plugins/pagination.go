@@ -62,10 +62,6 @@ func (p PageEle) Dots() string {
 	return p.DotsEle
 }
 
-func (p PageEle) Step() int {
-	return 0
-}
-
 func (p PageEle) Middle(page int, url string) string {
 	return fmt.Sprintf(p.MiddleEle, url, page)
 }
@@ -142,10 +138,6 @@ func (p CommentPageEle) Prev(url string) string {
 	return fmt.Sprintf(p.PrevEle, url, helper.Or(wpconfig.GetOption("comment_order") == "asc", "较早评论", "较新评论"))
 }
 
-func (p CommentPageEle) Step() int {
-	return 0
-}
-
 func (p CommentPageEle) Next(url string) string {
 	return fmt.Sprintf(p.NextEle, url, helper.Or(wpconfig.GetOption("comment_order") == "asc", "较新评论", "较早评论"))
 }
@@ -157,7 +149,6 @@ type PaginationNav struct {
 	Dotss    func() string
 	Middles  func(page int, url string) string
 	Urlss    func(u url.URL, page int, isTLS bool) string
-	Steps    func() int
 }
 
 func (p PaginationNav) Current(page, totalPage, totalRows int) string {
@@ -182,8 +173,4 @@ func (p PaginationNav) Middle(page int, url string) string {
 
 func (p PaginationNav) Urls(u url.URL, page int, isTLS bool) string {
 	return p.Urlss(u, page, isTLS)
-}
-
-func (p PaginationNav) Step() int {
-	return p.Steps()
 }
