@@ -20,6 +20,11 @@
     - kill -SIGUSR1 PID 更新配置和清空缓存
     - kill -SIGUSR2 PID 清空缓存
 
+#### 运行
+```
+go run app/cmd/main.go [-c configpath] [-p port]
+```
+
 #### 数据显示支持程度
 
 | 页表  | 支持程度                                        |

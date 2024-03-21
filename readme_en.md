@@ -20,6 +20,12 @@ A WordPress front-end written in Go, with relatively simple functions,  only the
     - kill -SIGUSR1 PID update configuration and clear cache
     - kill -SIGUSR2 PID clear cache
 
+
+#### start up
+```
+go run app/cmd/main.go [-c configpath] [-p port]
+```
+
 #### The data show the degree of support
 
 | page table   | Support                                                                                                                                                                         |
