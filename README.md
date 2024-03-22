@@ -83,4 +83,5 @@ go run app/cmd/main.go [-c configpath] [-p port]
 
 #### 鸣谢
 
-[![jetbrains](https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.png)](https://jb.gg/OpenSourceSupport)
+<a href="https://jb.gg/OpenSourceSupport"><img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.png" alt="JetBrains Logo (Main) logo." width="30%"></a>
+
