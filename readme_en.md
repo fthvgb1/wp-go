@@ -77,6 +77,10 @@ It is divided into plug-ins that modify the data of list pages and plug-ins that
 | digest Automatically generate a digest of the specified length | Enlighter code highlighting (enlighterjs plug-in needs to be installed in the background) |
 |                                                                | hiddenLogin hidden login entry                                                            |
 
-#### other
+#### Others
 
 The gin framework and sqlx used encapsulate the layer query method outside.
+
+#### Thanks
+
+[![jetbrains](https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.png)](https://jb.gg/OpenSourceSupport)

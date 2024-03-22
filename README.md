@@ -80,3 +80,7 @@ go run app/cmd/main.go [-c configpath] [-p port]
 #### 其它
 
 用的gin框架和sqlx,在外面封装了层查询的方法。
+
+#### 鸣谢
+
+[![jetbrains](https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.png)](https://jb.gg/OpenSourceSupport)
