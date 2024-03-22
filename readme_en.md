@@ -83,4 +83,4 @@ The gin framework and sqlx used encapsulate the layer query method outside.
 
 #### Thanks
 
-[![jetbrains](https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.png)](https://jb.gg/OpenSourceSupport)
+<a href="https://jb.gg/OpenSourceSupport"><img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.png" alt="JetBrains Logo (Main) logo." width="50%"></a>
