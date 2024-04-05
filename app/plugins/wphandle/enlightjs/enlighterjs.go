@@ -58,7 +58,7 @@ func EnlighterJS(h *wp.Handle) {
 				Linehover:        maps.GetStrAnyValWithDefaults(opp, "enlighterjs-linehover", true),
 				RawcodeDbclick:   maps.GetStrAnyValWithDefaults(opp, "enlighterjs-rawcodedbclick", true),
 				TextOverflow:     maps.GetStrAnyValWithDefaults(opp, "enlighterjs-textoverflow", "break"),
-				Linenumbers:      maps.GetStrAnyValWithDefaults[bool](opp, "enlighterjs-linenumbers", true),
+				Linenumbers:      maps.GetStrAnyValWithDefaults(opp, "enlighterjs-linenumbers", true),
 				Theme:            maps.GetStrAnyValWithDefaults(opp, "enlighterjs-theme", "enlighter"),
 				Language:         maps.GetStrAnyValWithDefaults(opp, "enlighterjs-language", "generic"),
 				RetainCssClasses: maps.GetStrAnyValWithDefaults(opp, "enlighterjs-retaincss", false),
