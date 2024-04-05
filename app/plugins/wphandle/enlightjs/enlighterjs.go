@@ -22,7 +22,7 @@ type Options struct {
 	Linehover        bool   `json:"linehover,omitempty"`
 	RawcodeDbclick   bool   `json:"rawcodeDbclick,omitempty"`
 	TextOverflow     string `json:"textOverflow,omitempty"`
-	Linenumbers      int64  `json:"linenumbers,omitempty"`
+	Linenumbers      bool   `json:"linenumbers,omitempty"`
 	Theme            string `json:"theme,omitempty"`
 	Language         string `json:"language,omitempty"`
 	RetainCssClasses bool   `json:"retainCssClasses,omitempty"`
@@ -58,7 +58,7 @@ func EnlighterJS(h *wp.Handle) {
 				Linehover:        maps.GetStrAnyValWithDefaults(opp, "enlighterjs-linehover", true),
 				RawcodeDbclick:   maps.GetStrAnyValWithDefaults(opp, "enlighterjs-rawcodedbclick", true),
 				TextOverflow:     maps.GetStrAnyValWithDefaults(opp, "enlighterjs-textoverflow", "break"),
-				Linenumbers:      maps.GetStrAnyValWithDefaults[int64](opp, "enlighterjs-linenumbers", 1),
+				Linenumbers:      maps.GetStrAnyValWithDefaults[bool](opp, "enlighterjs-linenumbers", true),
 				Theme:            maps.GetStrAnyValWithDefaults(opp, "enlighterjs-theme", "enlighter"),
 				Language:         maps.GetStrAnyValWithDefaults(opp, "enlighterjs-language", "generic"),
 				RetainCssClasses: maps.GetStrAnyValWithDefaults(opp, "enlighterjs-retaincss", false),
