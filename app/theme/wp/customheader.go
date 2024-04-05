@@ -12,6 +12,7 @@ import (
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/model"
 	"regexp"
+	"strings"
 )
 
 func (h *Handle) DisplayHeaderText() bool {
@@ -23,7 +24,7 @@ var GetCustomHeaderImgFn = reload.BuildValFnWithConfirm("headerImages", customHe
 func customHeadImag(h *Handle) ([]models.PostThumbnail, bool) {
 	hs, err := h.GetHeaderImages(h.theme)
 	if err != nil {
-		h.SetErr(err)
+		h.SetErr(fmt.Errorf("get customheadimage err: %v", err))
 		return nil, false
 	}
 	return hs, true
@@ -33,7 +34,7 @@ func (h *Handle) GetCustomHeaderImg() (r models.PostThumbnail, isRand bool) {
 	var err error
 	img := GetCustomHeaderImgFn(h)
 	err = h.Err()
-	if err != nil {
+	if err != nil && strings.Contains(err.Error(), "get customheadimage err") {
 		logs.Error(err, "获取页眉背景图失败")
 		return
 	}
