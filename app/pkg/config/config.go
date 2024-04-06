@@ -85,6 +85,14 @@ type Mysql struct {
 	Pool Pool `yaml:"pool" json:"pool"`
 }
 
+func GetCustomizedConfig[T any]() (T, error) {
+	var r T
+	err := yaml.Unmarshal(fileData.Load(), &r)
+	return r, err
+}
+
+var fileData = safety.NewVar([]byte{})
+
 func InitConfig(conf string) error {
 	if conf == "" {
 		conf = "config.yaml"
@@ -96,6 +104,7 @@ func InitConfig(conf string) error {
 		if err != nil {
 			return err
 		}
+		defer get.Body.Close()
 		file, err = io.ReadAll(get.Body)
 	} else {
 		file, err = os.ReadFile(conf)
@@ -103,6 +112,7 @@ func InitConfig(conf string) error {
 	if err != nil {
 		return err
 	}
+	fileData.Store(file)
 	var c Config
 	err = yaml.Unmarshal(file, &c)
 	if err != nil {

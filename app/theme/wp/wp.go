@@ -32,6 +32,7 @@ type Handle struct {
 	templ     string
 	themeMods wpconfig.ThemeMods
 	err       error
+	errLevel  int8
 	abort     bool
 	stopPipe  bool
 }
@@ -145,8 +146,17 @@ func (h *Handle) Err() error {
 	return h.err
 }
 
-func (h *Handle) SetErr(err error) {
+func (h *Handle) SetErr(err error, level int8) {
 	h.err = errors.Join(err)
+	h.errLevel = level
+}
+
+func (h *Handle) ErrLevel() int8 {
+	return h.errLevel
+}
+
+func (h *Handle) SetErrLevel(errLevel int8) {
+	h.errLevel = errLevel
 }
 
 func (h *Handle) SetTempl(templ string) {

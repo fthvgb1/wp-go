@@ -24,7 +24,7 @@ var GetCustomHeaderImgFn = reload.BuildValFnWithConfirm("headerImages", customHe
 func customHeadImag(h *Handle) ([]models.PostThumbnail, bool) {
 	hs, err := h.GetHeaderImages(h.theme)
 	if err != nil {
-		h.SetErr(fmt.Errorf("get customheadimage err: %v", err))
+		h.SetErr(fmt.Errorf("get customheadimage err: %v", err), Low)
 		return nil, false
 	}
 	return hs, true

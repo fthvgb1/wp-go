@@ -173,7 +173,7 @@ func Index(h *Handle) {
 	i := h.GetIndexHandle()
 	err := i.BuildIndexData()
 	if err != nil {
-		i.SetErr(err)
+		i.SetErr(err, High)
 	}
 	h.SetData("scene", h.Scene())
 }

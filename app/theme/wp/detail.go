@@ -103,7 +103,7 @@ func (d *DetailHandle) CommentData() {
 	pageComments := wpconfig.GetOption("page_comments")
 	num, err := cachemanager.GetBy[int]("commentNumber", d.C, d.Post.Id, time.Second)
 	if err != nil {
-		d.SetErr(err)
+		d.SetErr(err, Low)
 		return
 	}
 	if num < 1 {
@@ -111,7 +111,7 @@ func (d *DetailHandle) CommentData() {
 	}
 	topNum, err := cachemanager.GetBy[int]("postTopCommentsNum", d.C, d.Post.Id, time.Second)
 	if err != nil {
-		d.SetErr(err)
+		d.SetErr(err, Low)
 		return
 	}
 	d.TotalPage = number.DivideCeil(topNum, d.Limit)
@@ -133,12 +133,12 @@ func (d *DetailHandle) CommentData() {
 	d.ginH["page_comments"] = pageComments
 	d.ginH["totalCommentPage"] = d.TotalPage
 	if d.TotalPage < d.Page {
-		d.SetErr(errors.New("curren page above total page"))
+		d.SetErr(errors.New("curren page above total page"), High)
 		return
 	}
 	data, err := cache.PostTopLevelCommentIds(d.C, d.Post.Id, d.Page, d.Limit, topNum, order, key)
 	if err != nil {
-		d.SetErr(err)
+		d.SetErr(err, Low)
 		return
 	}
 	d.TotalRaw = topNum
@@ -163,7 +163,7 @@ func (d *DetailHandle) RenderComment() {
 	var err error
 	d.ginH["comments"], err = RenderComment(d.C, d.Page, d.CommentRender, d.Comments, 2*time.Second, d.IsHttps())
 	if err != nil {
-		d.SetErr(err)
+		d.SetErr(err, High)
 		return
 	}
 	if d.CommentPageEle == nil {
@@ -195,7 +195,7 @@ func Detail(h *Handle) {
 	d := h.GetDetailHandle()
 	err := d.BuildDetailData()
 	if err != nil {
-		d.SetErr(err)
+		d.SetErr(err, High)
 	}
 	h.SetData("scene", h.Scene())
 }
