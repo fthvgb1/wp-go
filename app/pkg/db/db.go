@@ -19,10 +19,6 @@ func GetSqlxDB() *sqlx.DB {
 	return safeDb.Load()
 }
 
-func SetSqlxDB(db *sqlx.DB) {
-	safeDb.Store(db)
-}
-
 func InitDb() (*safety.Var[*sqlx.DB], error) {
 	c := config.GetConfig()
 	dsn := c.Mysql.Dsn.GetDsn()
