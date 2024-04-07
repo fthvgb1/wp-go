@@ -4,10 +4,14 @@ import (
 	"context"
 	"fmt"
 	"github.com/fthvgb1/wp-go/app/pkg/config"
+	"github.com/fthvgb1/wp-go/app/pkg/logs"
 	"github.com/fthvgb1/wp-go/app/pkg/models"
 	"github.com/fthvgb1/wp-go/cache/cachemanager"
+	"github.com/fthvgb1/wp-go/cache/reload"
 	"github.com/fthvgb1/wp-go/helper"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/plugin/digest"
+	"github.com/fthvgb1/wp-go/safety"
 	"regexp"
 	"strings"
 	"time"
@@ -18,10 +22,45 @@ var more = regexp.MustCompile("<!--more(.*?)?-->")
 
 var removeWpBlock = regexp.MustCompile("<!-- /?wp:.*-->")
 
+var digestConfig *safety.Var[DigestConfig]
+
 func InitDigestCache() {
 	cachemanager.NewMemoryMapCache(nil, digestRaw, config.GetConfig().CacheTime.DigestCacheTime, "digestPlugin", func() time.Duration {
 		return config.GetConfig().CacheTime.DigestCacheTime
 	})
+
+	digestConfig = reload.VarsBy(func() DigestConfig {
+		c, err := config.GetCustomizedConfig[DigestConfig]()
+		if err != nil {
+			logs.Error(err, "get digest config fail")
+			c.DigestWordCount = config.GetConfig().DigestWordCount
+			c.DigestAllowTag = config.GetConfig().DigestAllowTag
+			return c
+		}
+		if len(c.DigestTagOccupyNum) > 0 {
+			c.tagNum = map[string]int{}
+			for _, item := range c.DigestTagOccupyNum {
+				tags := strings.Split(item.Tag, "<")
+				for _, tag := range tags {
+					if tag == "" {
+						continue
+					}
+					c.tagNum[str.Join("<", tag)] = item.Num
+				}
+			}
+		}
+		return c
+	}, "digestConfig")
+}
+
+type DigestConfig struct {
+	DigestWordCount    int    `yaml:"digestWordCount"`
+	DigestAllowTag     string `yaml:"digestAllowTag"`
+	DigestTagOccupyNum []struct {
+		Tag string `yaml:"tag"`
+		Num int    `yaml:"num"`
+	} `yaml:"digestTagOccupyNum"`
+	tagNum map[string]int
 }
 
 func RemoveWpBlock(s string) string {
@@ -45,7 +84,8 @@ func digestRaw(ctx context.Context, id uint64, arg ...any) (string, error) {
 func Digests(content string, id uint64, limit int, fn func(id uint64, content, closeTag string) string) string {
 	closeTag := ""
 	content = RemoveWpBlock(content)
-	tag := config.GetConfig().DigestAllowTag
+	c := digestConfig.Load()
+	tag := c.DigestAllowTag
 	if tag == "" {
 		tag = "<a><b><blockquote><br><cite><code><dd><del><div><dl><dt><em><h1><h2><h3><h4><h5><h6><i><img><li><ol><p><pre><span><strong><ul>"
 	}
@@ -54,7 +94,7 @@ func Digests(content string, id uint64, limit int, fn func(id uint64, content, c
 	if length <= limit {
 		return content
 	}
-	content, closeTag = digest.Html(content, limit)
+	content, closeTag = digest.Html(content, limit, c.tagNum)
 	if fn == nil {
 		return PostsMore(id, content, closeTag)
 	}

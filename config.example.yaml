@@ -66,6 +66,15 @@ cacheTime:
 digestWordCount: 300
 # 摘要允许的标签 默认为<a><b><blockquote><br><cite><code><dd><del><div><dl><dt><em><h1><h2><h3><h4><h5><h6><i><img><li><ol><p><pre><span><strong><ul>
 digestTag: "<a><b><blockquote><br><cite><code><dd><del><div><dl><dt><em><h1><h2><h3><h4><h5><h6><i><img><li><ol><p><pre><span><strong><ul>"
+
+# 可以设置每个标签占用的字数，默认都为0 set tag occupied num, default every tag occupied 0
+digestTagOccupyNum: [
+  {
+    tag: "<img><table>",
+    num: 2
+  },
+]
+
 # 到达指定并发请求数时随机sleep
 maxRequestSleepNum: 100
 # 全局最大请求数，超过直接403
@@ -79,13 +88,13 @@ gzip: false
 # 提交评论url host需为ip形式
 postCommentUrl: http://127.0.0.1/wp-comments-post.php
 # TrustIps
-trustIps: []
+trustIps: [ ]
 # 分页器间隔数
 paginationStep: 1
 # 显示查询的sql语句
 showQuerySql: false
 # trust servername 信任的域名
-trustServerNames: ["xy.test","blog.xy.test"]
+trustServerNames: [ "xy.test","blog.xy.test" ]
 # 主题 为空值为option template，没有就默认为twentyfifteen
 theme: "twentyfifteen"
 # 文档排序默认升序还是降序
@@ -95,10 +104,10 @@ wpDir: "/var/www/html/wordpress"
 # pprof route path 为空表示不开启pprof,否则为pprof的路由
 pprof: "/debug/pprof"
 # 要使用的程序插件名
-plugins: ["enlightjs"]
+plugins: [ "enlightjs" ]
 # 插件存放路径
 pluginPath: "./plugins"
 # 列表页面post使用的插件
-listPagePlugins: ["digest"]
+listPagePlugins: [ "digest" ]
 # 额外引入的脚本 第一个为head 第二个为footer
-externScript: ["",""]
+externScript: [ "","" ]

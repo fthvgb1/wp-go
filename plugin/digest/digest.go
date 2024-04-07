@@ -3,6 +3,7 @@ package digest
 import (
 	"github.com/fthvgb1/wp-go/helper/html"
 	"github.com/fthvgb1/wp-go/helper/slice"
+	str "github.com/fthvgb1/wp-go/helper/strings"
 	"regexp"
 	"strings"
 	"unicode/utf8"
@@ -17,7 +18,7 @@ func StripTags(content, allowTag string) string {
 	return content
 }
 
-func Html(content string, limit int) (string, string) {
+func Html(content string, limit int, m map[string]int) (string, string) {
 	closeTag := ""
 	length := utf8.RuneCountInString(content) + 1
 	if length <= limit {
@@ -38,6 +39,7 @@ func Html(content string, limit int) (string, string) {
 	total := len(ru)
 	l, r := '<', '>'
 	i := -1
+	var tag []rune
 	for {
 		i++
 		for len(runeIndex) > 0 && i >= runeIndex[0][0] {
@@ -60,10 +62,19 @@ func Html(content string, limit int) (string, string) {
 			continue
 		} else if ru[i] == r {
 			tagIn = false
+			if len(m) > 0 {
+				tags := str.Join("<", strings.Split(string(tag), " ")[0], ">")
+				tag = tag[:0]
+				if n, ok := m[tags]; ok && n > 0 {
+					end += n
+				}
+			}
 			continue
 		}
 		if tagIn == false {
 			end++
+		} else if len(m) > 0 {
+			tag = append(tag, ru[i])
 		}
 	}
 	if i > total {
