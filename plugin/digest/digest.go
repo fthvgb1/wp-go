@@ -24,6 +24,14 @@ func Html(content string, limit int) (string, string) {
 		return content, ""
 	}
 	index := quto.FindAllStringIndex(content, -1)
+	var runeIndex [][]int
+	if len(index) > 0 {
+		runeIndex = slice.Map(index, func(t []int) []int {
+			return slice.Map(t, func(i int) int {
+				return utf8.RuneCountInString(content[:i])
+			})
+		})
+	}
 	end := 0
 	ru := []rune(content)
 	tagIn := false
@@ -32,13 +40,11 @@ func Html(content string, limit int) (string, string) {
 	i := -1
 	for {
 		i++
-		for len(index) > 0 {
-			ints := slice.Map(index[0], func(t int) int {
-				return utf8.RuneCountInString(content[:t])
-			})
+		for len(runeIndex) > 0 && i >= runeIndex[0][0] {
+			ints := runeIndex[0]
 			if ints[0] <= i {
-				i = i + i - ints[0] + ints[1] - ints[0]
-				index = index[1:]
+				i = ints[1]
+				runeIndex = runeIndex[1:]
 				end++
 				continue
 			} else {
