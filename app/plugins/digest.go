@@ -22,6 +22,24 @@ var more = regexp.MustCompile("<!--more(.*?)?-->")
 
 var removeWpBlock = regexp.MustCompile("<!-- /?wp:.*-->")
 
+type DigestConfig struct {
+	DigestWordCount    int    `yaml:"digestWordCount"`
+	DigestAllowTag     string `yaml:"digestAllowTag"`
+	DigestRegex        string `yaml:"digestRegex"`
+	DigestTagOccupyNum []struct {
+		Tag             string `yaml:"tag"`
+		Num             int    `yaml:"num"`
+		ChuckOvered     bool   `yaml:"chuckOvered"`
+		EscapeCharacter []struct {
+			Tags        string   `yaml:"tags"`
+			Character   []string `yaml:"character"`
+			Num         int      `yaml:"num"`
+			ChuckOvered bool     `yaml:"chuckOvered"`
+		} `yaml:"escapeCharacter"`
+	} `yaml:"digestTagOccupyNum"`
+	specialSolve map[string]digest.SpecialSolveConf
+}
+
 var digestConfig *safety.Var[DigestConfig]
 
 func InitDigestCache() {
@@ -37,30 +55,62 @@ func InitDigestCache() {
 			c.DigestAllowTag = config.GetConfig().DigestAllowTag
 			return c
 		}
-		if len(c.DigestTagOccupyNum) > 0 {
-			c.tagNum = map[string]int{}
-			for _, item := range c.DigestTagOccupyNum {
-				tags := strings.Split(item.Tag, "<")
-				for _, tag := range tags {
-					if tag == "" {
-						continue
+		if c.DigestRegex != "" {
+			digest.SetQutos(c.DigestRegex)
+		}
+		if len(c.DigestTagOccupyNum) <= 1 {
+			return c
+		}
+		c.specialSolve = map[string]digest.SpecialSolveConf{}
+		for _, item := range c.DigestTagOccupyNum {
+			tags := strings.Split(strings.ReplaceAll(item.Tag, " ", ""), "<")
+			for _, tag := range tags {
+				if tag == "" {
+					continue
+				}
+				tag = str.Join("<", tag)
+				var ec map[rune]digest.SpecialSolve
+				var specialTags map[string]digest.SpecialSolve
+				if len(item.EscapeCharacter) > 0 {
+					ec = make(map[rune]digest.SpecialSolve)
+					for _, esc := range item.EscapeCharacter {
+						for _, i := range esc.Character {
+							s := []rune(i)
+							if len(s) == 1 {
+								ec[s[0]] = digest.SpecialSolve{
+									Num:         esc.Num,
+									ChuckOvered: esc.ChuckOvered,
+								}
+							}
+						}
+						if esc.Tags == "" {
+							continue
+						}
+						tagss := strings.Split(strings.ReplaceAll(esc.Tags, " ", ""), "<")
+						specialTags = make(map[string]digest.SpecialSolve)
+						for _, t := range tagss {
+							if t == "" {
+								continue
+							}
+							t = str.Join("<", t)
+							specialTags[t] = digest.SpecialSolve{
+								Num:         esc.Num,
+								ChuckOvered: esc.ChuckOvered,
+							}
+						}
 					}
-					c.tagNum[str.Join("<", tag)] = item.Num
+
+				}
+				c.specialSolve[tag] = digest.SpecialSolveConf{
+					Num:             item.Num,
+					ChuckOvered:     item.ChuckOvered,
+					EscapeCharacter: ec,
+					Tags:            specialTags,
 				}
 			}
 		}
 		return c
 	}, "digestConfig")
-}
-
-type DigestConfig struct {
-	DigestWordCount    int    `yaml:"digestWordCount"`
-	DigestAllowTag     string `yaml:"digestAllowTag"`
-	DigestTagOccupyNum []struct {
-		Tag string `yaml:"tag"`
-		Num int    `yaml:"num"`
-	} `yaml:"digestTagOccupyNum"`
-	tagNum map[string]int
 }
 
 func RemoveWpBlock(s string) string {
@@ -94,7 +144,12 @@ func Digests(content string, id uint64, limit int, fn func(id uint64, content, c
 	if length <= limit {
 		return content
 	}
-	content, closeTag = digest.Html(content, limit, c.tagNum)
+	if len(c.specialSolve) > 0 {
+		content, closeTag = digest.CustomizeHtml(content, limit, c.specialSolve)
+	} else {
+		content, closeTag = digest.Html(content, limit)
+	}
+
 	if fn == nil {
 		return PostsMore(id, content, closeTag)
 	}

@@ -133,6 +133,13 @@ func StripTagsX(str, allowable string) string {
 
 var selfCloseTags = map[string]string{"area": "", "base": "", "basefont": "", "br": "", "col": "", "command": "", "fecolormatrix": "", "embed": "", "frame": "", "hr": "", "img": "", "input": "", "isindex": "", "link": "", "fecomposite": "", "fefuncr": "", "fefuncg": "", "fefuncb": "", "fefunca": "", "meta": "", "param": "", "!doctype": "", "source": "", "track": "", "wbr": ""}
 
+func GetSelfCloseTags() map[string]string {
+	return selfCloseTags
+}
+func SetSelfCloseTags(m map[string]string) {
+	selfCloseTags = m
+}
+
 func CloseTag(str string) string {
 	tags := tag.FindAllString(str, -1)
 	if len(tags) < 1 {

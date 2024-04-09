@@ -67,13 +67,46 @@ digestWordCount: 300
 # 摘要允许的标签 默认为<a><b><blockquote><br><cite><code><dd><del><div><dl><dt><em><h1><h2><h3><h4><h5><h6><i><img><li><ol><p><pre><span><strong><ul>
 digestTag: "<a><b><blockquote><br><cite><code><dd><del><div><dl><dt><em><h1><h2><h3><h4><h5><h6><i><img><li><ol><p><pre><span><strong><ul>"
 
-# 可以设置每个标签占用的字数，默认都为0 set tag occupied num, default every tag occupied 0
-digestTagOccupyNum: [
-  {
-    tag: "<img><table>",
-    num: 2
-  },
-]
+# 设置html转义实体正则  the html coded character set regex  file: plugin/digest/digest.go:12
+#digestRegex: "&quot;*|&amp;*|&lt;*|&gt;*|&nbsp;*|&#91;*|&#93;*|&emsp;*"
+
+# 可以设置每个标签或者转义字符占用的字数，默认都为0 set tag or escape character occupied num, default every tag occupied 0
+#digestTagOccupyNum: [
+#  {
+#    tag: "<top>", # 最外层固定tag   outermost immovable tag
+#    num: 0,
+#    chuckOvered: false,
+#    escapeCharacter: [
+#      {
+#        character: [ "\n","\r","\t" ],
+#        num: 0
+#      },
+#    ]
+#  },{
+#    tag: "<img>",
+#    num: 1,
+#    chuckOvered: false
+#  },
+#  {
+#    tag: "<pre><code>",
+#    num: 0,
+#    escapeCharacter: [
+#      {
+#        character: ["\t"],
+#        num: 4,
+#        chuckOvered: false,
+#      },
+#      {
+#        character: ["\n","\r"],
+#        num: 1
+#      },
+#      {
+#        tags: "<br>",
+#        num: 1
+#      },
+#    ]
+#  },
+#]
 
 # 到达指定并发请求数时随机sleep
 maxRequestSleepNum: 100
