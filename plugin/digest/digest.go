@@ -26,8 +26,6 @@ type SpecialSolve struct {
 	ChuckOvered bool
 }
 
-var selfCloseTags = html.GetSelfCloseTags()
-
 func StripTags(content, allowTag string) string {
 	content = strings.Trim(content, " \t\n\r\000\x0B")
 	content = strings.Replace(content, "]]>", "]]&gt;", -1)
@@ -78,7 +76,7 @@ func Html(content string, limit int) (string, string) {
 			tagIn = false
 			continue
 		}
-		if tagIn == false && ru[i] != '\n' {
+		if tagIn == false {
 			end++
 		}
 	}
@@ -111,6 +109,7 @@ func CustomizeHtml(content string, limit int, m map[string]SpecialSolveConf) (st
 	runeTotal := len(runeContent)
 	l, r := '<', '>'
 	i := -1
+	selfCloseTags := html.GetSelfCloseTags()
 	var currentTag, parentTag string
 	var allTags = []string{"<top>"}
 	var tag []rune
