@@ -79,6 +79,7 @@ func ParseDigestConf(c DigestConfig) map[string]digest.SpecialSolveConf {
 			var specialTags map[string]digest.SpecialSolve
 			if len(item.EscapeCharacter) > 0 {
 				ec = make(map[rune]digest.SpecialSolve)
+				specialTags = make(map[string]digest.SpecialSolve)
 				for _, esc := range item.EscapeCharacter {
 					for _, i := range esc.Character {
 						s := []rune(i)
@@ -93,7 +94,6 @@ func ParseDigestConf(c DigestConfig) map[string]digest.SpecialSolveConf {
 						continue
 					}
 					tagss := strings.Split(strings.ReplaceAll(esc.Tags, " ", ""), "<")
-					specialTags = make(map[string]digest.SpecialSolve)
 					for _, t := range tagss {
 						if t == "" {
 							continue
