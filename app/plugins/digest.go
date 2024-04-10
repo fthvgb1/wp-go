@@ -9,6 +9,7 @@ import (
 	"github.com/fthvgb1/wp-go/cache/cachemanager"
 	"github.com/fthvgb1/wp-go/cache/reload"
 	"github.com/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/helper/maps"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/plugin/digest"
 	"github.com/fthvgb1/wp-go/safety"
@@ -74,12 +75,10 @@ func ParseDigestConf(c DigestConfig) map[string]digest.SpecialSolveConf {
 			if tag == "" {
 				continue
 			}
+			ec := make(map[rune]digest.SpecialSolve)
+			specialTags := make(map[string]digest.SpecialSolve)
 			tag = str.Join("<", tag)
-			var ec map[rune]digest.SpecialSolve
-			var specialTags map[string]digest.SpecialSolve
 			if len(item.EscapeCharacter) > 0 {
-				ec = make(map[rune]digest.SpecialSolve)
-				specialTags = make(map[string]digest.SpecialSolve)
 				for _, esc := range item.EscapeCharacter {
 					for _, i := range esc.Character {
 						s := []rune(i)
@@ -106,12 +105,21 @@ func ParseDigestConf(c DigestConfig) map[string]digest.SpecialSolveConf {
 					}
 				}
 			}
-			specialSolve[tag] = digest.SpecialSolveConf{
-				Num:             item.Num,
-				ChuckOvered:     item.ChuckOvered,
-				EscapeCharacter: ec,
-				Tags:            specialTags,
+			v, ok := specialSolve[tag]
+			if !ok {
+				specialSolve[tag] = digest.SpecialSolveConf{
+					Num:             item.Num,
+					ChuckOvered:     item.ChuckOvered,
+					EscapeCharacter: ec,
+					Tags:            specialTags,
+				}
+				continue
 			}
+			v.Num = item.Num
+			v.ChuckOvered = item.ChuckOvered
+			v.EscapeCharacter = maps.Merge(v.EscapeCharacter, ec)
+			v.Tags = maps.Merge(v.Tags, specialTags)
+			specialSolve[tag] = v
 		}
 	}
 	return specialSolve

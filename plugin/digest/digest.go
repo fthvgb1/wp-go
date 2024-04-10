@@ -184,17 +184,17 @@ func CustomizeHtml(content string, limit int, m map[string]SpecialSolveConf) (st
 		}
 		currentTags := allTags[len(allTags)-1]
 		mm, ok := m[currentTags]
-		if !ok {
+		if !ok || len(mm.EscapeCharacter) < 1 {
 			count++
-		} else if len(mm.EscapeCharacter) > 0 {
-			if n, ok := mm.EscapeCharacter[runeContent[i]]; ok {
-				if (count+n.Num) > limit && n.ChuckOvered {
-					break
-				}
-				count += n.Num
-			} else {
-				count++
+			continue
+		}
+		if n, ok := mm.EscapeCharacter[runeContent[i]]; ok {
+			if (count+n.Num) > limit && n.ChuckOvered {
+				break
 			}
+			count += n.Num
+		} else {
+			count++
 		}
 	}
 	if i > runeTotal {
