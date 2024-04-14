@@ -451,7 +451,18 @@ func Append(fn func(), a ...any) {
 	ord, name := parseArgs(a...)
 	autoExec := helper.ParseArgs(true, a...)
 	once := helper.ParseArgs(0, a...)
+	queues := reloadQueues.Load()
 	queue := Queue{fn, ord, name, autoExec, once == 1}
+	if name != "" {
+		i, _ := slice.SearchFirst(queues, func(queue Queue) bool {
+			return queue.Name == name
+		})
+		if i > -1 {
+			queues[i] = queue
+			reloadQueues.Store(queues)
+			return
+		}
+	}
 	reloadQueues.Append(queue)
 }
 
