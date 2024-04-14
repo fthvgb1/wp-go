@@ -8,6 +8,7 @@ import (
 	"github.com/fthvgb1/wp-go/app/pkg/dao"
 	"github.com/fthvgb1/wp-go/app/theme/wp"
 	"github.com/fthvgb1/wp-go/cache/cachemanager"
+	"github.com/fthvgb1/wp-go/cache/reload"
 	"github.com/fthvgb1/wp-go/helper/number"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/helper/strings"
@@ -94,6 +95,9 @@ func Re(h *wp.Handle) {
 			return
 		}
 	}
+	reload.AppendOnceFn(func() {
+        cachemanager.SetMapCache("listPostIds",vv)
+    })
 	rdm := redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
 		Password: "", // no password set

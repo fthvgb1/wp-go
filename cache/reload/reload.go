@@ -9,10 +9,12 @@ import (
 	"sync/atomic"
 )
 
-type queue struct {
-	fn    func()
-	order float64
-	name  string
+type Queue struct {
+	Fn       func()
+	Order    float64
+	Name     string
+	AutoExec bool
+	Once     bool
 }
 
 var mut = &sync.Mutex{}
@@ -21,10 +23,54 @@ func GetGlobeMutex() *sync.Mutex {
 	return mut
 }
 
-var waitReloadCalls = safety.NewSlice(make([]queue, 0))
-var callMap = safety.NewMap[string, func()]()
+var reloadQueues = safety.NewSlice(make([]Queue, 0))
+
+var reloadQueueHookFns = safety.NewVar[[]func(queue Queue) (Queue, bool)](nil)
 
 var setFnVal = safety.NewMap[string, any]()
+
+func DeleteReloadQueue(names ...string) {
+	hooks := reloadQueueHookFns.Load()
+	for _, name := range names {
+		hooks = append(hooks, func(queue Queue) (Queue, bool) {
+			if name != queue.Name {
+				return queue, true
+			}
+			return queue, false
+		})
+	}
+	reloadQueueHookFns.Store(hooks)
+}
+
+func HookReloadQueue(fn func(queue Queue) (Queue, bool)) {
+	a := reloadQueueHookFns.Load()
+	a = append(a, fn)
+	reloadQueueHookFns.Store(a)
+}
+
+func GetReloadFn(name string) func() {
+	hookQueue()
+	i, queue := slice.SearchFirst(reloadQueues.Load(), func(queue Queue) bool {
+		return queue.Name == name
+	})
+	if i > -1 && queue.Fn != nil {
+		return queue.Fn
+	}
+	return nil
+}
+
+func hookQueue() {
+	hooks := reloadQueueHookFns.Load()
+	queues := reloadQueues.Load()
+	length := len(queues)
+	for _, hook := range hooks {
+		queues = slice.FilterAndMap(queues, hook)
+	}
+	if len(queues) != length {
+		reloadQueues.Store(queues)
+	}
+	reloadQueueHookFns.Flush()
+}
 
 type SafetyVar[T, A any] struct {
 	Val   *safety.Var[Val[T]]
@@ -65,12 +111,20 @@ func DeleteMapVal[T any](namespace string, key ...T) {
 func Reloads(namespaces ...string) {
 	mut.Lock()
 	defer mut.Unlock()
-	for _, namespace := range namespaces {
-		fn, ok := callMap.Load(namespace)
-		if !ok {
+	hookQueue()
+	queues := reloadQueues.Load()
+	for _, name := range namespaces {
+		i, queue := slice.SearchFirst(queues, func(queue Queue) bool {
+			return name == queue.Name
+		})
+		if i < 0 {
 			continue
 		}
-		fn()
+		queue.Fn()
+		if queue.Once {
+			slice.Delete(&queues, i)
+			reloadQueues.Store(queues)
+		}
 	}
 }
 
@@ -190,7 +244,7 @@ func GetAnyValMapBy[K comparable, V, A any](namespace string, key K, a A, fn fun
 	return v
 }
 
-func BuildAnyVal[T, A any](namespace string, counter bool, args ...any) *SafetyVar[T, A] {
+func BuildAnyVal[T, A any](namespace string, args ...any) *SafetyVar[T, A] {
 	var vv *SafetyVar[T, A]
 	vvv, ok := safetyMaps.Load(namespace)
 	if ok {
@@ -212,7 +266,7 @@ func BuildAnyVal[T, A any](namespace string, counter bool, args ...any) *SafetyV
 }
 
 func GetAnyValBys[T, A any](namespace string, a A, fn func(A) (T, bool), args ...any) T {
-	var vv = BuildAnyVal[T, A](namespace, false, args...)
+	var vv = BuildAnyVal[T, A](namespace, args...)
 	v := vv.Val.Load()
 	if v.Ok {
 		return v.V
@@ -232,7 +286,7 @@ func GetAnyValBys[T, A any](namespace string, a A, fn func(A) (T, bool), args ..
 //
 // if give a int and value bigger than 1 will be a times which built fn called return false
 func BuildValFnWithConfirm[T, A any](namespace string, fn func(A) (T, bool), args ...any) func(A) T {
-	var vv = BuildAnyVal[T, A](namespace, false, args...)
+	var vv = BuildAnyVal[T, A](namespace, args...)
 	tryTimes := helper.ParseArgs(1, args...)
 	var counter int64
 	if tryTimes > 1 {
@@ -277,7 +331,7 @@ func BuildValFnWithConfirm[T, A any](namespace string, fn func(A) (T, bool), arg
 //
 // if give a bool false will not flushed when called Reload, but can call GetValMap or Reloads to flush manually
 func BuildValFn[T, A any](namespace string, fn func(A) T, args ...any) func(A) T {
-	var vv = BuildAnyVal[T, A](namespace, false, args...)
+	var vv = BuildAnyVal[T, A](namespace, args...)
 	return func(a A) T {
 		v := vv.Val.Load()
 		if v.Ok {
@@ -298,7 +352,7 @@ func BuildValFn[T, A any](namespace string, fn func(A) T, args ...any) func(A) T
 
 // BuildValFnWithAnyParams same as BuildValFn use multiple params
 func BuildValFnWithAnyParams[T any](namespace string, fn func(...any) T, args ...any) func(...any) T {
-	var vv = BuildAnyVal[T, any](namespace, false, args...)
+	var vv = BuildAnyVal[T, any](namespace, args...)
 	return func(a ...any) T {
 		v := vv.Val.Load()
 		if v.Ok {
@@ -326,6 +380,8 @@ func BuildValFnWithAnyParams[T any](namespace string, fn func(...any) T, args ..
 // if give a float then can be reloaded early or lately, more bigger more earlier
 //
 // if give a bool false will not flushed when called Reload, but can call GetValMap or Reloads to flush manually
+//
+// if give a int 1 will only execute once when called Reload or Reloads and then delete the flush fn
 func Vars[T any](defaults T, args ...any) *safety.Var[T] {
 	ss := safety.NewVar(defaults)
 
@@ -388,32 +444,45 @@ func SafeMap[K comparable, T any](args ...any) *safety.Map[K, T] {
 //
 // if give a float then can be called early or lately when called Reload, more bigger more earlier
 //
-// if give a bool false will not flushed when called Reload, then can called GetValMap to flush manually
+// if give a bool false will not execute when called Reload, then can called Reloads to execute manually
+//
+// if give a int 1 will only execute once when called Reload or Reloads and then delete the Queue
 func Append(fn func(), a ...any) {
 	ord, name := parseArgs(a...)
-	auto := helper.ParseArgs(true, a...)
-	if name != "" && !auto {
-		callMap.Store(name, fn)
-		return
-	}
-	waitReloadCalls.Append(queue{fn, ord, name})
-	if name != "" {
-		callMap.Store(name, fn)
-	}
+	autoExec := helper.ParseArgs(true, a...)
+	once := helper.ParseArgs(0, a...)
+	queue := Queue{fn, ord, name, autoExec, once == 1}
+	reloadQueues.Append(queue)
+}
+
+// AppendOnceFn function and args same as Append, but func will execute only once when called Reload or Reloads and then will be deleted. Especially suitable for using to develop plugins, when uninstall plugin can clean or recover some progress's self relative data or behavior which was changed by plugin.
+func AppendOnceFn(fn func(), a ...any) {
+	a = append([]any{1}, a...)
+	Append(fn, a...)
 }
 
 func Reload() {
 	mut.Lock()
 	defer mut.Unlock()
 	deleteMapFn.Flush()
-	reloadCalls := waitReloadCalls.Load()
-	slice.SimpleSort(reloadCalls, slice.DESC, func(t queue) float64 {
-		return t.order
+	hookQueue()
+	queues := reloadQueues.Load()
+	length := len(queues)
+	slice.SimpleSort(queues, slice.DESC, func(t Queue) float64 {
+		return t.Order
 	})
-	for _, call := range reloadCalls {
-		call.fn()
+	for i, queue := range queues {
+		if !queue.AutoExec {
+			continue
+		}
+		queue.Fn()
+		if queue.Once {
+			slice.Delete(&queues, i)
+		}
 	}
-	return
+	if length != len(queues) {
+		reloadQueues.Store(queues)
+	}
 }
 
 type Any[T any] struct {
