@@ -45,7 +45,7 @@ func TestFlushMapVal(t *testing.T) {
 		}
 		p.Wait()
 		fmt.Println(gets, count)
-		FlushMapVal("test", 3, 4)
+		DelMapCacheVal("test", 3, 4)
 		fmt.Println(vv.Get(ctx, 3))
 		fmt.Println(vv.Get(ctx, 4))
 		get, err := GetBy[int]("test", ctx, 3, time.Second)
@@ -54,7 +54,7 @@ func TestFlushMapVal(t *testing.T) {
 		}
 		fmt.Println(get, count)
 		fmt.Println(vv.Get(ctx, 5))
-		FlushAnyVal("test")
+		Flushes(ctx, "test")
 		fmt.Println(vv.Get(ctx, 5))
 		fmt.Println(vv.Get(ctx, 6))
 		//fmt.Println(GetVarCache("test"))

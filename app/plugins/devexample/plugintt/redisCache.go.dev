@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/fthvgb1/wp-go/app/pkg/config"
 	"github.com/fthvgb1/wp-go/app/pkg/dao"
+	"github.com/fthvgb1/wp-go/app/pkg/logs"
 	"github.com/fthvgb1/wp-go/app/theme/wp"
 	"github.com/fthvgb1/wp-go/cache/cachemanager"
 	"github.com/fthvgb1/wp-go/cache/reload"
@@ -14,7 +15,7 @@ import (
 	"github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/redis/go-redis/v9"
 	"strconv"
-	strings2 "strings"
+	str "strings"
 	"time"
 )
 
@@ -58,7 +59,6 @@ func (r *RdmCache[K, V]) Set(ctx context.Context, key K, val V) {
 		return
 	}
 	fmt.Println(result, err)
-
 }
 
 func (r *RdmCache[K, V]) GetExpireTime(ctx context.Context) time.Duration {
@@ -74,7 +74,7 @@ func (r *RdmCache[K, V]) Ttl(ctx context.Context, key K) time.Duration {
 }
 
 func (r *RdmCache[K, V]) Flush(ctx context.Context) {
-
+	fmt.Println("flush redis cache")
 }
 
 func (r *RdmCache[K, V]) Del(ctx context.Context, key ...K) {
@@ -82,12 +82,13 @@ func (r *RdmCache[K, V]) Del(ctx context.Context, key ...K) {
 }
 
 func (r *RdmCache[K, V]) ClearExpired(ctx context.Context) {
-
+	fmt.Println("clear expired redis cache")
 }
-// use step:
-//1 go build -gcflags all="-N -l" --race -buildmode=plugin -o redisCache.so main.go && cp ./redisCache.so wp-go/plugins/
-//2 wp-go config add redisCache plugin
-func Re(h *wp.Handle) {
+
+// RedisCache use step:
+// 1 go build -gcflags all="-N -l" --race -buildmode=plugin -o redisCache.so main.go && cp ./redisCache.so ../wp-go/plugins/
+// 2 wp-go config add redisCache plugin
+func RedisCache(h *wp.Handle) {
 	vv, ok := cachemanager.GetMapCache[string, dao.PostIds]("listPostIds")
 	if ok {
 		_, ok := any(vv.Cache).(*RdmCache[string, dao.PostIds])
@@ -96,8 +97,15 @@ func Re(h *wp.Handle) {
 		}
 	}
 	reload.AppendOnceFn(func() {
-        cachemanager.SetMapCache("listPostIds",vv)
-    })
+		err := cachemanager.SetMapCache("listPostIds", vv)
+		if err != nil {
+			logs.Error(err, "set recovery listPostIds cache err")
+		} else {
+			cachemanager.PushOrSetFlush(cachemanager.Queue{Name: "listPostIds", Fn: vv.Flush})
+			cachemanager.PushOrSetClearExpired(cachemanager.Queue{Name: "listPostIds", Fn: vv.Flush})
+			fmt.Println("recovery listPostIds cache ok")
+		}
+	})
 	rdm := redis.NewClient(&redis.Options{
 		Addr:     "localhost:6379",
 		Password: "", // no password set
@@ -114,14 +122,14 @@ func Re(h *wp.Handle) {
 		name: "",
 		resFn: func(m map[string]string) dao.PostIds {
 			return dao.PostIds{
-				Ids:    slice.Map(strings2.Split(m["ids"], ","), strings.ToInt[uint64]),
+				Ids:    slice.Map(str.Split(m["ids"], ","), strings.ToInt[uint64]),
 				Length: strings.ToInt[int](m["length"]),
 			}
 		},
 		saveData: func(ids dao.PostIds) map[string]string {
 			t := slice.Map(ids.Ids, number.IntToString[uint64])
 			return map[string]string{
-				"ids":    strings2.Join(t, ","),
+				"ids":    str.Join(t, ","),
 				"length": strconv.Itoa(ids.Length),
 			}
 		},

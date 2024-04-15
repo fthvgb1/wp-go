@@ -87,6 +87,8 @@ type HandleCall struct {
 	Name  string
 }
 
+var isFirstRequest = true
+
 func SetConfigHandle(a ...any) Handle {
 	configFn := a[0].(func(*Handle))
 	hh := a[1].(*Handle)
@@ -100,6 +102,11 @@ func SetConfigHandle(a ...any) Handle {
 	h.ginH = gin.H{}
 	fnMap.Flush()
 	fnHook.Flush()
+	if isFirstRequest {
+		isFirstRequest = false
+	} else {
+		reload.Reload()
+	}
 	h.C = hh.C
 	h.theme = hh.theme
 	configFn(h)
@@ -108,7 +115,6 @@ func SetConfigHandle(a ...any) Handle {
 	if ok {
 		pluginFn(h)
 	}
-	reload.Reload()
 	return *h
 }
 
