@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/fthvgb1/wp-go/cache"
 	"github.com/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/helper/slice/mockmap"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/safety"
 	"time"
@@ -35,15 +36,15 @@ func NewVarCache[T any](c cache.AnyCache[T], fn func(context.Context, ...any) (T
 	if name != "" {
 		varCache.Store(name, v)
 	}
-	PushOrSetFlush(Queue{
-		Name: name,
-		Fn:   v.Flush,
+	PushOrSetFlush(mockmap.Item[string, Fn]{
+		Name:  name,
+		Value: v.Flush,
 	})
 	cc, ok := any(c).(clearExpired)
 	if ok {
-		PushOrSetClearExpired(Queue{
-			Name: name,
-			Fn:   cc.ClearExpired,
+		PushOrSetClearExpired(mockmap.Item[string, Fn]{
+			Name:  name,
+			Value: cc.ClearExpired,
 		})
 	}
 	return v

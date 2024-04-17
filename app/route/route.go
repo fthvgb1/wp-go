@@ -8,6 +8,8 @@ import (
 	"github.com/fthvgb1/wp-go/app/theme"
 	"github.com/fthvgb1/wp-go/app/wpconfig"
 	"github.com/fthvgb1/wp-go/cache/reload"
+	"github.com/fthvgb1/wp-go/helper/slice"
+	"github.com/fthvgb1/wp-go/helper/slice/mockmap"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-contrib/pprof"
@@ -16,11 +18,27 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-var hooker []func(r *gin.Engine)
+type GinHook func(*gin.Engine)
 
-// Hook 方便插件在init时使用
-func Hook(fn ...func(r *gin.Engine)) {
-	hooker = append(hooker, fn...)
+var hookers mockmap.Map[string, GinHook]
+
+// SetGinAction 方便插件在init时使用
+func SetGinAction(name string, hook GinHook, orders ...float64) {
+	hookers.Set(name, hook, orders...)
+}
+
+func HookGinAction(name string, fn func(item mockmap.Item[string, GinHook]) mockmap.Item[string, GinHook]) {
+	item := hookers.Get(name)
+	if item.Name == "" {
+		return
+	}
+	t := fn(item)
+	SetGinAction(name, t.Value, t.Order)
+}
+
+// DelGinAction 方便插件在init时使用
+func DelGinAction(name string) {
+	hookers.Del(name)
 }
 
 func SetupRouter() *gin.Engine {
@@ -28,72 +46,99 @@ func SetupRouter() *gin.Engine {
 	// gin.DisableConsoleColor()
 	r := gin.New()
 	c := config.GetConfig()
-	if len(c.TrustIps) > 0 {
-		err := r.SetTrustedProxies(c.TrustIps)
-		if err != nil {
-			panic(err)
+	SetGinAction("initTrustIp", func(r *gin.Engine) {
+		if len(c.TrustIps) > 0 {
+			err := r.SetTrustedProxies(c.TrustIps)
+			if err != nil {
+				panic(err)
+			}
 		}
-	}
+	}, 99.5)
 
-	r.HTMLRender = theme.BuildTemplate()
-	wpconfig.SetTemplateFs(theme.TemplateFs)
+	SetGinAction("setTemplate", func(r *gin.Engine) {
+		r.HTMLRender = theme.BuildTemplate()
+		wpconfig.SetTemplateFs(theme.TemplateFs)
+	}, 90.5)
+
 	siteFlowLimitMiddleware, siteFlow := middleware.FlowLimit(c.MaxRequestSleepNum, c.MaxRequestNum, c.CacheTime.SleepTime)
-	r.Use(
-		gin.Logger(),
-		middleware.ValidateServerNames(),
-		middleware.RecoverAndSendMail(gin.DefaultErrorWriter),
-		siteFlowLimitMiddleware,
-		middleware.SetStaticFileCache,
-	)
-	//gzip 因为一般会用nginx做反代时自动使用gzip,所以go这边本身可以不用
-	if c.Gzip {
-		r.Use(gzip.Gzip(gzip.DefaultCompression, gzip.WithExcludedPaths([]string{
-			"/wp-includes/", "/wp-content/",
-		})))
-	}
-
-	if c.WpDir == "" {
-		panic("wordpress path can't be empty")
-	}
-	r.Static("/wp-content/uploads", str.Join(c.WpDir, "/wp-content/uploads"))
-	r.Static("/wp-content/themes", str.Join(c.WpDir, "/wp-content/themes"))
-	r.Static("/wp-content/plugins", str.Join(c.WpDir, "/wp-content/plugins"))
-	r.Static("/wp-includes/css", str.Join(c.WpDir, "/wp-includes/css"))
-	r.Static("/wp-includes/fonts", str.Join(c.WpDir, "/wp-includes/fonts"))
-	r.Static("/wp-includes/js", str.Join(c.WpDir, "/wp-includes/js"))
-
-	store := cookie.NewStore([]byte("secret"))
-	r.Use(sessions.Sessions("go-wp", store))
-	r.GET("/", actions.Feed, middleware.SearchLimit(c.SingleIpSearchNum),
-		actions.ThemeHook(constraints.Home))
-	r.GET("/page/:page", actions.ThemeHook(constraints.Home))
-	r.GET("/p/category/:category", actions.ThemeHook(constraints.Category))
-	r.GET("/p/category/:category/page/:page", actions.ThemeHook(constraints.Category))
-	r.GET("/p/tag/:tag", actions.ThemeHook(constraints.Tag))
-	r.GET("/p/tag/:tag/page/:page", actions.ThemeHook(constraints.Tag))
-	r.GET("/p/date/:year/:month", actions.ThemeHook(constraints.Archive))
-	r.GET("/p/date/:year/:month/page/:page", actions.ThemeHook(constraints.Archive))
-	r.GET("/p/author/:author", actions.ThemeHook(constraints.Author))
-	r.GET("/p/author/:author/page/:page", actions.ThemeHook(constraints.Author))
-	r.POST("/login", actions.Login)
-	r.GET("/p/:id", actions.ThemeHook(constraints.Detail))
-	r.GET("/p/:id/comment-page-:page", actions.ThemeHook(constraints.Detail))
-	r.GET("/p/:id/feed", actions.PostFeed)
-	r.GET("/feed", actions.SiteFeed)
-	r.GET("/comments/feed", actions.CommentsFeed)
-	//r.NoRoute(actions.ThemeHook(constraints.NoRoute))
-	commentMiddleWare, _ := middleware.FlowLimit(c.MaxRequestSleepNum, 5, c.CacheTime.SleepTime)
-	r.POST("/comment", commentMiddleWare, actions.PostComment)
-	if c.Pprof != "" {
-		pprof.Register(r, c.Pprof)
-	}
-	for _, fn := range hooker {
-		fn(r)
-	}
-
 	reload.Append(func() {
-		c := config.GetConfig()
+		c = config.GetConfig()
 		siteFlow(c.MaxRequestSleepNum, c.MaxRequestNum, c.CacheTime.SleepTime)
 	}, "site-flowLimit-config")
+
+	SetGinAction("setGlobalMiddleware", func(r *gin.Engine) {
+		r.Use(
+			gin.Logger(),
+			middleware.ValidateServerNames(),
+			middleware.RecoverAndSendMail(gin.DefaultErrorWriter),
+			siteFlowLimitMiddleware,
+			middleware.SetStaticFileCache,
+		)
+	}, 88.5)
+
+	SetGinAction("setGzip", func(r *gin.Engine) {
+		//gzip 因为一般会用nginx做反代时自动使用gzip,所以go这边本身可以不用
+		if c.Gzip {
+			r.Use(gzip.Gzip(gzip.DefaultCompression, gzip.WithExcludedPaths([]string{
+				"/wp-includes/", "/wp-content/",
+			})))
+		}
+	}, 87.6)
+
+	SetGinAction("setWpDir", func(r *gin.Engine) {
+		if c.WpDir == "" {
+			panic("wordpress path can't be empty")
+		}
+		r.Static("/wp-content/uploads", str.Join(c.WpDir, "/wp-content/uploads"))
+		r.Static("/wp-content/themes", str.Join(c.WpDir, "/wp-content/themes"))
+		r.Static("/wp-content/plugins", str.Join(c.WpDir, "/wp-content/plugins"))
+		r.Static("/wp-includes/css", str.Join(c.WpDir, "/wp-includes/css"))
+		r.Static("/wp-includes/fonts", str.Join(c.WpDir, "/wp-includes/fonts"))
+		r.Static("/wp-includes/js", str.Join(c.WpDir, "/wp-includes/js"))
+	}, 86.1)
+
+	SetGinAction("setSession", func(r *gin.Engine) {
+		store := cookie.NewStore([]byte("secret"))
+		r.Use(sessions.Sessions("go-wp", store))
+	}, 85.1)
+
+	SetGinAction("setRoute", func(r *gin.Engine) {
+		r.GET("/", actions.Feed, middleware.SearchLimit(c.SingleIpSearchNum),
+			actions.ThemeHook(constraints.Home))
+		r.GET("/page/:page", actions.ThemeHook(constraints.Home))
+		r.GET("/p/category/:category", actions.ThemeHook(constraints.Category))
+		r.GET("/p/category/:category/page/:page", actions.ThemeHook(constraints.Category))
+		r.GET("/p/tag/:tag", actions.ThemeHook(constraints.Tag))
+		r.GET("/p/tag/:tag/page/:page", actions.ThemeHook(constraints.Tag))
+		r.GET("/p/date/:year/:month", actions.ThemeHook(constraints.Archive))
+		r.GET("/p/date/:year/:month/page/:page", actions.ThemeHook(constraints.Archive))
+		r.GET("/p/author/:author", actions.ThemeHook(constraints.Author))
+		r.GET("/p/author/:author/page/:page", actions.ThemeHook(constraints.Author))
+		r.POST("/login", actions.Login)
+		r.GET("/p/:id", actions.ThemeHook(constraints.Detail))
+		r.GET("/p/:id/comment-page-:page", actions.ThemeHook(constraints.Detail))
+		r.GET("/p/:id/feed", actions.PostFeed)
+		r.GET("/feed", actions.SiteFeed)
+		r.GET("/comments/feed", actions.CommentsFeed)
+		commentMiddleWare, _ := middleware.FlowLimit(c.MaxRequestSleepNum, 5, c.CacheTime.SleepTime)
+		r.POST("/comment", commentMiddleWare, actions.PostComment)
+
+		r.NoRoute(actions.ThemeHook(constraints.NoRoute))
+	}, 84.6)
+
+	SetGinAction("setpprof", func(r *gin.Engine) {
+		if c.Pprof != "" {
+			pprof.Register(r, c.Pprof)
+		}
+	}, 80.8)
+
+	slice.SimpleSort(hookers, slice.DESC, func(t mockmap.Item[string, GinHook]) float64 {
+		return t.Order
+	})
+
+	for _, fn := range hookers {
+		fn.Value(r)
+	}
+
 	return r
 }

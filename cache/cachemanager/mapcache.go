@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/fthvgb1/wp-go/cache"
 	"github.com/fthvgb1/wp-go/helper"
+	"github.com/fthvgb1/wp-go/helper/slice/mockmap"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/safety"
 	"time"
@@ -110,13 +111,13 @@ func NewMapCache[K comparable, V any](data cache.Cache[K, V], batchFn cache.MapB
 	if name != "" {
 		PushMangerMap(name, m)
 	}
-	PushOrSetFlush(Queue{
-		Name: name,
-		Fn:   m.Flush,
+	PushOrSetFlush(mockmap.Item[string, Fn]{
+		Name:  name,
+		Value: m.Flush,
 	})
-	PushOrSetClearExpired(Queue{
-		Name: name,
-		Fn:   m.ClearExpired,
+	PushOrSetClearExpired(mockmap.Item[string, Fn]{
+		Name:  name,
+		Value: m.ClearExpired,
 	})
 	if f != nil && name != "" {
 		SetExpireTime(any(data).(cache.SetTime), name, 0, f)

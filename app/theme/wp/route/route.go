@@ -5,9 +5,12 @@ import (
 	"github.com/fthvgb1/wp-go/cache/reload"
 	"github.com/fthvgb1/wp-go/helper/slice"
 	"github.com/fthvgb1/wp-go/safety"
+	"net/http"
 	"regexp"
 )
 
+// Route
+// Type value equal const or reg
 type Route struct {
 	Path   string
 	Scene  string
@@ -131,4 +134,6 @@ func ResolveRoute(h *wp.Handle) {
 			return
 		}
 	}
+	h.C.Status(http.StatusNotFound)
+	h.Abort()
 }

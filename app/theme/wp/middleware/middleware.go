@@ -5,6 +5,7 @@ import (
 	"github.com/fthvgb1/wp-go/app/pkg/constraints"
 	"github.com/fthvgb1/wp-go/app/theme/wp"
 	"github.com/fthvgb1/wp-go/app/theme/wp/components/widget"
+	"github.com/fthvgb1/wp-go/app/theme/wp/route"
 	"github.com/fthvgb1/wp-go/cache/reload"
 	"github.com/fthvgb1/wp-go/helper/maps"
 	"github.com/fthvgb1/wp-go/helper/number"
@@ -159,5 +160,8 @@ func CommonMiddleware(h *wp.Handle) {
 	)
 	h.PushHandler(constraints.PipeMiddleware, constraints.Detail,
 		wp.NewHandleFn(ShowPreComment, 100, "middleware.ShowPreComment"),
+	)
+	h.PushHandler(constraints.PipeMiddleware, constraints.NoRoute,
+		wp.NewHandleFn(route.ResolveRoute, 100, "route.ResolveRoute"),
 	)
 }

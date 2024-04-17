@@ -5,7 +5,7 @@ import (
 	"github.com/fthvgb1/wp-go/cache"
 	"github.com/fthvgb1/wp-go/cache/reload"
 	"github.com/fthvgb1/wp-go/helper"
-	"github.com/fthvgb1/wp-go/helper/slice"
+	"github.com/fthvgb1/wp-go/helper/slice/mockmap"
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"github.com/fthvgb1/wp-go/safety"
 	"runtime"
@@ -15,52 +15,20 @@ import (
 
 var mutex sync.Mutex
 
-type Queue struct {
-	Name string
-	Fn   func(context.Context)
-}
-
-type Queues []Queue
-
-func (q *Queues) Get(name string) Queue {
-	_, v := slice.SearchFirst(*q, func(t Queue) bool {
-		return name == t.Name
-	})
-	return v
-}
-
-func (q *Queues) Set(name string, fn func(context.Context)) {
-	i := slice.IndexOfBy(*q, func(t Queue) bool {
-		return name == t.Name
-	})
-	if i > -1 {
-		(*q)[i].Fn = fn
-		return
-	}
-	*q = append(*q, Queue{name, fn})
-}
-
-func (q *Queues) Del(name string) {
-	i := slice.IndexOfBy(*q, func(t Queue) bool {
-		return name == t.Name
-	})
-	if i > -1 {
-		slice.Delete((*[]Queue)(q), i)
-	}
-}
+type Fn func(context.Context)
 
 type clearExpired interface {
 	ClearExpired(ctx context.Context)
 }
 
-var clears = safety.NewVar(Queues{})
+var clears = safety.NewVar(mockmap.Map[string, Fn]{})
 
-var flushes = safety.NewVar(Queues{})
+var flushes = safety.NewVar(mockmap.Map[string, Fn]{})
 
 func Flush() {
 	ctx := context.WithValue(context.Background(), "execFlushBy", "mangerFlushFn")
 	for _, f := range flushes.Load() {
-		f.Fn(ctx)
+		f.Value(ctx)
 	}
 }
 
@@ -68,12 +36,12 @@ func Flushes(ctx context.Context, names ...string) {
 	execute(ctx, flushes, names...)
 }
 
-func execute(ctx context.Context, q *safety.Var[Queues], names ...string) {
+func execute(ctx context.Context, q *safety.Var[mockmap.Map[string, Fn]], names ...string) {
 	queues := q.Load()
 	for _, name := range names {
 		queue := queues.Get(name)
-		if queue.Fn != nil {
-			queue.Fn(ctx)
+		if queue.Value != nil {
+			queue.Value(ctx)
 		}
 	}
 }
@@ -118,9 +86,9 @@ func buildLockFn[K comparable](args ...any) cache.LockFn[K] {
 		} else {
 			lo := cache.NewLocks[K](loFn)
 			lockFn = lo.GetLock
-			PushOrSetFlush(Queue{
-				Name: name,
-				Fn:   lo.Flush,
+			PushOrSetFlush(mockmap.Item[string, Fn]{
+				Name:  name,
+				Value: lo.Flush,
 			})
 		}
 
@@ -141,14 +109,14 @@ func ChangeExpireTime(t time.Duration, coverConf bool, name ...string) {
 		reload.SetFnVal(s, t, coverConf)
 	}
 }
-func pushOrSet(q *safety.Var[Queues], queues ...Queue) {
+func pushOrSet(q *safety.Var[mockmap.Map[string, Fn]], queues ...mockmap.Item[string, Fn]) {
 	mutex.Lock()
 	defer mutex.Unlock()
 	qu := q.Load()
 	for _, queue := range queues {
 		v := qu.Get(queue.Name)
-		if v.Fn != nil {
-			qu.Set(queue.Name, queue.Fn)
+		if v.Value != nil {
+			qu.Set(queue.Name, queue.Value)
 		} else {
 			qu = append(qu, queue)
 		}
@@ -157,16 +125,16 @@ func pushOrSet(q *safety.Var[Queues], queues ...Queue) {
 }
 
 // PushOrSetFlush will execute flush func when call Flush or Flushes
-func PushOrSetFlush(queues ...Queue) {
+func PushOrSetFlush(queues ...mockmap.Item[string, Fn]) {
 	pushOrSet(flushes, queues...)
 }
 
 // PushOrSetClearExpired will execute clearExpired func when call ClearExpired or ClearExpireds
-func PushOrSetClearExpired(queues ...Queue) {
+func PushOrSetClearExpired(queues ...mockmap.Item[string, Fn]) {
 	pushOrSet(clears, queues...)
 }
 
-func del(q *safety.Var[Queues], names ...string) {
+func del(q *safety.Var[mockmap.Map[string, Fn]], names ...string) {
 	mutex.Lock()
 	defer mutex.Unlock()
 	queues := q.Load()
@@ -190,6 +158,6 @@ func ClearExpireds(ctx context.Context, names ...string) {
 func ClearExpired() {
 	ctx := context.WithValue(context.Background(), "execClearExpired", "mangerClearExpiredFn")
 	for _, queue := range clears.Load() {
-		queue.Fn(ctx)
+		queue.Value(ctx)
 	}
 }
