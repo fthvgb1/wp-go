@@ -33,8 +33,8 @@ var routes = func() *safety.Map[string, Route] {
 
 // PushRoute path can be const or regex string
 //
-//	eg: `(?P<control>\w+)/(?P<method>\w+)`, route.Route{
-//			Path:   `(?P<control>\w+)/(?P<method>\w+)`,
+//	eg: `(?P<controller>\w+)/(?P<method>\w+)`, route.Route{
+//			Path:   `(?P<controller>\w+)/(?P<method>\w+)`,
 //			Scene:  constraints.Home,
 //			Method: []string{"GET"},
 //			Type:   "reg",
@@ -121,14 +121,21 @@ func ResolveRoute(h *wp.Handle) {
 		return
 	}
 	for path, reg := range rrs {
-		r := reg.FindAllStringSubmatch(requestURI, -1)
+		r := reg.FindStringSubmatch(requestURI)
 		if len(r) < 1 {
 			return
 		}
 		rr := rs[path]
 		if slice.IsContained(rr.Method, h.C.Request.Method) {
 			h.SetScene(rr.Scene)
-			h.C.Set("route", r)
+			for i, name := range reg.SubexpNames() {
+				if name == "" {
+					continue
+				}
+				h.C.AddParam(name, r[i])
+			}
+			h.C.Set("regRoute", reg)
+			h.C.Set("regRouteRes", r)
 			wp.Run(h, nil)
 			h.Abort()
 			return
