@@ -18,27 +18,26 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-type GinHook func(*gin.Engine)
+type GinSetter func(*gin.Engine)
 
-var hookers mockmap.Map[string, GinHook]
+var setters mockmap.Map[string, GinSetter]
+
+var setterHooks []func(item mockmap.Item[string, GinSetter]) (mockmap.Item[string, GinSetter], bool)
 
 // SetGinAction 方便插件在init时使用
-func SetGinAction(name string, hook GinHook, orders ...float64) {
-	hookers.Set(name, hook, orders...)
+func SetGinAction(name string, hook GinSetter, orders ...float64) {
+	setters.Set(name, hook, orders...)
 }
 
-func HookGinAction(name string, fn func(item mockmap.Item[string, GinHook]) mockmap.Item[string, GinHook]) {
-	item := hookers.Get(name)
-	if item.Name == "" {
-		return
-	}
-	t := fn(item)
-	SetGinAction(name, t.Value, t.Order)
+func HookGinSetter(fn func(item mockmap.Item[string, GinSetter]) (mockmap.Item[string, GinSetter], bool)) {
+	setterHooks = append(setterHooks, fn)
 }
 
-// DelGinAction 方便插件在init时使用
-func DelGinAction(name string) {
-	hookers.Del(name)
+// DelGinSetter 方便插件在init时使用
+func DelGinSetter(name string) {
+	setterHooks = append(setterHooks, func(item mockmap.Item[string, GinSetter]) (mockmap.Item[string, GinSetter], bool) {
+		return item, item.Name != name
+	})
 }
 
 func SetupRouter() *gin.Engine {
@@ -132,11 +131,15 @@ func SetupRouter() *gin.Engine {
 		}
 	}, 80.8)
 
-	slice.SimpleSort(hookers, slice.DESC, func(t mockmap.Item[string, GinHook]) float64 {
+	for _, hook := range setterHooks {
+		setters = slice.FilterAndMap(setters, hook)
+	}
+
+	slice.SimpleSort(setters, slice.DESC, func(t mockmap.Item[string, GinSetter]) float64 {
 		return t.Order
 	})
 
-	for _, fn := range hookers {
+	for _, fn := range setters {
 		fn.Value(r)
 	}
 
