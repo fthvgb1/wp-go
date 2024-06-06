@@ -51,7 +51,7 @@ func GetToJsonAny[T any](u string, q map[string]any, a ...any) (r T, code int, e
 	if err != nil {
 		return
 	}
-	rr.Body.Close()
+	defer rr.Body.Close()
 	err = json.Unmarshal(b, &r)
 	return
 }
@@ -66,7 +66,7 @@ func PostWwwString(u string, form map[string]any, a ...any) (r string, code int,
 	if err != nil {
 		return "", code, err
 	}
-	rr.Body.Close()
+	defer rr.Body.Close()
 	r = string(rs)
 	return
 }
@@ -80,7 +80,7 @@ func PostFormDataString(u string, form map[string]any, a ...any) (r string, code
 	if err != nil {
 		return "", code, err
 	}
-	rr.Body.Close()
+	defer rr.Body.Close()
 	r = string(rs)
 	return
 }
@@ -98,7 +98,7 @@ func GetClient(u string, q map[string]any, a ...any) (res *http.Client, req *htt
 		Method: "GET",
 		URL:    parse,
 	}
-	setArgs(&cli, req, a...)
+	SetArgs(&cli, req, a...)
 	return &cli, req, err
 }
 
@@ -160,7 +160,7 @@ func PostClient(u string, types int, form map[string]any, a ...any) (cli *http.C
 		req.Body = io.NopCloser(bytes.NewReader(b))
 		req.Header.Add("Content-Type", "application/octet-stream")
 	}
-	setArgs(cli, req, a...)
+	SetArgs(cli, req, a...)
 	return
 }
 
@@ -174,18 +174,44 @@ func PostToJsonAny[T any](u string, types int, form map[string]any, a ...any) (r
 	if err != nil {
 		return
 	}
-	rr.Body.Close()
+	defer rr.Body.Close()
 	err = json.Unmarshal(b, &r)
 	return
 }
 
-func setArgs(cli *http.Client, req *http.Request, a ...any) {
+func SetUrl(u string, req *http.Request) error {
+	parse, err := url.Parse(u)
+	if err != nil {
+		return err
+	}
+	req.URL = parse
+	return nil
+}
+
+func RequestToJSON[T any](client *http.Client, req *http.Request, a ...any) (res *http.Response, r T, err error) {
+	SetArgs(client, req, a...)
+	res, err = client.Do(req)
+	if err != nil {
+		return
+	}
+	bt, err := io.ReadAll(res.Body)
+	if err != nil {
+		return
+	}
+	err = json.Unmarshal(bt, &r)
+	return
+}
+
+func SetArgs(cli *http.Client, req *http.Request, a ...any) {
 	if len(a) < 1 {
 		return
 	}
 	for _, arg := range a {
 		h, ok := arg.(map[string]string)
 		if ok && len(h) > 0 {
+			if req.Header == nil {
+				req.Header = make(http.Header)
+			}
 			for k, v := range h {
 				req.Header.Add(k, v)
 			}
@@ -208,6 +234,9 @@ func setArgs(cli *http.Client, req *http.Request, a ...any) {
 		}
 		c, ok := arg.(string)
 		if ok && c != "" {
+			if req.Header == nil {
+				req.Header = make(http.Header)
+			}
 			req.Header.Add("cookie", c)
 		}
 	}
