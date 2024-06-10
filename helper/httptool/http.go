@@ -113,17 +113,9 @@ func Post(u string, types int, form map[string]any, a ...any) (res *http.Respons
 	return
 }
 
-func PostClient(u string, types int, form map[string]any, a ...any) (cli *http.Client, req *http.Request, err error) {
-	parse, err := url.Parse(u)
-	if err != nil {
-		return
-	}
-	cli = &http.Client{}
-	req = &http.Request{
-		Method: "POST",
-		URL:    parse,
-		Header: http.Header{},
-	}
+// SetBody
+// types 1 x-www-form-urlencoded, 2 form-data, 3 json, 4 binary
+func SetBody(req *http.Request, types int, form map[string]any) (err error) {
 	switch types {
 	case 1:
 		values := url.Values{}
@@ -147,7 +139,7 @@ func PostClient(u string, types int, form map[string]any, a ...any) (cli *http.C
 	case 3:
 		fo, err := json.Marshal(form)
 		if err != nil {
-			return nil, nil, err
+			return err
 		}
 		b := bytes.NewReader(fo)
 		req.Body = io.NopCloser(b)
@@ -155,11 +147,27 @@ func PostClient(u string, types int, form map[string]any, a ...any) (cli *http.C
 	case 4:
 		b, ok := maps.GetStrAnyVal[[]byte](form, "binary")
 		if !ok {
-			return nil, nil, errors.New("no binary value")
+			return errors.New("no binary value")
 		}
 		req.Body = io.NopCloser(bytes.NewReader(b))
 		req.Header.Add("Content-Type", "application/octet-stream")
+		req.ContentLength = int64(len(b))
 	}
+	return
+}
+
+func PostClient(u string, types int, form map[string]any, a ...any) (cli *http.Client, req *http.Request, err error) {
+	parse, err := url.Parse(u)
+	if err != nil {
+		return
+	}
+	cli = &http.Client{}
+	req = &http.Request{
+		Method: "POST",
+		URL:    parse,
+		Header: http.Header{},
+	}
+	SetBody(req, types, form)
 	SetArgs(cli, req, a...)
 	return
 }

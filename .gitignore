@@ -4,3 +4,4 @@
 err.log
 /plugins/
 /config.json
+go.sum

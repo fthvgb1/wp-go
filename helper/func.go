@@ -129,6 +129,21 @@ func FileExist(path string) bool {
 	return err == nil
 }
 
+func IsFile(file string) bool {
+	info, err := os.Stat(file)
+	return err == nil && !info.IsDir()
+}
+
+func ZeroDefault[T comparable](vals ...T) T {
+	var val T
+	for _, v := range vals {
+		if v != val {
+			return v
+		}
+	}
+	return val
+}
+
 func GetAnyVal[T any](v any, defaults T) T {
 	vv, ok := v.(T)
 	if !ok {
