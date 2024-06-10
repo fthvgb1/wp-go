@@ -146,14 +146,72 @@ func SetBody(req *http.Request, types int, form map[string]any) (err error) {
 		req.Header.Add("Content-Type", "application/json")
 	case 4:
 		b, ok := maps.GetStrAnyVal[[]byte](form, "binary")
+		if ok {
+			req.Body = io.NopCloser(bytes.NewReader(b))
+			req.Header.Add("Content-Type", "application/octet-stream")
+			req.ContentLength = int64(len(b))
+			return
+		}
+		bb, ok := maps.GetStrAnyVal[*[]byte](form, "binary")
 		if !ok {
 			return errors.New("no binary value")
 		}
-		req.Body = io.NopCloser(bytes.NewReader(b))
+		req.Body = io.NopCloser(&BodyBuffer{0, bb})
 		req.Header.Add("Content-Type", "application/octet-stream")
-		req.ContentLength = int64(len(b))
+		req.ContentLength = int64(len(*bb))
+
 	}
 	return
+}
+
+type BodyBuffer struct {
+	pointer int
+	Data    *[]byte
+}
+
+func (b *BodyBuffer) Reset() {
+	*b.Data = (*b.Data)[:0]
+	b.pointer = 0
+}
+
+func (b *BodyBuffer) Write(p []byte) (int, error) {
+	if b.pointer == 0 {
+		copy(*b.Data, p)
+		if len(p) <= len(*b.Data) {
+			b.pointer += len(p)
+			return len(p), nil
+		}
+		b.pointer += len(*b.Data)
+		return len(*b.Data), nil
+	}
+	if len(p)+b.pointer <= len(*b.Data) {
+		copy((*b.Data)[b.pointer:b.pointer+len(p)], p)
+		b.pointer += len(p)
+		return len(p), nil
+	}
+	l := len(*b.Data) - b.pointer
+	if l <= 0 {
+		return 0, nil
+	}
+	copy((*b.Data)[b.pointer:], p[:l])
+	return l, nil
+}
+
+func (b *BodyBuffer) Read(p []byte) (int, error) {
+	if len(p) <= len(*b.Data) {
+		copy(p, *b.Data)
+		*b.Data = (*b.Data)[len(p):]
+		return len(p), nil
+	}
+	if len(*b.Data) <= 0 {
+		return 0, io.EOF
+	}
+	copy(p, *b.Data)
+	return len(*b.Data), io.EOF
+}
+
+func NewBodyBuffer(bytes *[]byte) BodyBuffer {
+	return BodyBuffer{0, bytes}
 }
 
 func PostClient(u string, types int, form map[string]any, a ...any) (cli *http.Client, req *http.Request, err error) {
