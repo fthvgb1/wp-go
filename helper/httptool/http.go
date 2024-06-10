@@ -165,49 +165,47 @@ func SetBody(req *http.Request, types int, form map[string]any) (err error) {
 }
 
 type BodyBuffer struct {
-	pointer int
-	Data    *[]byte
-}
-
-func (b *BodyBuffer) Reset() {
-	*b.Data = (*b.Data)[:0]
-	b.pointer = 0
+	Offset int
+	Data   *[]byte
 }
 
 func (b *BodyBuffer) Write(p []byte) (int, error) {
-	if b.pointer == 0 {
+	if b.Offset == 0 {
 		copy(*b.Data, p)
 		if len(p) <= len(*b.Data) {
-			b.pointer += len(p)
+			b.Offset += len(p)
 			return len(p), nil
 		}
-		b.pointer += len(*b.Data)
+		b.Offset += len(*b.Data)
 		return len(*b.Data), nil
 	}
-	if len(p)+b.pointer <= len(*b.Data) {
-		copy((*b.Data)[b.pointer:b.pointer+len(p)], p)
-		b.pointer += len(p)
+	if len(p)+b.Offset <= len(*b.Data) {
+		copy((*b.Data)[b.Offset:b.Offset+len(p)], p)
+		b.Offset += len(p)
 		return len(p), nil
 	}
-	l := len(*b.Data) - b.pointer
+	l := len(*b.Data) - b.Offset
 	if l <= 0 {
 		return 0, nil
 	}
-	copy((*b.Data)[b.pointer:], p[:l])
+	copy((*b.Data)[b.Offset:], p[:l])
 	return l, nil
 }
 
 func (b *BodyBuffer) Read(p []byte) (int, error) {
-	if len(p) <= len(*b.Data) {
-		copy(p, *b.Data)
-		*b.Data = (*b.Data)[len(p):]
+	data := (*b.Data)[b.Offset:]
+	if len(p) <= len(data) {
+		copy(p, data[0:len(p)])
+		b.Offset += len(p)
 		return len(p), nil
 	}
-	if len(*b.Data) <= 0 {
+	if len(data) <= 0 {
+		b.Offset = 0
 		return 0, io.EOF
 	}
-	copy(p, *b.Data)
-	return len(*b.Data), io.EOF
+	copy(p, data)
+	b.Offset = 0
+	return len(data), io.EOF
 }
 
 func NewBodyBuffer(bytes *[]byte) BodyBuffer {
@@ -225,7 +223,10 @@ func PostClient(u string, types int, form map[string]any, a ...any) (cli *http.C
 		URL:    parse,
 		Header: http.Header{},
 	}
-	SetBody(req, types, form)
+	err = SetBody(req, types, form)
+	if err != nil {
+		return
+	}
 	SetArgs(cli, req, a...)
 	return
 }
