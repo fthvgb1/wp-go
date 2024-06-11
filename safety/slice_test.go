@@ -19,7 +19,7 @@ func TestSlice_Append(t *testing.T) {
 	tests := []testCase[int]{
 		{
 			name: "t1",
-			r:    *NewSlice([]int{}),
+			r:    *NewSlice[int](),
 			args: args[int]{number.Range(1, 10, 1)},
 		},
 	}

@@ -23,7 +23,7 @@ func GetGlobeMutex() *sync.Mutex {
 	return mut
 }
 
-var reloadQueues = safety.NewSlice(make([]Queue, 0))
+var reloadQueues = safety.NewSlice[Queue]()
 
 var reloadQueueHookFns = safety.NewVar[[]func(queue Queue) (Queue, bool)](nil)
 

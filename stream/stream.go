@@ -7,8 +7,7 @@ import (
 )
 
 func ParallelFilterAndMap[R, T any](a Stream[T], fn func(T) (R, bool), c int) Stream[R] {
-	var x []R
-	rr := safety.NewSlice(x)
+	rr := safety.NewSlice[R]()
 	a.ParallelForEach(func(t T) {
 		y, ok := fn(t)
 		if ok {
@@ -84,7 +83,7 @@ func (r Stream[T]) ParallelForEach(fn func(T), c int) {
 }
 
 func (r Stream[T]) ParallelFilterAndMap(fn func(T) (T, bool), c int) Stream[T] {
-	rr := safety.NewSlice([]T{})
+	rr := safety.NewSlice[T]()
 	r.ParallelForEach(func(t T) {
 		v, ok := fn(t)
 		if ok {

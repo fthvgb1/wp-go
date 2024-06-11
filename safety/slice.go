@@ -3,37 +3,37 @@ package safety
 import "sync"
 
 type Slice[T any] struct {
-	*Var[[]T]
-	mu sync.Mutex
+	Var []T
+	mu  sync.RWMutex
 }
 
-func NewSlice[T any](a []T) *Slice[T] {
+func NewSlice[T any](a ...[]T) *Slice[T] {
+	var s []T
+	if len(a) > 0 {
+		s = a[0]
+	}
 	return &Slice[T]{
-		NewVar(a),
-		sync.Mutex{},
+		s,
+		sync.RWMutex{},
 	}
 }
 
 func (r *Slice[T]) Append(t ...T) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	ts := append(r.Var.Load(), t...)
-	r.Store(ts)
+	r.Var = append(r.Var, t...)
 }
 
-func (r *Slice[T]) Set(index int, val T) {
-	v := r.Var.Load()
-	if index >= len(v) {
-		return
-	}
+func (r *Slice[T]) Store(a []T) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	v[index] = val
+	r.Var = a
 }
 
 func (r *Slice[T]) Load() (a []T) {
-	v := r.Var.Load()
-	a = make([]T, len(v))
-	copy(a, v)
+	r.mu.RLock()
+	defer r.mu.RUnlock()
+	a = make([]T, len(r.Var))
+	copy(a, r.Var)
 	return
 }

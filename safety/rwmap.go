@@ -38,10 +38,14 @@ func (v *RWMap[K, V]) Del(keys ...K) {
 	}
 }
 
-func (v *RWMap[K, V]) Raw() map[K]V {
+func (v *RWMap[K, V]) Copy() map[K]V {
 	v.mux.RLock()
 	defer v.mux.RUnlock()
-	return v.m
+	var m = make(map[K]V)
+	for k, val := range v.m {
+		m[k] = val
+	}
+	return m
 }
 
 func (v *RWMap[K, V]) Len() int {
