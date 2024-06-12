@@ -15,20 +15,24 @@ var logs = safety.NewVar[*log.Logger](nil)
 var logFile = safety.NewVar[*os.File](nil)
 
 func InitLogger() error {
+	c := config.GetConfig()
+	return SetLogger(c.LogOutput)
+}
+
+func SetLogger(loggerFile string) error {
+	if loggerFile == "" {
+		loggerFile = "stderr"
+	}
 	preFD := logFile.Load()
 	l := &log.Logger{}
-	c := config.GetConfig()
-	if c.LogOutput == "" {
-		c.LogOutput = "stderr"
-	}
 	var out io.Writer
-	switch c.LogOutput {
+	switch loggerFile {
 	case "stdout":
 		out = os.Stdout
 	case "stderr":
 		out = os.Stderr
 	default:
-		file, err := os.OpenFile(c.LogOutput, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0777)
+		file, err := os.OpenFile(loggerFile, os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0777)
 		if err != nil {
 			return err
 		}
