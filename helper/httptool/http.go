@@ -36,7 +36,7 @@ func GetString(u string, q map[string]any, a ...any) (r string, code int, err er
 }
 
 func Get(u string, q map[string]any, a ...any) (res *http.Response, err error) {
-	cli, req, err := GetClient(u, q, a...)
+	cli, req, err := BuildClient(u, "get", q, a...)
 	res, err = cli.Do(req)
 	return
 }
@@ -85,7 +85,7 @@ func PostFormDataString(u string, form map[string]any, a ...any) (r string, code
 	return
 }
 
-func GetClient(u string, q map[string]any, a ...any) (res *http.Client, req *http.Request, err error) {
+func BuildClient(u, method string, q map[string]any, a ...any) (res *http.Client, req *http.Request, err error) {
 	parse, err := url.Parse(u)
 	if err != nil {
 		return nil, nil, err
@@ -95,7 +95,7 @@ func GetClient(u string, q map[string]any, a ...any) (res *http.Client, req *htt
 	setValue(q, values)
 	parse.RawQuery = values.Encode()
 	req = &http.Request{
-		Method: "GET",
+		Method: strings.ToUpper(method),
 		URL:    parse,
 	}
 	SetArgs(&cli, req, a...)
