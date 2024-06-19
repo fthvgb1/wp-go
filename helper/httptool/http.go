@@ -153,46 +153,45 @@ func SetBody(req *http.Request, types int, form map[string]any) (err error) {
 			return
 		}
 		bb, ok := maps.GetStrAnyVal[*[]byte](form, "binary")
-		if !ok {
-			return errors.New("no binary value")
+		if ok {
+			req.Body = io.NopCloser(NewBodyBuffer(bb))
+			req.Header.Add("Content-Type", "application/octet-stream")
+			req.ContentLength = int64(len(*bb))
+			return
 		}
-		req.Body = io.NopCloser(&BodyBuffer{0, bb})
-		req.Header.Add("Content-Type", "application/octet-stream")
-		req.ContentLength = int64(len(*bb))
+		bf, ok := maps.GetStrAnyVal[*BodyBuffer](form, "binary")
+		if ok {
+			req.Body = bf
+			req.Header.Add("Content-Type", "application/octet-stream")
+			req.ContentLength = int64(len(*bf.Data))
+			return
+		}
+		return errors.New("no binary value")
 
 	}
 	return
 }
 
 type BodyBuffer struct {
-	Offset int
-	Data   *[]byte
+	Offset  int
+	Data    *[]byte
+	ReadFn  func([]byte) (int, error)
+	CloseFn func() error
 }
 
-func (b *BodyBuffer) Write(p []byte) (int, error) {
-	if b.Offset == 0 {
-		copy(*b.Data, p)
-		if len(p) <= len(*b.Data) {
-			b.Offset += len(p)
-			return len(p), nil
-		}
-		b.Offset += len(*b.Data)
-		return len(*b.Data), nil
+func (b *BodyBuffer) Close() error {
+	if b.CloseFn != nil {
+		return b.CloseFn()
 	}
-	if len(p)+b.Offset <= len(*b.Data) {
-		copy((*b.Data)[b.Offset:b.Offset+len(p)], p)
-		b.Offset += len(p)
-		return len(p), nil
-	}
-	l := len(*b.Data) - b.Offset
-	if l <= 0 {
-		return 0, nil
-	}
-	copy((*b.Data)[b.Offset:], p[:l])
-	return l, nil
+	b.Offset = 0
+	return nil
 }
 
 func (b *BodyBuffer) Read(p []byte) (int, error) {
+	return b.ReadFn(p)
+}
+
+func (b *BodyBuffer) Reads(p []byte) (int, error) {
 	data := (*b.Data)[b.Offset:]
 	if len(p) <= len(data) {
 		copy(p, data[0:len(p)])
@@ -208,8 +207,18 @@ func (b *BodyBuffer) Read(p []byte) (int, error) {
 	return len(data), io.EOF
 }
 
-func NewBodyBuffer(bytes *[]byte) BodyBuffer {
-	return BodyBuffer{0, bytes}
+func NewBodyBuffer(byt *[]byte, readFn ...func(*BodyBuffer, []byte) (int, error)) *BodyBuffer {
+	var fn func([]byte) (int, error)
+	b := &BodyBuffer{Data: byt}
+	if len(readFn) > 1 {
+		fn = func(p []byte) (int, error) {
+			return readFn[0](b, p)
+		}
+	} else {
+		fn = b.Reads
+	}
+	b.ReadFn = fn
+	return b
 }
 
 func PostClient(u string, types int, form map[string]any, a ...any) (cli *http.Client, req *http.Request, err error) {

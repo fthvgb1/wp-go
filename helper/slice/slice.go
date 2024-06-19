@@ -22,6 +22,15 @@ func FilterAndMap[N any, T any](arr []T, fn func(T) (N, bool)) (r []N) {
 	}
 	return
 }
+func FilterAndMaps[N any, T any](arr []T, fn func(int, T) (N, bool)) (r []N) {
+	for i, t := range arr {
+		x, ok := fn(i, t)
+		if ok {
+			r = append(r, x)
+		}
+	}
+	return
+}
 
 func Walk[T any](arr []T, fn func(*T)) {
 	for i := 0; i < len(arr); i++ {

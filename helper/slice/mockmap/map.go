@@ -42,3 +42,6 @@ func (q *Map[K, T]) Del(name K) {
 		slice.Delete((*[]Item[K, T])(q), i)
 	}
 }
+func (q *Map[K, T]) DelByIndex(i int) {
+	slice.Delete((*[]Item[K, T])(q), i)
+}
