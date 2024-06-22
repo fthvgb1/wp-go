@@ -2,6 +2,7 @@ package helper
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	str "github.com/fthvgb1/wp-go/helper/strings"
@@ -51,12 +52,14 @@ func CutUrlHost(u string) string {
 	return ur.String()
 }
 
-func Defaults[T comparable](v, defaults T) T {
-	var zero T
-	if v == zero {
-		return defaults
+func Defaults[T comparable](vals ...T) T {
+	var val T
+	for _, v := range vals {
+		if v != val {
+			return v
+		}
 	}
-	return v
+	return val
 }
 func DefaultVal[T any](v, defaults T) T {
 	var zero T
@@ -134,16 +137,6 @@ func IsFile(file string) bool {
 	return err == nil && !info.IsDir()
 }
 
-func ZeroDefault[T comparable](vals ...T) T {
-	var val T
-	for _, v := range vals {
-		if v != val {
-			return v
-		}
-	}
-	return val
-}
-
 func GetAnyVal[T any](v any, defaults T) T {
 	vv, ok := v.(T)
 	if !ok {
@@ -202,4 +195,16 @@ func RunFnWithTimeouts[A, V any](ctx context.Context, t time.Duration, ar A, cal
 		close(done)
 	}
 	return v, err
+}
+
+func JsonDecode[T any](byts []byte) (T, error) {
+	var v T
+	err := json.Unmarshal(byts, &v)
+	return v, err
+}
+
+func AsError[T any](err error) (T, bool) {
+	var v T
+	ok := errors.As(err, &v)
+	return v, ok
 }
