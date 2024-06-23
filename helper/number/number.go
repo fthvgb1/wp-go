@@ -100,6 +100,10 @@ func Divide[T constraints.Integer | constraints.Float](i, j T) T {
 	return i / j
 }
 
+func Ceil[T constraints.Integer](num1, num2 T) int {
+	return int((num1 + num2 - 1) / num2)
+}
+
 func DivideCeil[T constraints.Integer](num1, num2 T) T {
 	return T(math.Ceil(float64(num1) / float64(num2)))
 }
