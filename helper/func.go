@@ -8,6 +8,7 @@ import (
 	str "github.com/fthvgb1/wp-go/helper/strings"
 	"net/url"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strconv"
 	"strings"
@@ -207,4 +208,35 @@ func AsError[T any](err error) (T, bool) {
 	var v T
 	ok := errors.As(err, &v)
 	return v, ok
+}
+
+func IsDirExistAndMkdir(dir string, perm os.FileMode) error {
+	stat, err := os.Stat(dir)
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return err
+		} else {
+			return os.MkdirAll(dir, perm)
+		}
+	}
+	if !stat.IsDir() {
+		return fmt.Errorf("%s is exist but not dir", dir)
+	}
+	return nil
+}
+
+func ReadDir(dir string) ([]string, error) {
+	fii, err := os.ReadDir(dir)
+	if err != nil {
+		return nil, err
+	}
+	var files []string
+	for _, entry := range fii {
+		name := entry.Name()
+		if name == "." || name == ".." {
+			continue
+		}
+		files = append(files, filepath.Join(dir, name))
+	}
+	return files, nil
 }

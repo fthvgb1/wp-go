@@ -27,7 +27,7 @@ func (r anyArr[T]) Less(i, j int) bool {
 	return r.fn(r.data[i], r.data[j])
 }
 
-// Sort fn i>j 为降序 desc，反之为升序 asc
+// Sort fn i>j desc ↓，i<j asc ↑
 func Sort[T any](arr []T, fn func(i, j T) bool) {
 	slice := anyArr[T]{
 		data: arr,
@@ -80,6 +80,19 @@ func SimpleSort[T any, O constraints.Ordered](a []T, order string, fn func(t T) 
 				return fn(i) > fn(j)
 			}
 			return fn(i) < fn(j)
+		},
+	}
+	sort.Sort(slice)
+}
+
+func SimpleSorts[T constraints.Ordered](a []T, order string) {
+	slice := anyArr[T]{
+		data: a,
+		fn: func(i, j T) bool {
+			if order == DESC {
+				return i > j
+			}
+			return i < j
 		},
 	}
 	sort.Sort(slice)
