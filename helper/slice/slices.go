@@ -102,3 +102,9 @@ func DecompressBy[T, R any](a [][]T, fn func(T) (R, bool)) (r []R) {
 	}
 	return
 }
+
+func Replace[T any](a []T, offset int, replacement []T) {
+	aa := a[offset:]
+	aa = aa[:0]
+	aa = append(aa, replacement...)
+}
