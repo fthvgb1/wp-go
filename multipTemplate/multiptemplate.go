@@ -71,9 +71,6 @@ func NewFsTemplates(f embed.FS, m maps) *MultipleFsTemplate {
 }
 
 func (t *MultipleFileTemplate) SetTemplate(name string, templ *template.Template) *MultipleFileTemplate {
-	if _, ok := t.Template.Load(name); ok {
-		panic("exists same template " + name)
-	}
 	t.Template.Store(name, templ)
 	return t
 }
@@ -105,9 +102,6 @@ func (t *MultipleFsTemplate) AddTemplate(mainTemplatePattern string, fnMap templ
 		panic(err)
 	}
 	for _, mainTemplate := range mainTemplates {
-		if _, ok := t.Template.Load(mainTemplate); ok {
-			panic("exists same Template " + mainTemplate)
-		}
 		file := filepath.Base(mainTemplate)
 		pattern := append([]string{mainTemplate}, layoutTemplatePattern...)
 		t.Template.Store(mainTemplate, template.Must(template.New(file).Funcs(fnMap).ParseFS(t.Fs, pattern...)))

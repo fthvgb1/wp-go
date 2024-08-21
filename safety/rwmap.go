@@ -30,7 +30,7 @@ func (v *RWMap[K, V]) Load(key K) (V, bool) {
 	return val, ok
 }
 
-func (v *RWMap[K, V]) Del(keys ...K) {
+func (v *RWMap[K, V]) Delete(keys ...K) {
 	v.mux.Lock()
 	defer v.mux.Unlock()
 	for _, key := range keys {

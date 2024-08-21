@@ -66,7 +66,7 @@ func LoadPlugins() {
 		}
 		RegisterPlugin(name, plu)
 	}
-	apply.SetFn(func(h *wp.Handle) {
+	apply.SetVal("wp-plugins", func(h *wp.Handle) {
 		UsePlugins(h)
 	})
 }

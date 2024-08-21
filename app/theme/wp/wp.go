@@ -110,7 +110,7 @@ func SetConfigHandle(a ...any) Handle {
 	h.C = hh.C
 	h.theme = hh.theme
 	configFn(h)
-	v := apply.UsePlugins()
+	v := apply.GetPlugins()
 	pluginFn, ok := v.(func(*Handle))
 	if ok {
 		pluginFn(h)

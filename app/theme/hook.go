@@ -9,9 +9,6 @@ import (
 var themeMap = safety.NewMap[string, func(*wp.Handle)]()
 
 func AddThemeHookFunc(name string, fn func(handle *wp.Handle)) {
-	if _, ok := themeMap.Load(name); ok {
-		panic("exists same name theme")
-	}
 	themeMap.Store(name, fn)
 }
 
