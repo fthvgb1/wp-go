@@ -8,7 +8,7 @@ import (
 
 func ThemeHook(scene string) func(*gin.Context) {
 	return func(c *gin.Context) {
-		t := theme.GetCurrentTemplateName()
+		t := theme.GetCurrentTheme()
 		h := wp.NewHandle(c, scene, t)
 		theme.Hook(t, h)
 	}

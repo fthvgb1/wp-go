@@ -8,8 +8,16 @@ import (
 
 var themeMap = safety.NewMap[string, func(*wp.Handle)]()
 
-func AddThemeHookFunc(name string, fn func(handle *wp.Handle)) {
+func AddTheme(name string, fn func(handle *wp.Handle)) {
 	themeMap.Store(name, fn)
+}
+
+func DelTheme(name string) {
+	themeMap.Delete(name)
+}
+
+func GetTheme(name string) (func(*wp.Handle), bool) {
+	return themeMap.Load(name)
 }
 
 func IsThemeHookFuncExist(name string) bool {

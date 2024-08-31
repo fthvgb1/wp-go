@@ -8,17 +8,17 @@ import (
 )
 
 func InitTheme() {
-	AddThemeHookFunc(twentyfifteen.ThemeName, twentyfifteen.Hook)
-	AddThemeHookFunc(twentyseventeen.ThemeName, twentyseventeen.Hook)
+	AddTheme(twentyfifteen.ThemeName, twentyfifteen.Hook)
+	AddTheme(twentyseventeen.ThemeName, twentyseventeen.Hook)
 }
 
-func GetCurrentTemplateName() string {
-	templateName := config.GetConfig().Theme
-	if templateName == "" {
-		templateName = wpconfig.GetOption("template")
+func GetCurrentTheme() string {
+	themeName := config.GetConfig().Theme
+	if themeName == "" {
+		themeName = wpconfig.GetOption("template")
 	}
-	if !IsTemplateDirExists(templateName) {
-		templateName = "twentyfifteen"
+	if !IsTemplateDirExists(themeName) {
+		themeName = "twentyfifteen"
 	}
-	return templateName
+	return themeName
 }
