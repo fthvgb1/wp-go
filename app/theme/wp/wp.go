@@ -264,23 +264,20 @@ func AdditionScript(h *Handle) {
 	if len(s) < 1 {
 		return
 	}
-	fn := func(f, name string) {
+	fn := func(f, name, position string) {
 		if f == "" {
 			return
 		}
 		ss, err := os.ReadFile(f)
 		if err != nil {
 			logs.Error(err, str.Join("解析", name, "失败"), f)
-		} else {
-			h.PushComponents(constraints.AllScene, constraints.HeadScript, NewComponent(name, string(ss), false, 0, nil))
+			return
 		}
+		h.PushComponents(constraints.AllScene, position, NewComponent(name, string(ss), false, 0, nil))
 	}
-	switch len(s) {
-	case 1:
-		fn(s[0], "externHead")
-	case 2:
-		fn(s[0], "externHead")
-		fn(s[1], "externFooter")
+	fn(s[0], "externHead", constraints.HeadScript)
+	if len(s) > 1 {
+		fn(s[1], "externFooter", constraints.FooterScript)
 	}
 }
 
