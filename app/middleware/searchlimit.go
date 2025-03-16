@@ -6,8 +6,8 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func SearchLimit(num int64) func(ctx *gin.Context) {
-	fn, reFn := IpLimit(num)
+func SearchLimit(num int64, clearNum ...int64) func(ctx *gin.Context) {
+	fn, reFn := IpLimit(num, clearNum...)
 	reload.Append(func() {
 		reFn(config.GetConfig().SingleIpSearchNum)
 	}, "search-ip-limit-number")

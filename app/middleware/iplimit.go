@@ -7,22 +7,27 @@ import (
 	"sync/atomic"
 )
 
-type IpLimitMap struct {
+type ipLimitMap struct {
 	mux      *sync.RWMutex
 	m        map[string]*int64
 	limitNum *int64
+	clearNum *int64
 }
 
-func IpLimit(num int64) (func(ctx *gin.Context), func(int64)) {
-	m := IpLimitMap{
+func IpLimit(num int64, clearNum ...int64) (func(ctx *gin.Context), func(int64, ...int64)) {
+	m := ipLimitMap{
 		mux:      &sync.RWMutex{},
 		m:        make(map[string]*int64),
 		limitNum: new(int64),
+		clearNum: new(int64),
 	}
-	fn := func(num int64) {
+	fn := func(num int64, clearNum ...int64) {
 		atomic.StoreInt64(m.limitNum, num)
+		if len(clearNum) > 0 {
+			atomic.StoreInt64(m.clearNum, clearNum[0])
+		}
 	}
-	fn(num)
+	fn(num, clearNum...)
 
 	return func(c *gin.Context) {
 		if atomic.LoadInt64(m.limitNum) <= 0 {
@@ -42,10 +47,20 @@ func IpLimit(num int64) (func(ctx *gin.Context), func(int64)) {
 		}
 
 		defer func() {
-			ii := atomic.LoadInt64(i)
-			if ii > 0 {
-				atomic.AddInt64(i, -1)
-				if atomic.LoadInt64(i) == 0 {
+			atomic.AddInt64(i, -1)
+			if atomic.LoadInt64(i) <= 0 {
+				cNum := int(atomic.LoadInt64(m.clearNum))
+				if cNum <= 0 {
+					m.mux.Lock()
+					delete(m.m, ip)
+					m.mux.Unlock()
+					return
+				}
+
+				m.mux.RLock()
+				l := len(m.m)
+				m.mux.RUnlock()
+				if l < cNum {
 					m.mux.Lock()
 					delete(m.m, ip)
 					m.mux.Unlock()
@@ -54,7 +69,7 @@ func IpLimit(num int64) (func(ctx *gin.Context), func(int64)) {
 		}()
 
 		if atomic.LoadInt64(i) >= atomic.LoadInt64(m.limitNum) {
-			c.Status(http.StatusForbidden)
+			c.String(http.StatusForbidden, "请求太多了，服务器君表示压力山大==!, 请稍后访问")
 			c.Abort()
 			return
 		}
