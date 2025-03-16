@@ -5,6 +5,7 @@ import (
 	"github.com/fthvgb1/wp-go/safety"
 	"github.com/gin-gonic/gin"
 	"net/http"
+	"strings"
 	"sync/atomic"
 	"time"
 )
@@ -35,4 +36,22 @@ func FlowLimit(maxRequestSleepNum, maxRequestNum int64, sleepTime []time.Duratio
 		}()
 		c.Next()
 	}, fn
+}
+
+func WPFlowLimit(maxRequestSleepNum, maxRequestNum int64, sleepTime []time.Duration) (func(ctx *gin.Context), func(int64, int64, []time.Duration)) {
+	statPath := map[string]struct{}{
+		"wp-includes": {},
+		"wp-content":  {},
+		"favicon.ico": {},
+	}
+	next, reFn := FlowLimit(maxRequestSleepNum, maxRequestNum, sleepTime)
+	return func(c *gin.Context) {
+		f := strings.Split(strings.TrimLeft(c.FullPath(), "/"), "/")
+		_, ok := statPath[f[0]]
+		if len(f) > 0 && ok {
+			c.Next()
+			return
+		}
+		next(c)
+	}, reFn
 }

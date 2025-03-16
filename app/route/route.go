@@ -59,7 +59,7 @@ func SetupRouter() *gin.Engine {
 		wpconfig.SetTemplateFs(theme.TemplateFs)
 	}, 90.5)
 
-	siteFlowLimitMiddleware, siteFlow := middleware.FlowLimit(c.MaxRequestSleepNum, c.MaxRequestNum, c.CacheTime.SleepTime)
+	siteFlowLimitMiddleware, siteFlow := middleware.WPFlowLimit(c.MaxRequestSleepNum, c.MaxRequestNum, c.CacheTime.SleepTime)
 	reload.Append(func() {
 		c = config.GetConfig()
 		siteFlow(c.MaxRequestSleepNum, c.MaxRequestNum, c.CacheTime.SleepTime)
