@@ -29,7 +29,7 @@ func finds[T Model](db dbQuery, ctx context.Context, q *QueryCondition) (r []T, 
 	setTable[T](q)
 	if len(q.RelationFn) < 1 {
 		sq, args, er := BuildQuerySql(q)
-		if err != nil {
+		if er != nil {
 			err = er
 			return
 		}
@@ -113,7 +113,7 @@ func chunk[T Model, R any](db dbQuery, ctx context.Context, perLimit int, fn fun
 			rr, err = finds[T](db, ctx, q)
 		}
 		offset += perLimit
-		if (err != nil && err != sql.ErrNoRows) || len(rr) < 1 {
+		if (err != nil && !errors.Is(err, sql.ErrNoRows)) || len(rr) < 1 {
 			return
 		}
 		for _, t := range rr {

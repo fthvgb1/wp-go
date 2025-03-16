@@ -124,12 +124,8 @@ func categoryArgs(_ ...any) map[string]string {
 
 func Category(h *wp.Handle, id string, blockParser ParserBlock) (func() string, error) {
 	counter := number.Counters[int]()
-	var err error
 	conf := GetCategoryConf(blockParser)
 
-	if err != nil {
-		return nil, err
-	}
 	if conf == nil {
 		return nil, errors.New("解析block-category配置错误")
 	}

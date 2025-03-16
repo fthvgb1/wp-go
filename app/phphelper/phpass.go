@@ -232,11 +232,11 @@ func (p *PasswordHash) CheckPassword(pass, hash string) bool {
 func (p *PasswordHash) genSaltPrivate(input string) string {
 	s := strings.Builder{}
 	s.WriteString("$P$")
-	min := 30
+	mins := 30
 	if p.iterationCountLog2+5 < 30 {
-		min = p.iterationCountLog2 + 5
+		mins = p.iterationCountLog2 + 5
 	}
-	s.WriteString(string(p.itoa64[min]))
+	s.WriteString(string(p.itoa64[mins]))
 	s.WriteString(p.Encode64(input, 6))
 	return s.String()
 }

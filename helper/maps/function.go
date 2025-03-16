@@ -137,7 +137,7 @@ func SetStrAnyVal[T any](m map[string]any, k string, v T, delimiter ...string) {
 		m[kk[0]] = map[string]any{}
 		mx = m[kk[0]].(map[string]any)
 	}
-	for i, _ := range kk[0 : len(kk)-2] {
+	for i := range kk[0 : len(kk)-2] {
 		key := kk[i+1]
 		mm, ok := mx[key]
 		if !ok {
@@ -159,7 +159,7 @@ func SetAnyAnyVal[T any](m map[any]any, v T, k ...any) {
 		m[k[0]] = v
 		return
 	}
-	for i, _ := range k[0 : len(k)-1] {
+	for i := range k[0 : len(k)-1] {
 		key := k[0 : i+1]
 		mm, ok := GetAnyAnyMapVal[map[any]any](m, key...)
 		if !ok {

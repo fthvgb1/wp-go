@@ -192,7 +192,7 @@ func (i *IndexParams) ParseAuthors() (err error) {
 	username := i.Ctx.Param("author")
 	if username != "" {
 		allUsername, er := cache.GetAllUsername(i.Ctx)
-		if err != nil {
+		if er != nil {
 			err = er
 			return
 		}
