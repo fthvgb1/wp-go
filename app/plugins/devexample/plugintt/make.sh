@@ -1,4 +1,4 @@
-#/bin/bash
+#!/bin/bash
 
 # copy plugintt to other dir and remove .dev suffix
 # note the go version and build tool flag must same to server build
