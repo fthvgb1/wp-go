@@ -120,7 +120,7 @@ func SetupRouter() *gin.Engine {
 		r.GET("/feed", actions.SiteFeed)
 		r.GET("/comments/feed", actions.CommentsFeed)
 		commentMiddleWare, _ := middleware.FlowLimit(5, c.SingleIpSearchNum, c.CacheTime.SleepTime)
-		commentIpMiddleware, _ := middleware.IpLimit(5, 5)
+		commentIpMiddleware, _ := middleware.IpLimit(5, 2)
 		r.POST("/comment", commentMiddleWare, commentIpMiddleware, actions.PostComment)
 
 		r.NoRoute(actions.ThemeHook(constraints.NoRoute))
