@@ -158,23 +158,25 @@ func IpLimit(num int64, clearNum ...int64) (func(ctx *gin.Context), func(int64, 
 	return CustomFlowLimit[string](a, num, clearNum...)
 }
 
+const minute = "2006-01-02 15:04"
+
 func IpMinuteLimit(num int64, clearNum ...int64) (func(ctx *gin.Context), func(int64, ...int64)) {
 	a := NewFlowLimits(func(c *gin.Context) string {
-		return str.Join(c.ClientIP(), "|", time.Now().Format("2006-01-02 15:04"))
+		return str.Join(c.ClientIP(), "|", time.Now().Format(minute))
 	}, ToManyRequest(), IpMinuteLimitDeferFn,
 	)
 
 	return CustomFlowLimit(a, num, clearNum...)
 }
 
-func IpMinuteLimitDeferFn(_ *gin.Context, m LimitMap[string], k string, _ *int64, currentTotalFlow int64) {
+func IpMinuteLimitDeferFn(_ *gin.Context, m LimitMap[string], _ string, _ *int64, currentTotalFlow int64) {
 	cNum := atomic.LoadInt64(m.ClearNum)
-	minu := strings.Split(k, "|")[1]
 	if currentTotalFlow <= cNum {
+		now, _ := time.Parse(minute, time.Now().Format(minute))
 		m.Mux.Lock()
 		for key := range m.Map {
-			t := strings.Split(key, "|")[1]
-			if minu != t {
+			minu, _ := time.Parse(minute, strings.Split(key, "|")[1])
+			if now.Sub(minu) > 0 {
 				delete(m.Map, key)
 			}
 		}
