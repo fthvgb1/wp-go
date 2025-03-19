@@ -20,14 +20,14 @@ type LimitMap[K comparable] struct {
 type FlowLimits[K comparable] struct {
 	GetKeyFn     func(ctx *gin.Context) K
 	LimitedFns   func(ctx *gin.Context)
-	DeferClearFn func(c *gin.Context, m LimitMap[K], k K, v, currentTotalFlow *int64)
-	AddFn        func(c *gin.Context, m LimitMap[K], k K, v, currentTotalFlow *int64)
+	DeferClearFn func(c *gin.Context, m LimitMap[K], k K, v *int64, currentTotalFlow int64)
+	AddFn        func(c *gin.Context, m LimitMap[K], k K, v, currentTotalFlow *int64) (current int64, currentTotal int64)
 }
 
 func NewFlowLimits[K comparable](getKeyFn func(ctx *gin.Context) K,
 	limitedFns func(ctx *gin.Context),
-	deferClearFn func(c *gin.Context, m LimitMap[K], k K, v, currentTotalFlow *int64),
-	addFns ...func(c *gin.Context, m LimitMap[K], k K, v, currentTotalFlow *int64),
+	deferClearFn func(c *gin.Context, m LimitMap[K], k K, v *int64, currentTotalFlow int64),
+	addFns ...func(c *gin.Context, m LimitMap[K], k K, v, currentTotalFlow *int64) (current int64, currentTotal int64),
 ) *FlowLimits[K] {
 
 	f := &FlowLimits[K]{
@@ -50,24 +50,24 @@ func (f FlowLimits[K]) GetKey(c *gin.Context) K {
 func (f FlowLimits[K]) Limit(c *gin.Context) {
 	f.LimitedFns(c)
 }
-func (f FlowLimits[K]) DeferClear(c *gin.Context, m LimitMap[K], k K, v, currentTotalFlow *int64) {
+func (f FlowLimits[K]) DeferClear(c *gin.Context, m LimitMap[K], k K, v *int64, currentTotalFlow int64) {
 	f.DeferClearFn(c, m, k, v, currentTotalFlow)
 }
 
-func (f FlowLimits[K]) Add(c *gin.Context, m LimitMap[K], k K, v, currentTotalFlow *int64) {
-	f.AddFn(c, m, k, v, currentTotalFlow)
+func (f FlowLimits[K]) Add(c *gin.Context, m LimitMap[K], k K, v, currentTotalFlow *int64) (current int64, currentTotal int64) {
+	return f.AddFn(c, m, k, v, currentTotalFlow)
 }
 
-func (f FlowLimits[K]) Adds(_ *gin.Context, _ LimitMap[K], _ K, v, currentTotalFlow *int64) {
-	atomic.AddInt64(v, 1)
-	atomic.AddInt64(currentTotalFlow, 1)
+func (f FlowLimits[K]) Adds(_ *gin.Context, _ LimitMap[K], _ K, v, currentTotalFlow *int64) (current int64, currentTotal int64) {
+
+	return atomic.AddInt64(v, 1), atomic.AddInt64(currentTotalFlow, 1)
 }
 
 type MapFlowLimit[K comparable] interface {
 	GetKey(c *gin.Context) K
 	Limit(c *gin.Context)
-	DeferClear(c *gin.Context, m LimitMap[K], k K, v, currentTotalFlow *int64)
-	Add(c *gin.Context, m LimitMap[K], k K, v, currentTotalFlow *int64)
+	DeferClear(c *gin.Context, m LimitMap[K], k K, v *int64, currentTotalFlow int64)
+	Add(c *gin.Context, m LimitMap[K], k K, v, currentTotalFlow *int64) (current int64, currentTotal int64)
 }
 
 func CustomFlowLimit[K comparable](a MapFlowLimit[K], maxRequestNum int64, clearNum ...int64) (func(ctx *gin.Context), func(int64, ...int64)) {
@@ -104,10 +104,12 @@ func CustomFlowLimit[K comparable](a MapFlowLimit[K], maxRequestNum int64, clear
 			m.Map[key] = i
 			m.Mux.Unlock()
 		}
-		a.Add(c, m, key, i, currentTotalFlow)
-		defer a.DeferClear(c, m, key, i, currentTotalFlow)
-		defer atomic.AddInt64(currentTotalFlow, -1)
-		if atomic.LoadInt64(i) > atomic.LoadInt64(m.LimitNum) {
+		ii, total := a.Add(c, m, key, i, currentTotalFlow)
+		defer func() {
+			total = atomic.AddInt64(currentTotalFlow, -1)
+			a.DeferClear(c, m, key, i, total)
+		}()
+		if ii > atomic.LoadInt64(m.LimitNum) {
 			a.Limit(c)
 			return
 		}
@@ -115,18 +117,18 @@ func CustomFlowLimit[K comparable](a MapFlowLimit[K], maxRequestNum int64, clear
 	}, fn
 }
 
-func IpLimitClear[K comparable](_ *gin.Context, m LimitMap[K], key K, i, currentTotalFlow *int64) {
-	atomic.AddInt64(i, -1)
-	if atomic.LoadInt64(i) <= 0 {
-		cNum := int(atomic.LoadInt64(m.ClearNum))
-		if cNum <= 0 {
+func IpLimitClear[K comparable](_ *gin.Context, m LimitMap[K], key K, i *int64, currentTotalFlow int64) {
+	ii := atomic.AddInt64(i, -1)
+	if ii <= 0 {
+		cNum := atomic.LoadInt64(m.ClearNum)
+		if cNum < 0 {
 			m.Mux.Lock()
 			delete(m.Map, key)
 			m.Mux.Unlock()
 			return
 		}
 
-		if int(atomic.LoadInt64(currentTotalFlow)) <= cNum {
+		if currentTotalFlow < cNum {
 			m.Mux.Lock()
 			for k, v := range m.Map {
 				if atomic.LoadInt64(v) < 1 {
@@ -165,10 +167,10 @@ func IpMinuteLimit(num int64, clearNum ...int64) (func(ctx *gin.Context), func(i
 	return CustomFlowLimit(a, num, clearNum...)
 }
 
-func IpMinuteLimitDeferFn(_ *gin.Context, m LimitMap[string], k string, _, currentTotalFlow *int64) {
-	cNum := min(int(atomic.LoadInt64(m.ClearNum)), 1)
+func IpMinuteLimitDeferFn(_ *gin.Context, m LimitMap[string], k string, _ *int64, currentTotalFlow int64) {
+	cNum := atomic.LoadInt64(m.ClearNum)
 	minu := strings.Split(k, "|")[1]
-	if int(atomic.LoadInt64(currentTotalFlow)) < cNum {
+	if currentTotalFlow <= cNum {
 		m.Mux.Lock()
 		for key := range m.Map {
 			t := strings.Split(key, "|")[1]

@@ -102,7 +102,7 @@ func SetupRouter() *gin.Engine {
 	}, 85.1)
 
 	SetGinAction("setRoute", func(r *gin.Engine) {
-		r.GET("/", actions.Feed, middleware.SearchLimit(c.SingleIpSearchNum, 5),
+		r.GET("/", actions.Feed, middleware.SearchLimit(c.SingleIpSearchNum),
 			actions.ThemeHook(constraints.Home))
 		r.GET("/page/:page", actions.ThemeHook(constraints.Home))
 		r.GET("/p/category/:category", actions.ThemeHook(constraints.Category))
@@ -119,8 +119,8 @@ func SetupRouter() *gin.Engine {
 		r.GET("/p/:id/feed", actions.PostFeed)
 		r.GET("/feed", actions.SiteFeed)
 		r.GET("/comments/feed", actions.CommentsFeed)
-		commentMiddleWare, _ := middleware.FlowLimit(5, c.SingleIpSearchNum, c.CacheTime.SleepTime)
-		commentIpMiddleware, _ := middleware.IpLimit(5, 2)
+		commentMiddleWare, _ := middleware.FlowLimit(10, c.SingleIpSearchNum, c.CacheTime.SleepTime)
+		commentIpMiddleware, _ := middleware.IpLimit(5)
 		r.POST("/comment", commentMiddleWare, commentIpMiddleware, actions.PostComment)
 
 		r.NoRoute(actions.ThemeHook(constraints.NoRoute))
