@@ -348,9 +348,6 @@ func setFormData(m map[string]any, values *multipart.Writer) (err error) {
 		case int64, int, int8, int32, int16, uint64, uint, uint8, uint32, uint16, float32, float64:
 			err = values.WriteField(k, fmt.Sprintf("%v", v))
 		case []string:
-			if !strings.Contains(k, "[]") {
-				k = str.Join(k, "[]")
-			}
 			for _, vv := range v.([]string) {
 				err = values.WriteField(k, vv)
 			}
@@ -411,9 +408,6 @@ func setValue(m map[string]any, values url.Values) {
 		case int64, int, int8, int32, int16, uint64, uint, uint8, uint32, uint16, float32, float64:
 			values.Add(k, fmt.Sprintf("%v", v))
 		case []string:
-			if !strings.Contains(k, "[]") {
-				k = str.Join(k, "[]")
-			}
 			for _, vv := range v.([]string) {
 				values.Add(k, vv)
 			}
