@@ -37,6 +37,9 @@ func GetString(u string, q map[string]any, a ...any) (r string, code int, err er
 
 func Get(u string, q map[string]any, a ...any) (res *http.Response, err error) {
 	cli, req, err := BuildClient(u, "get", q, a...)
+	if err != nil {
+		return
+	}
 	res, err = cli.Do(req)
 	return
 }
@@ -109,6 +112,9 @@ func BuildClient(u, method string, q map[string]any, a ...any) (res *http.Client
 // types 1 x-www-form-urlencoded, 2 form-data, 3 json, 4 binary
 func Post(u string, types int, form map[string]any, a ...any) (res *http.Response, err error) {
 	cli, req, err := PostClient(u, types, form, a...)
+	if err != nil {
+		return
+	}
 	res, err = cli.Do(req)
 	return
 }
