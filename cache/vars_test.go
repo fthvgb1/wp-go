@@ -7,11 +7,11 @@ import (
 	"time"
 )
 
-var cc = *NewVarCache[int](NewVarMemoryCache[int](func() time.Duration {
+var cc = *NewVarCache(NewVarMemoryCache[int](func() time.Duration {
 	return time.Minute
 }), func(ctx context.Context, a ...any) (int, error) {
 	return 1, nil
-})
+}, nil, nil)
 
 func TestVarCache_Flush(t *testing.T) {
 	type testCase[T any] struct {

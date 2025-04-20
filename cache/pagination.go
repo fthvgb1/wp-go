@@ -32,7 +32,7 @@ type LocalFn[K comparable, V any] func(ctx context.Context, data []V, k K, page,
 
 func (p *Pagination[K, V]) IsSwitchDB(k K) bool {
 	v, _ := p.isSwitch.Load(k)
-	return v == true
+	return v
 }
 
 func NewPagination[K comparable, V any](m *MapCache[string, helper.PaginationData[V]], maxNum func() int,

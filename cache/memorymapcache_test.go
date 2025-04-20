@@ -15,7 +15,9 @@ var ttt time.Time
 
 func init() {
 	ctx = context.Background()
-	mm = *NewMemoryMapCache[string, string](3 * time.Second)
+	mm = *NewMemoryMapCache[string, string](func() time.Duration {
+		return 3 * time.Second
+	})
 	ttt = time.Now()
 	mm.Store("aa", mapVal[string]{
 		setTime: ttt,

@@ -81,7 +81,5 @@ go run app/cmd/main.go [-c configpath] [-p port]
 
 用的gin框架和sqlx,在外面封装了层查询的方法。
 
-#### 鸣谢
 
-<a href="https://jb.gg/OpenSourceSupport"><img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.png" alt="JetBrains Logo (Main) logo." width="30%"></a>
 

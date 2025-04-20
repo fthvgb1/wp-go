@@ -39,7 +39,7 @@ func (m *MemoryMapCache[K, V]) Get(_ context.Context, key K) (r V, ok bool) {
 		return
 	}
 	r = v.data
-	t := m.expireTime() - time.Now().Sub(v.setTime)
+	t := m.expireTime() - time.Since(v.setTime)
 	if t <= 0 {
 		ok = false
 	}
@@ -68,7 +68,7 @@ func (m *MemoryMapCache[K, V]) Ttl(_ context.Context, key K) time.Duration {
 	if !ok {
 		return time.Duration(-1)
 	}
-	return m.expireTime() - time.Now().Sub(v.setTime)
+	return m.expireTime() - time.Since(v.setTime)
 }
 
 func (m *MemoryMapCache[K, V]) Ver(_ context.Context, key K) int {

@@ -168,7 +168,7 @@ func NewVarMemoryCache[T any](expireTime func() time.Duration) *VarMemoryCache[T
 
 func (c *VarMemoryCache[T]) Get(_ context.Context) (T, bool) {
 	v := c.v.Load()
-	return v.data, c.expireTime() >= time.Now().Sub(v.setTime)
+	return v.data, c.expireTime() >= time.Since(v.setTime)
 }
 
 func (c *VarMemoryCache[T]) Set(_ context.Context, v T) {

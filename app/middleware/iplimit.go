@@ -155,7 +155,7 @@ func IpLimit(num int64, clearNum ...int64) (func(ctx *gin.Context), func(int64, 
 	a := NewFlowLimits(func(c *gin.Context) string {
 		return c.ClientIP()
 	}, ToManyRequest(), IpLimitClear)
-	return CustomFlowLimit[string](a, num, clearNum...)
+	return CustomFlowLimit(a, num, clearNum...)
 }
 
 const minute = "2006-01-02 15:04"

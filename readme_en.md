@@ -81,6 +81,4 @@ It is divided into plug-ins that modify the data of list pages and plug-ins that
 
 The gin framework and sqlx used encapsulate the layer query method outside.
 
-#### Thanks
 
-<a href="https://jb.gg/OpenSourceSupport"><img src="https://resources.jetbrains.com/storage/products/company/brand/logos/jb_beam.png" alt="JetBrains Logo (Main) logo." width="30%"></a>

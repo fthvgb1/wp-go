@@ -3,12 +3,13 @@ package cache
 import (
 	"context"
 	"fmt"
-	"github.com/fthvgb1/wp-go/helper/slice"
-	"github.com/fthvgb1/wp-go/taskPools"
 	"reflect"
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/fthvgb1/wp-go/helper/slice"
+	"github.com/fthvgb1/wp-go/taskPools"
 )
 
 var ca MapCache[string, string]
@@ -67,7 +68,7 @@ func TestMapCache_Flush(t *testing.T) {
 		m    MapCache[K, V]
 		args args
 	}
-	ca := *NewMapCache[string, string](NewMemoryMapCache[string, string](func() time.Duration {
+	ca := *NewMapCache(NewMemoryMapCache[string, string](func() time.Duration {
 		return time.Second
 	}), fn, nil, nil, nil)
 	_, _ = ca.GetCache(ct, "aa", time.Second, ct, "aa")
@@ -206,7 +207,6 @@ func TestMapCache_GetCacheBatch(t *testing.T) {
 					a, err := ca.GetCacheBatch(c, []string{"xx", "oo", "aa"}, time.Hour, c, []string{"xx", "oo", "aa"})
 					if err != nil {
 						panic(err)
-						return
 					}
 
 					if a[0] == "xxxx" && a[1] == "oooo" && a[2] == "aaaa" {

@@ -300,11 +300,9 @@ func (m *MapCache[K, V]) getBatchToMap(e Expend[K, V]) func(c context.Context, k
 		}
 		var needIndex = make(map[K]int)
 		res = mm
-		var flushKeys []K
 		for i, k := range key {
 			_, ok := mm[k]
 			if !ok {
-				flushKeys = append(flushKeys, k)
 				needIndex[k] = i
 			}
 		}
@@ -354,7 +352,7 @@ func (m *MapCache[K, V]) getBatchToMap(e Expend[K, V]) func(c context.Context, k
 			}()
 			select {
 			case <-ctx.Done():
-				err = errors.New(fmt.Sprintf("get cache %v %s", key, ctx.Err().Error()))
+				err = fmt.Errorf("get cache %v %s", key, ctx.Err().Error())
 				return nil, err
 			case <-done:
 			}
@@ -421,7 +419,7 @@ func (m *MapCache[K, V]) getBatchToMapes(c context.Context, key []K, timeout tim
 		}()
 		select {
 		case <-ctx.Done():
-			err = errors.New(fmt.Sprintf("get cache %v %s", key, ctx.Err().Error()))
+			err = fmt.Errorf("get cache %v %s", key, ctx.Err().Error())
 			return nil, err
 		case <-done:
 		}
@@ -487,7 +485,7 @@ func (m *MapCache[K, V]) getCacheBatchs(c context.Context, key []K, timeout time
 		}()
 		select {
 		case <-ctx.Done():
-			err = errors.New(fmt.Sprintf("get cache %v %s", key, ctx.Err().Error()))
+			err = fmt.Errorf("get cache %v %s", key, ctx.Err().Error())
 			return nil, err
 		case <-done:
 		}
@@ -508,11 +506,9 @@ func (m *MapCache[K, V]) getBatches(e Expend[K, V]) func(ctx context.Context, ke
 		if err != nil {
 			return nil, err
 		}
-		var flushKeys []K
 		for i, k := range key {
 			v, ok := mm[k]
 			if !ok {
-				flushKeys = append(flushKeys, k)
 				needIndex[k] = i
 				var vv V
 				v = vv
@@ -568,7 +564,7 @@ func (m *MapCache[K, V]) getBatches(e Expend[K, V]) func(ctx context.Context, ke
 			}()
 			select {
 			case <-ctx.Done():
-				err = errors.New(fmt.Sprintf("get cache %v %s", key, ctx.Err().Error()))
+				err = fmt.Errorf("get cache %v %s", key, ctx.Err().Error())
 				return nil, err
 			case <-done:
 			}
