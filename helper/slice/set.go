@@ -20,17 +20,15 @@ func IsContainedByFn[T any](a []T, e T, fn func(i, j T) bool) bool {
 
 // Diff return elements which in a and not in b,...
 func Diff[T comparable](a []T, b ...[]T) (r []T) {
-	for _, t := range a {
-		f := false
-		for _, ts := range b {
-			if IsContained(ts, t) {
-				f = true
-				break
-			}
+	m := SimpleToMap(a, func(v T) T {
+		return v
+	})
+	for _, bb := range b {
+		for _, k := range bb {
+			delete(m, k)
 		}
-		if f {
-			continue
-		}
+	}
+	for _, t := range m {
 		r = append(r, t)
 	}
 	return
