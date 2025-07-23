@@ -36,6 +36,14 @@ func TestDiff(t *testing.T) {
 			},
 			wantR: []int{1, 2, 10},
 		},
+		{
+			name: "t2",
+			args: args[int]{
+				a: number.Range(1, 10, 1),
+				b: [][]int{number.Range(5, 11, 1)},
+			},
+			wantR: []int{1, 2, 3, 4},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

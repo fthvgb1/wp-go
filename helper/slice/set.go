@@ -20,16 +20,41 @@ func IsContainedByFn[T any](a []T, e T, fn func(i, j T) bool) bool {
 
 // Diff return elements which in a and not in b,...
 func Diff[T comparable](a []T, b ...[]T) (r []T) {
-	m := SimpleToMap(a, func(v T) T {
-		return v
-	})
-	for _, bb := range b {
-		for _, k := range bb {
-			delete(m, k)
-		}
+	if len(b) < 1 {
+		r = a
+		return
 	}
-	for _, t := range m {
-		r = append(r, t)
+	bb := b[0]
+	for _, ts := range b[1:] {
+		bb = append(bb, ts...)
+	}
+	r = Diffs(a, bb)
+	return
+}
+
+// Diffs return elements which in a and not in b
+func Diffs[T comparable](a, b []T) (r []T) {
+	if len(b) < 1 {
+		r = Copy(a)
+		return
+	}
+	m := map[T]struct{}{}
+	i := 0
+	for _, v := range a {
+		if _, ok := m[v]; ok {
+			continue
+		}
+		if i == len(b)-1 {
+			r = append(r, v)
+			continue
+		}
+		for ; i < len(b); i++ {
+			m[b[i]] = struct{}{}
+			if v == b[i] {
+				continue
+			}
+		}
+		r = append(r, v)
 	}
 	return
 }
