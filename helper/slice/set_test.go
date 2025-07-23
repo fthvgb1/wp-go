@@ -44,10 +44,19 @@ func TestDiff(t *testing.T) {
 			},
 			wantR: []int{1, 2, 3, 4},
 		},
+		{
+			name: "t3",
+			args: args[int]{
+				a: number.Range(1, 10, 1),
+				b: [][]int{number.Range(1, 13, 1)},
+			},
+			wantR: []int{},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if gotR := Diff(tt.args.a, tt.args.b...); !reflect.DeepEqual(gotR, tt.wantR) {
+			if gotR := Diff(tt.args.a, tt.args.b...); (len(gotR) != len(tt.wantR)) || (len(gotR) > 0 &&
+				!reflect.DeepEqual(gotR, tt.wantR)) {
 				t.Errorf("Diff() = %v, want %v", gotR, tt.wantR)
 			}
 		})

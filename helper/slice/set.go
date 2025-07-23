@@ -48,11 +48,16 @@ func Diffs[T comparable](a, b []T) (r []T) {
 			r = append(r, v)
 			continue
 		}
+		f := false
 		for ; i < len(b); i++ {
 			m[b[i]] = struct{}{}
 			if v == b[i] {
-				continue
+				f = true
+				break
 			}
+		}
+		if f {
+			continue
 		}
 		r = append(r, v)
 	}
