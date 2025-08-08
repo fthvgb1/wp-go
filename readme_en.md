@@ -36,7 +36,8 @@ driver and so on registered functions or add new themes same as php, and it woul
 
 #### background settings support
 
-You can set follow configurations in php WordPress background.
+You can set follow configurations in php WordPress background. Every time changed the configuration it would come into
+effect after `kill -SIGUSR1 wp-go-pid`
 
 - dashboard
     - Appearance
