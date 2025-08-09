@@ -2,7 +2,7 @@
 
 This is a WordPress frontend written in Golang with Gin framework and sqlx db driver. Now had completed the displaying
 of posts' listing, detail, comment, rss2 and so forth features and two themes. The lowest version of Golang requirement
-is 1.23 and the newer, the better.
+is 1.20 and the newer, the better.
 
 #### Primary features
 
