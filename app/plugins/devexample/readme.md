@@ -1,6 +1,6 @@
 #### limitation
 
-- only linux platform
+- only Linux, macOS platform
 - the golang version, build flags of plugin same as wp-go
 - same plugin name only loaded once
 
@@ -8,10 +8,10 @@
 
 - set wp-go config.yaml `pluginPath`
 - plugin package must be named `main`
-- plugin export func signature `func Pluginname( *wp.Handle) `
+- plugin export func signature `func PluginName( *wp.Handle) `
 - plugin's `go.mod` replace wp-go package => local wp-go path
 - ```shell
-  go build buildmode=plugin [other flags same as wp-go] -o pluginname.so && mv pluginname.so pluginPath
+  go build buildmode=plugin [other flags same as wp-go] -o PluginName.so && mv PluginName.so pluginPath
   ```
 
 #### load plugin
