@@ -16,5 +16,5 @@
 
 #### load plugin
 
-- add `pluginname` into wp-go config.yaml `plugins` item
+- add `PluginName` into wp-go config.yaml `plugins` item
 - reload wp-go configuration (`kill -SIGUSR1 wp-go pid`)
