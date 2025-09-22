@@ -126,9 +126,10 @@ func SetBody(req *http.Request, types int, form map[string]any) (err error) {
 	case 1:
 		values := url.Values{}
 		setValue(form, values)
-		req.Header.Add("Content-Type", "application/x-www-form-urlencoded")
+		req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 		b := strings.NewReader(values.Encode())
 		req.Body = io.NopCloser(b)
+		req.ContentLength = int64(b.Len())
 	case 2:
 		payload := &bytes.Buffer{}
 		writer := multipart.NewWriter(payload)
@@ -141,7 +142,8 @@ func SetBody(req *http.Request, types int, form map[string]any) (err error) {
 			return
 		}
 		req.Body = io.NopCloser(payload)
-		req.Header.Add("Content-Type", writer.FormDataContentType())
+		req.ContentLength = int64(payload.Len())
+		req.Header.Set("Content-Type", writer.FormDataContentType())
 	case 3:
 		fo, err := json.Marshal(form)
 		if err != nil {
@@ -149,26 +151,27 @@ func SetBody(req *http.Request, types int, form map[string]any) (err error) {
 		}
 		b := bytes.NewReader(fo)
 		req.Body = io.NopCloser(b)
-		req.Header.Add("Content-Type", "application/json")
+		req.ContentLength = int64(b.Len())
+		req.Header.Set("Content-Type", "application/json")
 	case 4:
 		b, ok := maps.GetStrAnyVal[[]byte](form, "binary")
 		if ok {
 			req.Body = io.NopCloser(bytes.NewReader(b))
-			req.Header.Add("Content-Type", "application/octet-stream")
+			req.Header.Set("Content-Type", "application/octet-stream")
 			req.ContentLength = int64(len(b))
 			return
 		}
 		bb, ok := maps.GetStrAnyVal[*[]byte](form, "binary")
 		if ok {
 			req.Body = io.NopCloser(NewBodyBuffer(bb))
-			req.Header.Add("Content-Type", "application/octet-stream")
+			req.Header.Set("Content-Type", "application/octet-stream")
 			req.ContentLength = int64(len(*bb))
 			return
 		}
 		bf, ok := maps.GetStrAnyVal[*BodyBuffer](form, "binary")
 		if ok {
 			req.Body = bf
-			req.Header.Add("Content-Type", "application/octet-stream")
+			req.Header.Set("Content-Type", "application/octet-stream")
 			req.ContentLength = int64(len(*bf.Data))
 			return
 		}
